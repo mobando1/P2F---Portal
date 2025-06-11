@@ -1,5 +1,6 @@
 import express from "express";
 import { createServer } from "http";
+import path from "path";
 import { storage } from "./storage-simple";
 
 const app = express();
@@ -238,76 +239,29 @@ app.put("/api/subscription/:id", async (req, res) => {
   }
 });
 
-// Serve the React app with Vite middleware in development
-if (process.env.NODE_ENV === "development") {
-  // Simple HTML response for development
-  app.get("*", (req, res) => {
-    res.send(`
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>EspañolPro - Spanish Learning Platform</title>
-          <script src="https://cdn.tailwindcss.com"></script>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }
-          </style>
-        </head>
-        <body>
-          <div id="root"></div>
-          <script type="module">
-            import { createElement } from 'https://esm.sh/react@18';
-            import { createRoot } from 'https://esm.sh/react-dom@18/client';
-            
-            const App = () => {
-              return createElement('div', { 
-                className: 'min-h-screen bg-gray-50 flex items-center justify-center p-8' 
-              }, [
-                createElement('div', { 
-                  key: 'container',
-                  className: 'max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center' 
-                }, [
-                  createElement('h1', { 
-                    key: 'title',
-                    className: 'text-3xl font-bold text-blue-600 mb-4' 
-                  }, 'EspañolPro'),
-                  createElement('p', { 
-                    key: 'subtitle',
-                    className: 'text-gray-600 mb-6' 
-                  }, 'Your Spanish learning journey starts here'),
-                  createElement('div', { 
-                    key: 'status',
-                    className: 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4' 
-                  }, '✅ Server is running successfully!'),
-                  createElement('p', { 
-                    key: 'info',
-                    className: 'text-sm text-gray-500' 
-                  }, 'The full React application is being configured...')
-                ])
-              ]);
-            };
-            
-            const root = createRoot(document.getElementById('root'));
-            root.render(createElement(App));
-          </script>
-        </body>
-      </html>
-    `);
-  });
-} else {
-  // Production mode - serve static files
-  app.use(express.static("dist"));
-  
-  app.get("*", (req, res) => {
-    res.send("EspañolPro is running!");
-  });
-}
+// Serve static files
+app.use(express.static("dist"));
 
-const server = createServer(app);
-const PORT = 5000;
+// Catch-all handler
+app.get("*", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>EspañolPro</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+      </head>
+      <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+      </body>
+    </html>
+  `);
+});
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 EspañolPro server running on http://0.0.0.0:${PORT}`);
-  console.log(`📚 Spanish learning platform is ready!`);
+const httpServer = createServer(app);
+
+const port = parseInt(process.env.PORT || "5000", 10);
+httpServer.listen(port, "0.0.0.0", () => {
+  console.log(`Server running on http://0.0.0.0:${port}`);
 });
