@@ -216,9 +216,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Refund the class to user's subscription
       const subscription = await storage.getUserSubscription(userId);
-      if (subscription && subscription.classesUsed > 0) {
+      if (subscription && (subscription.classesUsed || 0) > 0) {
         await storage.updateSubscription(subscription.id, {
-          classesUsed: subscription.classesUsed - 1,
+          classesUsed: (subscription.classesUsed || 0) - 1,
         });
       }
 

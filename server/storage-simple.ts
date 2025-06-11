@@ -1,5 +1,4 @@
 import { 
-  users, tutors, classes, videos, subscriptions, userProgress,
   type User, type InsertUser, type Tutor, type InsertTutor, 
   type Class, type InsertClass, type Video, type InsertVideo,
   type Subscription, type InsertSubscription, type UserProgress, type InsertUserProgress
@@ -43,12 +42,12 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private tutors: Map<number, Tutor>;
-  private classes: Map<number, Class>;
-  private videos: Map<number, Video>;
-  private subscriptions: Map<number, Subscription>;
-  private userProgress: Map<number, UserProgress>;
+  private users: Map<number, any>;
+  private tutors: Map<number, any>;
+  private classes: Map<number, any>;
+  private videos: Map<number, any>;
+  private subscriptions: Map<number, any>;
+  private userProgress: Map<number, any>;
   private currentUserId: number;
   private currentTutorId: number;
   private currentClassId: number;
@@ -75,7 +74,7 @@ export class MemStorage implements IStorage {
 
   private initializeData() {
     // Sample user
-    const user: User = {
+    const user = {
       id: 1,
       username: "juan_sanchez",
       email: "juan.sanchez@example.com", 
@@ -90,7 +89,7 @@ export class MemStorage implements IStorage {
     this.currentUserId = 2;
 
     // Sample subscription
-    const subscription: Subscription = {
+    const subscription = {
       id: 1,
       userId: 1,
       planName: "Premium Plan",
@@ -151,7 +150,7 @@ export class MemStorage implements IStorage {
         description: "Practice conversational Spanish",
         scheduledAt: new Date("2024-12-18T15:00:00"),
         duration: 60,
-        status: "scheduled" as const,
+        status: "scheduled",
         meetingLink: "https://meet.example.com/abc123",
         createdAt: new Date(),
       },
@@ -163,7 +162,7 @@ export class MemStorage implements IStorage {
         description: "Focus on Spanish grammar rules",
         scheduledAt: new Date("2024-12-20T10:00:00"),
         duration: 60,
-        status: "scheduled" as const,
+        status: "scheduled",
         meetingLink: "https://meet.example.com/def456",
         createdAt: new Date(),
       }
@@ -214,55 +213,16 @@ export class MemStorage implements IStorage {
         category: "Business",
         isActive: true,
         createdAt: new Date(),
-      },
-      {
-        id: 4,
-        title: "Pronunciation Mastery",
-        description: "Perfect your Spanish accent",
-        instructor: "Prof. Miguel Ruiz",
-        level: "All Levels",
-        duration: "15:30",
-        thumbnailUrl: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&h=400&fit=crop",
-        videoUrl: "https://example.com/video4.mp4",
-        category: "Pronunciation",
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: 5,
-        title: "Cultural Insights",
-        description: "Understanding Hispanic cultures",
-        instructor: "Prof. Sofia Vargas",
-        level: "Intermediate",
-        duration: "21:45",
-        thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
-        videoUrl: "https://example.com/video5.mp4",
-        category: "Culture",
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: 6,
-        title: "Advanced Writing",
-        description: "Master complex writing structures",
-        instructor: "Prof. Eduardo Morales",
-        level: "Advanced",
-        duration: "28:12",
-        thumbnailUrl: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=400&fit=crop",
-        videoUrl: "https://example.com/video6.mp4",
-        category: "Writing",
-        isActive: true,
-        createdAt: new Date(),
       }
     ];
 
     videoData.forEach(video => {
       this.videos.set(video.id, video);
     });
-    this.currentVideoId = 7;
+    this.currentVideoId = 4;
 
     // Sample user progress
-    const progress: UserProgress = {
+    const progress = {
       id: 1,
       userId: 1,
       classesCompleted: 8,
@@ -285,7 +245,7 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
-    const user: User = { 
+    const user = { 
       ...insertUser, 
       id, 
       createdAt: new Date(),
@@ -293,7 +253,7 @@ export class MemStorage implements IStorage {
       avatar: insertUser.avatar || null
     };
     this.users.set(id, user);
-    return user;
+    return user as User;
   }
 
   async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
@@ -319,7 +279,7 @@ export class MemStorage implements IStorage {
 
   async createSubscription(subscriptionData: InsertSubscription): Promise<Subscription> {
     const id = this.currentSubscriptionId++;
-    const subscription: Subscription = { 
+    const subscription = { 
       ...subscriptionData, 
       id, 
       createdAt: new Date(),
@@ -330,7 +290,7 @@ export class MemStorage implements IStorage {
       nextBillingDate: subscriptionData.nextBillingDate || null
     };
     this.subscriptions.set(id, subscription);
-    return subscription;
+    return subscription as Subscription;
   }
 
   async updateSubscription(id: number, subscriptionData: Partial<InsertSubscription>): Promise<Subscription | undefined> {
@@ -352,7 +312,7 @@ export class MemStorage implements IStorage {
 
   async createTutor(tutorData: InsertTutor): Promise<Tutor> {
     const id = this.currentTutorId++;
-    const tutor: Tutor = { 
+    const tutor = { 
       ...tutorData, 
       id, 
       createdAt: new Date(),
@@ -363,7 +323,7 @@ export class MemStorage implements IStorage {
       isActive: tutorData.isActive !== undefined ? tutorData.isActive : true
     };
     this.tutors.set(id, tutor);
-    return tutor;
+    return tutor as Tutor;
   }
 
   async getUserClasses(userId: number): Promise<Class[]> {
@@ -385,7 +345,7 @@ export class MemStorage implements IStorage {
 
   async createClass(classData: InsertClass): Promise<Class> {
     const id = this.currentClassId++;
-    const classItem: Class = { 
+    const classItem = { 
       ...classData, 
       id, 
       createdAt: new Date(),
@@ -395,7 +355,7 @@ export class MemStorage implements IStorage {
       meetingLink: classData.meetingLink || null
     };
     this.classes.set(id, classItem);
-    return classItem;
+    return classItem as Class;
   }
 
   async updateClass(id: number, classData: Partial<InsertClass>): Promise<Class | undefined> {
@@ -411,7 +371,7 @@ export class MemStorage implements IStorage {
     const classItem = this.classes.get(id);
     if (!classItem || classItem.userId !== userId) return false;
     
-    const updatedClass = { ...classItem, status: "cancelled" as const };
+    const updatedClass = { ...classItem, status: "cancelled" };
     this.classes.set(id, updatedClass);
     return true;
   }
@@ -427,7 +387,7 @@ export class MemStorage implements IStorage {
 
   async createVideo(videoData: InsertVideo): Promise<Video> {
     const id = this.currentVideoId++;
-    const video: Video = { 
+    const video = { 
       ...videoData, 
       id, 
       createdAt: new Date(),
@@ -437,7 +397,7 @@ export class MemStorage implements IStorage {
       isActive: videoData.isActive !== undefined ? videoData.isActive : true
     };
     this.videos.set(id, video);
-    return video;
+    return video as Video;
   }
 
   async getUserProgress(userId: number): Promise<UserProgress | undefined> {
@@ -466,7 +426,7 @@ export class MemStorage implements IStorage {
       progress = updatedProgress;
     }
     
-    return progress;
+    return progress as UserProgress;
   }
 }
 

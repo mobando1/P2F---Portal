@@ -16,7 +16,7 @@ import {
   GraduationCap, 
   Clock, 
   Star, 
-  Video,
+  Video as VideoIcon,
   BookOpen,
   Headphones,
   X 
@@ -325,7 +325,7 @@ export default function Dashboard() {
                     upcomingClasses.map((classItem: any) => (
                       <div key={classItem.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
                         <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                          <Video className="text-primary h-5 w-5" />
+                          <VideoIcon className="text-primary h-5 w-5" />
                         </div>
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-900">{classItem.title}</h4>
