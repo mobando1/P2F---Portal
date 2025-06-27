@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { isAuthenticated } from "@/lib/auth";
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
+import SubscriptionPage from "@/pages/subscription";
 import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -22,6 +23,11 @@ function Router() {
       <Route path="/dashboard">
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/subscription">
+        <ProtectedRoute>
+          <SubscriptionPage />
         </ProtectedRoute>
       </Route>
       <Route path="/">

@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getCurrentUser, isAuthenticated } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
-import CalendarBooking from "@/components/calendar-booking";
+import EnhancedCalendar from "@/components/enhanced-calendar";
 import TutorCard from "@/components/tutor-card";
 import SubscriptionCard from "@/components/subscription-card";
 import VideoLibrary from "@/components/video-library";
@@ -74,12 +74,12 @@ export default function Dashboard() {
 
   // Mutations
   const bookClassMutation = useMutation({
-    mutationFn: async ({ tutorId, scheduledAt }: { tutorId: number; scheduledAt: Date }) => {
+    mutationFn: async ({ tutorId, scheduledAt, time }: { tutorId: number; scheduledAt: Date; time: string }) => {
       const response = await apiRequest("POST", "/api/classes", {
         userId: user.id,
         tutorId,
-        title: "Spanish Lesson",
-        description: "One-on-one Spanish lesson",
+        title: "Language Lesson",
+        description: "One-on-one language lesson",
         scheduledAt: scheduledAt.toISOString(),
         duration: 60,
       });
@@ -127,13 +127,8 @@ export default function Dashboard() {
   });
 
   // Handlers
-  const handleBookTutor = (tutorId: number) => {
-    // In a real app, this would open a booking dialog with time selection
-    const scheduledAt = new Date();
-    scheduledAt.setDate(scheduledAt.getDate() + 1); // Tomorrow
-    scheduledAt.setHours(14, 0, 0, 0); // 2 PM
-    
-    bookClassMutation.mutate({ tutorId, scheduledAt });
+  const handleBookClass = (tutorId: number, scheduledAt: Date, time: string) => {
+    bookClassMutation.mutate({ tutorId, scheduledAt, time });
   };
 
   const handleVideoPlay = (video: Video) => {
@@ -266,9 +261,10 @@ export default function Dashboard() {
           {/* Left Column - Calendar & Booking */}
           <div className="lg:col-span-2 space-y-8">
             {/* Calendar Section */}
-            <CalendarBooking 
+            <EnhancedCalendar 
               remainingClasses={stats.remainingClasses}
-              onDateSelect={(date) => console.log("Selected date:", date)}
+              tutors={tutors}
+              onBookClass={handleBookClass}
             />
 
             {/* Available Tutors */}
@@ -293,7 +289,13 @@ export default function Dashboard() {
                       <TutorCard 
                         key={tutor.id} 
                         tutor={tutor} 
-                        onBook={handleBookTutor}
+                        onBook={(tutorId) => {
+                          // Simple booking - use tomorrow at 2 PM as default
+                          const scheduledAt = new Date();
+                          scheduledAt.setDate(scheduledAt.getDate() + 1);
+                          scheduledAt.setHours(14, 0, 0, 0);
+                          handleBookClass(tutorId, scheduledAt, "14:00");
+                        }}
                       />
                     ))}
                   </div>
