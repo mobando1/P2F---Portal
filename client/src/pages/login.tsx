@@ -74,8 +74,12 @@ export default function Login() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary">EspañolPro</h1>
-          <p className="mt-2 text-gray-600">Your Spanish learning journey starts here</p>
+          <img 
+            src="@assets/a1c5a1_9514ede9e3124d7a9adf78f5dcf07f28~mv2_1749609806728.png" 
+            alt="Passport2Fluency" 
+            className="h-16 w-auto mx-auto mb-4"
+          />
+          <p className="mt-2 text-gray-600">Your language learning journey starts here</p>
         </div>
 
         <Card>

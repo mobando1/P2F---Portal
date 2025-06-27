@@ -30,10 +30,12 @@ export default function Header() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/">
-              <div className="flex-shrink-0">
-                <span className="text-2xl font-bold text-primary cursor-pointer">
-                  EspañolPro
-                </span>
+              <div className="flex-shrink-0 flex items-center">
+                <img 
+                  src="@assets/a1c5a1_9514ede9e3124d7a9adf78f5dcf07f28~mv2_1749609806728.png" 
+                  alt="Passport2Fluency" 
+                  className="h-10 w-auto cursor-pointer"
+                />
               </div>
             </Link>
           </div>

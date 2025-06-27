@@ -1,6 +1,11 @@
 import express from "express";
 import { createServer } from "http";
 import { storage } from "./storage-simple";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-05-28.basil",
+});
 
 const app = express();
 app.use(express.json());
@@ -215,6 +220,70 @@ app.get("/api/videos", async (req, res) => {
   }
 });
 
+// Stripe payment routes
+app.post("/api/create-payment-intent", async (req, res) => {
+  try {
+    const { amount, description } = req.body;
+    
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: "usd",
+      description: description || "Language class payment",
+      metadata: {
+        platform: "passport2fluency"
+      }
+    });
+    
+    res.json({ clientSecret: paymentIntent.client_secret });
+  } catch (error: any) {
+    res.status(500).json({ message: "Error creating payment intent: " + error.message });
+  }
+});
+
+app.post("/api/create-subscription", async (req, res) => {
+  try {
+    const { userId, planType, email } = req.body;
+    
+    // Create Stripe customer
+    const customer = await stripe.customers.create({
+      email: email,
+      metadata: { userId: userId.toString() }
+    });
+
+    // Define subscription plans
+    const plans = {
+      basic: { priceId: "price_basic", amount: 19.99, classes: 4 },
+      premium: { priceId: "price_premium", amount: 49.99, classes: 12 },
+      unlimited: { priceId: "price_unlimited", amount: 99.99, classes: null }
+    };
+
+    const selectedPlan = plans[planType as keyof typeof plans];
+    if (!selectedPlan) {
+      return res.status(400).json({ message: "Invalid plan type" });
+    }
+
+    // For demo purposes, create a payment intent instead of recurring subscription
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(selectedPlan.amount * 100),
+      currency: "usd",
+      customer: customer.id,
+      description: `${planType.charAt(0).toUpperCase() + planType.slice(1)} Language Plan`,
+      metadata: {
+        userId: userId.toString(),
+        planType: planType,
+        classes: selectedPlan.classes?.toString() || "unlimited"
+      }
+    });
+
+    res.json({ 
+      clientSecret: paymentIntent.client_secret,
+      customerId: customer.id 
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: "Error creating subscription: " + error.message });
+  }
+});
+
 // Subscription management
 app.put("/api/subscription/:id", async (req, res) => {
   try {
@@ -235,6 +304,42 @@ app.put("/api/subscription/:id", async (req, res) => {
     res.json(updatedSubscription);
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Webhook to handle successful payments
+app.post("/api/stripe-webhook", express.raw({type: 'application/json'}), async (req, res) => {
+  try {
+    const sig = req.headers['stripe-signature'] as string;
+    // In production, use your webhook secret
+    // const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+    
+    // For development, parse the event directly
+    const event = JSON.parse(req.body.toString());
+
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object;
+      const { userId, planType, classes } = paymentIntent.metadata;
+
+      if (userId && planType) {
+        // Update user subscription in database
+        await storage.createSubscription({
+          userId: parseInt(userId),
+          planName: `${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`,
+          planType: planType,
+          classesLimit: classes === "unlimited" ? null : parseInt(classes),
+          classesUsed: 0,
+          price: (paymentIntent.amount / 100).toString(),
+          status: "active",
+          stripeSubscriptionId: paymentIntent.id,
+          nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        });
+      }
+    }
+
+    res.json({received: true});
+  } catch (error) {
+    res.status(400).json({ message: "Webhook error" });
   }
 });
 
