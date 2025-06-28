@@ -32,7 +32,7 @@ export default function Header() {
             <Link href="/">
               <div className="flex-shrink-0 flex items-center">
                 <img 
-                  src="@assets/a1c5a1_9514ede9e3124d7a9adf78f5dcf07f28~mv2_1749609806728.png" 
+                  src="/attached_assets/lOGO_1749609806728.png" 
                   alt="Passport2Fluency" 
                   className="h-10 w-auto cursor-pointer"
                 />
@@ -47,9 +47,11 @@ export default function Header() {
                 Dashboard
               </a>
             </Link>
-            <a href="#" className="text-gray-600 hover:text-primary transition-colors">
-              Courses
-            </a>
+            <Link href="/subscription">
+              <a className="text-gray-600 hover:text-primary transition-colors">
+                Plans
+              </a>
+            </Link>
             <a href="#" className="text-gray-600 hover:text-primary transition-colors">
               Tutors
             </a>
