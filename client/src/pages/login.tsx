@@ -79,28 +79,28 @@ export default function Login() {
             alt="Passport2Fluency" 
             className="h-16 w-auto mx-auto mb-4"
           />
-          <p className="mt-2 text-gray-600">Your language learning journey starts here</p>
+          <p className="mt-2 text-gray-600">Tu camino hacia la fluidez en español comienza aquí</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-center">Welcome</CardTitle>
+            <CardTitle className="text-center">Bienvenido</CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Sign Up</TabsTrigger>
+                <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
+                <TabsTrigger value="register">Registrarse</TabsTrigger>
               </TabsList>
               
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">Correo Electrónico</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="Ingresa tu correo electrónico"
                       value={loginData.email}
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                       required
@@ -108,11 +108,11 @@ export default function Login() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">Contraseña</Label>
                     <Input
                       id="password"
                       type="password"
-                      placeholder="Enter your password"
+                      placeholder="Ingresa tu contraseña"
                       value={loginData.password}
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                       required
@@ -120,8 +120,14 @@ export default function Login() {
                   </div>
                   
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Logging in..." : "Log In"}
+                    {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
                   </Button>
+                  
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm font-medium text-blue-900 mb-2">Credenciales de Prueba:</p>
+                    <p className="text-xs text-blue-800">Email: juan.sanchez@example.com</p>
+                    <p className="text-xs text-blue-800">Contraseña: password123</p>
+                  </div>
                 </form>
               </TabsContent>
               
