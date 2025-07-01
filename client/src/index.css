@@ -102,7 +102,7 @@
   }
   
   .video-overlay {
-    @apply absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors flex items-center justify-center;
+    @apply absolute inset-0 bg-black/30 transition-colors flex items-center justify-center;
   }
   
   .play-button {

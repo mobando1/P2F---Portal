@@ -78,7 +78,7 @@ export default function VideoLibrary({ videos, onVideoPlay }: VideoLibraryProps)
                   alt={`${video.title} thumbnail`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="video-overlay">
+                <div className="video-overlay group-hover:bg-black/20">
                   <div className="play-button">
                     <Play className="text-gray-800 ml-1 h-5 w-5" />
                   </div>
