@@ -43,6 +43,12 @@ A comprehensive client portal for Passport2Fluency online Spanish school featuri
 
 ## Recent Changes
 
+### January 1, 2025
+✓ Fixed CSS build error caused by invalid @apply group utility
+✓ Removed @apply group from video-card CSS class
+✓ Added group class directly to HTML elements in video library
+✓ Resolved Vite build process deployment issues
+
 ### December 27, 2025
 ✓ Implemented Stripe payment integration for subscription management
 ✓ Created enhanced calendar component with time slot selection

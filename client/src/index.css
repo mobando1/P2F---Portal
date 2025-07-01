@@ -94,7 +94,7 @@
   }
 
   .video-card {
-    @apply group cursor-pointer transition-transform duration-200;
+    @apply cursor-pointer transition-transform duration-200;
   }
   
   .video-card:hover {

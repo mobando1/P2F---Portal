@@ -69,7 +69,7 @@ export default function VideoLibrary({ videos, onVideoPlay }: VideoLibraryProps)
           {filteredVideos.map((video) => (
             <div
               key={video.id}
-              className="video-card"
+              className="video-card group"
               onClick={() => onVideoPlay(video)}
             >
               <div className="relative overflow-hidden rounded-lg bg-black aspect-video mb-4">
