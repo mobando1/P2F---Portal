@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import SubscriptionPage from "@/pages/subscription";
 import NotFound from "@/pages/not-found";
+import AdminPage from "@/pages/admin";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated()) {
@@ -28,6 +29,11 @@ function Router() {
       <Route path="/subscription">
         <ProtectedRoute>
           <SubscriptionPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin">
+        <ProtectedRoute>
+          <AdminPage />
         </ProtectedRoute>
       </Route>
       <Route path="/">

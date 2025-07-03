@@ -5,10 +5,22 @@ import { loginSchema, insertUserSchema, insertClassSchema } from "@shared/schema
 import { z } from "zod";
 import Stripe from "stripe";
 import express from "express";
+import { HighLevelService } from "./services/high-level";
+import { TutorManagementService } from "./services/tutor-management";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_fake_key", {
   apiVersion: "2025-05-28.basil",
 });
+
+// Configurar servicios de High Level
+const highLevelService = process.env.HIGH_LEVEL_API_KEY && process.env.HIGH_LEVEL_LOCATION_ID 
+  ? new HighLevelService(process.env.HIGH_LEVEL_API_KEY, process.env.HIGH_LEVEL_LOCATION_ID)
+  : undefined;
+
+const tutorManagement = new TutorManagementService(
+  process.env.HIGH_LEVEL_API_KEY,
+  process.env.HIGH_LEVEL_LOCATION_ID
+);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
@@ -372,6 +384,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({received: true});
     } catch (error) {
       res.status(400).json({ message: "Webhook error" });
+    }
+  });
+
+  // Rutas para gestión de profesores
+  app.post("/api/tutors", async (req, res) => {
+    try {
+      const tutorData = req.body;
+      const tutor = await tutorManagement.createTutorProfile(tutorData);
+      res.status(201).json(tutor);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/tutors/:id", async (req, res) => {
+    try {
+      const tutorId = parseInt(req.params.id);
+      const updateData = req.body;
+      const tutor = await tutorManagement.updateTutorProfile(tutorId, updateData);
+      res.json(tutor);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/tutors/:id/availability", async (req, res) => {
+    try {
+      const tutorId = parseInt(req.params.id);
+      const availability = req.body.availability;
+      await tutorManagement.setTutorAvailability(tutorId, availability);
+      res.json({ message: "Disponibilidad actualizada" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/tutors/:id/stats", async (req, res) => {
+    try {
+      const tutorId = parseInt(req.params.id);
+      const stats = await tutorManagement.getTutorStats(tutorId);
+      res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/tutors/bulk-import", async (req, res) => {
+    try {
+      const tutorsData = req.body.tutors;
+      const result = await tutorManagement.bulkImportTutors(tutorsData);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Rutas para High Level
+  app.post("/api/high-level/test-connection", async (req, res) => {
+    try {
+      if (!highLevelService) {
+        return res.status(400).json({ message: "High Level no está configurado" });
+      }
+      
+      // Intentar hacer una llamada de prueba
+      const testEmail = "test@passport2fluency.com";
+      const contact = await highLevelService.findContactByEmail(testEmail);
+      
+      res.json({ 
+        connected: true, 
+        message: "Conexión exitosa con High Level",
+        testResult: contact ? "Contacto de prueba encontrado" : "API funcionando correctamente"
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        connected: false, 
+        message: "Error conectando con High Level", 
+        error: error.message 
+      });
+    }
+  });
+
+  app.post("/api/high-level/send-test-message", async (req, res) => {
+    try {
+      if (!highLevelService) {
+        return res.status(400).json({ message: "High Level no está configurado" });
+      }
+
+      const { email, message } = req.body;
+      const contact = await highLevelService.findContactByEmail(email);
+      
+      if (!contact) {
+        return res.status(404).json({ message: "Contacto no encontrado en High Level" });
+      }
+
+      await highLevelService.sendCustomMessage(contact.id, message);
+      res.json({ message: "Mensaje de prueba enviado exitosamente" });
+      
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 

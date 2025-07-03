@@ -52,6 +52,11 @@ export default function Header() {
                 Plans
               </a>
             </Link>
+            <Link href="/admin">
+              <a className="text-gray-600 hover:text-primary transition-colors">
+                Admin
+              </a>
+            </Link>
             <a href="#" className="text-gray-600 hover:text-primary transition-colors">
               Tutors
             </a>

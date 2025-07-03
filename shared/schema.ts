@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, time } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -39,7 +39,40 @@ export const tutors = pgTable("tutors", {
   reviewCount: integer("review_count").default(0),
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull(),
   isActive: boolean("is_active").default(true),
+  // Información adicional para profesores
+  phone: text("phone"),
+  country: text("country"),
+  timezone: text("timezone"),
+  certifications: text("certifications").array(),
+  yearsOfExperience: integer("years_of_experience"),
+  // Integración con High Level
+  highLevelContactId: text("high_level_contact_id"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Nueva tabla para disponibilidad de tutores
+export const tutorAvailability = pgTable("tutor_availability", {
+  id: serial("id").primaryKey(),
+  tutorId: integer("tutor_id").references(() => tutors.id),
+  dayOfWeek: integer("day_of_week").notNull(), // 0=Domingo, 1=Lunes, etc.
+  startTime: time("start_time").notNull(),
+  endTime: time("end_time").notNull(),
+  isAvailable: boolean("is_available").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Tabla para configuración de High Level
+export const highLevelConfig = pgTable("high_level_config", {
+  id: serial("id").primaryKey(),
+  apiKey: text("api_key").notNull(),
+  locationId: text("location_id").notNull(),
+  webhookUrl: text("webhook_url"),
+  // Plantillas de mensajes
+  classBookingTemplateId: text("class_booking_template_id"),
+  classReminderTemplateId: text("class_reminder_template_id"),
+  classCancellationTemplateId: text("class_cancellation_template_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const classes = pgTable("classes", {
@@ -110,6 +143,17 @@ export const insertUserProgressSchema = createInsertSchema(userProgress).omit({
   updatedAt: true,
 });
 
+export const insertTutorAvailabilitySchema = createInsertSchema(tutorAvailability).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertHighLevelConfigSchema = createInsertSchema(highLevelConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Login schema
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -123,6 +167,10 @@ export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Tutor = typeof tutors.$inferSelect;
 export type InsertTutor = z.infer<typeof insertTutorSchema>;
+export type TutorAvailability = typeof tutorAvailability.$inferSelect;
+export type InsertTutorAvailability = z.infer<typeof insertTutorAvailabilitySchema>;
+export type HighLevelConfig = typeof highLevelConfig.$inferSelect;
+export type InsertHighLevelConfig = z.infer<typeof insertHighLevelConfigSchema>;
 export type Class = typeof classes.$inferSelect;
 export type InsertClass = z.infer<typeof insertClassSchema>;
 export type Video = typeof videos.$inferSelect;
