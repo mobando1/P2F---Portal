@@ -7,6 +7,7 @@ import Stripe from "stripe";
 import express from "express";
 import { HighLevelService } from "./services/high-level";
 import { TutorManagementService } from "./services/tutor-management";
+import { ClassSchedulerService } from "./services/class-scheduler";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_fake_key", {
   apiVersion: "2025-05-28.basil",
@@ -18,6 +19,12 @@ const highLevelService = process.env.HIGH_LEVEL_API_KEY && process.env.HIGH_LEVE
   : undefined;
 
 const tutorManagement = new TutorManagementService(
+  process.env.HIGH_LEVEL_API_KEY,
+  process.env.HIGH_LEVEL_LOCATION_ID
+);
+
+// Configurar servicio de programación de recordatorios
+const classScheduler = new ClassSchedulerService(
   process.env.HIGH_LEVEL_API_KEY,
   process.env.HIGH_LEVEL_LOCATION_ID
 );
@@ -215,6 +222,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         classesUsed: (subscription.classesUsed || 0) + 1,
       });
 
+      // 🚀 ENVIAR NOTIFICACIONES AUTOMÁTICAS DUALES Y PROGRAMAR RECORDATORIOS
+      try {
+        if (highLevelService) {
+          // Obtener datos del alumno y profesor
+          const user = await storage.getUser(classData.userId);
+          const tutor = await storage.getTutor(classData.tutorId);
+          
+          if (user && tutor) {
+            // 1. Enviar confirmaciones inmediatas a AMBOS (alumno + profesor)
+            await highLevelService.sendClassBookingConfirmation(user, newClass, tutor);
+            console.log(`✅ Confirmaciones duales enviadas: ${user.email} y ${tutor.email}`);
+            
+            // 2. Programar recordatorio automático para 24h antes
+            classScheduler.scheduleClassReminder(user, newClass, tutor);
+            console.log(`⏰ Recordatorio programado para ${new Date(newClass.scheduledAt).toLocaleString()}`);
+          }
+        }
+      } catch (notificationError) {
+        console.error("Error enviando notificaciones automáticas:", notificationError);
+        // No fallar la reserva por error de notificación
+      }
+
       res.status(201).json(newClass);
     } catch (error) {
       res.status(400).json({ message: "Invalid request data" });
@@ -225,6 +254,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const classId = parseInt(req.params.id);
       const { userId } = req.body;
+      
+      // Obtener datos de la clase ANTES de cancelarla
+      const userClasses = await storage.getUserClasses(userId);
+      const classToCancel = userClasses.find(c => c.id === classId);
       
       const success = await storage.cancelClass(classId, userId);
       
@@ -238,6 +271,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateSubscription(subscription.id, {
           classesUsed: (subscription.classesUsed || 0) - 1,
         });
+      }
+
+      // 🚀 ENVIAR NOTIFICACIONES AUTOMÁTICAS DE CANCELACIÓN
+      try {
+        if (highLevelService && classToCancel) {
+          const user = await storage.getUser(userId);
+          const tutor = await storage.getTutor(classToCancel.tutorId);
+          
+          if (user && tutor) {
+            // Enviar notificaciones de cancelación a AMBOS (alumno + profesor)
+            await highLevelService.sendClassCancellation(user, classToCancel, tutor);
+            console.log(`✅ Notificaciones de cancelación enviadas: ${user.email} y ${tutor.email}`);
+          }
+        }
+      } catch (notificationError) {
+        console.error("Error enviando notificaciones de cancelación:", notificationError);
+        // No fallar la cancelación por error de notificación
       }
 
       res.json({ message: "Class cancelled successfully" });
@@ -560,6 +610,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Iniciar el servicio de recordatorios automáticos
+  if (process.env.HIGH_LEVEL_API_KEY && process.env.HIGH_LEVEL_LOCATION_ID) {
+    classScheduler.startReminderService();
+    console.log("🚀 Sistema de notificaciones automáticas iniciado");
+  }
 
   const httpServer = createServer(app);
   return httpServer;

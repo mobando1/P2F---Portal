@@ -61,6 +61,15 @@ A comprehensive client portal for Passport2Fluency online Spanish school featuri
 ✓ Creé APIs para importación masiva y gestión de calendarios
 ✓ Documenté guía completa de configuración en SETUP_GUIDE.md
 
+### July 3, 2025 - Sistema de Notificaciones Automáticas Duales
+✓ Implementé notificaciones duales automáticas (alumno + profesor) al reservar clase
+✓ Configuré confirmaciones inmediatas via High Level para ambas partes
+✓ Agregué notificaciones automáticas de cancelación para alumno y profesor
+✓ Creé sistema de recordatorios automáticos 24h antes de cada clase
+✓ Integré programación automática de recordatorios al crear clase
+✓ Sistema funciona automáticamente cuando usuario logueado reserva clase
+✓ Servicio de recordatorios ejecuta verificaciones cada hora automáticamente
+
 ### December 27, 2025
 ✓ Implemented Stripe payment integration for subscription management
 ✓ Created enhanced calendar component with time slot selection
