@@ -486,6 +486,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para probar notificaciones duales (alumno + profesor)
+  app.post("/api/high-level/test-dual-notifications", async (req, res) => {
+    try {
+      if (!highLevelService) {
+        return res.status(400).json({ message: "High Level no está configurado" });
+      }
+
+      // Datos de prueba
+      const testStudent = {
+        id: 1,
+        email: 'student@test.com',
+        firstName: 'Juan',
+        lastName: 'Pérez',
+        phone: '+1234567890',
+        username: 'student@test.com',
+        password: '',
+        level: 'beginner',
+        avatar: null,
+        createdAt: new Date()
+      };
+
+      const testTutor = {
+        id: 1,
+        name: 'María González',
+        email: 'maria.gonzalez@passport2fluency.com',
+        phone: '+34 612 345 678',
+        specialization: 'Conversación',
+        bio: 'Profesora experimentada',
+        avatar: null,
+        rating: '5.0',
+        reviewCount: 10,
+        hourlyRate: '25',
+        isActive: true,
+        createdAt: new Date(),
+        country: 'España',
+        timezone: 'Europe/Madrid',
+        certifications: ['DELE'],
+        yearsOfExperience: 5,
+        highLevelContactId: null
+      };
+
+      const testClass = {
+        id: 1,
+        userId: 1,
+        tutorId: 1,
+        scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Mañana
+        duration: 60,
+        status: 'scheduled',
+        notes: 'Clase de prueba',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // Enviar notificación dual
+      await highLevelService.sendClassBookingConfirmation(testStudent, testClass, testTutor);
+
+      res.json({
+        success: true,
+        message: 'Notificaciones duales enviadas exitosamente',
+        details: {
+          student: testStudent.email,
+          tutor: testTutor.email,
+          classDate: testClass.scheduledAt
+        }
+      });
+    } catch (error: any) {
+      console.error('Error sending dual notifications:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error enviando notificaciones duales',
+        error: error.message
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

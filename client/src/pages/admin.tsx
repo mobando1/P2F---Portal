@@ -204,6 +204,27 @@ export default function AdminPage() {
     }
   });
 
+  // Probar notificaciones duales (alumno + profesor)
+  const testDualNotificationsMutation = useMutation({
+    mutationFn: () => 
+      apiRequest('/api/high-level/test-dual-notifications', {
+        method: 'POST'
+      }).then(res => res.json()),
+    onSuccess: (result) => {
+      toast({
+        title: "Notificaciones duales enviadas",
+        description: `Enviado a ${result.details?.student} y ${result.details?.tutor}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error enviando notificaciones duales",
+        variant: "destructive"
+      });
+    }
+  });
+
   const handleCreateTutor = () => {
     if (!newTutor.name || !newTutor.email || !newTutor.specialization) {
       toast({
@@ -527,6 +548,27 @@ export default function AdminPage() {
                   variant="outline"
                 >
                   {sendTestMessageMutation.isPending ? "Enviando..." : "Enviar Mensaje de Prueba"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Prueba de Notificaciones Duales</CardTitle>
+                <p className="text-sm text-gray-600">Probar el sistema de notificaciones que envía mensajes tanto al alumno como al profesor</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Esta función simulará el envío de una confirmación de clase a un alumno ficticio (student@test.com) 
+                  y al profesor María González. Ambos recibirán notificaciones en High Level.
+                </p>
+                
+                <Button 
+                  onClick={() => testDualNotificationsMutation.mutate()}
+                  disabled={testDualNotificationsMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {testDualNotificationsMutation.isPending ? "Enviando..." : "Probar Notificaciones Duales"}
                 </Button>
               </CardContent>
             </Card>
