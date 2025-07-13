@@ -34,7 +34,7 @@ export default function Header() {
                 <img 
                   src="/attached_assets/lOGO_1752434522756.png" 
                   alt="Passport2Fluency" 
-                  className="h-12 w-auto cursor-pointer"
+                  className="h-10 w-auto cursor-pointer"
                 />
               </div>
             </Link>
