@@ -91,7 +91,7 @@ export default function Login() {
             <div className="absolute -inset-4 bg-gradient-to-r from-[#1C7BB1]/10 to-[#F59E1C]/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
           <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2 animate-in slide-in-from-bottom-4 duration-500">¡Bienvenido!</h1>
-          <p className="text-[#0A4A6E]/70 text-lg animate-in slide-in-from-bottom-6 duration-700">Tu camino hacia la fluidez en español comienza aquí</p>
+          <p className="text-[#0A4A6E]/70 text-lg animate-in slide-in-from-bottom-6 duration-700">Tu camino hacia la fluidez en idiomas comienza aquí</p>
         </div>
 
         <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/95 hover:shadow-2xl transition-all duration-500 animate-in fade-in-0 slide-in-from-bottom-10">
