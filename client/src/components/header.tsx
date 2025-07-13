@@ -32,9 +32,9 @@ export default function Header() {
             <Link href="/">
               <div className="flex-shrink-0 flex items-center">
                 <img 
-                  src="/attached_assets/lOGO_1749609806728.png" 
+                  src="/attached_assets/lOGO_1752434522756.png" 
                   alt="Passport2Fluency" 
-                  className="h-10 w-auto cursor-pointer"
+                  className="h-12 w-auto cursor-pointer"
                 />
               </div>
             </Link>
@@ -43,27 +43,27 @@ export default function Header() {
           {/* Navigation Menu */}
           <nav className="hidden md:flex space-x-8">
             <Link href="/dashboard">
-              <a className="text-gray-600 hover:text-primary transition-colors">
+              <a className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
                 Dashboard
               </a>
             </Link>
             <Link href="/subscription">
-              <a className="text-gray-600 hover:text-primary transition-colors">
+              <a className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
                 Plans
               </a>
             </Link>
             <Link href="/admin">
-              <a className="text-gray-600 hover:text-primary transition-colors">
+              <a className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
                 Admin
               </a>
             </Link>
-            <a href="#" className="text-gray-600 hover:text-primary transition-colors">
+            <a href="#" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
               Tutors
             </a>
-            <a href="#" className="text-gray-600 hover:text-primary transition-colors">
+            <a href="#" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
               About
             </a>
-            <a href="#" className="text-gray-600 hover:text-primary transition-colors">
+            <a href="#" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
               Contact
             </a>
           </nav>
@@ -116,10 +116,14 @@ export default function Header() {
             ) : (
               <div className="flex items-center space-x-4">
                 <Link href="/login">
-                  <Button variant="outline">Log In</Button>
+                  <Button variant="outline" className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white">
+                    Log In
+                  </Button>
                 </Link>
                 <Link href="/login">
-                  <Button>Sign Up</Button>
+                  <Button className="bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white">
+                    Sign Up
+                  </Button>
                 </Link>
               </div>
             )}

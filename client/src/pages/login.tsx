@@ -71,26 +71,26 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: '#EAF4FA' }}>
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <img 
-            src="@assets/a1c5a1_9514ede9e3124d7a9adf78f5dcf07f28~mv2_1749609806728.png" 
+            src="/attached_assets/a1c5a1_9514ede9e3124d7a9adf78f5dcf07f28~mv2_1752434522754.png" 
             alt="Passport2Fluency" 
-            className="h-16 w-auto mx-auto mb-4"
+            className="h-20 w-auto mx-auto mb-4"
           />
-          <p className="mt-2 text-gray-600">Tu camino hacia la fluidez en español comienza aquí</p>
+          <p className="mt-2 text-[#0A4A6E] font-medium">Tu camino hacia la fluidez en español comienza aquí</p>
         </div>
 
-        <Card>
+        <Card className="shadow-lg border-0">
           <CardHeader>
-            <CardTitle className="text-center">Bienvenido</CardTitle>
+            <CardTitle className="text-center text-[#0A4A6E] text-2xl font-bold">¡Bienvenido!</CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-                <TabsTrigger value="register">Registrarse</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-[#F8F9FA]">
+                <TabsTrigger value="login" className="data-[state=active]:bg-[#1C7BB1] data-[state=active]:text-white">Iniciar Sesión</TabsTrigger>
+                <TabsTrigger value="register" className="data-[state=active]:bg-[#1C7BB1] data-[state=active]:text-white">Registrarse</TabsTrigger>
               </TabsList>
               
               <TabsContent value="login">
@@ -119,14 +119,14 @@ export default function Login() {
                     />
                   </div>
                   
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full bg-[#1C7BB1] hover:bg-[#1C7BB1]/90 text-white" disabled={isLoading}>
                     {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
                   </Button>
                   
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-sm font-medium text-blue-900 mb-2">Credenciales de Prueba:</p>
-                    <p className="text-xs text-blue-800">Email: juan.sanchez@example.com</p>
-                    <p className="text-xs text-blue-800">Contraseña: password123</p>
+                  <div className="mt-4 p-3 bg-[#EAF4FA] rounded-lg border border-[#1C7BB1]/20">
+                    <p className="text-sm font-medium text-[#0A4A6E] mb-2">Credenciales de Prueba:</p>
+                    <p className="text-xs text-[#0A4A6E]">Email: juan.sanchez@example.com</p>
+                    <p className="text-xs text-[#0A4A6E]">Contraseña: password123</p>
                   </div>
                 </form>
               </TabsContent>
@@ -192,7 +192,7 @@ export default function Login() {
                     />
                   </div>
                   
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white" disabled={isLoading}>
                     {isLoading ? "Creating account..." : "Sign Up"}
                   </Button>
                 </form>

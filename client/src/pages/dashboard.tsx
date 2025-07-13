@@ -185,71 +185,71 @@ export default function Dashboard() {
   const upcomingClasses = dashboardData?.upcomingClasses || [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#F8F9FA' }}>
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            ¡Bienvenido, <span>{dashboardData?.user?.firstName || user.firstName}</span>!
+          <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2">
+            ¡Bienvenido, <span className="text-[#1C7BB1]">{dashboardData?.user?.firstName || user.firstName}</span>!
           </h1>
-          <p className="text-gray-600">Continue your Spanish learning journey</p>
+          <p className="text-[#0A4A6E]/70">Continue your Spanish learning journey</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="shadow-lg border-0">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <CalendarCheck className="text-primary h-6 w-6" />
+                <div className="p-3 rounded-lg" style={{ backgroundColor: '#1C7BB1', opacity: 0.1 }}>
+                  <CalendarCheck className="h-6 w-6" style={{ color: '#1C7BB1' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Classes Booked</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.classesBooked}</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">Classes Booked</p>
+                  <p className="text-2xl font-bold text-[#0A4A6E]">{stats.classesBooked}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="shadow-lg border-0">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-3 rounded-lg bg-green-500/10">
-                  <GraduationCap className="text-green-500 h-6 w-6" />
+                <div className="p-3 rounded-lg" style={{ backgroundColor: '#F59E1C', opacity: 0.1 }}>
+                  <GraduationCap className="h-6 w-6" style={{ color: '#F59E1C' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Classes Completed</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.classesCompleted}</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">Classes Completed</p>
+                  <p className="text-2xl font-bold text-[#0A4A6E]">{stats.classesCompleted}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="shadow-lg border-0">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-3 rounded-lg bg-blue-500/10">
-                  <Clock className="text-blue-500 h-6 w-6" />
+                <div className="p-3 rounded-lg" style={{ backgroundColor: '#1C7BB1', opacity: 0.1 }}>
+                  <Clock className="h-6 w-6" style={{ color: '#1C7BB1' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Learning Hours</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.learningHours}</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">Learning Hours</p>
+                  <p className="text-2xl font-bold text-[#0A4A6E]">{stats.learningHours}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="shadow-lg border-0">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-3 rounded-lg bg-yellow-500/10">
-                  <Star className="text-yellow-500 h-6 w-6" />
+                <div className="p-3 rounded-lg" style={{ backgroundColor: '#F59E1C', opacity: 0.1 }}>
+                  <Star className="h-6 w-6" style={{ color: '#F59E1C' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Current Level</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.currentLevel}</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">Current Level</p>
+                  <p className="text-2xl font-bold text-[#0A4A6E]">{stats.currentLevel}</p>
                 </div>
               </div>
             </CardContent>
@@ -402,10 +402,10 @@ export default function Dashboard() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-16">
+      <footer className="bg-white border-t border-[#D3D3D3] mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-gray-600">
-            <p>&copy; 2024 EspañolPro. All rights reserved.</p>
+          <div className="text-center text-[#0A4A6E]">
+            <p>&copy; 2024 Passport2Fluency. All rights reserved.</p>
           </div>
         </div>
       </footer>

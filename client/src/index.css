@@ -3,31 +3,40 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(60, 4.8%, 95.9%);
-  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --background: hsl(0, 0%, 100%); /* Blanco puro */
+  --foreground: hsl(208, 74%, 25%); /* Azul noche */
+  --muted: hsl(200, 71%, 96%); /* Azul niebla */
+  --muted-foreground: hsl(0, 0%, 45%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --popover-foreground: hsl(208, 74%, 25%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(20, 5.9%, 90%);
-  --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(200, 69%, 43%);
+  --card-foreground: hsl(208, 74%, 25%);
+  --border: hsl(0, 0%, 82%); /* Gris piedra */
+  --input: hsl(0, 0%, 82%);
+  --primary: hsl(200, 69%, 43%); /* Azul cielo */
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(37, 95%, 58%);
+  --secondary: hsl(37, 95%, 58%); /* Naranja sol */
   --secondary-foreground: hsl(0, 0%, 0%);
-  --accent: hsl(37, 95%, 58%);
+  --accent: hsl(37, 95%, 58%); /* Naranja sol */
   --accent-foreground: hsl(0, 0%, 0%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
+  --ring: hsl(200, 69%, 43%);
   --radius: 0.5rem;
 
+  /* Passport2Fluency Brand Colors */
+  --p2f-sky-blue: hsl(200, 69%, 43%); /* #1C7BB1 */
+  --p2f-sun-orange: hsl(37, 95%, 58%); /* #F59E1C */
+  --p2f-night-blue: hsl(208, 74%, 25%); /* #0A4A6E */
+  --p2f-fog-blue: hsl(200, 71%, 96%); /* #EAF4FA */
+  --p2f-cloud-gray: hsl(0, 0%, 97%); /* #F8F9FA */
+  --p2f-stone-gray: hsl(0, 0%, 82%); /* #D3D3D3 */
+  --p2f-pure-white: hsl(0, 0%, 100%); /* #FFFFFF */
+  
   /* Custom colors matching the design */
   --success: hsl(142, 76%, 36%);
   --warning: hsl(45, 93%, 47%);
-  --info: hsl(199, 89%, 48%);
+  --info: hsl(200, 69%, 43%);
 }
 
 .dark {
@@ -59,7 +68,8 @@
   }
 
   body {
-    @apply font-sans antialiased bg-gray-50 text-foreground;
+    @apply font-sans antialiased text-foreground;
+    background-color: var(--p2f-cloud-gray);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
 }
