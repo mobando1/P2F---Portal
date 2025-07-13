@@ -92,11 +92,6 @@ export default function Login() {
           </div>
           <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2 animate-in slide-in-from-bottom-4 duration-500">¡Bienvenido!</h1>
           <p className="text-[#0A4A6E]/70 text-lg animate-in slide-in-from-bottom-6 duration-700">Tu camino hacia la fluidez en español comienza aquí</p>
-          <div className="mt-4 flex justify-center space-x-2">
-            <div className="w-2 h-2 bg-[#1C7BB1] rounded-full animate-pulse"></div>
-            <div className="w-2 h-2 bg-[#F59E1C] rounded-full animate-pulse delay-100"></div>
-            <div className="w-2 h-2 bg-[#1C7BB1] rounded-full animate-pulse delay-200"></div>
-          </div>
         </div>
 
         <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/95 hover:shadow-2xl transition-all duration-500 animate-in fade-in-0 slide-in-from-bottom-10">
