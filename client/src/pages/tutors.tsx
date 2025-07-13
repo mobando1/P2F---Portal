@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentUser, isAuthenticated } from "@/lib/auth";
+import { useLanguage, getLevelText } from "@/lib/i18n";
 import Header from "@/components/header";
 import { 
   Search, 
@@ -23,6 +24,7 @@ import type { Tutor } from "@shared/schema";
 export default function TutorsPage() {
   const { toast } = useToast();
   const user = getCurrentUser();
+  const { t, language } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
@@ -55,16 +57,16 @@ export default function TutorsPage() {
   const handleBookTutor = (tutorId: number) => {
     if (!isAuthenticated()) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to book a class with a tutor.",
+        title: language === 'es' ? "Autenticación Requerida" : "Authentication Required",
+        description: language === 'es' ? "Por favor inicia sesión para reservar una clase." : "Please log in to book a class with a tutor.",
         variant: "destructive",
       });
       return;
     }
 
     toast({
-      title: "Booking Calendar",
-      description: "Redirecting to calendar to select date and time...",
+      title: language === 'es' ? "Calendario de Reservas" : "Booking Calendar",
+      description: language === 'es' ? "Redirigiendo al calendario para seleccionar fecha y hora..." : "Redirecting to calendar to select date and time...",
     });
     // In a real app, this would open a booking modal or redirect to calendar
   };
@@ -86,10 +88,10 @@ export default function TutorsPage() {
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2">
-            Encuentra tu <span className="text-[#1C7BB1]">Tutor Ideal</span>
+            {t.findIdealTutor} <span className="text-[#1C7BB1]">{language === 'es' ? 'Tutor Ideal' : 'Ideal Tutor'}</span>
           </h1>
           <p className="text-[#0A4A6E]/70">
-            Explora nuestros tutores certificados y encuentra el perfecto para tu camino hacia la fluidez
+            {t.findIdealTutorDesc}
           </p>
         </div>
 
@@ -101,7 +103,7 @@ export default function TutorsPage() {
               <div className="lg:col-span-2 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1C7BB1]/40 w-4 h-4" />
                 <Input
-                  placeholder="Buscar por nombre o especialidad..."
+                  placeholder={t.searchPlaceholder}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20"
@@ -111,43 +113,43 @@ export default function TutorsPage() {
               {/* Language Filter */}
               <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
                 <SelectTrigger className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20">
-                  <SelectValue placeholder="Idioma" />
+                  <SelectValue placeholder={t.languages} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los idiomas</SelectItem>
-                  <SelectItem value="Spanish">Español</SelectItem>
-                  <SelectItem value="English">Inglés</SelectItem>
-                  <SelectItem value="French">Francés</SelectItem>
-                  <SelectItem value="Portuguese">Portugués</SelectItem>
+                  <SelectItem value="all">{t.allLanguages}</SelectItem>
+                  <SelectItem value="Spanish">{language === 'es' ? 'Español' : 'Spanish'}</SelectItem>
+                  <SelectItem value="English">{language === 'es' ? 'Inglés' : 'English'}</SelectItem>
+                  <SelectItem value="French">{language === 'es' ? 'Francés' : 'French'}</SelectItem>
+                  <SelectItem value="Portuguese">{language === 'es' ? 'Portugués' : 'Portuguese'}</SelectItem>
                 </SelectContent>
               </Select>
 
               {/* Level Filter */}
               <Select value={selectedLevel} onValueChange={setSelectedLevel}>
                 <SelectTrigger className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20">
-                  <SelectValue placeholder="Nivel" />
+                  <SelectValue placeholder={t.levels} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los niveles</SelectItem>
-                  <SelectItem value="A1">A1 - Principiante</SelectItem>
-                  <SelectItem value="A2">A2 - Elemental</SelectItem>
-                  <SelectItem value="B1">B1 - Intermedio</SelectItem>
-                  <SelectItem value="B2">B2 - Intermedio Alto</SelectItem>
-                  <SelectItem value="C1">C1 - Avanzado</SelectItem>
-                  <SelectItem value="C2">C2 - Maestría</SelectItem>
+                  <SelectItem value="all">{t.allLevels}</SelectItem>
+                  <SelectItem value="A1">A1 - {t.beginner}</SelectItem>
+                  <SelectItem value="A2">A2 - {t.elementary}</SelectItem>
+                  <SelectItem value="B1">B1 - {t.intermediate}</SelectItem>
+                  <SelectItem value="B2">B2 - {t.upperIntermediate}</SelectItem>
+                  <SelectItem value="C1">C1 - {t.advanced}</SelectItem>
+                  <SelectItem value="C2">C2 - {t.mastery}</SelectItem>
                 </SelectContent>
               </Select>
 
               {/* Rating Filter */}
               <Select value={selectedRating} onValueChange={setSelectedRating}>
                 <SelectTrigger className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20">
-                  <SelectValue placeholder="Calificación" />
+                  <SelectValue placeholder={t.rating} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Cualquier calificación</SelectItem>
-                  <SelectItem value="4.5">4.5+ estrellas</SelectItem>
-                  <SelectItem value="4">4+ estrellas</SelectItem>
-                  <SelectItem value="3.5">3.5+ estrellas</SelectItem>
+                  <SelectItem value="all">{t.anyRating}</SelectItem>
+                  <SelectItem value="4.5">4.5+ {t.stars}</SelectItem>
+                  <SelectItem value="4">4+ {t.stars}</SelectItem>
+                  <SelectItem value="3.5">3.5+ {t.stars}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -157,7 +159,7 @@ export default function TutorsPage() {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-[#0A4A6E]/70">
-            Mostrando {filteredTutors.length} de {tutors.length} tutores
+            {t.showing} {filteredTutors.length} {t.of} {tutors.length} {t.tutorsText}
           </p>
         </div>
 
@@ -209,12 +211,12 @@ export default function TutorsPage() {
                   <div className="mb-4">
                     <div className="flex items-center mb-2">
                       <Languages className="w-4 h-4 text-[#1C7BB1] mr-2" />
-                      <span className="text-sm font-medium text-[#0A4A6E]">Idiomas</span>
+                      <span className="text-sm font-medium text-[#0A4A6E]">{t.languages}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {tutor.languages.map((language) => (
-                        <Badge key={language} variant="secondary" className="text-xs">
-                          {language}
+                      {tutor.languages.map((lang) => (
+                        <Badge key={lang} variant="secondary" className="text-xs">
+                          {lang}
                         </Badge>
                       ))}
                     </div>
@@ -224,7 +226,7 @@ export default function TutorsPage() {
                   <div className="mb-4">
                     <div className="flex items-center mb-2">
                       <GraduationCap className="w-4 h-4 text-[#1C7BB1] mr-2" />
-                      <span className="text-sm font-medium text-[#0A4A6E]">Especialidades</span>
+                      <span className="text-sm font-medium text-[#0A4A6E]">{t.specialties}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {tutor.specialties.slice(0, 3).map((specialty) => (
@@ -234,7 +236,7 @@ export default function TutorsPage() {
                       ))}
                       {tutor.specialties.length > 3 && (
                         <Badge variant="outline" className="text-xs">
-                          +{tutor.specialties.length - 3} más
+                          +{tutor.specialties.length - 3} {language === 'es' ? 'más' : 'more'}
                         </Badge>
                       )}
                     </div>
@@ -244,12 +246,12 @@ export default function TutorsPage() {
                   <div className="mb-4">
                     <div className="flex items-center mb-2">
                       <Clock className="w-4 h-4 text-[#1C7BB1] mr-2" />
-                      <span className="text-sm font-medium text-[#0A4A6E]">Niveles</span>
+                      <span className="text-sm font-medium text-[#0A4A6E]">{t.levels}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {tutor.teachingLevels.map((level) => (
                         <Badge key={level} variant="secondary" className="text-xs">
-                          {level}
+                          {getLevelText(level, language)}
                         </Badge>
                       ))}
                     </div>
@@ -258,9 +260,9 @@ export default function TutorsPage() {
                   {/* Pricing */}
                   <div className="mb-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Precio por clase</span>
+                      <span className="text-sm text-gray-600">{t.pricePerClass}</span>
                       <span className="text-lg font-bold text-[#0A4A6E]">
-                        ${tutor.hourlyRate}/hora
+                        ${tutor.hourlyRate}{t.perHour}
                       </span>
                     </div>
                   </div>
@@ -271,7 +273,7 @@ export default function TutorsPage() {
                     className="w-full bg-gradient-to-r from-[#1C7BB1] to-[#1C7BB1]/80 hover:from-[#1C7BB1]/90 hover:to-[#1C7BB1] text-white font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02]"
                   >
                     <Calendar className="w-4 h-4 mr-2" />
-                    Reservar Clase
+                    {t.bookClass}
                   </Button>
                 </CardContent>
               </Card>
@@ -286,10 +288,10 @@ export default function TutorsPage() {
               <Search className="w-8 h-8 text-[#1C7BB1]" />
             </div>
             <h3 className="text-lg font-medium text-[#0A4A6E] mb-2">
-              No se encontraron tutores
+              {t.noTutorsFound}
             </h3>
             <p className="text-gray-600 mb-4">
-              Intenta ajustar tus filtros de búsqueda para encontrar más tutores
+              {t.adjustFilters}
             </p>
             <Button 
               onClick={() => {
@@ -301,7 +303,7 @@ export default function TutorsPage() {
               variant="outline"
               className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white"
             >
-              Limpiar Filtros
+              {t.clearFilters}
             </Button>
           </div>
         )}

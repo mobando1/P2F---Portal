@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentUser, isAuthenticated } from "@/lib/auth";
+import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
 import EnhancedCalendar from "@/components/enhanced-calendar";
@@ -48,6 +49,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = getCurrentUser();
+  const { t } = useLanguage();
 
   // Redirect if not authenticated
   if (!isAuthenticated() || !user) {
@@ -189,9 +191,9 @@ export default function Dashboard() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2">
-            ¡Bienvenido, <span className="text-[#1C7BB1]">{dashboardData?.user?.firstName || user.firstName}</span>!
+            {t.welcome} <span className="text-[#1C7BB1]">{dashboardData?.user?.firstName || user.firstName}</span>!
           </h1>
-          <p className="text-[#0A4A6E]/70">Continúa tu camino hacia la fluidez en idiomas</p>
+          <p className="text-[#0A4A6E]/70">{t.continueJourney}</p>
         </div>
 
         {/* Stats Cards */}
@@ -203,7 +205,7 @@ export default function Dashboard() {
                   <CalendarCheck className="h-6 w-6" style={{ color: '#1C7BB1' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-[#0A4A6E]">Clases Reservadas</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">{t.classesBooked}</p>
                   <p className="text-2xl font-bold text-[#0A4A6E]">{stats.classesBooked}</p>
                 </div>
               </div>
@@ -217,7 +219,7 @@ export default function Dashboard() {
                   <GraduationCap className="h-6 w-6" style={{ color: '#F59E1C' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-[#0A4A6E]">Clases Completadas</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">{t.classesCompleted}</p>
                   <p className="text-2xl font-bold text-[#0A4A6E]">{stats.classesCompleted}</p>
                 </div>
               </div>
@@ -231,7 +233,7 @@ export default function Dashboard() {
                   <Clock className="h-6 w-6" style={{ color: '#1C7BB1' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-[#0A4A6E]">Horas de Aprendizaje</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">{t.learningHours}</p>
                   <p className="text-2xl font-bold text-[#0A4A6E]">{stats.learningHours}</p>
                 </div>
               </div>
@@ -245,7 +247,7 @@ export default function Dashboard() {
                   <Star className="h-6 w-6" style={{ color: '#F59E1C' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-[#0A4A6E]">Nivel Actual</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">{t.currentLevel}</p>
                   <p className="text-2xl font-bold text-[#0A4A6E]">{stats.currentLevel}</p>
                 </div>
               </div>
@@ -268,8 +270,8 @@ export default function Dashboard() {
             <Card>
               <CardContent className="p-6">
                 <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-[#0A4A6E] mb-1">Tutores Disponibles</h2>
-                  <p className="text-[#0A4A6E]/70">Elige tu tutor preferido para tus próximas clases</p>
+                  <h2 className="text-xl font-semibold text-[#0A4A6E] mb-1">{t.availableTutors}</h2>
+                  <p className="text-[#0A4A6E]/70">{t.choosePreferredTutor}</p>
                 </div>
                 
                 {isTutorsLoading ? (
@@ -315,7 +317,7 @@ export default function Dashboard() {
             {/* Upcoming Classes */}
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">Próximas Clases</h2>
+                <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">{t.upcomingClasses}</h2>
                 
                 <div className="space-y-4">
                   {upcomingClasses.length === 0 ? (
@@ -323,9 +325,9 @@ export default function Dashboard() {
                       <div className="w-16 h-16 bg-[#EAF4FA] rounded-full mx-auto mb-4 flex items-center justify-center">
                         <CalendarCheck className="w-8 h-8 text-[#1C7BB1]" />
                       </div>
-                      <p className="text-[#0A4A6E]/60 mb-2">No hay clases programadas</p>
+                      <p className="text-[#0A4A6E]/60 mb-2">{t.noUpcomingClasses}</p>
                       <p className="text-[#0A4A6E]/40 text-sm mb-4">
-                        ¡Reserva tu primera clase con uno de nuestros tutores!
+                        {t.reserveFirstClass}
                       </p>
                       <Button
                         variant="outline"
@@ -333,7 +335,7 @@ export default function Dashboard() {
                         onClick={() => setLocation("/tutors")}
                         className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white"
                       >
-                        Explorar Tutores
+                        {t.exploreTutors}
                       </Button>
                     </div>
                   ) : (
@@ -344,7 +346,7 @@ export default function Dashboard() {
                         </div>
                         <div className="flex-1">
                           <h4 className="font-medium text-[#0A4A6E]">{classItem.title}</h4>
-                          <p className="text-sm text-[#0A4A6E]/70">con {classItem.tutorName}</p>
+                          <p className="text-sm text-[#0A4A6E]/70">{t.with} {classItem.tutorName}</p>
                           <p className="text-sm text-[#0A4A6E]/50">
                             {new Date(classItem.scheduledAt).toLocaleDateString('es-ES', {
                               month: 'short',
@@ -372,7 +374,7 @@ export default function Dashboard() {
             {/* Quick Actions */}
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">Acciones Rápidas</h2>
+                <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">{t.quickActions}</h2>
                 
                 <div className="space-y-3">
                   <Button
@@ -381,7 +383,7 @@ export default function Dashboard() {
                     onClick={() => setLocation("/tutors")}
                   >
                     <CalendarCheck className="mr-3 h-4 w-4 text-[#1C7BB1]" />
-                    Reservar Nueva Clase
+                    {t.bookNewClass}
                   </Button>
                   
                   <Button
@@ -390,16 +392,16 @@ export default function Dashboard() {
                     onClick={() => setLocation("/subscription")}
                   >
                     <BookOpen className="mr-3 h-4 w-4 text-[#F59E1C]" />
-                    Actualizar Plan
+                    {t.updatePlan}
                   </Button>
                   
                   <Button
                     variant="ghost"
                     className="w-full justify-start hover:bg-[#EAF4FA]"
-                    onClick={() => toast({ title: "Soporte", description: "Función próximamente disponible!" })}
+                    onClick={() => toast({ title: t.contactSupport, description: "Función próximamente disponible!" })}
                   >
                     <Headphones className="mr-3 h-4 w-4 text-[#1C7BB1]" />
-                    Contactar Soporte
+                    {t.contactSupport}
                   </Button>
                 </div>
               </CardContent>

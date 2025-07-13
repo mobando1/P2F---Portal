@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { getCurrentUser, logout } from "@/lib/auth";
+import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -10,9 +11,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Settings } from "lucide-react";
+import LanguageSwitcher from "./language-switcher";
 
 export default function Header() {
   const user = getCurrentUser();
+  const { t } = useLanguage();
 
   const handleLogout = () => {
     logout();
@@ -43,27 +46,28 @@ export default function Header() {
           {/* Navigation Menu */}
           <nav className="hidden md:flex space-x-8">
             <Link href="/dashboard" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              Dashboard
+              {t.dashboard}
             </Link>
             <Link href="/tutors" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              Tutors
+              {t.tutors}
             </Link>
             <Link href="/subscription" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              Plans
+              {t.plans}
             </Link>
             <Link href="/admin" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              Admin
+              {t.admin}
             </Link>
             <a href="#" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              About
+              {t.about}
             </a>
             <a href="#" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              Contact
+              {t.contact}
             </a>
           </nav>
 
           {/* User Profile & Login */}
           <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
             {user ? (
               <div className="hidden md:flex items-center space-x-3">
                 <DropdownMenu>
@@ -98,7 +102,7 @@ export default function Header() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
-                      Log out
+                      {t.logout}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -111,12 +115,12 @@ export default function Header() {
               <div className="flex items-center space-x-4">
                 <Link href="/login">
                   <Button variant="outline" className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white">
-                    Log In
+                    {t.login}
                   </Button>
                 </Link>
                 <Link href="/login">
                   <Button className="bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white">
-                    Sign Up
+                    {t.signup}
                   </Button>
                 </Link>
               </div>
