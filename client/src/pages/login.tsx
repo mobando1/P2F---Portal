@@ -75,7 +75,7 @@ export default function Login() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <img 
-            src="/attached_assets/lOGO_1752434522756.png" 
+            src="/attached_assets/a1c5a1_9514ede9e3124d7a9adf78f5dcf07f28~mv2_1752436886046.png" 
             alt="Passport2Fluency" 
             className="h-16 w-auto mx-auto mb-4"
           />
