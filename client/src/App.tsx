@@ -7,6 +7,7 @@ import { isAuthenticated } from "@/lib/auth";
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import SubscriptionPage from "@/pages/subscription";
+import TutorsPage from "@/pages/tutors";
 import NotFound from "@/pages/not-found";
 import AdminPage from "@/pages/admin";
 
@@ -24,6 +25,11 @@ function Router() {
       <Route path="/dashboard">
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/tutors">
+        <ProtectedRoute>
+          <TutorsPage />
         </ProtectedRoute>
       </Route>
       <Route path="/subscription">

@@ -139,10 +139,7 @@ export default function Dashboard() {
   };
 
   const handleUpgradeSubscription = () => {
-    toast({
-      title: "Upgrade Plan",
-      description: "Redirecting to subscription upgrade page...",
-    });
+    setLocation("/subscription");
   };
 
   const handleManageSubscription = () => {
@@ -194,7 +191,7 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2">
             ¡Bienvenido, <span className="text-[#1C7BB1]">{dashboardData?.user?.firstName || user.firstName}</span>!
           </h1>
-          <p className="text-[#0A4A6E]/70">Continue your Spanish learning journey</p>
+          <p className="text-[#0A4A6E]/70">Continúa tu camino hacia la fluidez en idiomas</p>
         </div>
 
         {/* Stats Cards */}
@@ -206,7 +203,7 @@ export default function Dashboard() {
                   <CalendarCheck className="h-6 w-6" style={{ color: '#1C7BB1' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-[#0A4A6E]">Classes Booked</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">Clases Reservadas</p>
                   <p className="text-2xl font-bold text-[#0A4A6E]">{stats.classesBooked}</p>
                 </div>
               </div>
@@ -220,7 +217,7 @@ export default function Dashboard() {
                   <GraduationCap className="h-6 w-6" style={{ color: '#F59E1C' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-[#0A4A6E]">Classes Completed</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">Clases Completadas</p>
                   <p className="text-2xl font-bold text-[#0A4A6E]">{stats.classesCompleted}</p>
                 </div>
               </div>
@@ -234,7 +231,7 @@ export default function Dashboard() {
                   <Clock className="h-6 w-6" style={{ color: '#1C7BB1' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-[#0A4A6E]">Learning Hours</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">Horas de Aprendizaje</p>
                   <p className="text-2xl font-bold text-[#0A4A6E]">{stats.learningHours}</p>
                 </div>
               </div>
@@ -248,7 +245,7 @@ export default function Dashboard() {
                   <Star className="h-6 w-6" style={{ color: '#F59E1C' }} />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-[#0A4A6E]">Current Level</p>
+                  <p className="text-sm font-medium text-[#0A4A6E]">Nivel Actual</p>
                   <p className="text-2xl font-bold text-[#0A4A6E]">{stats.currentLevel}</p>
                 </div>
               </div>
@@ -271,8 +268,8 @@ export default function Dashboard() {
             <Card>
               <CardContent className="p-6">
                 <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-1">Available Tutors</h2>
-                  <p className="text-gray-600">Choose your preferred tutor for upcoming classes</p>
+                  <h2 className="text-xl font-semibold text-[#0A4A6E] mb-1">Tutores Disponibles</h2>
+                  <p className="text-[#0A4A6E]/70">Elige tu tutor preferido para tus próximas clases</p>
                 </div>
                 
                 {isTutorsLoading ? (
@@ -318,22 +315,38 @@ export default function Dashboard() {
             {/* Upcoming Classes */}
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Upcoming Classes</h2>
+                <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">Próximas Clases</h2>
                 
                 <div className="space-y-4">
                   {upcomingClasses.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">No upcoming classes scheduled</p>
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-[#EAF4FA] rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <CalendarCheck className="w-8 h-8 text-[#1C7BB1]" />
+                      </div>
+                      <p className="text-[#0A4A6E]/60 mb-2">No hay clases programadas</p>
+                      <p className="text-[#0A4A6E]/40 text-sm mb-4">
+                        ¡Reserva tu primera clase con uno de nuestros tutores!
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLocation("/tutors")}
+                        className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white"
+                      >
+                        Explorar Tutores
+                      </Button>
+                    </div>
                   ) : (
                     upcomingClasses.map((classItem: any) => (
-                      <div key={classItem.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
-                        <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                          <VideoIcon className="text-primary h-5 w-5" />
+                      <div key={classItem.id} className="flex items-center space-x-3 p-3 border border-[#1C7BB1]/20 rounded-lg hover:bg-[#EAF4FA]/30 transition-colors">
+                        <div className="w-12 h-12 bg-[#1C7BB1]/10 rounded-lg flex items-center justify-center">
+                          <VideoIcon className="text-[#1C7BB1] h-5 w-5" />
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">{classItem.title}</h4>
-                          <p className="text-sm text-gray-600">with {classItem.tutorName}</p>
-                          <p className="text-sm text-gray-500">
-                            {new Date(classItem.scheduledAt).toLocaleDateString('en-US', {
+                          <h4 className="font-medium text-[#0A4A6E]">{classItem.title}</h4>
+                          <p className="text-sm text-[#0A4A6E]/70">con {classItem.tutorName}</p>
+                          <p className="text-sm text-[#0A4A6E]/50">
+                            {new Date(classItem.scheduledAt).toLocaleDateString('es-ES', {
                               month: 'short',
                               day: 'numeric',
                               hour: 'numeric',
@@ -345,7 +358,7 @@ export default function Dashboard() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleCancelClass(classItem.id)}
-                          className="text-gray-400 hover:text-red-500"
+                          className="text-[#0A4A6E]/40 hover:text-red-500"
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -359,34 +372,34 @@ export default function Dashboard() {
             {/* Quick Actions */}
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+                <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">Acciones Rápidas</h2>
                 
                 <div className="space-y-3">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => toast({ title: "Book New Class", description: "Feature coming soon!" })}
+                    className="w-full justify-start hover:bg-[#EAF4FA]"
+                    onClick={() => setLocation("/tutors")}
                   >
-                    <CalendarCheck className="mr-3 h-4 w-4 text-primary" />
-                    Book New Class
+                    <CalendarCheck className="mr-3 h-4 w-4 text-[#1C7BB1]" />
+                    Reservar Nueva Clase
                   </Button>
                   
                   <Button
                     variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => toast({ title: "View Progress", description: "Feature coming soon!" })}
+                    className="w-full justify-start hover:bg-[#EAF4FA]"
+                    onClick={() => setLocation("/subscription")}
                   >
-                    <BookOpen className="mr-3 h-4 w-4 text-green-500" />
-                    View Progress
+                    <BookOpen className="mr-3 h-4 w-4 text-[#F59E1C]" />
+                    Actualizar Plan
                   </Button>
                   
                   <Button
                     variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => toast({ title: "Contact Support", description: "Feature coming soon!" })}
+                    className="w-full justify-start hover:bg-[#EAF4FA]"
+                    onClick={() => toast({ title: "Soporte", description: "Función próximamente disponible!" })}
                   >
-                    <Headphones className="mr-3 h-4 w-4 text-blue-500" />
-                    Contact Support
+                    <Headphones className="mr-3 h-4 w-4 text-[#1C7BB1]" />
+                    Contactar Soporte
                   </Button>
                 </div>
               </CardContent>

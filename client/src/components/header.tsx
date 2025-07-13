@@ -42,24 +42,18 @@ export default function Header() {
 
           {/* Navigation Menu */}
           <nav className="hidden md:flex space-x-8">
-            <Link href="/dashboard">
-              <a className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-                Dashboard
-              </a>
+            <Link href="/dashboard" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
+              Dashboard
             </Link>
-            <Link href="/subscription">
-              <a className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-                Plans
-              </a>
-            </Link>
-            <Link href="/admin">
-              <a className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-                Admin
-              </a>
-            </Link>
-            <a href="#" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
+            <Link href="/tutors" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
               Tutors
-            </a>
+            </Link>
+            <Link href="/subscription" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
+              Plans
+            </Link>
+            <Link href="/admin" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
+              Admin
+            </Link>
             <a href="#" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
               About
             </a>
