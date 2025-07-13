@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { login, register } from "@/lib/auth";
+import { Mail, Lock, LogIn, UserPlus, User } from "lucide-react";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -81,17 +82,27 @@ export default function Login() {
       <div className="max-w-md w-full relative z-10">
         {/* Logo y mensaje de bienvenida */}
         <div className="text-center mb-8">
-          <img 
-            src="/attached_assets/a1c5a1_9514ede9e3124d7a9adf78f5dcf07f28~mv2_1752436886046.png" 
-            alt="Passport2Fluency" 
-            className="h-16 w-auto mx-auto mb-6"
-          />
-          <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2">¡Bienvenido!</h1>
-          <p className="text-[#0A4A6E]/70 text-lg">Tu camino hacia la fluidez en español comienza aquí</p>
+          <div className="relative inline-block">
+            <img 
+              src="/attached_assets/a1c5a1_9514ede9e3124d7a9adf78f5dcf07f28~mv2_1752436886046.png" 
+              alt="Passport2Fluency" 
+              className="h-16 w-auto mx-auto mb-6 transform hover:scale-105 transition-transform duration-300"
+            />
+            <div className="absolute -inset-4 bg-gradient-to-r from-[#1C7BB1]/10 to-[#F59E1C]/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          </div>
+          <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2 animate-in slide-in-from-bottom-4 duration-500">¡Bienvenido!</h1>
+          <p className="text-[#0A4A6E]/70 text-lg animate-in slide-in-from-bottom-6 duration-700">Tu camino hacia la fluidez en español comienza aquí</p>
+          <div className="mt-4 flex justify-center space-x-2">
+            <div className="w-2 h-2 bg-[#1C7BB1] rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-[#F59E1C] rounded-full animate-pulse delay-100"></div>
+            <div className="w-2 h-2 bg-[#1C7BB1] rounded-full animate-pulse delay-200"></div>
+          </div>
         </div>
 
-        <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/95">
-          <CardContent className="p-8">
+        <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/95 hover:shadow-2xl transition-all duration-500 animate-in fade-in-0 slide-in-from-bottom-10">
+          <CardContent className="p-8 relative">
+            {/* Gradiente decorativo interno */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1C7BB1] via-[#F59E1C] to-[#1C7BB1]"></div>
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-[#F8F9FA] p-1 rounded-xl">
                 <TabsTrigger 
@@ -110,30 +121,42 @@ export default function Login() {
               
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-6 mt-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-[#0A4A6E] font-medium text-sm">Correo Electrónico</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="tu@email.com"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
-                      required
-                    />
+                  <div className="space-y-2 group">
+                    <Label htmlFor="email" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-[#1C7BB1]" />
+                      Correo Electrónico
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="tu@email.com"
+                        value={loginData.email}
+                        onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                        className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300 pl-10 focus:shadow-lg focus:shadow-[#1C7BB1]/10"
+                        required
+                      />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1C7BB1]/40 w-4 h-4" />
+                    </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-[#0A4A6E] font-medium text-sm">Contraseña</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Tu contraseña"
-                      value={loginData.password}
-                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
-                      required
-                    />
+                  <div className="space-y-2 group">
+                    <Label htmlFor="password" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-[#1C7BB1]" />
+                      Contraseña
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="Tu contraseña"
+                        value={loginData.password}
+                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                        className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300 pl-10 focus:shadow-lg focus:shadow-[#1C7BB1]/10"
+                        required
+                      />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1C7BB1]/40 w-4 h-4" />
+                    </div>
                   </div>
                   
                   <div className="flex items-center justify-between text-sm">
@@ -152,16 +175,35 @@ export default function Login() {
                   
                   <Button 
                     type="submit" 
-                    className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white font-medium h-12 transition-all duration-300 shadow-lg hover:shadow-xl" 
+                    className="w-full bg-gradient-to-r from-[#1C7BB1] to-[#0A4A6E] hover:from-[#0A4A6E] hover:to-[#1C7BB1] text-white font-medium h-12 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] transform flex items-center justify-center gap-2" 
                     disabled={isLoading}
                   >
-                    {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                    {isLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Iniciando sesión...
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="w-4 h-4" />
+                        Iniciar Sesión
+                      </>
+                    )}
                   </Button>
                   
-                  <div className="mt-4 p-3 bg-[#EAF4FA] rounded-lg border border-[#1C7BB1]/20">
-                    <p className="text-sm font-medium text-[#0A4A6E] mb-2">Credenciales de Prueba:</p>
-                    <p className="text-xs text-[#0A4A6E]">Email: juan.sanchez@example.com</p>
-                    <p className="text-xs text-[#0A4A6E]">Contraseña: password123</p>
+                  <div className="mt-6 p-4 bg-gradient-to-r from-[#EAF4FA] to-[#F8F9FA] rounded-lg border border-[#1C7BB1]/20 shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 bg-[#1C7BB1] rounded-full animate-pulse"></div>
+                      <p className="text-sm font-medium text-[#0A4A6E]">Credenciales de Prueba:</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-[#0A4A6E] font-mono bg-white/50 px-2 py-1 rounded">
+                        📧 juan.sanchez@example.com
+                      </p>
+                      <p className="text-xs text-[#0A4A6E] font-mono bg-white/50 px-2 py-1 rounded">
+                        🔒 password123
+                      </p>
+                    </div>
                   </div>
                 </form>
               </TabsContent>
@@ -169,67 +211,97 @@ export default function Login() {
               <TabsContent value="register">
                 <form onSubmit={handleRegister} className="space-y-6 mt-6">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-[#0A4A6E] font-medium text-sm">Nombre</Label>
-                      <Input
-                        id="firstName"
-                        placeholder="Tu nombre"
-                        value={registerData.firstName}
-                        onChange={(e) => setRegisterData({ ...registerData, firstName: e.target.value })}
-                        className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
-                        required
-                      />
+                    <div className="space-y-2 group">
+                      <Label htmlFor="firstName" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
+                        <User className="w-4 h-4 text-[#1C7BB1]" />
+                        Nombre
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="firstName"
+                          placeholder="Tu nombre"
+                          value={registerData.firstName}
+                          onChange={(e) => setRegisterData({ ...registerData, firstName: e.target.value })}
+                          className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300 pl-10 focus:shadow-lg focus:shadow-[#1C7BB1]/10"
+                          required
+                        />
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1C7BB1]/40 w-4 h-4" />
+                      </div>
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-[#0A4A6E] font-medium text-sm">Apellido</Label>
-                      <Input
-                        id="lastName"
-                        placeholder="Tu apellido"
-                        value={registerData.lastName}
-                        onChange={(e) => setRegisterData({ ...registerData, lastName: e.target.value })}
-                        className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
-                        required
-                      />
+                    <div className="space-y-2 group">
+                      <Label htmlFor="lastName" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
+                        <User className="w-4 h-4 text-[#1C7BB1]" />
+                        Apellido
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="lastName"
+                          placeholder="Tu apellido"
+                          value={registerData.lastName}
+                          onChange={(e) => setRegisterData({ ...registerData, lastName: e.target.value })}
+                          className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300 pl-10 focus:shadow-lg focus:shadow-[#1C7BB1]/10"
+                          required
+                        />
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1C7BB1]/40 w-4 h-4" />
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="username" className="text-[#0A4A6E] font-medium text-sm">Nombre de usuario</Label>
-                    <Input
-                      id="username"
-                      placeholder="Elige un nombre de usuario"
-                      value={registerData.username}
-                      onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
-                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
-                      required
-                    />
+                  <div className="space-y-2 group">
+                    <Label htmlFor="username" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
+                      <User className="w-4 h-4 text-[#1C7BB1]" />
+                      Nombre de usuario
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="username"
+                        placeholder="Elige un nombre de usuario"
+                        value={registerData.username}
+                        onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
+                        className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300 pl-10 focus:shadow-lg focus:shadow-[#1C7BB1]/10"
+                        required
+                      />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1C7BB1]/40 w-4 h-4" />
+                    </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="registerEmail" className="text-[#0A4A6E] font-medium text-sm">Correo Electrónico</Label>
-                    <Input
-                      id="registerEmail"
-                      type="email"
-                      placeholder="tu@email.com"
-                      value={registerData.email}
-                      onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
-                      required
-                    />
+                  <div className="space-y-2 group">
+                    <Label htmlFor="registerEmail" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-[#1C7BB1]" />
+                      Correo Electrónico
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="registerEmail"
+                        type="email"
+                        placeholder="tu@email.com"
+                        value={registerData.email}
+                        onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                        className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300 pl-10 focus:shadow-lg focus:shadow-[#1C7BB1]/10"
+                        required
+                      />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1C7BB1]/40 w-4 h-4" />
+                    </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="registerPassword" className="text-[#0A4A6E] font-medium text-sm">Contraseña</Label>
-                    <Input
-                      id="registerPassword"
-                      type="password"
-                      placeholder="Mínimo 8 caracteres"
-                      value={registerData.password}
-                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
-                      required
-                    />
+                  <div className="space-y-2 group">
+                    <Label htmlFor="registerPassword" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-[#1C7BB1]" />
+                      Contraseña
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="registerPassword"
+                        type="password"
+                        placeholder="Mínimo 8 caracteres"
+                        value={registerData.password}
+                        onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                        className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300 pl-10 focus:shadow-lg focus:shadow-[#1C7BB1]/10"
+                        required
+                      />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1C7BB1]/40 w-4 h-4" />
+                    </div>
                   </div>
                   
                   <div className="flex items-center space-x-2 text-sm">
@@ -249,10 +321,20 @@ export default function Login() {
                   
                   <Button 
                     type="submit" 
-                    className="w-full bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white font-medium h-12 transition-all duration-300 shadow-lg hover:shadow-xl" 
+                    className="w-full bg-gradient-to-r from-[#F59E1C] to-[#F59E1C]/80 hover:from-[#F59E1C]/90 hover:to-[#F59E1C] text-white font-medium h-12 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] transform flex items-center justify-center gap-2" 
                     disabled={isLoading}
                   >
-                    {isLoading ? "Registrando..." : "Registrarse"}
+                    {isLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Registrando...
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        Registrarse
+                      </>
+                    )}
                   </Button>
                 </form>
               </TabsContent>
