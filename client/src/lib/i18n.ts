@@ -1,4 +1,6 @@
 // Multi-language support for Passport2Fluency
+import React from 'react';
+
 export type Language = 'es' | 'en';
 
 export interface Translations {
@@ -365,11 +367,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [language]);
 
   const t = translations[language];
+  const contextValue = { language, setLanguage, t };
 
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
+  return React.createElement(
+    LanguageContext.Provider,
+    { value: contextValue },
+    children
   );
 }
 
