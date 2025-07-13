@@ -71,55 +71,90 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: '#EAF4FA' }}>
-      <div className="max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative" style={{ backgroundColor: '#EAF4FA' }}>
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#1C7BB1]/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#F59E1C]/5 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="max-w-md w-full relative z-10">
+        {/* Logo y mensaje de bienvenida */}
         <div className="text-center mb-8">
           <img 
             src="/attached_assets/a1c5a1_9514ede9e3124d7a9adf78f5dcf07f28~mv2_1752436886046.png" 
             alt="Passport2Fluency" 
-            className="h-16 w-auto mx-auto mb-4"
+            className="h-16 w-auto mx-auto mb-6"
           />
-          <p className="mt-2 text-[#0A4A6E] font-medium">Tu camino hacia la fluidez en español comienza aquí</p>
+          <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2">¡Bienvenido!</h1>
+          <p className="text-[#0A4A6E]/70 text-lg">Tu camino hacia la fluidez en español comienza aquí</p>
         </div>
 
-        <Card className="shadow-lg border-0">
-          <CardHeader>
-            <CardTitle className="text-center text-[#0A4A6E] text-2xl font-bold">¡Bienvenido!</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/95">
+          <CardContent className="p-8">
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-[#F8F9FA]">
-                <TabsTrigger value="login" className="data-[state=active]:bg-[#1C7BB1] data-[state=active]:text-white">Iniciar Sesión</TabsTrigger>
-                <TabsTrigger value="register" className="data-[state=active]:bg-[#1C7BB1] data-[state=active]:text-white">Registrarse</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-[#F8F9FA] p-1 rounded-xl">
+                <TabsTrigger 
+                  value="login" 
+                  className="data-[state=active]:bg-[#1C7BB1] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg font-medium"
+                >
+                  Iniciar Sesión
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="register" 
+                  className="data-[state=active]:bg-[#1C7BB1] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg font-medium"
+                >
+                  Registrarse
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-6 mt-6">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Correo Electrónico</Label>
+                    <Label htmlFor="email" className="text-[#0A4A6E] font-medium text-sm">Correo Electrónico</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="Ingresa tu correo electrónico"
+                      placeholder="tu@email.com"
                       value={loginData.email}
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
                       required
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="password">Contraseña</Label>
+                    <Label htmlFor="password" className="text-[#0A4A6E] font-medium text-sm">Contraseña</Label>
                     <Input
                       id="password"
                       type="password"
-                      placeholder="Ingresa tu contraseña"
+                      placeholder="Tu contraseña"
                       value={loginData.password}
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
                       required
                     />
                   </div>
                   
-                  <Button type="submit" className="w-full bg-[#1C7BB1] hover:bg-[#1C7BB1]/90 text-white" disabled={isLoading}>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="remember" 
+                        className="rounded text-[#1C7BB1] focus:ring-[#1C7BB1] border-[#1C7BB1]/20" 
+                      />
+                      <label htmlFor="remember" className="text-[#0A4A6E]">Recordarme</label>
+                    </div>
+                    <a href="#" className="text-[#1C7BB1] hover:text-[#0A4A6E] transition-colors duration-300">
+                      ¿Olvidaste tu contraseña?
+                    </a>
+                  </div>
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white font-medium h-12 transition-all duration-300 shadow-lg hover:shadow-xl" 
+                    disabled={isLoading}
+                  >
                     {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
                   </Button>
                   
@@ -132,68 +167,92 @@ export default function Login() {
               </TabsContent>
               
               <TabsContent value="register">
-                <form onSubmit={handleRegister} className="space-y-4">
+                <form onSubmit={handleRegister} className="space-y-6 mt-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="firstName" className="text-[#0A4A6E] font-medium text-sm">Nombre</Label>
                       <Input
                         id="firstName"
-                        placeholder="First name"
+                        placeholder="Tu nombre"
                         value={registerData.firstName}
                         onChange={(e) => setRegisterData({ ...registerData, firstName: e.target.value })}
+                        className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
                         required
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="lastName" className="text-[#0A4A6E] font-medium text-sm">Apellido</Label>
                       <Input
                         id="lastName"
-                        placeholder="Last name"
+                        placeholder="Tu apellido"
                         value={registerData.lastName}
                         onChange={(e) => setRegisterData({ ...registerData, lastName: e.target.value })}
+                        className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
                         required
                       />
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
+                    <Label htmlFor="username" className="text-[#0A4A6E] font-medium text-sm">Nombre de usuario</Label>
                     <Input
                       id="username"
-                      placeholder="Choose a username"
+                      placeholder="Elige un nombre de usuario"
                       value={registerData.username}
                       onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
+                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
                       required
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="registerEmail">Email</Label>
+                    <Label htmlFor="registerEmail" className="text-[#0A4A6E] font-medium text-sm">Correo Electrónico</Label>
                     <Input
                       id="registerEmail"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="tu@email.com"
                       value={registerData.email}
                       onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
                       required
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="registerPassword">Password</Label>
+                    <Label htmlFor="registerPassword" className="text-[#0A4A6E] font-medium text-sm">Contraseña</Label>
                     <Input
                       id="registerPassword"
                       type="password"
-                      placeholder="Create a password"
+                      placeholder="Mínimo 8 caracteres"
                       value={registerData.password}
                       onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300"
                       required
                     />
                   </div>
                   
-                  <Button type="submit" className="w-full bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white" disabled={isLoading}>
-                    {isLoading ? "Creating account..." : "Sign Up"}
+                  <div className="flex items-center space-x-2 text-sm">
+                    <input 
+                      type="checkbox" 
+                      id="terms" 
+                      className="rounded text-[#1C7BB1] focus:ring-[#1C7BB1] border-[#1C7BB1]/20" 
+                      required
+                    />
+                    <label htmlFor="terms" className="text-[#0A4A6E]">
+                      Acepto los{' '}
+                      <a href="#" className="text-[#1C7BB1] hover:text-[#0A4A6E] transition-colors duration-300">
+                        términos y condiciones
+                      </a>
+                    </label>
+                  </div>
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white font-medium h-12 transition-all duration-300 shadow-lg hover:shadow-xl" 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Registrando..." : "Registrarse"}
                   </Button>
                 </form>
               </TabsContent>
