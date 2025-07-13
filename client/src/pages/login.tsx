@@ -186,20 +186,23 @@ export default function Login() {
                     )}
                   </Button>
                   
-                  <div className="mt-6 p-4 bg-gradient-to-r from-[#EAF4FA] to-[#F8F9FA] rounded-lg border border-[#1C7BB1]/20 shadow-sm">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-2 h-2 bg-[#1C7BB1] rounded-full animate-pulse"></div>
-                      <p className="text-sm font-medium text-[#0A4A6E]">Credenciales de Prueba:</p>
+                  {/* Solo mostrar credenciales de prueba en desarrollo */}
+                  {import.meta.env.DEV && (
+                    <div className="mt-6 p-4 bg-gradient-to-r from-[#EAF4FA] to-[#F8F9FA] rounded-lg border border-[#1C7BB1]/20 shadow-sm">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-2 h-2 bg-[#1C7BB1] rounded-full animate-pulse"></div>
+                        <p className="text-sm font-medium text-[#0A4A6E]">Credenciales de Prueba:</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-[#0A4A6E] font-mono bg-white/50 px-2 py-1 rounded">
+                          📧 juan.sanchez@example.com
+                        </p>
+                        <p className="text-xs text-[#0A4A6E] font-mono bg-white/50 px-2 py-1 rounded">
+                          🔒 password123
+                        </p>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-[#0A4A6E] font-mono bg-white/50 px-2 py-1 rounded">
-                        📧 juan.sanchez@example.com
-                      </p>
-                      <p className="text-xs text-[#0A4A6E] font-mono bg-white/50 px-2 py-1 rounded">
-                        🔒 password123
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </form>
               </TabsContent>
               
