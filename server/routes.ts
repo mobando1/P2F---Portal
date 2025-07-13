@@ -30,6 +30,9 @@ const classScheduler = new ClassSchedulerService(
 );
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Servir archivos estáticos desde attached_assets
+  app.use('/attached_assets', express.static('attached_assets'));
+  
   // Auth routes
   app.post("/api/auth/login", async (req, res) => {
     try {
