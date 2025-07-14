@@ -123,8 +123,16 @@ A comprehensive client portal for Passport2Fluency online Spanish school featuri
 ✓ Optimicé experiencia para conversión directa desde sitio web principal
 ✓ Mejoré mensajes de login orientados a venta: "comprar paquetes, gestionar suscripción"
 
+### July 14, 2025 - Consolidación de Interface de Planes
+✓ Consolidé páginas duplicadas en una sola interfaz unificada de planes
+✓ Eliminé confusión entre /subscription y /packages - ahora solo /packages
+✓ Redirección automática de /subscription a /packages para mantener URLs existentes
+✓ Simplificé navegación con solo enlace "Planes" en header
+✓ Banner naranja optimizado aplicado a ambas páginas antes de consolidar
+✓ Mantuvo funcionalidad de detección automática de plan desde URL
+
 ### Current Status
-- Flujo de ventas completo implementado y documentado
+- Interfaz de planes consolidada en página única optimizada
 - Portal híbrido listo para integración con Wix
 - Sistema de paquetes tipo Preply con preselección automática
 - Experiencia de compra optimizada para conversión

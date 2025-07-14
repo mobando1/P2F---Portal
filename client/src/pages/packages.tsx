@@ -33,29 +33,6 @@ export default function PackagesPage() {
   const [selectedPackage, setSelectedPackage] = useState<ClassPackage | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   
-  // Detectar plan preseleccionado desde URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const planParam = urlParams.get('plan');
-    if (planParam) {
-      // Buscar en planes de suscripción
-      let planMatch = null;
-      
-      // Mapear parámetros de URL a planes
-      if (planParam === '1-class' || planParam === '1') {
-        planMatch = subscriptionPlans.find(p => p.id === 1);
-      } else if (planParam === '2-class' || planParam === '2') {
-        planMatch = subscriptionPlans.find(p => p.id === 2);
-      } else if (planParam === '3-class' || planParam === '3') {
-        planMatch = subscriptionPlans.find(p => p.id === 3);
-      }
-      
-      if (planMatch) {
-        setSelectedPlan(planMatch);
-      }
-    }
-  }, [subscriptionPlans]);
-
   // Planes de suscripción basados en tu sitio web actual
   const subscriptionPlans: SubscriptionPlan[] = [
     {
@@ -109,6 +86,27 @@ export default function PackagesPage() {
       ],
     },
   ];
+
+  // Detectar plan preseleccionado desde URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const planParam = urlParams.get('plan');
+    if (planParam) {
+      let planMatch = null;
+      
+      if (planParam === '1-class' || planParam === '1') {
+        planMatch = subscriptionPlans.find(p => p.id === 1);
+      } else if (planParam === '2-class' || planParam === '2') {
+        planMatch = subscriptionPlans.find(p => p.id === 2);
+      } else if (planParam === '3-class' || planParam === '3') {
+        planMatch = subscriptionPlans.find(p => p.id === 3);
+      }
+      
+      if (planMatch) {
+        setSelectedPlan(planMatch);
+      }
+    }
+  }, []);
 
   // Mantener paquetes de clases como opción adicional
   const classPackages: ClassPackage[] = [

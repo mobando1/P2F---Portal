@@ -35,15 +35,13 @@ function Router() {
           <TutorsPage />
         </ProtectedRoute>
       </Route>
-      <Route path="/subscription">
-        <ProtectedRoute>
-          <SubscriptionPage />
-        </ProtectedRoute>
-      </Route>
       <Route path="/packages">
         <ProtectedRoute>
           <PackagesPage />
         </ProtectedRoute>
+      </Route>
+      <Route path="/subscription">
+        <Redirect to="/packages" />
       </Route>
       <Route path="/admin">
         <ProtectedRoute>
