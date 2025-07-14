@@ -245,15 +245,7 @@ export default function TutorsPage() {
                     </div>
                   </div>
 
-                  {/* Pricing */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">{t.pricePerClass}</span>
-                      <span className="text-lg font-bold text-[#0A4A6E]">
-                        {tutor.hourlyRate}
-                      </span>
-                    </div>
-                  </div>
+
 
                   {/* Book Button */}
                   <Button 

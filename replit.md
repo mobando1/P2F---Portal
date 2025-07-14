@@ -131,6 +131,14 @@ A comprehensive client portal for Passport2Fluency online Spanish school featuri
 ✓ Banner naranja optimizado aplicado a ambas páginas antes de consolidar
 ✓ Mantuvo funcionalidad de detección automática de plan desde URL
 
+### July 14, 2025 - Actualización de Profesores Reales y Modelo de Suscripción
+✓ Integré los 5 profesores reales de Passport2Fluency con datos completos
+✓ Configuré Carolina Perilla, Evelyn Salcedo, Felipe Rodriguez, Gloria Cardona, Johanna Pacheco
+✓ Cada profesor incluye especialización, bio, país, idiomas, certificaciones, años de experiencia
+✓ Eliminé precios individuales ya que con suscripción se accede a cualquier profesor
+✓ Modelo de negocio: suscripción mensual da acceso a todos los profesores sin costo adicional
+✓ Corregí errores de TypeScript y estructura de datos para funcionamiento óptimo
+
 ### Current Status
 - Interfaz de planes consolidada en página única optimizada
 - Portal híbrido listo para integración con Wix
