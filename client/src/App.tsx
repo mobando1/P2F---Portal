@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/lib/i18n";
 import { isAuthenticated } from "@/lib/auth";
-import Landing from "@/pages/landing";
+
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import SubscriptionPage from "@/pages/subscription";
@@ -51,7 +51,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/">
-        {isAuthenticated() ? <Redirect to="/dashboard" /> : <Landing />}
+        {isAuthenticated() ? <Redirect to="/dashboard" /> : <Redirect to="/login" />}
       </Route>
       <Route component={NotFound} />
     </Switch>

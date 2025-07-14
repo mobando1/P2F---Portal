@@ -104,12 +104,22 @@ A comprehensive client portal for Passport2Fluency online Spanish school featuri
 ✓ Enhanced dashboard with improved calendar booking
 ✓ Added payment webhook handling for subscription activation
 
+### January 14, 2025 - Portal Híbrido con Modelo Preply
+✓ Implementé portal híbrido para integración con sitio web Wix existente
+✓ Eliminé landing page independiente para enfocar en /login como punto de entrada
+✓ Creé página de paquetes de clases inspirada en Preply (5, 10, 20, 30 clases)
+✓ Agregué sistema de suscripciones mensual con descuentos progresivos
+✓ Implementé nueva tarjeta de créditos en dashboard con botón "Comprar Más"
+✓ Optimicé flujo: Sitio Wix → High Level (free trial) → Portal Login → Compra clases
+✓ Configuré estructura de datos para class_packages, subscription_plans, class_purchases
+✓ Mejoré login con mensaje de bienvenida para usuarios post-trial
+
 ### Current Status
-- Core platform functionality complete
-- Stripe payments integrated and configured
-- Enhanced calendar booking system operational
-- Passport2Fluency branding applied throughout
-- All major components tested and functional
+- Portal híbrido implementado para integración con Wix
+- Sistema de paquetes tipo Preply funcional
+- Flujo de compra de clases integrado en dashboard
+- Login optimizado como punto de entrada principal
+- Stripe payments y High Level listos para integración
 
 ## User Preferences
 - Professional, clean design inspired by Preply.com

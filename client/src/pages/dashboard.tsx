@@ -197,7 +197,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <Card className="shadow-lg border-0">
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -249,6 +249,29 @@ export default function Dashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-[#0A4A6E]">{t.currentLevel}</p>
                   <p className="text-2xl font-bold text-[#0A4A6E]">{stats.currentLevel}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Nueva tarjeta para clases restantes */}
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-[#1C7BB1] to-[#0A4A6E] text-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-white/90">
+                    {t.language === 'es' ? 'Clases Restantes' : 'Remaining Classes'}
+                  </p>
+                  <p className="text-2xl font-bold text-white">{stats.remainingClasses}</p>
+                </div>
+                <div className="text-right">
+                  <Button 
+                    onClick={() => setLocation("/packages")}
+                    size="sm"
+                    className="bg-white text-[#1C7BB1] hover:bg-white/90 font-medium"
+                  >
+                    {t.language === 'es' ? 'Comprar Más' : 'Buy More'}
+                  </Button>
                 </div>
               </div>
             </CardContent>

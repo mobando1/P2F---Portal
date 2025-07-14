@@ -104,6 +104,16 @@ export default function Login() {
           <p className="text-[#0A4A6E]/70 text-lg animate-in slide-in-from-bottom-6 duration-700">
             {t.continueJourney}
           </p>
+          
+          {/* Mensaje para usuarios nuevos que vienen desde Wix */}
+          <div className="mt-6 p-4 bg-gradient-to-r from-[#1C7BB1]/5 to-[#F59E1C]/5 rounded-lg border border-[#1C7BB1]/20">
+            <p className="text-sm text-[#0A4A6E] text-center">
+              {t.language === 'es' 
+                ? '¿Completaste tu clase gratuita? ¡Perfecto! Ahora puedes acceder a tu portal de estudiante.'
+                : 'Completed your free trial? Perfect! Now you can access your student portal.'
+              }
+            </p>
+          </div>
         </div>
 
         <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/95 hover:shadow-2xl transition-all duration-500 animate-in fade-in-0 slide-in-from-bottom-10">
