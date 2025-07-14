@@ -82,8 +82,14 @@ export class MemStorage implements IStorage {
       password: "password123",
       firstName: "Juan",
       lastName: "Sánchez",
+      phone: null,
       level: "B1",
       avatar: null,
+      userType: "student",
+      trialCompleted: true,
+      classCredits: 5,
+      highLevelContactId: null,
+      stripeCustomerId: null,
       createdAt: new Date(),
     };
     this.users.set(1, user);
@@ -93,11 +99,7 @@ export class MemStorage implements IStorage {
     const subscription: Subscription = {
       id: 1,
       userId: 1,
-      planName: "Premium Plan",
-      planType: "premium",
-      classesLimit: 12,
-      classesUsed: 8,
-      price: "49.99",
+      planId: 1,
       stripeSubscriptionId: "sub_premium_123",
       status: "active",
       nextBillingDate: new Date("2025-01-15"),
@@ -364,7 +366,13 @@ export class MemStorage implements IStorage {
       id, 
       createdAt: new Date(),
       level: insertUser.level || "A1",
-      avatar: insertUser.avatar || null
+      avatar: insertUser.avatar || null,
+      phone: insertUser.phone || null,
+      userType: insertUser.userType || "student",
+      trialCompleted: insertUser.trialCompleted || false,
+      classCredits: insertUser.classCredits || 0,
+      highLevelContactId: insertUser.highLevelContactId || null,
+      stripeCustomerId: insertUser.stripeCustomerId || null
     };
     this.users.set(id, user);
     return user;
@@ -398,8 +406,6 @@ export class MemStorage implements IStorage {
       id, 
       createdAt: new Date(),
       status: subscriptionData.status || "active",
-      classesLimit: subscriptionData.classesLimit || null,
-      classesUsed: subscriptionData.classesUsed || 0,
       stripeSubscriptionId: subscriptionData.stripeSubscriptionId || null,
       nextBillingDate: subscriptionData.nextBillingDate || null
     };
@@ -434,7 +440,10 @@ export class MemStorage implements IStorage {
       avatar: tutorData.avatar || null,
       rating: tutorData.rating || "5.00",
       reviewCount: tutorData.reviewCount || 0,
-      isActive: tutorData.isActive !== undefined ? tutorData.isActive : true
+      isActive: tutorData.isActive !== undefined ? tutorData.isActive : true,
+      phone: tutorData.phone || null,
+      highLevelContactId: tutorData.highLevelContactId || null,
+      yearsOfExperience: tutorData.yearsOfExperience || 0
     };
     this.tutors.set(id, tutor);
     return tutor;
