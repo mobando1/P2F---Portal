@@ -222,13 +222,19 @@ export default function SubscriptionPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Choose Your Learning Plan
+        <div className="text-center mb-12 bg-gradient-to-r from-[#F59E1C] to-[#F59E1C]/80 text-white rounded-xl p-8">
+          <h1 className="text-5xl font-bold mb-4">
+            🚀 ¡NUEVO! Planes de Suscripción Mejorados
           </h1>
-          <p className="text-xl text-gray-600">
-            Start your language learning journey with Passport2Fluency
+          <p className="text-2xl opacity-90 mb-4">
+            Ahora con garantía de 30 días y profesores nativos certificados
           </p>
+          <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg">
+            <span className="text-lg font-semibold">¿Prefieres paquetes de clases?</span>
+            <a href="/packages" className="bg-white text-[#F59E1C] px-4 py-2 rounded-lg font-bold hover:bg-gray-100">
+              Ver Paquetes
+            </a>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
