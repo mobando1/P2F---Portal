@@ -75,6 +75,24 @@ export interface Translations {
   // Common
   with: string;
   by: string;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  rememberMe: string;
+  forgotPassword: string;
+  loggingIn: string;
+  registering: string;
+  createAccount: string;
+  demoCredentials: string;
+  welcome: string;
+  welcomeBack: string;
+  accountCreated: string;
+  loginFailed: string;
+  registrationFailed: string;
+  checkCredentials: string;
+  journeyBegins: string;
   stars: string;
   reviews: string;
   country: string;
@@ -127,7 +145,7 @@ export const translations: Record<Language, Translations> = {
     logout: 'Cerrar Sesión',
     
     // Dashboard
-    welcome: '¡Bienvenido,',
+    welcomeName: '¡Bienvenido,',
     continueJourney: 'Continúa tu camino hacia la fluidez en idiomas',
     classesBooked: 'Clases Reservadas',
     classesCompleted: 'Clases Completadas',
@@ -186,6 +204,24 @@ export const translations: Record<Language, Translations> = {
     // Common
     with: 'con',
     by: 'por',
+    email: 'Correo Electrónico',
+    password: 'Contraseña',
+    firstName: 'Nombre',
+    lastName: 'Apellido',
+    username: 'Nombre de Usuario',
+    rememberMe: 'Recordarme',
+    forgotPassword: '¿Olvidaste tu contraseña?',
+    loggingIn: 'Iniciando sesión...',
+    registering: 'Registrando...',
+    createAccount: 'Crear Cuenta',
+    demoCredentials: 'Credenciales de Prueba',
+    welcome: '¡Bienvenido!',
+    welcomeBack: '¡Bienvenido de nuevo!',
+    accountCreated: 'Cuenta creada exitosamente',
+    loginFailed: 'Error al iniciar sesión',
+    registrationFailed: 'Error al registrarse',
+    checkCredentials: 'Verifica tus credenciales e intenta de nuevo',
+    journeyBegins: 'Tu camino hacia la fluidez en idiomas comienza aquí',
     stars: 'estrellas',
     reviews: 'reseñas',
     country: 'país',
@@ -237,7 +273,7 @@ export const translations: Record<Language, Translations> = {
     logout: 'Log Out',
     
     // Dashboard
-    welcome: 'Welcome,',
+    welcomeName: 'Welcome,',
     continueJourney: 'Continue your language fluency journey',
     classesBooked: 'Classes Booked',
     classesCompleted: 'Classes Completed',
@@ -296,6 +332,24 @@ export const translations: Record<Language, Translations> = {
     // Common
     with: 'with',
     by: 'by',
+    email: 'Email',
+    password: 'Password',
+    firstName: 'First Name',
+    lastName: 'Last Name',
+    username: 'Username',
+    rememberMe: 'Remember me',
+    forgotPassword: 'Forgot your password?',
+    loggingIn: 'Logging in...',
+    registering: 'Registering...',
+    createAccount: 'Create Account',
+    demoCredentials: 'Demo Credentials',
+    welcome: 'Welcome!',
+    welcomeBack: 'Welcome back!',
+    accountCreated: 'Account created successfully',
+    loginFailed: 'Login failed',
+    registrationFailed: 'Registration failed',
+    checkCredentials: 'Please check your credentials and try again',
+    journeyBegins: 'Your path to language fluency starts here',
     stars: 'stars',
     reviews: 'reviews',
     country: 'country',
@@ -354,12 +408,22 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       return saved;
     }
     
+    // Better browser language detection
     const browserLang = navigator.language.toLowerCase();
-    if (browserLang.startsWith('en')) {
+    const browserLangShort = browserLang.split('-')[0];
+    
+    // Check for English variants
+    if (browserLangShort === 'en' || browserLang.includes('en')) {
       return 'en';
     }
     
-    return 'es'; // Default to Spanish
+    // Check for Spanish variants
+    if (browserLangShort === 'es' || browserLang.includes('es')) {
+      return 'es';
+    }
+    
+    // Default to Spanish for Latin American users
+    return 'es';
   });
 
   useEffect(() => {

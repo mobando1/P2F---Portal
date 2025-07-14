@@ -191,7 +191,7 @@ export default function Dashboard() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2">
-            {t.welcome} <span className="text-[#1C7BB1]">{dashboardData?.user?.firstName || user.firstName}</span>!
+            {t.welcomeName} <span className="text-[#1C7BB1]">{dashboardData?.user?.firstName || user.firstName}</span>!
           </h1>
           <p className="text-[#0A4A6E]/70">{t.continueJourney}</p>
         </div>
