@@ -36,20 +36,20 @@ export default function TutorsPage() {
 
   // Filter tutors based on search criteria
   const filteredTutors = tutors.filter(tutor => {
-    const matchesSearch = tutor.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tutor.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tutor.specialties.some(specialty => 
-                           specialty.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = (tutor.firstName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                         (tutor.lastName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                         (tutor.specialties || []).some(specialty => 
+                           specialty?.toLowerCase()?.includes(searchTerm.toLowerCase())
                          );
     
     const matchesLanguage = selectedLanguage === "all" || 
-                           tutor.languages.includes(selectedLanguage);
+                           (tutor.languages || []).includes(selectedLanguage);
     
     const matchesLevel = selectedLevel === "all" || 
-                        tutor.teachingLevels.includes(selectedLevel);
+                        (tutor.teachingLevels || []).includes(selectedLevel);
     
     const matchesRating = selectedRating === "all" || 
-                         tutor.rating >= parseFloat(selectedRating);
+                         (tutor.rating || 0) >= parseFloat(selectedRating);
 
     return matchesSearch && matchesLanguage && matchesLevel && matchesRating;
   });
