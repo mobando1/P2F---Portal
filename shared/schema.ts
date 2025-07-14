@@ -9,22 +9,66 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
+  phone: text("phone"), // Capturado en free trial
   level: text("level").notNull().default("A1"),
   avatar: text("avatar"),
+  // Estados del usuario en el funnel
+  userType: text("user_type").notNull().default("trial"), // 'trial', 'lead', 'customer'
+  trialCompleted: boolean("trial_completed").default(false),
+  // Créditos de clases (sistema similar a Preply)
+  classCredits: integer("class_credits").default(1), // 1 clase gratis inicial
+  // Integración con High Level
+  highLevelContactId: text("high_level_contact_id"),
+  // Stripe para pagos
+  stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Planes de suscripción disponibles
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // "Basic", "Premium", "Unlimited"
+  type: text("type").notNull(), // 'monthly', 'yearly', 'lifetime'
+  classesIncluded: integer("classes_included"), // null para unlimited
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  discountPercent: integer("discount_percent").default(0),
+  stripePriceId: text("stripe_price_id"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Paquetes de clases individuales (como Preply)
+export const classPackages = pgTable("class_packages", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // "5 Classes", "10 Classes", etc.
+  classCount: integer("class_count").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  discountPercent: integer("discount_percent").default(0),
+  stripePriceId: text("stripe_price_id"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Suscripciones activas de usuarios
 export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
-  planName: text("plan_name").notNull(),
-  planType: text("plan_type").notNull(), // 'basic', 'premium', 'unlimited'
-  classesLimit: integer("classes_limit"),
-  classesUsed: integer("classes_used").default(0),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  planId: integer("plan_id").references(() => subscriptionPlans.id).notNull(),
   stripeSubscriptionId: text("stripe_subscription_id"),
   status: text("status").notNull().default("active"), // 'active', 'cancelled', 'expired'
   nextBillingDate: timestamp("next_billing_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Compras de paquetes de clases
+export const classPurchases = pgTable("class_purchases", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  packageId: integer("package_id").references(() => classPackages.id).notNull(),
+  classesAdded: integer("classes_added").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  status: text("status").notNull().default("completed"), // 'pending', 'completed', 'refunded'
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -118,6 +162,21 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
 });
 
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertClassPackageSchema = createInsertSchema(classPackages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertClassPurchaseSchema = createInsertSchema(classPurchases).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   id: true,
   createdAt: true,
@@ -163,18 +222,35 @@ export const loginSchema = z.object({
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+
+export type ClassPackage = typeof classPackages.$inferSelect;
+export type InsertClassPackage = z.infer<typeof insertClassPackageSchema>;
+
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+
+export type ClassPurchase = typeof classPurchases.$inferSelect;
+export type InsertClassPurchase = z.infer<typeof insertClassPurchaseSchema>;
+
 export type Tutor = typeof tutors.$inferSelect;
 export type InsertTutor = z.infer<typeof insertTutorSchema>;
+
 export type TutorAvailability = typeof tutorAvailability.$inferSelect;
 export type InsertTutorAvailability = z.infer<typeof insertTutorAvailabilitySchema>;
+
 export type HighLevelConfig = typeof highLevelConfig.$inferSelect;
 export type InsertHighLevelConfig = z.infer<typeof insertHighLevelConfigSchema>;
+
 export type Class = typeof classes.$inferSelect;
 export type InsertClass = z.infer<typeof insertClassSchema>;
+
 export type Video = typeof videos.$inferSelect;
 export type InsertVideo = z.infer<typeof insertVideoSchema>;
+
 export type UserProgress = typeof userProgress.$inferSelect;
 export type InsertUserProgress = z.infer<typeof insertUserProgressSchema>;
+
 export type LoginData = z.infer<typeof loginSchema>;

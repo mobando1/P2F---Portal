@@ -5,9 +5,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/lib/i18n";
 import { isAuthenticated } from "@/lib/auth";
+import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import SubscriptionPage from "@/pages/subscription";
+import PackagesPage from "@/pages/packages";
 import TutorsPage from "@/pages/tutors";
 import NotFound from "@/pages/not-found";
 import AdminPage from "@/pages/admin";
@@ -38,13 +40,18 @@ function Router() {
           <SubscriptionPage />
         </ProtectedRoute>
       </Route>
+      <Route path="/packages">
+        <ProtectedRoute>
+          <PackagesPage />
+        </ProtectedRoute>
+      </Route>
       <Route path="/admin">
         <ProtectedRoute>
           <AdminPage />
         </ProtectedRoute>
       </Route>
       <Route path="/">
-        {isAuthenticated() ? <Redirect to="/dashboard" /> : <Redirect to="/login" />}
+        {isAuthenticated() ? <Redirect to="/dashboard" /> : <Landing />}
       </Route>
       <Route component={NotFound} />
     </Switch>
