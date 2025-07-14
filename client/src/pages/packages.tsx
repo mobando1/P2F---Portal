@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +32,22 @@ export default function PackagesPage() {
   const { t } = useLanguage();
   const [selectedPackage, setSelectedPackage] = useState<ClassPackage | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  
+  // Detectar plan preseleccionado desde URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const planParam = urlParams.get('plan');
+    if (planParam) {
+      // Buscar en paquetes de clases
+      const packageMatch = classPackages.find(pkg => 
+        pkg.name.toLowerCase().includes(planParam.toLowerCase()) || 
+        pkg.classCount.toString() === planParam
+      );
+      if (packageMatch) {
+        setSelectedPackage(packageMatch);
+      }
+    }
+  }, []);
 
   // Datos de ejemplo - en producción vendrían de la API
   const classPackages: ClassPackage[] = [

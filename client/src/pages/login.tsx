@@ -16,6 +16,11 @@ export default function Login() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Detectar si viene desde compra de plan
+  const urlParams = new URLSearchParams(window.location.search);
+  const selectedPlan = urlParams.get('plan');
+  const fromPurchase = urlParams.get('from') === 'purchase';
 
   const [loginData, setLoginData] = useState({
     email: "",
@@ -40,7 +45,13 @@ export default function Login() {
         title: "Welcome back!",
         description: "You have been successfully logged in.",
       });
-      setLocation("/dashboard");
+      
+      // Redirigir según el contexto
+      if (fromPurchase && selectedPlan) {
+        setLocation(`/packages?plan=${selectedPlan}`);
+      } else {
+        setLocation("/dashboard");
+      }
     } catch (error) {
       toast({
         title: "Login failed",
@@ -62,7 +73,13 @@ export default function Login() {
         title: "Account created!",
         description: "Welcome to EspañolPro. Your learning journey begins now.",
       });
-      setLocation("/dashboard");
+      
+      // Redirigir según el contexto
+      if (fromPurchase && selectedPlan) {
+        setLocation(`/packages?plan=${selectedPlan}`);
+      } else {
+        setLocation("/dashboard");
+      }
     } catch (error) {
       toast({
         title: "Registration failed",
@@ -108,10 +125,15 @@ export default function Login() {
           {/* Mensaje para usuarios nuevos que vienen desde Wix */}
           <div className="mt-6 p-4 bg-gradient-to-r from-[#1C7BB1]/5 to-[#F59E1C]/5 rounded-lg border border-[#1C7BB1]/20">
             <p className="text-sm text-[#0A4A6E] text-center">
-              {t.language === 'es' 
-                ? '¿Completaste tu clase gratuita? ¡Perfecto! Ahora puedes acceder a tu portal de estudiante.'
-                : 'Completed your free trial? Perfect! Now you can access your student portal.'
-              }
+              {fromPurchase ? (
+                t.language === 'es' 
+                  ? '¡Estás a un paso de comenzar! Inicia sesión o regístrate para completar tu compra.'
+                  : 'You\'re one step away from starting! Sign in or register to complete your purchase.'
+              ) : (
+                t.language === 'es' 
+                  ? '¿Completaste tu clase gratuita? ¡Perfecto! Ahora puedes acceder a tu portal de estudiante.'
+                  : 'Completed your free trial? Perfect! Now you can access your student portal.'
+              )}
             </p>
           </div>
         </div>
