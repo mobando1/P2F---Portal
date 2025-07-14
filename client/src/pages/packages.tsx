@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, CreditCard, Calendar, Star, Clock } from "lucide-react";
+import { Check, CreditCard, Calendar, Star, Clock, Users, Shield } from "lucide-react";
 import Header from "@/components/header";
 
 interface ClassPackage {
@@ -159,12 +159,12 @@ export default function PackagesPage() {
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-[#0A4A6E] mb-4">
-            {t.language === 'es' ? 'Elige tu Plan Perfecto' : 'Choose Your Perfect Plan'}
+            {t.language === 'es' ? 'Encuentra el plan perfecto para hablar español con confianza' : 'Find the perfect plan to speak Spanish confidently'}
           </h1>
           <p className="text-xl text-[#0A4A6E]/70 mb-8">
             {t.language === 'es' 
-              ? 'Compra clases individuales o suscríbete para obtener mejores precios'
-              : 'Buy individual classes or subscribe for better prices'
+              ? 'Planes flexibles diseñados para tu ritmo de aprendizaje'
+              : 'Flexible plans designed for your learning pace'
             }
           </p>
           <div className="flex items-center justify-center gap-4 text-sm text-[#0A4A6E]/60">
@@ -183,13 +183,13 @@ export default function PackagesPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="packages" className="w-full">
+        <Tabs defaultValue="subscriptions" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="subscriptions">
+              {t.language === 'es' ? 'Planes Mensuales' : 'Monthly Plans'}
+            </TabsTrigger>
             <TabsTrigger value="packages">
               {t.language === 'es' ? 'Paquetes de Clases' : 'Class Packages'}
-            </TabsTrigger>
-            <TabsTrigger value="subscriptions">
-              {t.language === 'es' ? 'Suscripciones' : 'Subscriptions'}
             </TabsTrigger>
           </TabsList>
 
@@ -201,8 +201,8 @@ export default function PackagesPage() {
               </h2>
               <p className="text-[#0A4A6E]/70">
                 {t.language === 'es' 
-                  ? 'Compra clases individuales sin compromiso mensual'
-                  : 'Buy individual classes without monthly commitment'
+                  ? 'Para estudiantes que prefieren flexibilidad total'
+                  : 'For students who prefer complete flexibility'
                 }
               </p>
             </div>
@@ -262,54 +262,63 @@ export default function PackagesPage() {
           <TabsContent value="subscriptions">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-[#0A4A6E] mb-2">
-                {t.language === 'es' ? 'Planes de Suscripción' : 'Subscription Plans'}
+                {t.language === 'es' ? 'Planes Mensuales' : 'Monthly Plans'}
               </h2>
               <p className="text-[#0A4A6E]/70">
                 {t.language === 'es' 
-                  ? 'Suscríbete mensualmente y obtén mejores precios'
-                  : 'Subscribe monthly and get better prices'
+                  ? 'Elige la frecuencia que mejor se adapte a tu estilo de vida'
+                  : 'Choose the frequency that best fits your lifestyle'
                 }
               </p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {subscriptionPlans.map((plan) => (
-                <Card key={plan.id} className={`relative ${plan.popular ? 'ring-2 ring-[#1C7BB1]' : ''}`}>
+                <Card key={plan.id} className={`relative ${plan.popular ? 'ring-2 ring-[#F59E1C] scale-105' : ''}`}>
                   {plan.popular && (
                     <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-[#F59E1C] text-white">
-                      {t.language === 'es' ? 'Más Popular' : 'Most Popular'}
+                      {t.language === 'es' ? 'MÁS POPULAR' : 'MOST POPULAR'}
                     </Badge>
                   )}
                   <CardHeader className="text-center">
-                    <CardTitle className="text-[#0A4A6E]">{plan.name}</CardTitle>
+                    <CardTitle className="text-[#0A4A6E] text-xl">{plan.name}</CardTitle>
                     <CardDescription>
-                      <div className="text-3xl font-bold text-[#1C7BB1] mb-2">
+                      <div className="text-4xl font-bold text-[#1C7BB1] mb-2">
                         ${plan.price}
-                        <span className="text-sm text-[#0A4A6E]/60">
-                          /{t.language === 'es' ? 'mes' : 'month'}
-                        </span>
+                      </div>
+                      <div className="text-lg text-[#0A4A6E]/80 mb-1">
+                        {t.language === 'es' ? 'Por Mes' : 'Per Month'}
+                      </div>
+                      <div className="text-sm text-[#0A4A6E]/60">
+                        ${(plan.price / plan.classesIncluded).toFixed(2)} {t.language === 'es' ? 'por clase' : 'per class'}
                       </div>
                       {plan.discountPercent > 0 && (
-                        <Badge variant="secondary" className="mt-2">
+                        <Badge variant="secondary" className="mt-2 bg-[#F59E1C]/20 text-[#F59E1C]">
                           {plan.discountPercent}% {t.language === 'es' ? 'descuento' : 'off'}
                         </Badge>
                       )}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2 mb-6">
+                    <div className="space-y-3 mb-6">
                       {plan.features.map((feature, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-[#1C7BB1]" />
-                          <span className="text-sm">{feature}</span>
+                        <div key={index} className="flex items-start gap-2">
+                          <Check className="w-5 h-5 text-[#1C7BB1] mt-0.5 flex-shrink-0" />
+                          <span className="text-sm text-[#0A4A6E]/80">{feature}</span>
                         </div>
                       ))}
                     </div>
                     <Button 
-                      className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+                      className={`w-full ${plan.popular 
+                        ? 'bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white' 
+                        : 'bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white'
+                      }`}
                       onClick={() => handleSubscriptionPurchase(plan)}
                     >
-                      {t.language === 'es' ? 'Suscribirme' : 'Subscribe'}
+                      {plan.popular 
+                        ? (t.language === 'es' ? 'Elegir Este Plan' : 'Choose This Plan')
+                        : (t.language === 'es' ? 'Comenzar Ahora' : 'Start Learning Now')
+                      }
                     </Button>
                   </CardContent>
                 </Card>
@@ -318,7 +327,88 @@ export default function PackagesPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Sección de Garantía */}
+        {/* Sección de Garantía y Testimonios */}
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-[#0A4A6E] mb-4">
+                {t.language === 'es' ? '¿Por qué elegir Passport2Fluency?' : 'Why Choose Passport2Fluency?'}
+              </h2>
+              <p className="text-lg text-[#0A4A6E]/80">
+                {t.language === 'es' 
+                  ? 'Miles de estudiantes han logrado la fluidez con nosotros'
+                  : 'Thousands of students have achieved fluency with us'
+                }
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <div className="text-center p-6 bg-[#EAF4FA] rounded-lg">
+                <div className="w-16 h-16 bg-[#1C7BB1] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#0A4A6E] mb-2">
+                  {t.language === 'es' ? 'Profesores Nativos' : 'Native Teachers'}
+                </h3>
+                <p className="text-[#0A4A6E]/70">
+                  {t.language === 'es' 
+                    ? 'Todos certificados y con experiencia comprobada'
+                    : 'All certified with proven experience'
+                  }
+                </p>
+              </div>
+
+              <div className="text-center p-6 bg-[#EAF4FA] rounded-lg">
+                <div className="w-16 h-16 bg-[#F59E1C] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#0A4A6E] mb-2">
+                  {t.language === 'es' ? 'Garantía de Satisfacción' : 'Satisfaction Guarantee'}
+                </h3>
+                <p className="text-[#0A4A6E]/70">
+                  {t.language === 'es' 
+                    ? 'Si no estás satisfecho en los primeros 30 días, te devolvemos tu dinero'
+                    : 'If not satisfied within 30 days, we refund your money'
+                  }
+                </p>
+              </div>
+
+              <div className="text-center p-6 bg-[#EAF4FA] rounded-lg">
+                <div className="w-16 h-16 bg-[#1C7BB1] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#0A4A6E] mb-2">
+                  {t.language === 'es' ? 'Horarios Flexibles' : 'Flexible Schedules'}
+                </h3>
+                <p className="text-[#0A4A6E]/70">
+                  {t.language === 'es' 
+                    ? 'Reserva clases 24/7, adapta tu aprendizaje a tu vida'
+                    : 'Book classes 24/7, adapt learning to your life'
+                  }
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t border-[#0A4A6E]/20 pt-8">
+              <div className="text-center">
+                <p className="text-lg text-[#0A4A6E]/80 mb-4">
+                  {t.language === 'es' 
+                    ? 'Únete a más de 5,000 estudiantes satisfechos'
+                    : 'Join over 5,000 satisfied students'
+                  }
+                </p>
+                <div className="flex justify-center items-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className="w-6 h-6 text-[#F59E1C] fill-current" />
+                  ))}
+                  <span className="text-[#0A4A6E]/80 ml-2">
+                    4.9/5 {t.language === 'es' ? 'estrellas' : 'stars'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="mt-16 text-center">
           <Card className="bg-white border-[#1C7BB1]/20">
             <CardContent className="py-8">
