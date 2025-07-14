@@ -87,6 +87,7 @@ export const tutors = pgTable("tutors", {
   phone: text("phone"),
   country: text("country"),
   timezone: text("timezone"),
+  languages: text("languages").array(),
   certifications: text("certifications").array(),
   yearsOfExperience: integer("years_of_experience"),
   // Integración con High Level

@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage-simple";
+import { storage } from "./storage";
 import { loginSchema, insertUserSchema, insertClassSchema } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";

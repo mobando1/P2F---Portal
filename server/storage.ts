@@ -443,7 +443,12 @@ export class MemStorage implements IStorage {
       isActive: tutorData.isActive !== undefined ? tutorData.isActive : true,
       phone: tutorData.phone || null,
       highLevelContactId: tutorData.highLevelContactId || null,
-      yearsOfExperience: tutorData.yearsOfExperience || 0
+      yearsOfExperience: tutorData.yearsOfExperience || 0,
+      country: tutorData.country || null,
+      timezone: tutorData.timezone || null,
+      hourlyRate: tutorData.hourlyRate || "25.00",
+      certifications: tutorData.certifications || [],
+      languages: tutorData.languages || []
     };
     this.tutors.set(id, tutor);
     return tutor;
