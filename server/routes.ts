@@ -8,6 +8,7 @@ import express from "express";
 import { HighLevelService } from "./services/high-level";
 import { TutorManagementService } from "./services/tutor-management";
 import { ClassSchedulerService } from "./services/class-scheduler";
+import { CalendarIntegrationService } from "./services/calendar-integration";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_fake_key", {
   apiVersion: "2025-05-28.basil",
@@ -25,6 +26,12 @@ const tutorManagement = new TutorManagementService(
 
 // Configurar servicio de programación de recordatorios
 const classScheduler = new ClassSchedulerService(
+  process.env.HIGH_LEVEL_API_KEY,
+  process.env.HIGH_LEVEL_LOCATION_ID
+);
+
+// Configurar servicio de integración de calendarios
+const calendarService = new CalendarIntegrationService(
   process.env.HIGH_LEVEL_API_KEY,
   process.env.HIGH_LEVEL_LOCATION_ID
 );
@@ -295,6 +302,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ message: "Class cancelled successfully" });
     } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Calendar Integration Routes
+  
+  // Get tutor availability for a specific date
+  app.get("/api/calendar/tutor/:tutorId/availability", async (req, res) => {
+    try {
+      const tutorId = parseInt(req.params.tutorId);
+      const { date } = req.query;
+      
+      if (!date || typeof date !== "string") {
+        return res.status(400).json({ message: "Date parameter is required" });
+      }
+      
+      const availability = await calendarService.getTutorAvailability(tutorId, date);
+      res.json(availability);
+    } catch (error) {
+      console.error("Error getting tutor availability:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Get all tutors availability for a date
+  app.get("/api/calendar/availability", async (req, res) => {
+    try {
+      const { date } = req.query;
+      
+      if (!date || typeof date !== "string") {
+        return res.status(400).json({ message: "Date parameter is required" });
+      }
+      
+      const availability = await calendarService.getAllTutorsAvailability(date);
+      res.json(availability);
+    } catch (error) {
+      console.error("Error getting all tutors availability:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Book a class with specific tutor
+  app.post("/api/calendar/book", async (req, res) => {
+    try {
+      const { userId, tutorId, date, startTime, endTime } = req.body;
+      
+      if (!userId || !tutorId || !date || !startTime || !endTime) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+      
+      const result = await calendarService.bookClassWithTutor(
+        userId,
+        tutorId,
+        date,
+        startTime,
+        endTime
+      );
+      
+      if (result.success) {
+        res.json({ message: result.message, appointmentId: result.appointmentId });
+      } else {
+        res.status(400).json({ message: result.message });
+      }
+    } catch (error) {
+      console.error("Error booking class:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Cancel a class (enhanced version)
+  app.put("/api/calendar/cancel/:classId", async (req, res) => {
+    try {
+      const classId = parseInt(req.params.classId);
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      
+      const result = await calendarService.cancelClass(classId, userId);
+      
+      if (result.success) {
+        res.json({ message: result.message });
+      } else {
+        res.status(400).json({ message: result.message });
+      }
+    } catch (error) {
+      console.error("Error cancelling class:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

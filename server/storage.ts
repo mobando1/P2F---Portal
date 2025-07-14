@@ -460,6 +460,10 @@ export class MemStorage implements IStorage {
       .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   }
 
+  async getClass(classId: number): Promise<Class | undefined> {
+    return this.classes.get(classId);
+  }
+
   async getUpcomingClasses(userId: number): Promise<Class[]> {
     const now = new Date();
     return Array.from(this.classes.values())

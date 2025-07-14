@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentUser, isAuthenticated } from "@/lib/auth";
 import { useLanguage, getLevelText } from "@/lib/i18n";
 import Header from "@/components/header";
+import { TutorCalendar } from "@/components/TutorCalendar";
 import { 
   Search, 
   Star, 
@@ -29,6 +31,8 @@ export default function TutorsPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
   const [selectedRating, setSelectedRating] = useState<string>("all");
+  const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const { data: tutors, isLoading } = useQuery<Tutor[]>({
     queryKey: ["/api/tutors"],
@@ -61,11 +65,20 @@ export default function TutorsPage() {
       return;
     }
 
+    const tutor = tutors?.find(t => t.id === tutorId);
+    if (tutor) {
+      setSelectedTutor(tutor);
+      setShowCalendar(true);
+    }
+  };
+
+  const handleBookingSuccess = () => {
+    setShowCalendar(false);
+    setSelectedTutor(null);
     toast({
-      title: language === 'es' ? "Calendario de Reservas" : "Booking Calendar",
-      description: language === 'es' ? "Redirigiendo al calendario para seleccionar fecha y hora..." : "Redirecting to calendar to select date and time...",
+      title: language === 'es' ? "¡Clase reservada exitosamente!" : "Class booked successfully!",
+      description: language === 'es' ? "Revisa tu dashboard para ver los detalles de la clase" : "Check your dashboard for class details",
     });
-    // In a real app, this would open a booking modal or redirect to calendar
   };
 
   const renderStars = (rating: number) => {
@@ -297,6 +310,25 @@ export default function TutorsPage() {
           </div>
         </div>
       </footer>
+
+      {/* Booking Calendar Dialog */}
+      <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-[#0A4A6E]">
+              {language === 'es' ? 'Reservar Clase' : 'Book Class'}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedTutor && user && (
+            <TutorCalendar
+              tutorId={selectedTutor.id}
+              tutorName={selectedTutor.name}
+              userId={user.id}
+              onBookingSuccess={handleBookingSuccess}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -139,6 +139,16 @@ A comprehensive client portal for Passport2Fluency online Spanish school featuri
 ✓ Modelo de negocio: suscripción mensual da acceso a todos los profesores sin costo adicional
 ✓ Corregí errores de TypeScript y estructura de datos para funcionamiento óptimo
 
+### July 14, 2025 - Sistema de Calendarios Integrado Híbrido
+✓ Diseñé arquitectura híbrida High Level + Portal para gestión de calendarios
+✓ Mantuve sistema actual para free trial (asignación automática de profesor)
+✓ Creé sistema avanzado para usuarios suscritos (selección específica de profesor)
+✓ Implementé CalendarIntegrationService para consultar disponibilidad en tiempo real
+✓ Agregué APIs para disponibilidad, reservas y cancelaciones: /api/calendar/*
+✓ Desarrollé componente TutorCalendar con selección de fecha y hora intuitiva
+✓ Integré modal de reservas en página de tutores con experiencia fluida
+✓ Documenté sistema completo en CALENDAR_SYSTEM_GUIDE.md para implementación
+
 ### Current Status
 - Interfaz de planes consolidada en página única optimizada
 - Portal híbrido listo para integración con Wix
