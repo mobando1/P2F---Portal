@@ -131,8 +131,8 @@ export default function Login() {
                   : 'You\'re one step away from starting! Sign in or register to complete your purchase.'
               ) : (
                 t.language === 'es' 
-                  ? 'Accede a tu portal de estudiante para reservar clases, ver tu progreso y explorar nuestros recursos.'
-                  : 'Access your student portal to book classes, track your progress, and explore our resources.'
+                  ? 'Accede a tu portal para comprar paquetes de clases, gestionar tu suscripción y reservar con tus profesores favoritos.'
+                  : 'Access your portal to buy class packages, manage your subscription, and book with your favorite teachers.'
               )}
             </p>
           </div>

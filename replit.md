@@ -121,6 +121,7 @@ A comprehensive client portal for Passport2Fluency online Spanish school featuri
 ✓ Configuré redirección inteligente post-login según origen
 ✓ Documenté flujo completo de ventas en SALES_FLOW_GUIDE.md
 ✓ Optimicé experiencia para conversión directa desde sitio web principal
+✓ Mejoré mensajes de login orientados a venta: "comprar paquetes, gestionar suscripción"
 
 ### Current Status
 - Flujo de ventas completo implementado y documentado
