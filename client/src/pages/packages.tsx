@@ -38,97 +38,104 @@ export default function PackagesPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const planParam = urlParams.get('plan');
     if (planParam) {
-      // Buscar en paquetes de clases
-      const packageMatch = classPackages.find(pkg => 
-        pkg.name.toLowerCase().includes(planParam.toLowerCase()) || 
-        pkg.classCount.toString() === planParam
-      );
-      if (packageMatch) {
-        setSelectedPackage(packageMatch);
+      // Buscar en planes de suscripción
+      let planMatch = null;
+      
+      // Mapear parámetros de URL a planes
+      if (planParam === '1-class' || planParam === '1') {
+        planMatch = subscriptionPlans.find(p => p.id === 1);
+      } else if (planParam === '2-class' || planParam === '2') {
+        planMatch = subscriptionPlans.find(p => p.id === 2);
+      } else if (planParam === '3-class' || planParam === '3') {
+        planMatch = subscriptionPlans.find(p => p.id === 3);
+      }
+      
+      if (planMatch) {
+        setSelectedPlan(planMatch);
       }
     }
-  }, []);
+  }, [subscriptionPlans]);
 
-  // Datos de ejemplo - en producción vendrían de la API
-  const classPackages: ClassPackage[] = [
-    {
-      id: 1,
-      name: t.language === 'es' ? '5 Clases' : '5 Classes',
-      classCount: 5,
-      price: 75,
-      discountPercent: 0,
-      perClassPrice: 15,
-    },
-    {
-      id: 2,
-      name: t.language === 'es' ? '10 Clases' : '10 Classes',
-      classCount: 10,
-      price: 140,
-      discountPercent: 10,
-      perClassPrice: 14,
-      popular: true,
-    },
-    {
-      id: 3,
-      name: t.language === 'es' ? '20 Clases' : '20 Classes',
-      classCount: 20,
-      price: 260,
-      discountPercent: 15,
-      perClassPrice: 13,
-    },
-    {
-      id: 4,
-      name: t.language === 'es' ? '30 Clases' : '30 Classes',
-      classCount: 30,
-      price: 360,
-      discountPercent: 20,
-      perClassPrice: 12,
-    },
-  ];
-
+  // Planes de suscripción basados en tu sitio web actual
   const subscriptionPlans: SubscriptionPlan[] = [
     {
       id: 1,
-      name: t.language === 'es' ? 'Básico' : 'Basic',
-      type: 'monthly',
-      classesIncluded: 4,
-      price: 49,
+      name: t.language === 'es' ? '1 Clase por Semana' : '1 Class per Week',
+      type: 'weekly',
+      classesIncluded: 4, // ~4 clases por mes
+      price: 119.96,
       discountPercent: 0,
       features: [
-        t.language === 'es' ? '4 clases por mes' : '4 classes per month',
-        t.language === 'es' ? 'Acceso a materiales' : 'Access to materials',
-        t.language === 'es' ? 'Soporte básico' : 'Basic support',
+        t.language === 'es' ? 'Progreso constante' : 'Steady progress',
+        t.language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
+        t.language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
+        t.language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
+        t.language === 'es' ? 'Soporte del profesor' : 'Teacher support',
+        t.language === 'es' ? 'Sin contrato' : 'No contract'
       ],
     },
     {
       id: 2,
-      name: t.language === 'es' ? 'Premium' : 'Premium',
-      type: 'monthly',
-      classesIncluded: 8,
-      price: 89,
-      discountPercent: 10,
+      name: t.language === 'es' ? '2 Clases por Semana' : '2 Classes per Week',
+      type: 'weekly',
+      classesIncluded: 8, // ~8 clases por mes
+      price: 219.99,
+      discountPercent: 18, // vs 2 × $119.96
       features: [
-        t.language === 'es' ? '8 clases por mes' : '8 classes per month',
-        t.language === 'es' ? 'Acceso completo a materiales' : 'Full access to materials',
-        t.language === 'es' ? 'Soporte prioritario' : 'Priority support',
-        t.language === 'es' ? 'Clases de conversación grupales' : 'Group conversation classes',
+        t.language === 'es' ? 'Progreso más rápido' : 'Faster progress',
+        t.language === 'es' ? 'Mejora conversacional semanal' : 'Weekly conversational improvement',
+        t.language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
+        t.language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
+        t.language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
+        t.language === 'es' ? 'Soporte del profesor' : 'Teacher support',
+        t.language === 'es' ? 'Sin contrato' : 'No contract'
       ],
       popular: true,
     },
     {
       id: 3,
-      name: t.language === 'es' ? 'Ilimitado' : 'Unlimited',
-      type: 'monthly',
-      classesIncluded: null,
-      price: 149,
-      discountPercent: 15,
+      name: t.language === 'es' ? '3 Clases por Semana' : '3 Classes per Week',
+      type: 'weekly',
+      classesIncluded: 12, // ~12 clases por mes
+      price: 299.99,
+      discountPercent: 25, // vs 3 × $119.96
       features: [
-        t.language === 'es' ? 'Clases ilimitadas' : 'Unlimited classes',
-        t.language === 'es' ? 'Acceso VIP a materiales' : 'VIP access to materials',
-        t.language === 'es' ? 'Soporte 24/7' : '24/7 support',
-        t.language === 'es' ? 'Clases grupales ilimitadas' : 'Unlimited group classes',
-        t.language === 'es' ? 'Sesiones de coaching' : 'Coaching sessions',
+        t.language === 'es' ? 'Para estudiantes serios que quieren resultados rápidos' : 'For serious learners who want results fast',
+        t.language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
+        t.language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
+        t.language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
+        t.language === 'es' ? 'Soporte del profesor' : 'Teacher support',
+        t.language === 'es' ? 'Sin contrato' : 'No contract'
       ],
+    },
+  ];
+
+  // Mantener paquetes de clases como opción adicional
+  const classPackages: ClassPackage[] = [
+    {
+      id: 1,
+      name: t.language === 'es' ? 'Paquete de 5 Clases' : '5-Class Package',
+      classCount: 5,
+      price: 149.95,
+      discountPercent: 0,
+      perClassPrice: 29.99,
+    },
+    {
+      id: 2,
+      name: t.language === 'es' ? 'Paquete de 10 Clases' : '10-Class Package',
+      classCount: 10,
+      price: 274.90,
+      discountPercent: 8,
+      perClassPrice: 27.49,
+      popular: true,
+    },
+    {
+      id: 3,
+      name: t.language === 'es' ? 'Paquete de 20 Clases' : '20-Class Package',
+      classCount: 20,
+      price: 499.80,
+      discountPercent: 17,
+      perClassPrice: 24.99,
     },
   ];
 

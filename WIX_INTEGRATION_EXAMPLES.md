@@ -2,32 +2,32 @@
 
 ## URLs para Botones de Compra en Wix
 
-### Paquete de 5 Clases
+### Plan 1 Clase por Semana
 ```html
-<a href="https://tu-portal.replit.app/login?plan=5&from=purchase" class="buy-button">
-  Comprar 5 Clases - $75
+<a href="https://tu-portal.replit.app/login?plan=1-class&from=purchase" class="buy-button">
+  Start Learning Now - $119.96/month
 </a>
 ```
 
-### Paquete de 10 Clases (Más Popular)
+### Plan 2 Clases por Semana (Más Popular)
 ```html
-<a href="https://tu-portal.replit.app/login?plan=10&from=purchase" class="buy-button popular">
-  Comprar 10 Clases - $140
+<a href="https://tu-portal.replit.app/login?plan=2-class&from=purchase" class="buy-button popular">
+  Choose This Plan - $219.99/month
 </a>
 ```
 
-### Paquete de 20 Clases
+### Plan 3 Clases por Semana
 ```html
-<a href="https://tu-portal.replit.app/login?plan=20&from=purchase" class="buy-button">
-  Comprar 20 Clases - $260
+<a href="https://tu-portal.replit.app/login?plan=3-class&from=purchase" class="buy-button">
+  Start Learning Now - $299.99/month
 </a>
 ```
 
-### Paquete de 30 Clases
+### URLs Alternativas con Números
 ```html
-<a href="https://tu-portal.replit.app/login?plan=30&from=purchase" class="buy-button">
-  Comprar 30 Clases - $360
-</a>
+<a href="https://tu-portal.replit.app/login?plan=1&from=purchase">1 Clase por Semana</a>
+<a href="https://tu-portal.replit.app/login?plan=2&from=purchase">2 Clases por Semana</a>
+<a href="https://tu-portal.replit.app/login?plan=3&from=purchase">3 Clases por Semana</a>
 ```
 
 ## Enlaces para Email Marketing
@@ -39,7 +39,7 @@ https://tu-portal.replit.app/login?from=trial
 
 ### Usuarios Interesados en Plan Específico
 ```
-https://tu-portal.replit.app/login?plan=10&from=email
+https://tu-portal.replit.app/login?plan=2-class&from=email
 ```
 
 ## Código JavaScript para Wix
@@ -54,7 +54,9 @@ export function buyPlan(planId) {
 }
 
 // Para usar en botones:
-// onClick: () => buyPlan(10)
+// onClick: () => buyPlan('2-class')
+// onClick: () => buyPlan('1-class')
+// onClick: () => buyPlan('3-class')
 ```
 
 ### Tracking de Conversiones

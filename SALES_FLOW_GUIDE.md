@@ -37,14 +37,13 @@
 
 ### Desde Wix a Portal
 ```
-https://portal.dominio.com/login?plan=5&from=purchase
-https://portal.dominio.com/login?plan=10&from=purchase
-https://portal.dominio.com/login?plan=20&from=purchase
-https://portal.dominio.com/login?plan=30&from=purchase
+https://portal.dominio.com/login?plan=1-class&from=purchase
+https://portal.dominio.com/login?plan=2-class&from=purchase
+https://portal.dominio.com/login?plan=3-class&from=purchase
 ```
 
 ### Parámetros Soportados
-- `plan`: Número de clases (5, 10, 20, 30)
+- `plan`: Identificador del plan (1-class, 2-class, 3-class) o número (1, 2, 3)
 - `from=purchase`: Indica origen desde compra
 - `from=trial`: Indica origen desde trial completado
 
