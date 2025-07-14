@@ -30,11 +30,11 @@ export default function TutorsPage() {
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
   const [selectedRating, setSelectedRating] = useState<string>("all");
 
-  const { data: tutors = [], isLoading } = useQuery<Tutor[]>({
+  const { data: tutors, isLoading } = useQuery<Tutor[]>({
     queryKey: ["/api/tutors"],
   });
 
-  // Filter tutors based on search criteria
+  // Filter tutors based on search criteria  
   const filteredTutors = (tutors || []).filter(tutor => {
     if (!tutor) return false;
     
@@ -182,17 +182,17 @@ export default function TutorsPage() {
                   <div className="flex items-start space-x-4 mb-4">
                     <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100">
                       <img 
-                        src={tutor.avatar || `https://ui-avatars.com/api/?name=${tutor.firstName}+${tutor.lastName}&size=64`}
-                        alt={`${tutor.firstName} ${tutor.lastName}`}
+                        src={tutor.avatar || `https://ui-avatars.com/api/?name=${tutor.name}&size=64`}
+                        alt={tutor.name}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-[#0A4A6E] text-lg">
-                        {tutor.firstName} {tutor.lastName}
+                        {tutor.name}
                       </h3>
                       <div className="flex items-center space-x-1 mb-1">
-                        {renderStars(tutor.rating)}
+                        {renderStars(parseFloat(tutor.rating))}
                         <span className="text-sm text-gray-600 ml-1">
                           ({tutor.rating})
                         </span>
@@ -208,10 +208,10 @@ export default function TutorsPage() {
                   <div className="mb-4">
                     <div className="flex items-center mb-2">
                       <Languages className="w-4 h-4 text-[#1C7BB1] mr-2" />
-                      <span className="text-sm font-medium text-[#0A4A6E]">{t.languages}</span>
+                      <span className="text-sm font-medium text-[#0A4A6E]">{t.language === 'es' ? 'Idiomas' : 'Languages'}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {tutor.languages.map((lang) => (
+                      {tutor.languages && tutor.languages.map((lang) => (
                         <Badge key={lang} variant="secondary" className="text-xs">
                           {lang}
                         </Badge>
@@ -219,38 +219,29 @@ export default function TutorsPage() {
                     </div>
                   </div>
 
-                  {/* Specialties */}
+                  {/* Specialization */}
                   <div className="mb-4">
                     <div className="flex items-center mb-2">
                       <GraduationCap className="w-4 h-4 text-[#1C7BB1] mr-2" />
                       <span className="text-sm font-medium text-[#0A4A6E]">{t.specialties}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {tutor.specialties.slice(0, 3).map((specialty) => (
-                        <Badge key={specialty} variant="outline" className="text-xs">
-                          {specialty}
-                        </Badge>
-                      ))}
-                      {tutor.specialties.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{tutor.specialties.length - 3} {language === 'es' ? 'más' : 'more'}
-                        </Badge>
-                      )}
+                      <Badge variant="outline" className="text-xs">
+                        {tutor.specialization}
+                      </Badge>
                     </div>
                   </div>
 
-                  {/* Teaching Levels */}
+                  {/* Experience */}
                   <div className="mb-4">
                     <div className="flex items-center mb-2">
                       <Clock className="w-4 h-4 text-[#1C7BB1] mr-2" />
-                      <span className="text-sm font-medium text-[#0A4A6E]">{t.levels}</span>
+                      <span className="text-sm font-medium text-[#0A4A6E]">{t.language === 'es' ? 'Experiencia' : 'Experience'}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {tutor.teachingLevels.map((level) => (
-                        <Badge key={level} variant="secondary" className="text-xs">
-                          {getLevelText(level, language)}
-                        </Badge>
-                      ))}
+                      <Badge variant="secondary" className="text-xs">
+                        {tutor.yearsOfExperience} {t.language === 'es' ? 'años' : 'years'}
+                      </Badge>
                     </div>
                   </div>
 
@@ -259,7 +250,7 @@ export default function TutorsPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">{t.pricePerClass}</span>
                       <span className="text-lg font-bold text-[#0A4A6E]">
-                        ${tutor.hourlyRate}{t.perHour}
+                        {tutor.hourlyRate}
                       </span>
                     </div>
                   </div>
