@@ -122,7 +122,7 @@ export default function Login() {
             {t.continueJourney}
           </p>
           
-          {/* Mensaje para usuarios nuevos que vienen desde Wix */}
+          {/* Mensaje contextual para usuarios */}
           <div className="mt-6 p-4 bg-gradient-to-r from-[#1C7BB1]/5 to-[#F59E1C]/5 rounded-lg border border-[#1C7BB1]/20">
             <p className="text-sm text-[#0A4A6E] text-center">
               {fromPurchase ? (
@@ -131,8 +131,8 @@ export default function Login() {
                   : 'You\'re one step away from starting! Sign in or register to complete your purchase.'
               ) : (
                 t.language === 'es' 
-                  ? '¿Completaste tu clase gratuita? ¡Perfecto! Ahora puedes acceder a tu portal de estudiante.'
-                  : 'Completed your free trial? Perfect! Now you can access your student portal.'
+                  ? 'Accede a tu portal de estudiante para reservar clases, ver tu progreso y explorar nuestros recursos.'
+                  : 'Access your student portal to book classes, track your progress, and explore our resources.'
               )}
             </p>
           </div>
