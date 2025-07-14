@@ -156,29 +156,29 @@ export default function PackagesPage() {
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-[#0A4A6E] mb-4">
-            {t.language === 'es' ? 'Encuentra el plan perfecto para hablar español con confianza' : 'Find the perfect plan to speak Spanish confidently'}
+        {/* Hero Section ACTUALIZADO */}
+        <div className="text-center mb-12 bg-gradient-to-r from-[#F59E1C] to-[#F59E1C]/80 text-white rounded-xl p-8">
+          <h1 className="text-5xl font-bold mb-4">
+            {t.language === 'es' ? '🚀 ¡NUEVO! Planes Optimizados para Tu Éxito' : '🚀 NEW! Optimized Plans for Your Success'}
           </h1>
-          <p className="text-xl text-[#0A4A6E]/70 mb-8">
+          <p className="text-2xl mb-8 opacity-90">
             {t.language === 'es' 
-              ? 'Planes flexibles diseñados para tu ritmo de aprendizaje'
-              : 'Flexible plans designed for your learning pace'
+              ? 'Ahora con garantía de 30 días y profesores nativos certificados'
+              : 'Now with 30-day guarantee and certified native teachers'
             }
           </p>
-          <div className="flex items-center justify-center gap-4 text-sm text-[#0A4A6E]/60">
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-[#F59E1C]" />
-              <span>{t.language === 'es' ? 'Profesores certificados' : 'Certified teachers'}</span>
+          <div className="flex items-center justify-center gap-6 text-lg">
+            <div className="flex items-center gap-2">
+              <Star className="w-6 h-6 text-white" />
+              <span className="font-semibold">{t.language === 'es' ? 'Profesores nativos' : 'Native teachers'}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4 text-[#F59E1C]" />
-              <span>{t.language === 'es' ? 'Horarios flexibles' : 'Flexible schedules'}</span>
+            <div className="flex items-center gap-2">
+              <Clock className="w-6 h-6 text-white" />
+              <span className="font-semibold">{t.language === 'es' ? 'Horarios 24/7' : '24/7 schedules'}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <CreditCard className="w-4 h-4 text-[#F59E1C]" />
-              <span>{t.language === 'es' ? 'Pago seguro' : 'Secure payment'}</span>
+            <div className="flex items-center gap-2">
+              <Shield className="w-6 h-6 text-white" />
+              <span className="font-semibold">{t.language === 'es' ? 'Garantía 30 días' : '30-day guarantee'}</span>
             </div>
           </div>
         </div>
@@ -327,85 +327,73 @@ export default function PackagesPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Sección de Garantía y Testimonios */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-[#0A4A6E] mb-4">
-                {t.language === 'es' ? '¿Por qué elegir Passport2Fluency?' : 'Why Choose Passport2Fluency?'}
-              </h2>
-              <p className="text-lg text-[#0A4A6E]/80">
-                {t.language === 'es' 
-                  ? 'Miles de estudiantes han logrado la fluidez con nosotros'
-                  : 'Thousands of students have achieved fluency with us'
-                }
-              </p>
-            </div>
-
+        {/* Nueva sección de valor agregado */}
+        <div className="bg-gradient-to-r from-[#1C7BB1] to-[#0A4A6E] text-white rounded-lg p-8 mb-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-4">
+              {t.language === 'es' ? '¿Por qué elegir Passport2Fluency?' : 'Why Choose Passport2Fluency?'}
+            </h2>
+            <p className="text-xl mb-8 opacity-90">
+              {t.language === 'es' 
+                ? 'Únete a más de 5,000 estudiantes que han logrado la fluidez'
+                : 'Join over 5,000 students who have achieved fluency'
+              }
+            </p>
+            
             <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <div className="text-center p-6 bg-[#EAF4FA] rounded-lg">
-                <div className="w-16 h-16 bg-[#1C7BB1] rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-[#0A4A6E] mb-2">
+                <h3 className="text-xl font-semibold mb-2">
                   {t.language === 'es' ? 'Profesores Nativos' : 'Native Teachers'}
                 </h3>
-                <p className="text-[#0A4A6E]/70">
+                <p className="opacity-90">
                   {t.language === 'es' 
-                    ? 'Todos certificados y con experiencia comprobada'
-                    : 'All certified with proven experience'
+                    ? 'Certificados y con experiencia comprobada'
+                    : 'Certified with proven experience'
                   }
                 </p>
               </div>
 
-              <div className="text-center p-6 bg-[#EAF4FA] rounded-lg">
-                <div className="w-16 h-16 bg-[#F59E1C] rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Shield className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-[#0A4A6E] mb-2">
-                  {t.language === 'es' ? 'Garantía de Satisfacción' : 'Satisfaction Guarantee'}
+                <h3 className="text-xl font-semibold mb-2">
+                  {t.language === 'es' ? 'Garantía 30 Días' : '30-Day Guarantee'}
                 </h3>
-                <p className="text-[#0A4A6E]/70">
+                <p className="opacity-90">
                   {t.language === 'es' 
-                    ? 'Si no estás satisfecho en los primeros 30 días, te devolvemos tu dinero'
-                    : 'If not satisfied within 30 days, we refund your money'
+                    ? 'Si no estás satisfecho, te devolvemos tu dinero'
+                    : 'If not satisfied, we refund your money'
                   }
                 </p>
               </div>
 
-              <div className="text-center p-6 bg-[#EAF4FA] rounded-lg">
-                <div className="w-16 h-16 bg-[#1C7BB1] rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Calendar className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-[#0A4A6E] mb-2">
+                <h3 className="text-xl font-semibold mb-2">
                   {t.language === 'es' ? 'Horarios Flexibles' : 'Flexible Schedules'}
                 </h3>
-                <p className="text-[#0A4A6E]/70">
+                <p className="opacity-90">
                   {t.language === 'es' 
-                    ? 'Reserva clases 24/7, adapta tu aprendizaje a tu vida'
-                    : 'Book classes 24/7, adapt learning to your life'
+                    ? 'Reserva clases 24/7, adapta a tu vida'
+                    : 'Book classes 24/7, adapt to your life'
                   }
                 </p>
               </div>
             </div>
 
-            <div className="border-t border-[#0A4A6E]/20 pt-8">
-              <div className="text-center">
-                <p className="text-lg text-[#0A4A6E]/80 mb-4">
-                  {t.language === 'es' 
-                    ? 'Únete a más de 5,000 estudiantes satisfechos'
-                    : 'Join over 5,000 satisfied students'
-                  }
-                </p>
-                <div className="flex justify-center items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} className="w-6 h-6 text-[#F59E1C] fill-current" />
-                  ))}
-                  <span className="text-[#0A4A6E]/80 ml-2">
-                    4.9/5 {t.language === 'es' ? 'estrellas' : 'stars'}
-                  </span>
-                </div>
-              </div>
+            <div className="flex justify-center items-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star key={star} className="w-6 h-6 text-[#F59E1C] fill-current" />
+              ))}
+              <span className="ml-2 text-lg font-semibold">
+                4.9/5 {t.language === 'es' ? 'estrellas' : 'stars'}
+              </span>
             </div>
           </div>
         </div>
