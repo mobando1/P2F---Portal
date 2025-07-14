@@ -51,8 +51,11 @@ export default function Header() {
             <Link href="/tutors" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
               {t.tutors}
             </Link>
+            <Link href="/packages" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
+              {t.language === 'es' ? 'Paquetes' : 'Packages'}
+            </Link>
             <Link href="/subscription" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              {t.plans}
+              {t.language === 'es' ? 'Suscripciones' : 'Subscriptions'}
             </Link>
             <Link href="/admin" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
               {t.admin}
