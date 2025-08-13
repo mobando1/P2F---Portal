@@ -208,6 +208,17 @@ export default function PackagesPage() {
       if (data.clientSecret) {
         // Redirigir a página de suscripción con el clientSecret
         window.location.href = `/subscribe?client_secret=${data.clientSecret}&plan_id=${plan.id}`;
+      } else if (data.subscriptionId) {
+        // Si no hay clientSecret pero sí subscriptionId, la suscripción ya está activa
+        toast({
+          title: t.language === 'es' ? "Suscripción Creada" : "Subscription Created",
+          description: t.language === 'es' ? "Tu suscripción ha sido activada exitosamente." : "Your subscription has been activated successfully.",
+        });
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1500);
+      } else {
+        throw new Error('No client secret or subscription ID received');
       }
     } catch (error) {
       console.error('Error creating subscription:', error);

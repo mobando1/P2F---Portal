@@ -521,7 +521,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      const paymentIntent = subscription.latest_invoice?.payment_intent;
+      const invoice = subscription.latest_invoice;
+      const paymentIntent = typeof invoice === 'string' ? null : invoice?.payment_intent;
 
       res.json({ 
         clientSecret: paymentIntent?.client_secret,
