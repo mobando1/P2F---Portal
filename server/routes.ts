@@ -463,28 +463,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/create-subscription", async (req, res) => {
     try {
-      const { planId, planName, price, classesIncluded } = req.body;
+      const { planId, userId } = req.body;
       
-      if (!planId || !planName || !price || !classesIncluded) {
+      if (!planId || !userId) {
         return res.status(400).json({ message: "Missing required subscription data" });
       }
+
+      // Map plan IDs to Stripe Price IDs
+      const stripePriceIds = {
+        1: process.env.STRIPE_PRICE_ID_PLAN_1, // 1 clase por semana
+        2: process.env.STRIPE_PRICE_ID_PLAN_2, // 2 clases por semana 
+        3: process.env.STRIPE_PRICE_ID_PLAN_3, // 3 clases por semana
+      };
+
+      const priceId = stripePriceIds[planId as keyof typeof stripePriceIds];
       
-      // Create payment intent for subscription (one-time payment for monthly access)
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(price * 100), // Convert to cents
-        currency: "usd",
-        description: `${planName} - Monthly Subscription`,
+      if (!priceId) {
+        return res.status(400).json({ message: "Invalid plan ID or Stripe Price ID not configured" });
+      }
+
+      // Get or create Stripe customer
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      let customerId = user.stripeCustomerId;
+      
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          metadata: {
+            userId: userId.toString(),
+            platform: "passport2fluency"
+          }
+        });
+        customerId = customer.id;
+        
+        // Update user with customer ID
+        await storage.updateUser(userId, { stripeCustomerId: customerId });
+      }
+
+      // Create subscription
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{
+          price: priceId,
+        }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['latest_invoice.payment_intent'],
         metadata: {
-          platform: "passport2fluency",
-          type: "subscription",
+          userId: userId.toString(),
           planId: planId.toString(),
-          planName: planName,
-          classesIncluded: classesIncluded.toString()
+          platform: "passport2fluency"
         }
       });
 
+      const paymentIntent = subscription.latest_invoice?.payment_intent;
+
       res.json({ 
-        clientSecret: paymentIntent.client_secret
+        clientSecret: paymentIntent?.client_secret,
+        subscriptionId: subscription.id
       });
     } catch (error: any) {
       console.error("Error creating subscription:", error);
@@ -492,7 +533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Webhook to handle successful payments
+  // Webhook to handle successful payments and subscription events
   app.post("/api/stripe-webhook", express.raw({type: 'application/json'}), async (req, res) => {
     try {
       const sig = req.headers['stripe-signature'] as string;
@@ -502,28 +543,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For development, parse the event directly
       const event = JSON.parse(req.body.toString());
 
+      console.log(`🔔 Webhook received: ${event.type}`);
+
+      // Handle one-time payments (packages)
       if (event.type === 'payment_intent.succeeded') {
         const paymentIntent = event.data.object;
-        const { userId, planType, classes } = paymentIntent.metadata;
+        const { userId, type, packageId } = paymentIntent.metadata;
 
-        if (userId && planType) {
-          // Update user subscription in database
-          await storage.createSubscription({
-            userId: parseInt(userId),
-            planName: `${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`,
-            planType: planType,
-            classesLimit: classes === "unlimited" ? null : parseInt(classes),
-            classesUsed: 0,
-            price: (paymentIntent.amount / 100).toString(),
-            status: "active",
-            stripeSubscriptionId: paymentIntent.id,
-            nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        if (userId && type === 'package' && packageId) {
+          // Handle package purchase
+          const user = await storage.getUser(parseInt(userId));
+          if (user) {
+            // Add credits to user account based on package
+            const packageCredits = {
+              '1': 5,   // 5-class package
+              '2': 10,  // 10-class package
+              '3': 20,  // 20-class package
+            };
+            
+            const credits = packageCredits[packageId as keyof typeof packageCredits] || 0;
+            await storage.updateUser(parseInt(userId), {
+              classCredits: (user.classCredits || 0) + credits
+            });
+            
+            console.log(`✅ Added ${credits} class credits to user ${userId}`);
+          }
+        }
+      }
+
+      // Handle subscription creation
+      if (event.type === 'customer.subscription.created' || event.type === 'invoice.payment_succeeded') {
+        const subscription = event.data.object;
+        const { userId, planId } = subscription.metadata || {};
+
+        if (userId && planId) {
+          const planDetails = {
+            1: { name: '1 Clase por Semana', classesIncluded: 4 },
+            2: { name: '2 Clases por Semana', classesIncluded: 8 },
+            3: { name: '3 Clases por Semana', classesIncluded: 12 },
+          };
+
+          const plan = planDetails[parseInt(planId) as keyof typeof planDetails];
+          
+          if (plan) {
+            // Create or update subscription in database
+            await storage.createSubscription({
+              userId: parseInt(userId),
+              planId: parseInt(planId),
+              stripeSubscriptionId: subscription.id,
+              status: 'active',
+              nextBillingDate: new Date(subscription.current_period_end * 1000),
+            });
+            
+            console.log(`✅ Created subscription for user ${userId}, plan ${planId}`);
+          }
+        }
+      }
+
+      // Handle subscription cancellation
+      if (event.type === 'customer.subscription.deleted') {
+        const subscription = event.data.object;
+        
+        // Update subscription status in database
+        const dbSubscription = await storage.getSubscriptionByStripeId(subscription.id);
+        if (dbSubscription) {
+          await storage.updateSubscription(dbSubscription.id, {
+            status: 'cancelled'
           });
+          console.log(`✅ Cancelled subscription ${subscription.id}`);
         }
       }
 
       res.json({received: true});
     } catch (error) {
+      console.error('Webhook error:', error);
       res.status(400).json({ message: "Webhook error" });
     }
   });

@@ -148,14 +148,21 @@ export default function PackagesPage() {
     setSelectedPackage(packageItem);
     
     try {
+      // Obtener el usuario actual del localStorage
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      if (!currentUser.id) {
+        throw new Error('Usuario no encontrado');
+      }
+
       // Crear PaymentIntent para paquete de clases
       const response = await apiRequest("POST", "/api/create-payment-intent", {
         amount: packageItem.price,
         metadata: {
-          type: 'class_package',
+          type: 'package',
           packageId: packageItem.id,
           packageName: packageItem.name,
-          classCount: packageItem.classCount
+          classCount: packageItem.classCount,
+          userId: currentUser.id
         }
       });
 
@@ -184,12 +191,16 @@ export default function PackagesPage() {
     setSelectedPlan(plan);
     
     try {
+      // Obtener el usuario actual del localStorage
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      if (!currentUser.id) {
+        throw new Error('Usuario no encontrado');
+      }
+
       // Crear suscripción en Stripe
       const response = await apiRequest("POST", "/api/create-subscription", {
         planId: plan.id,
-        planName: plan.name,
-        price: plan.price,
-        classesIncluded: plan.classesIncluded
+        userId: currentUser.id
       });
 
       const data = await response.json();
