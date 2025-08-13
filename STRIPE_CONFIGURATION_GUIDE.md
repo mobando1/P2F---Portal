@@ -101,11 +101,18 @@ Para que las suscripciones se registren automáticamente en la base de datos:
 
 ## Estructura de Precios por Plan
 
-| Plan | Clases/Mes | Precio/Mes | Price ID Variable |
-|------|------------|------------|------------------|
-| Plan 1 | 4 clases | $119.96 | STRIPE_PRICE_ID_PLAN_1 |
-| Plan 2 | 8 clases | $219.99 | STRIPE_PRICE_ID_PLAN_2 |
-| Plan 3 | 12 clases | $299.99 | STRIPE_PRICE_ID_PLAN_3 |
+| Plan | Nombre | Clases/Mes | Precio/Mes | Price ID Variable |
+|------|--------|------------|------------|------------------|
+| Plan 1 | Starter Flow | 4 clases | $119.96 | STRIPE_PRICE_ID_PLAN_1 |
+| Plan 2 | Momentum Plan | 8 clases | $219.99 | STRIPE_PRICE_ID_PLAN_2 |
+| Plan 3 | Fluency Boost | 12 clases | $299.99 | STRIPE_PRICE_ID_PLAN_3 |
+
+## Estado Actual - ✅ CONFIGURADO
+
+Los Price IDs están configurados correctamente:
+- **STRIPE_PRICE_ID_PLAN_1**: price_1RW1BcLeh4G0Mqb7bk0laWwE (Starter Flow)
+- **STRIPE_PRICE_ID_PLAN_2**: price_1RW18pLeh4G0Mqb7fLWu0VKI (Momentum Plan)
+- **STRIPE_PRICE_ID_PLAN_3**: price_1RW187Leh4G0Mqb7XgxzetzR (Fluency Boost)
 
 ## Notas Importantes
 

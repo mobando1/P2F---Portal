@@ -471,9 +471,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Map plan IDs to Stripe Price IDs
       const stripePriceIds = {
-        1: process.env.STRIPE_PRICE_ID_PLAN_1, // 1 clase por semana
-        2: process.env.STRIPE_PRICE_ID_PLAN_2, // 2 clases por semana 
-        3: process.env.STRIPE_PRICE_ID_PLAN_3, // 3 clases por semana
+        1: process.env.STRIPE_PRICE_ID_PLAN_1, // Starter Flow - 4 clases/mes
+        2: process.env.STRIPE_PRICE_ID_PLAN_2, // Momentum Plan - 8 clases/mes
+        3: process.env.STRIPE_PRICE_ID_PLAN_3, // Fluency Boost - 12 clases/mes
       };
 
       const priceId = stripePriceIds[planId as keyof typeof stripePriceIds];
@@ -578,9 +578,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (userId && planId) {
           const planDetails = {
-            1: { name: '1 Clase por Semana', classesIncluded: 4 },
-            2: { name: '2 Clases por Semana', classesIncluded: 8 },
-            3: { name: '3 Clases por Semana', classesIncluded: 12 },
+            1: { name: 'Starter Flow', classesIncluded: 4 },
+            2: { name: 'Momentum Plan', classesIncluded: 8 },
+            3: { name: 'Fluency Boost', classesIncluded: 12 },
           };
 
           const plan = planDetails[parseInt(planId) as keyof typeof planDetails];

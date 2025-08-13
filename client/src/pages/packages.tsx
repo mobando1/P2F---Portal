@@ -41,7 +41,7 @@ export default function PackagesPage() {
   const subscriptionPlans: SubscriptionPlan[] = [
     {
       id: 1,
-      name: t.language === 'es' ? '1 Clase por Semana' : '1 Class per Week',
+      name: 'Starter Flow',
       type: 'weekly',
       classesIncluded: 4, // ~4 clases por mes
       price: 119.96,
@@ -57,7 +57,7 @@ export default function PackagesPage() {
     },
     {
       id: 2,
-      name: t.language === 'es' ? '2 Clases por Semana' : '2 Classes per Week',
+      name: 'Momentum Plan',
       type: 'weekly',
       classesIncluded: 8, // ~8 clases por mes
       price: 219.99,
@@ -75,7 +75,7 @@ export default function PackagesPage() {
     },
     {
       id: 3,
-      name: t.language === 'es' ? '3 Clases por Semana' : '3 Classes per Week',
+      name: 'Fluency Boost',
       type: 'weekly',
       classesIncluded: 12, // ~12 clases por mes
       price: 299.99,
