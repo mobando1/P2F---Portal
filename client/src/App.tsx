@@ -11,6 +11,8 @@ import Login from "@/pages/login";
 import SubscriptionPage from "@/pages/subscription";
 import PackagesPage from "@/pages/packages";
 import TutorsPage from "@/pages/tutors";
+import CheckoutPage from "@/pages/checkout";
+import SubscribePage from "@/pages/subscribe";
 import NotFound from "@/pages/not-found";
 import AdminPage from "@/pages/admin";
 
@@ -43,6 +45,8 @@ function Router() {
       <Route path="/subscription">
         <Redirect to="/packages" />
       </Route>
+      <Route path="/checkout" component={CheckoutPage} />
+      <Route path="/subscribe" component={SubscribePage} />
       <Route path="/admin">
         <ProtectedRoute>
           <AdminPage />

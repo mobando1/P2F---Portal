@@ -438,63 +438,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe payment routes
   app.post("/api/create-payment-intent", async (req, res) => {
     try {
-      const { amount, description } = req.body;
+      const { amount, metadata = {} } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+      }
       
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // Convert to cents
         currency: "usd",
-        description: description || "Language class payment",
+        description: metadata.packageName || "Class package payment",
         metadata: {
-          platform: "passport2fluency"
+          platform: "passport2fluency",
+          ...metadata
         }
       });
       
       res.json({ clientSecret: paymentIntent.client_secret });
     } catch (error: any) {
+      console.error("Error creating payment intent:", error);
       res.status(500).json({ message: "Error creating payment intent: " + error.message });
     }
   });
 
   app.post("/api/create-subscription", async (req, res) => {
     try {
-      const { userId, planType, email } = req.body;
+      const { planId, planName, price, classesIncluded } = req.body;
       
-      // Create Stripe customer
-      const customer = await stripe.customers.create({
-        email: email,
-        metadata: { userId: userId.toString() }
-      });
-
-      // Define subscription plans
-      const plans = {
-        basic: { priceId: "price_basic", amount: 19.99, classes: 4 },
-        premium: { priceId: "price_premium", amount: 49.99, classes: 12 },
-        unlimited: { priceId: "price_unlimited", amount: 99.99, classes: null }
-      };
-
-      const selectedPlan = plans[planType as keyof typeof plans];
-      if (!selectedPlan) {
-        return res.status(400).json({ message: "Invalid plan type" });
+      if (!planId || !planName || !price || !classesIncluded) {
+        return res.status(400).json({ message: "Missing required subscription data" });
       }
-
-      // For demo purposes, create a payment intent instead of recurring subscription
+      
+      // Create payment intent for subscription (one-time payment for monthly access)
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(selectedPlan.amount * 100),
+        amount: Math.round(price * 100), // Convert to cents
         currency: "usd",
-        customer: customer.id,
-        description: `${planType.charAt(0).toUpperCase() + planType.slice(1)} Language Plan`,
+        description: `${planName} - Monthly Subscription`,
         metadata: {
-          userId: userId.toString(),
-          planType: planType,
-          classes: selectedPlan.classes?.toString() || "unlimited"
+          platform: "passport2fluency",
+          type: "subscription",
+          planId: planId.toString(),
+          planName: planName,
+          classesIncluded: classesIncluded.toString()
         }
       });
 
       res.json({ 
-        clientSecret: paymentIntent.client_secret,
-        customerId: customer.id 
+        clientSecret: paymentIntent.client_secret
       });
     } catch (error: any) {
+      console.error("Error creating subscription:", error);
       res.status(500).json({ message: "Error creating subscription: " + error.message });
     }
   });

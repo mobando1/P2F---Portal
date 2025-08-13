@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, CreditCard, Calendar, Star, Clock, Users, Shield } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
 
 interface ClassPackage {
@@ -30,8 +32,10 @@ interface SubscriptionPlan {
 
 export default function PackagesPage() {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [selectedPackage, setSelectedPackage] = useState<ClassPackage | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Planes de suscripción basados en tu sitio web actual
   const subscriptionPlans: SubscriptionPlan[] = [
@@ -137,16 +141,73 @@ export default function PackagesPage() {
     },
   ];
 
-  const handlePackagePurchase = (packageItem: ClassPackage) => {
+  const handlePackagePurchase = async (packageItem: ClassPackage) => {
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
     setSelectedPackage(packageItem);
-    // Aquí iría la lógica de Stripe para comprar paquetes
-    console.log('Comprando paquete:', packageItem);
+    
+    try {
+      // Crear PaymentIntent para paquete de clases
+      const response = await apiRequest("POST", "/api/create-payment-intent", {
+        amount: packageItem.price,
+        metadata: {
+          type: 'class_package',
+          packageId: packageItem.id,
+          packageName: packageItem.name,
+          classCount: packageItem.classCount
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.clientSecret) {
+        // Redirigir a página de checkout con el clientSecret
+        window.location.href = `/checkout?client_secret=${data.clientSecret}&type=package&id=${packageItem.id}`;
+      }
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      toast({
+        title: t.language === 'es' ? "Error de Pago" : "Payment Error",
+        description: t.language === 'es' ? "No se pudo procesar el pago. Intenta de nuevo." : "Could not process payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleSubscriptionPurchase = (plan: SubscriptionPlan) => {
+  const handleSubscriptionPurchase = async (plan: SubscriptionPlan) => {
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
     setSelectedPlan(plan);
-    // Aquí iría la lógica de Stripe para suscripciones
-    console.log('Suscribiéndose a:', plan);
+    
+    try {
+      // Crear suscripción en Stripe
+      const response = await apiRequest("POST", "/api/create-subscription", {
+        planId: plan.id,
+        planName: plan.name,
+        price: plan.price,
+        classesIncluded: plan.classesIncluded
+      });
+
+      const data = await response.json();
+      
+      if (data.clientSecret) {
+        // Redirigir a página de suscripción con el clientSecret
+        window.location.href = `/subscribe?client_secret=${data.clientSecret}&plan_id=${plan.id}`;
+      }
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      toast({
+        title: t.language === 'es' ? "Error de Suscripción" : "Subscription Error",
+        description: t.language === 'es' ? "No se pudo crear la suscripción. Intenta de nuevo." : "Could not create subscription. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -245,10 +306,21 @@ export default function PackagesPage() {
                       </div>
                     </div>
                     <Button 
-                      className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+                      className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E] disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={() => handlePackagePurchase(pkg)}
+                      disabled={isProcessing}
                     >
-                      {t.language === 'es' ? 'Comprar Ahora' : 'Buy Now'}
+                      {isProcessing && selectedPackage?.id === pkg.id ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          {t.language === 'es' ? 'Procesando...' : 'Processing...'}
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          {t.language === 'es' ? 'Comprar Ahora' : 'Buy Now'}
+                        </>
+                      )}
                     </Button>
                   </CardContent>
                 </Card>
@@ -307,16 +379,27 @@ export default function PackagesPage() {
                       ))}
                     </div>
                     <Button 
-                      className={`w-full ${plan.popular 
+                      className={`w-full disabled:opacity-50 disabled:cursor-not-allowed ${plan.popular 
                         ? 'bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white' 
                         : 'bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white'
                       }`}
                       onClick={() => handleSubscriptionPurchase(plan)}
+                      disabled={isProcessing}
                     >
-                      {plan.popular 
-                        ? (t.language === 'es' ? 'Elegir Este Plan' : 'Choose This Plan')
-                        : (t.language === 'es' ? 'Comenzar Ahora' : 'Start Learning Now')
-                      }
+                      {isProcessing && selectedPlan?.id === plan.id ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          {t.language === 'es' ? 'Creando suscripción...' : 'Creating subscription...'}
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          {plan.popular 
+                            ? (t.language === 'es' ? 'Elegir Este Plan' : 'Choose This Plan')
+                            : (t.language === 'es' ? 'Comenzar Ahora' : 'Start Learning Now')
+                          }
+                        </>
+                      )}
                     </Button>
                   </CardContent>
                 </Card>
