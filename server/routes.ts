@@ -795,6 +795,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para extraer Price ID de Payment Links de Stripe
+  app.post("/api/extract-price-id", async (req, res) => {
+    try {
+      const { paymentLinkUrl } = req.body;
+      
+      if (!paymentLinkUrl) {
+        return res.status(400).json({ message: "Payment Link URL is required" });
+      }
+
+      // Extraer el Payment Link ID de la URL
+      const linkId = paymentLinkUrl.split('/').pop()?.split('?')[0];
+      
+      if (!linkId) {
+        return res.status(400).json({ message: "Invalid Payment Link URL format" });
+      }
+
+      // Obtener información del Payment Link desde Stripe
+      const paymentLink = await stripe.paymentLinks.retrieve(linkId, {
+        expand: ['line_items']
+      });
+
+      // Verificar que existen line_items
+      if (!paymentLink.line_items?.data?.length) {
+        return res.status(400).json({ message: "No line items found in payment link" });
+      }
+
+      // Extraer información del precio
+      const lineItem = paymentLink.line_items.data[0];
+      
+      if (!lineItem.price) {
+        return res.status(400).json({ message: "No price information found" });
+      }
+
+      const priceInfo = {
+        priceId: lineItem.price.id,
+        amount: lineItem.price.unit_amount || 0,
+        currency: lineItem.price.currency,
+        productId: lineItem.price.product,
+        nickname: lineItem.price.nickname,
+        interval: lineItem.price.recurring?.interval,
+        intervalCount: lineItem.price.recurring?.interval_count
+      };
+
+      console.log(`🔍 Price ID extraído: ${priceInfo.priceId}`);
+      console.log(`💰 Precio: ${priceInfo.amount / 100} ${priceInfo.currency.toUpperCase()}`);
+      
+      res.json(priceInfo);
+    } catch (error: any) {
+      console.error('Error extracting Price ID:', error);
+      res.status(500).json({ message: "Error extracting Price ID: " + error.message });
+    }
+  });
+
   // Iniciar el servicio de recordatorios automáticos
   if (process.env.HIGH_LEVEL_API_KEY && process.env.HIGH_LEVEL_LOCATION_ID) {
     classScheduler.startReminderService();
