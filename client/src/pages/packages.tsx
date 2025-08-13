@@ -193,41 +193,57 @@ export default function PackagesPage() {
     try {
       // Obtener el usuario actual del localStorage
       const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!currentUser.id) {
-        throw new Error('Usuario no encontrado');
+      console.log('Current user:', currentUser);
+      
+      if (!currentUser || !currentUser.id) {
+        throw new Error('Usuario no encontrado en localStorage');
       }
 
       console.log('Creating subscription for plan:', plan.id, 'user:', currentUser.id);
 
       // Crear suscripción en Stripe directamente usando fetch
+      const requestBody = {
+        planId: plan.id,
+        userId: currentUser.id
+      };
+      
+      console.log('Request body:', requestBody);
+
       const response = await fetch("/api/create-subscription", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          planId: plan.id,
-          userId: currentUser.id
-        }),
+        body: JSON.stringify(requestBody),
         credentials: "include",
       });
 
       console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error:', errorText);
+        console.error('API Error Response:', errorText);
         throw new Error(`API Error: ${response.status} - ${errorText}`);
       }
 
-      const data = await response.json();
-      console.log('Response data:', data);
+      const responseText = await response.text();
+      console.log('Raw response text:', responseText);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Parsed response data:', data);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        throw new Error(`Invalid JSON response: ${responseText}`);
+      }
       
       if (data.clientSecret) {
-        // Redirigir a página de suscripción con el clientSecret
+        console.log('Redirecting to subscribe page with clientSecret');
         window.location.href = `/subscribe?client_secret=${data.clientSecret}&plan_id=${plan.id}`;
       } else if (data.subscriptionId) {
-        // Si no hay clientSecret pero sí subscriptionId, la suscripción ya está activa
+        console.log('Subscription created successfully:', data.subscriptionId);
         toast({
           title: t.language === 'es' ? "Suscripción Creada" : "Subscription Created",
           description: t.language === 'es' ? "Tu suscripción ha sido activada exitosamente." : "Your subscription has been activated successfully.",
@@ -241,13 +257,15 @@ export default function PackagesPage() {
       }
     } catch (error) {
       console.error('Error creating subscription:', error);
+      console.error('Error stack:', error.stack);
       toast({
         title: t.language === 'es' ? "Error de Suscripción" : "Subscription Error",
-        description: t.language === 'es' ? "No se pudo crear la suscripción. Intenta de nuevo." : "Could not create subscription. Please try again.",
+        description: error.message || (t.language === 'es' ? "No se pudo crear la suscripción. Intenta de nuevo." : "Could not create subscription. Please try again."),
         variant: "destructive",
       });
     } finally {
       setIsProcessing(false);
+      setSelectedPlan(null);
     }
   };
 
