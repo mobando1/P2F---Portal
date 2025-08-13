@@ -197,13 +197,31 @@ export default function PackagesPage() {
         throw new Error('Usuario no encontrado');
       }
 
-      // Crear suscripción en Stripe
-      const response = await apiRequest("POST", "/api/create-subscription", {
-        planId: plan.id,
-        userId: currentUser.id
+      console.log('Creating subscription for plan:', plan.id, 'user:', currentUser.id);
+
+      // Crear suscripción en Stripe directamente usando fetch
+      const response = await fetch("/api/create-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          planId: plan.id,
+          userId: currentUser.id
+        }),
+        credentials: "include",
       });
 
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error:', errorText);
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+
       const data = await response.json();
+      console.log('Response data:', data);
       
       if (data.clientSecret) {
         // Redirigir a página de suscripción con el clientSecret
@@ -218,6 +236,7 @@ export default function PackagesPage() {
           window.location.href = '/dashboard';
         }, 1500);
       } else {
+        console.error('Unexpected response format:', data);
         throw new Error('No client secret or subscription ID received');
       }
     } catch (error) {
