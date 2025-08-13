@@ -2,9 +2,92 @@ import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, CreditCard, Check } from "lucide-react";
+import { ArrowLeft, CreditCard, Check, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import Header from "@/components/header";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { useToast } from "@/hooks/use-toast";
+
+// Initialize Stripe
+if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+}
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+
+// Subscription Form Component
+function SubscriptionForm({ planInfo }: { planInfo: any }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const { toast } = useToast();
+  const { language } = useLanguage();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/dashboard?subscription=success`,
+        },
+      });
+
+      if (error) {
+        toast({
+          title: language === 'es' ? "Error en la Suscripción" : "Subscription Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: language === 'es' ? "Error en la Suscripción" : "Subscription Failed",
+        description: language === 'es' ? "Ocurrió un error inesperado" : "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <PaymentElement 
+        options={{
+          layout: "tabs"
+        }}
+      />
+      <Button 
+        type="submit" 
+        disabled={!stripe || !elements || isLoading}
+        className={`w-full text-white ${planInfo.popular 
+          ? 'bg-[#F59E1C] hover:bg-[#F59E1C]/90' 
+          : 'bg-[#1C7BB1] hover:bg-[#0A4A6E]'
+        }`}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            {language === 'es' ? 'Procesando...' : 'Processing...'}
+          </>
+        ) : (
+          <>
+            <CreditCard className="w-4 h-4 mr-2" />
+            {language === 'es' ? 'Suscribirse Ahora' : 'Subscribe Now'} • ${planInfo.price}/mes
+          </>
+        )}
+      </Button>
+    </form>
+  );
+}
 
 export default function SubscribePage() {
   const { t, language } = useLanguage();
@@ -212,26 +295,21 @@ export default function SubscribePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-[#1C7BB1]/10 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <CreditCard className="w-8 h-8 text-[#1C7BB1]" />
+              {clientSecret ? (
+                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                  <SubscriptionForm planInfo={planInfo} />
+                </Elements>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="animate-spin w-8 h-8 border-4 border-[#1C7BB1] border-t-transparent rounded-full mx-auto mb-4" />
+                  <p className="text-gray-600">
+                    {language === 'es' 
+                      ? 'Preparando formulario de suscripción...'
+                      : 'Preparing subscription form...'
+                    }
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold text-[#0A4A6E] mb-2">
-                  {language === 'es' ? 'Integración de Stripe' : 'Stripe Integration'}
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  {language === 'es' 
-                    ? 'El formulario de pago seguro de Stripe se integrará aquí'
-                    : 'Stripe secure payment form will be integrated here'
-                  }
-                </p>
-                <Button className={planInfo.popular 
-                  ? 'bg-[#F59E1C] hover:bg-[#F59E1C]/90' 
-                  : 'bg-[#1C7BB1] hover:bg-[#0A4A6E]'
-                }>
-                  {language === 'es' ? 'Suscribirse Ahora' : 'Subscribe Now'}
-                </Button>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
