@@ -360,4 +360,133 @@ Equipo Passport2Fluency`;
       throw error;
     }
   }
+
+  // Métodos para gestión de calendarios y citas
+  
+  // Obtener disponibilidad de calendario para un tutor
+  async getCalendarAvailability(tutorId: string, startDate: string, endDate: string) {
+    try {
+      const response = await this.makeRequest(
+        `/calendars/availability?userId=${tutorId}&startDate=${startDate}&endDate=${endDate}`
+      );
+      return response.slots || [];
+    } catch (error) {
+      console.error("Error getting calendar availability:", error);
+      return [];
+    }
+  }
+
+  // Crear cita en calendario de High Level
+  async createAppointment(appointmentData: {
+    contactId: string;
+    tutorId: string;
+    startTime: string;
+    endTime: string;
+    title: string;
+    description?: string;
+  }) {
+    try {
+      const data = {
+        calendarId: appointmentData.tutorId,
+        contactId: appointmentData.contactId,
+        startTime: appointmentData.startTime,
+        endTime: appointmentData.endTime,
+        title: appointmentData.title,
+        description: appointmentData.description || "",
+        locationId: this.locationId,
+        appointmentStatus: "confirmed"
+      };
+
+      const response = await this.makeRequest("/appointments", "POST", data);
+      return response.appointment;
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      throw error;
+    }
+  }
+
+  // Actualizar estado de cita (completada, cancelada, etc.)
+  async updateAppointmentStatus(appointmentId: string, status: string) {
+    try {
+      const data = {
+        appointmentStatus: status
+      };
+
+      const response = await this.makeRequest(`/appointments/${appointmentId}`, "PUT", data);
+      return response.appointment;
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+      throw error;
+    }
+  }
+
+  // Obtener citas de un contacto
+  async getContactAppointments(contactId: string) {
+    try {
+      const response = await this.makeRequest(`/contacts/${contactId}/appointments`);
+      return response.appointments || [];
+    } catch (error) {
+      console.error("Error getting contact appointments:", error);
+      return [];
+    }
+  }
+
+  // Cancelar cita
+  async cancelAppointment(appointmentId: string, reason?: string) {
+    try {
+      const data = {
+        appointmentStatus: "cancelled",
+        notes: reason || "Cancelled by user"
+      };
+
+      const response = await this.makeRequest(`/appointments/${appointmentId}`, "PUT", data);
+      return response.appointment;
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+      throw error;
+    }
+  }
+
+  // Webhook para recibir actualizaciones de citas
+  async handleAppointmentWebhook(webhookData: any) {
+    try {
+      const { appointmentId, status, contactId, startTime, endTime } = webhookData;
+      
+      // Aquí puedes actualizar tu base de datos local
+      // basado en los cambios recibidos de High Level
+      
+      console.log(`Appointment ${appointmentId} status changed to: ${status}`);
+      
+      return {
+        success: true,
+        appointmentId,
+        status
+      };
+    } catch (error) {
+      console.error("Error handling appointment webhook:", error);
+      throw error;
+    }
+  }
+
+  // Obtener contacto por ID
+  async getContactById(contactId: string) {
+    try {
+      const response = await this.makeRequest(`/contacts/${contactId}`);
+      return response.contact;
+    } catch (error) {
+      console.error("Error getting contact:", error);
+      return null;
+    }
+  }
+
+  // Eliminar contacto
+  async deleteContact(contactId: string) {
+    try {
+      await this.makeRequest(`/contacts/${contactId}`, "DELETE");
+      return true;
+    } catch (error) {
+      console.error("Error deleting contact:", error);
+      return false;
+    }
+  }
 }

@@ -370,6 +370,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+  // Webhook para recibir actualizaciones de High Level
+  app.post("/api/high-level/webhook", async (req, res) => {
+    try {
+      const webhookData = req.body;
+      
+      // Manejar diferentes tipos de eventos de High Level
+      if (webhookData.type === 'appointment.completed') {
+        // Marcar clase como completada automáticamente
+        const appointmentId = webhookData.appointmentId;
+        
+        // Buscar la clase en la base de datos
+        const classes = await storage.getAllClasses();
+        const classToUpdate = classes.find(c => c.highLevelAppointmentId === appointmentId);
+        
+        if (classToUpdate) {
+          await storage.updateClass(classToUpdate.id, { status: 'completed' });
+          console.log(`Clase ${classToUpdate.id} marcada como completada automáticamente`);
+        }
+      }
+      
+      if (webhookData.type === 'appointment.cancelled') {
+        // Manejar cancelaciones desde High Level
+        const appointmentId = webhookData.appointmentId;
+        
+        const classes = await storage.getAllClasses();
+        const classToCancel = classes.find(c => c.highLevelAppointmentId === appointmentId);
+        
+        if (classToCancel) {
+          await storage.updateClass(classToCancel.id, { status: 'cancelled' });
+          console.log(`Clase ${classToCancel.id} cancelada desde High Level`);
+        }
+      }
+
+      // Responder a High Level que el webhook fue procesado
+      res.json({ success: true, processed: true });
+    } catch (error) {
+      console.error("Error processing High Level webhook:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
   
   // Cancel a class (enhanced version)
   app.put("/api/calendar/cancel/:classId", async (req, res) => {
