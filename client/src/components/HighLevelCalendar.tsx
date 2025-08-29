@@ -15,34 +15,22 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const scriptLoadedRef = useRef(false);
 
-  useEffect(() => {
-    if (isOpen && tutor.highLevelCalendarId && !scriptLoadedRef.current) {
-      const script = document.createElement('script');
-      script.src = 'https://api.leadconnectorhq.com/js/form_embed.js';
-      script.type = 'text/javascript';
-      script.onload = () => {
-        scriptLoadedRef.current = true;
-      };
-      document.head.appendChild(script);
-
-      return () => {
-        const existingScript = document.querySelector('script[src="https://api.leadconnectorhq.com/js/form_embed.js"]');
-        if (existingScript) {
-          existingScript.remove();
-        }
-      };
-    }
-  }, [isOpen, tutor.highLevelCalendarId]);
+  // Script de High Level se carga automáticamente cuando el iframe se monta
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.origin === 'https://api.leadconnectorhq.com') {
-        if (event.data?.type === 'booking_completed' || event.data?.type === 'appointment_booked') {
-          console.log('📅 Reserva completada en High Level:', event.data);
-          if (onBookingComplete) {
-            onBookingComplete();
+      try {
+        if (event.origin === 'https://api.leadconnectorhq.com' || event.origin.includes('leadconnectorhq.com')) {
+          console.log('📅 Mensaje de High Level:', event.data);
+          if (event.data?.type === 'booking_completed' || event.data?.type === 'appointment_booked') {
+            console.log('✅ Reserva completada en High Level:', event.data);
+            if (onBookingComplete) {
+              onBookingComplete();
+            }
           }
         }
+      } catch (error) {
+        console.log('Error procesando mensaje:', error);
       }
     };
 
@@ -56,7 +44,7 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
     return null;
   }
 
-  const calendarUrl = `https://api.leadconnectorhq.com/widget/booking/${tutor.highLevelCalendarId}`;
+  const calendarUrl = `https://api.leadconnectorhq.com/widget/booking/${tutor.highLevelCalendarId}?location_id=R5AR05D5vU38A6wUS0R7`;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -102,9 +90,10 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
                 overflow: 'hidden'
               }}
               scrolling="no"
-              id={`${tutor.highLevelCalendarId}_${Date.now()}`}
+              id={`hl_calendar_${Date.now()}`}
               title={`Calendario de ${tutor.name}`}
               className="w-full"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             />
           </div>
           
