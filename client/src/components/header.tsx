@@ -61,9 +61,9 @@ export default function Header() {
             <a href="#" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
               {t.about}
             </a>
-            <a href="#" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
+            <Link href="/contact" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
               {t.contact}
-            </a>
+            </Link>
           </nav>
 
           {/* User Profile & Login */}
