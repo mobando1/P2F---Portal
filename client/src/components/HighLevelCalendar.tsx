@@ -22,6 +22,18 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
       try {
         if (event.origin === 'https://api.leadconnectorhq.com' || event.origin.includes('leadconnectorhq.com')) {
           console.log('📅 Mensaje de High Level:', event.data);
+          
+          // Manejar resize del iframe
+          if (event.data && event.data[0] === 'highlevel.setHeight') {
+            const heightData = event.data[1];
+            if (heightData && heightData.height && iframeRef.current) {
+              const newHeight = Math.max(heightData.height, 600);
+              iframeRef.current.style.height = `${newHeight}px`;
+              console.log(`📏 Ajustando altura del iframe: ${newHeight}px`);
+            }
+          }
+          
+          // Manejar completación de reserva
           if (event.data?.type === 'booking_completed' || event.data?.type === 'appointment_booked') {
             console.log('✅ Reserva completada en High Level:', event.data);
             if (onBookingComplete) {
@@ -48,7 +60,7 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+      <DialogContent className="max-w-5xl max-h-[95vh] p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-xl font-semibold text-blue-800">
             Agendar Clase con {tutor.name}
@@ -58,7 +70,7 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
           </DialogDescription>
         </DialogHeader>
         
-        <div className="px-6 pb-6">
+        <div className="px-6 pb-6 max-h-[calc(95vh-120px)] overflow-auto">
           <div className="flex items-center justify-end mb-4 gap-2">
             <Button
               variant="outline"
@@ -79,21 +91,25 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
             </Button>
           </div>
           
-          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white relative">
             <iframe
               ref={iframeRef}
               src={calendarUrl}
               style={{ 
                 width: '100%', 
-                height: '600px',
+                height: '908px',
+                minHeight: '600px',
                 border: 'none',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                display: 'block'
               }}
               scrolling="no"
-              id={`hl_calendar_${Date.now()}`}
+              id="msgsndr-calendar"
+              name="msgsndr-calendar"
               title={`Calendario de ${tutor.name}`}
               className="w-full"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
+              allow="geolocation; microphone; camera"
             />
           </div>
           
