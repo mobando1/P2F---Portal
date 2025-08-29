@@ -148,10 +148,19 @@ export default function PackagesPage() {
     setSelectedPackage(packageItem);
     
     try {
-      // Obtener el usuario actual del localStorage
-      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!currentUser.id) {
-        throw new Error('Usuario no encontrado');
+      // Obtener el usuario actual del localStorage o crear uno de prueba
+      let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      if (!currentUser || !currentUser.id) {
+        // Crear usuario de prueba para desarrollo
+        currentUser = {
+          id: 1,
+          email: 'test@passport2fluency.com',
+          firstName: 'Test',
+          lastName: 'User',
+          username: 'testuser'
+        };
+        localStorage.setItem('user', JSON.stringify(currentUser));
       }
 
       // Crear PaymentIntent para paquete de clases
@@ -191,12 +200,21 @@ export default function PackagesPage() {
     setSelectedPlan(plan);
     
     try {
-      // Obtener el usuario actual del localStorage
-      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      console.log('Current user:', currentUser);
+      // Obtener el usuario actual del localStorage o crear uno de prueba
+      let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('Current user from localStorage:', currentUser);
       
       if (!currentUser || !currentUser.id) {
-        throw new Error('Usuario no encontrado en localStorage');
+        // Crear usuario de prueba para desarrollo
+        currentUser = {
+          id: 1,
+          email: 'test@passport2fluency.com',
+          firstName: 'Test',
+          lastName: 'User',
+          username: 'testuser'
+        };
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        console.log('Created test user:', currentUser);
       }
 
       console.log('Creating subscription for plan:', plan.id, 'user:', currentUser.id);

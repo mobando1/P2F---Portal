@@ -13,6 +13,7 @@ import PackagesPage from "@/pages/packages";
 import TutorsPage from "@/pages/tutors";
 import CheckoutPage from "@/pages/checkout";
 import SubscribePage from "@/pages/subscribe";
+import ContactPage from "@/pages/contact";
 import NotFound from "@/pages/not-found";
 import AdminPage from "@/pages/admin";
 
@@ -47,6 +48,7 @@ function Router() {
       </Route>
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/subscribe" component={SubscribePage} />
+      <Route path="/contact" component={ContactPage} />
       <Route path="/admin">
         <ProtectedRoute>
           <AdminPage />
