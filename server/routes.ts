@@ -375,40 +375,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/high-level/webhook", async (req, res) => {
     try {
       const webhookData = req.body;
+      console.log("📨 Webhook recibido de High Level:", JSON.stringify(webhookData, null, 2));
       
-      // Manejar diferentes tipos de eventos de High Level
-      if (webhookData.type === 'appointment.completed') {
-        // Marcar clase como completada automáticamente
+      // Procesar evento de cita completada
+      if (webhookData.appointmentId && webhookData.status === 'completed') {
         const appointmentId = webhookData.appointmentId;
+        const contactId = webhookData.contactId;
+        
+        console.log(`🔍 Buscando clase con appointmentId: ${appointmentId}`);
         
         // Buscar la clase en la base de datos
         const classes = await storage.getAllClasses();
         const classToUpdate = classes.find(c => c.highLevelAppointmentId === appointmentId);
         
         if (classToUpdate) {
+          // Marcar clase como completada
           await storage.updateClass(classToUpdate.id, { status: 'completed' });
-          console.log(`Clase ${classToUpdate.id} marcada como completada automáticamente`);
+          console.log(`✅ Clase ${classToUpdate.id} marcada como completada automáticamente`);
+          
+          // Descontar clase del balance del usuario
+          const user = await storage.getUser(classToUpdate.userId);
+          if (user && user.classCredits && user.classCredits > 0) {
+            const newCredits = user.classCredits - 1;
+            await storage.updateUser(user.id, { classCredits: newCredits });
+            console.log(`💳 Créditos actualizados: ${user.firstName} ${user.lastName} - ${user.classCredits} → ${newCredits}`);
+          }
+          
+          // Opcional: Enviar notificación de clase completada
+          if (highLevelService && user) {
+            const tutor = await storage.getTutor(classToUpdate.tutorId);
+            if (tutor) {
+              const completionMessage = `¡Clase completada! 
+
+Gracias por tu clase de español, ${user.firstName}. 
+
+Resumen:
+📅 Fecha: ${new Date(classToUpdate.scheduledAt).toLocaleDateString()}
+👨‍🏫 Profesor: ${tutor.name}
+⏱️ Duración: ${classToUpdate.duration} minutos
+
+Créditos restantes: ${newCredits || 0}
+
+¡Esperamos verte en tu próxima clase!
+Passport2Fluency`;
+
+              await highLevelService.sendCustomMessage(contactId, completionMessage);
+              console.log(`📧 Notificación de completado enviada a ${user.email}`);
+            }
+          }
+          
+        } else {
+          console.log(`⚠️ No se encontró clase con appointmentId: ${appointmentId}`);
         }
       }
       
-      if (webhookData.type === 'appointment.cancelled') {
-        // Manejar cancelaciones desde High Level
+      // Procesar evento de cita cancelada
+      if (webhookData.appointmentId && webhookData.status === 'cancelled') {
         const appointmentId = webhookData.appointmentId;
+        
+        console.log(`🔍 Procesando cancelación para appointmentId: ${appointmentId}`);
         
         const classes = await storage.getAllClasses();
         const classToCancel = classes.find(c => c.highLevelAppointmentId === appointmentId);
         
         if (classToCancel) {
           await storage.updateClass(classToCancel.id, { status: 'cancelled' });
-          console.log(`Clase ${classToCancel.id} cancelada desde High Level`);
+          console.log(`❌ Clase ${classToCancel.id} cancelada desde High Level`);
+          
+          // Restaurar crédito si la clase fue cancelada
+          const user = await storage.getUser(classToCancel.userId);
+          if (user) {
+            const newCredits = (user.classCredits || 0) + 1;
+            await storage.updateUser(user.id, { classCredits: newCredits });
+            console.log(`🔄 Crédito restaurado: ${user.firstName} ${user.lastName} - Créditos: ${newCredits}`);
+          }
         }
       }
 
       // Responder a High Level que el webhook fue procesado
-      res.json({ success: true, processed: true });
+      res.json({ 
+        success: true, 
+        processed: true,
+        message: "Webhook procesado correctamente"
+      });
     } catch (error) {
-      console.error("Error processing High Level webhook:", error);
-      res.status(500).json({ success: false, error: error.message });
+      console.error("❌ Error processing High Level webhook:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message,
+        message: "Error procesando webhook"
+      });
     }
   });
   
