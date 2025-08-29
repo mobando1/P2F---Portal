@@ -145,4 +145,52 @@ X-Webhook-Secret: tu_secreto_aqui_123
 **URL de Desarrollo**: `https://tu-repl-name.replit.app/api/high-level/webhook`
 **URL de Producción**: `https://tu-dominio-custom.com/api/high-level/webhook`
 
+## 🔍 Mapeo de Usuarios - Cómo se Vincula el Webhook
+
+### **Pregunta Clave**: ¿Cómo sabe el webhook a qué usuario descontar el crédito?
+
+### **Respuesta**: Por el Contact ID de High Level
+
+#### **Flujo de Vinculación**:
+1. **Webhook incluye contactId**: High Level envía el `contactId` del estudiante
+2. **Portal busca usuario**: Busca en la base de datos por `highLevelContactId = contactId`
+3. **Portal descuenta crédito**: Del usuario encontrado
+
+#### **Configuración Crítica**:
+Cada usuario del portal debe tener su `highLevelContactId` configurado:
+
+```javascript
+// Ejemplo de usuario vinculado
+const user = {
+  email: "juan.perez@email.com",
+  firstName: "Juan",
+  lastName: "Pérez", 
+  highLevelContactId: "abc123xyz456", // <- Contact ID de High Level
+  classCredits: 8
+}
+```
+
+#### **Datos que llegan en el Webhook**:
+```json
+{
+  "appointmentId": "appt_456",
+  "contactId": "abc123xyz456",  // <- Usado para buscar usuario
+  "status": "completed",
+  "studentEmail": "juan.perez@email.com",
+  "studentName": "Juan Pérez"
+}
+```
+
+#### **Proceso Automático**:
+```
+1. High Level: Cita terminada → Envía webhook con contactId
+2. Portal: Recibe webhook → Busca usuario por contactId
+3. Portal: Encuentra usuario → Descuenta 1 crédito
+4. Portal: Envía notificación → "Clase completada, X créditos restantes"
+```
+
+### **Importante**: 
+- **Sin contactId vinculado** = No se puede identificar al usuario
+- **Con contactId vinculado** = Descuento automático perfecto
+
 ¡Una vez configurado, el sistema será completamente automático! 🎉

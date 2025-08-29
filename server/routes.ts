@@ -382,42 +382,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const appointmentId = webhookData.appointmentId;
         const contactId = webhookData.contactId;
         
-        console.log(`🔍 Buscando clase con appointmentId: ${appointmentId}`);
+        console.log(`🔍 Procesando clase completada:`);
+        console.log(`   - Appointment ID: ${appointmentId}`);
+        console.log(`   - Contact ID: ${contactId}`);
         
-        // Buscar la clase en la base de datos
+        // Buscar usuario por contactId de High Level
+        const user = await storage.getUserByHighLevelContactId(contactId);
+        if (!user) {
+          console.log(`⚠️ Usuario no encontrado con contactId: ${contactId}`);
+          return res.json({ success: false, message: "Usuario no encontrado" });
+        }
+        
+        console.log(`👤 Usuario encontrado: ${user.firstName} ${user.lastName} (${user.email})`);
+        
+        // Buscar la clase específica por appointmentId
         const classes = await storage.getAllClasses();
-        const classToUpdate = classes.find(c => c.highLevelAppointmentId === appointmentId);
+        const classToUpdate = classes.find(c => 
+          c.highLevelAppointmentId === appointmentId || 
+          (c.userId === user.id && c.status === 'scheduled')
+        );
         
         if (classToUpdate) {
           // Marcar clase como completada
-          await storage.updateClass(classToUpdate.id, { status: 'completed' });
+          await storage.updateClass(classToUpdate.id, { 
+            status: 'completed',
+            highLevelAppointmentId: appointmentId,
+            highLevelContactId: contactId
+          });
           console.log(`✅ Clase ${classToUpdate.id} marcada como completada automáticamente`);
           
           // Descontar clase del balance del usuario
-          const user = await storage.getUser(classToUpdate.userId);
-          if (user && user.classCredits && user.classCredits > 0) {
+          if (user.classCredits && user.classCredits > 0) {
             const newCredits = user.classCredits - 1;
             await storage.updateUser(user.id, { classCredits: newCredits });
-            console.log(`💳 Créditos actualizados: ${user.firstName} ${user.lastName} - ${user.classCredits} → ${newCredits}`);
+            console.log(`💳 Créditos actualizados: ${user.firstName} ${user.lastName}`);
+            console.log(`   - Créditos antes: ${user.classCredits}`);
+            console.log(`   - Créditos después: ${newCredits}`);
+            
+            // Actualizar progreso del usuario
+            const progress = await storage.getUserProgress(user.id);
+            if (progress) {
+              await storage.updateUserProgress(user.id, {
+                classesCompleted: (progress.classesCompleted || 0) + 1,
+                learningHours: Number(progress.learningHours || 0) + (classToUpdate.duration / 60)
+              });
+            }
+          } else {
+            console.log(`⚠️ Usuario ${user.firstName} no tiene créditos disponibles`);
           }
           
-          // Opcional: Enviar notificación de clase completada
-          if (highLevelService && user) {
+          // Enviar notificación de clase completada
+          if (highLevelService) {
             const tutor = await storage.getTutor(classToUpdate.tutorId);
             if (tutor) {
-              const completionMessage = `¡Clase completada! 
+              const completionMessage = `¡Clase completada exitosamente! 🎉
 
-Gracias por tu clase de español, ${user.firstName}. 
+Hola ${user.firstName}, gracias por tu clase de español.
 
-Resumen:
-📅 Fecha: ${new Date(classToUpdate.scheduledAt).toLocaleDateString()}
+📊 Resumen de tu clase:
+📅 Fecha: ${new Date(classToUpdate.scheduledAt).toLocaleDateString('es-ES')}
 👨‍🏫 Profesor: ${tutor.name}
 ⏱️ Duración: ${classToUpdate.duration} minutos
+💳 Créditos restantes: ${(user.classCredits || 1) - 1}
 
-Créditos restantes: ${newCredits || 0}
+¡Sigue practicando! Reserva tu próxima clase en el portal.
 
-¡Esperamos verte en tu próxima clase!
-Passport2Fluency`;
+Saludos,
+Equipo Passport2Fluency 🇪🇸`;
 
               await highLevelService.sendCustomMessage(contactId, completionMessage);
               console.log(`📧 Notificación de completado enviada a ${user.email}`);
@@ -425,30 +456,68 @@ Passport2Fluency`;
           }
           
         } else {
-          console.log(`⚠️ No se encontró clase con appointmentId: ${appointmentId}`);
+          console.log(`⚠️ No se encontró clase programada para el usuario ${user.firstName} ${user.lastName}`);
+          console.log(`   - Buscando appointmentId: ${appointmentId}`);
+          console.log(`   - Para userId: ${user.id}`);
         }
       }
       
-      // Procesar evento de cita cancelada
+      // Procesar evento de cita cancelada  
       if (webhookData.appointmentId && webhookData.status === 'cancelled') {
         const appointmentId = webhookData.appointmentId;
+        const contactId = webhookData.contactId;
         
-        console.log(`🔍 Procesando cancelación para appointmentId: ${appointmentId}`);
+        console.log(`🔍 Procesando cancelación:`);
+        console.log(`   - Appointment ID: ${appointmentId}`);
+        console.log(`   - Contact ID: ${contactId}`);
         
+        // Buscar usuario por contactId
+        const user = await storage.getUserByHighLevelContactId(contactId);
+        if (!user) {
+          console.log(`⚠️ Usuario no encontrado con contactId: ${contactId}`);
+          return res.json({ success: false, message: "Usuario no encontrado para cancelación" });
+        }
+        
+        // Buscar la clase específica
         const classes = await storage.getAllClasses();
-        const classToCancel = classes.find(c => c.highLevelAppointmentId === appointmentId);
+        const classToCancel = classes.find(c => 
+          c.highLevelAppointmentId === appointmentId ||
+          (c.userId === user.id && c.status === 'scheduled')
+        );
         
         if (classToCancel) {
-          await storage.updateClass(classToCancel.id, { status: 'cancelled' });
+          await storage.updateClass(classToCancel.id, { 
+            status: 'cancelled',
+            highLevelAppointmentId: appointmentId,
+            highLevelContactId: contactId
+          });
           console.log(`❌ Clase ${classToCancel.id} cancelada desde High Level`);
           
           // Restaurar crédito si la clase fue cancelada
-          const user = await storage.getUser(classToCancel.userId);
-          if (user) {
-            const newCredits = (user.classCredits || 0) + 1;
-            await storage.updateUser(user.id, { classCredits: newCredits });
-            console.log(`🔄 Crédito restaurado: ${user.firstName} ${user.lastName} - Créditos: ${newCredits}`);
+          const newCredits = (user.classCredits || 0) + 1;
+          await storage.updateUser(user.id, { classCredits: newCredits });
+          console.log(`🔄 Crédito restaurado: ${user.firstName} ${user.lastName}`);
+          console.log(`   - Créditos restaurados: ${newCredits}`);
+          
+          // Notificar cancelación
+          if (highLevelService) {
+            const cancellationMessage = `Clase cancelada ❌
+
+Hola ${user.firstName}, tu clase ha sido cancelada.
+
+💳 Tu crédito ha sido restaurado automáticamente.
+📊 Créditos disponibles: ${newCredits}
+
+Puedes reagendar cuando gustes en el portal.
+
+Saludos,
+Equipo Passport2Fluency`;
+
+            await highLevelService.sendCustomMessage(contactId, cancellationMessage);
+            console.log(`📧 Notificación de cancelación enviada a ${user.email}`);
           }
+        } else {
+          console.log(`⚠️ No se encontró clase para cancelar con appointmentId: ${appointmentId}`);
         }
       }
 
@@ -943,6 +1012,99 @@ Passport2Fluency`;
     } catch (error: any) {
       console.error('Error extracting Price ID:', error);
       res.status(500).json({ message: "Error extracting Price ID: " + error.message });
+    }
+  });
+
+  // Endpoint para probar webhook de High Level (SOLO DESARROLLO)
+  app.post("/api/test-webhook", async (req, res) => {
+    try {
+      console.log("🧪 PRUEBA DE WEBHOOK - Simulando High Level...");
+      
+      // Simular webhook de clase completada
+      const testWebhookData = {
+        appointmentId: "APPT_TEST_001",
+        contactId: "TEST_CONTACT_123", 
+        status: "completed",
+        appointmentTitle: "Conversation Practice - Test",
+        startTime: "2025-08-30T15:00:00Z",
+        endTime: "2025-08-30T16:00:00Z",
+        studentEmail: "juan.sanchez@example.com",
+        studentName: "Juan Sánchez",
+        timestamp: new Date().toISOString()
+      };
+
+      console.log("📨 Simulando datos de High Level:", JSON.stringify(testWebhookData, null, 2));
+      
+      // Procesar directamente como si fuera el webhook real
+      const contactId = testWebhookData.contactId;
+      const appointmentId = testWebhookData.appointmentId;
+      
+      // Buscar usuario por contactId
+      const user = await storage.getUserByHighLevelContactId(contactId);
+      if (!user) {
+        return res.json({
+          success: false,
+          message: `Usuario no encontrado con contactId: ${contactId}`,
+          testData: testWebhookData
+        });
+      }
+      
+      console.log(`👤 Usuario encontrado: ${user.firstName} ${user.lastName} (${user.email})`);
+      console.log(`💳 Créditos actuales: ${user.classCredits}`);
+      
+      // Buscar clase
+      const classes = await storage.getAllClasses();
+      const classToUpdate = classes.find(c => 
+        c.highLevelAppointmentId === appointmentId || 
+        (c.userId === user.id && c.status === 'scheduled')
+      );
+      
+      if (classToUpdate) {
+        // Simular el procesamiento completo
+        await storage.updateClass(classToUpdate.id, { 
+          status: 'completed',
+          highLevelAppointmentId: appointmentId,
+          highLevelContactId: contactId
+        });
+        
+        const newCredits = user.classCredits - 1;
+        await storage.updateUser(user.id, { classCredits: newCredits });
+        
+        console.log(`✅ Clase ${classToUpdate.id} marcada como completada`);
+        console.log(`💳 Créditos actualizados: ${user.classCredits} → ${newCredits}`);
+        
+        res.json({
+          success: true,
+          message: "✅ Webhook de prueba ejecutado exitosamente",
+          details: {
+            usuario: `${user.firstName} ${user.lastName}`,
+            email: user.email,
+            creditosAntes: user.classCredits,
+            creditosDespues: newCredits,
+            claseId: classToUpdate.id,
+            appointmentId: appointmentId
+          },
+          testData: testWebhookData
+        });
+      } else {
+        res.json({
+          success: false,
+          message: "❌ No se encontró clase para procesar",
+          details: {
+            usuario: `${user.firstName} ${user.lastName}`,
+            appointmentId: appointmentId,
+            clasesDisponibles: classes.filter(c => c.userId === user.id).length
+          }
+        });
+      }
+      
+    } catch (error: any) {
+      console.error("❌ Error en webhook de prueba:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message,
+        message: "Error en webhook de prueba"
+      });
     }
   });
 

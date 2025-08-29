@@ -130,6 +130,9 @@ export const classes = pgTable("classes", {
   duration: integer("duration").notNull().default(60), // minutes
   status: text("status").notNull().default("scheduled"), // 'scheduled', 'completed', 'cancelled'
   meetingLink: text("meeting_link"),
+  // Vinculación con High Level para tracking automático
+  highLevelAppointmentId: text("high_level_appointment_id"),
+  highLevelContactId: text("high_level_contact_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

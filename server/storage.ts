@@ -9,6 +9,7 @@ export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByHighLevelContactId(contactId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
 
@@ -17,6 +18,7 @@ export interface IStorage {
 
   // Subscriptions
   getUserSubscription(userId: number): Promise<Subscription | undefined>;
+  getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<Subscription | undefined>;
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   updateSubscription(id: number, subscription: Partial<InsertSubscription>): Promise<Subscription | undefined>;
 
@@ -26,6 +28,7 @@ export interface IStorage {
   createTutor(tutor: InsertTutor): Promise<Tutor>;
 
   // Classes
+  getAllClasses(): Promise<Class[]>;
   getUserClasses(userId: number): Promise<Class[]>;
   getUpcomingClasses(userId: number): Promise<Class[]>;
   createClass(classData: InsertClass): Promise<Class>;
@@ -74,7 +77,7 @@ export class MemStorage implements IStorage {
   }
 
   private initializeData() {
-    // Sample user
+    // Usuario de prueba vinculado con High Level
     const user: User = {
       id: 1,
       username: "juan_sanchez",
@@ -82,18 +85,38 @@ export class MemStorage implements IStorage {
       password: "password123",
       firstName: "Juan",
       lastName: "Sánchez",
-      phone: null,
+      phone: "+1-555-0123",
       level: "B1",
       avatar: null,
-      userType: "student",
+      userType: "customer",
       trialCompleted: true,
-      classCredits: 5,
-      highLevelContactId: null,
-      stripeCustomerId: null,
+      classCredits: 8,
+      highLevelContactId: "TEST_CONTACT_123", // Contact ID de prueba para testing
+      stripeCustomerId: "cus_test_123",
       createdAt: new Date(),
     };
     this.users.set(1, user);
-    this.currentUserId = 2;
+
+    // Usuario adicional para pruebas
+    const user2: User = {
+      id: 2,
+      username: "maria_rodriguez", 
+      email: "maria.rodriguez@example.com",
+      password: "password123",
+      firstName: "María",
+      lastName: "Rodríguez",
+      phone: "+1-555-0124",
+      level: "A2",
+      avatar: null,
+      userType: "customer",
+      trialCompleted: true,
+      classCredits: 12,
+      highLevelContactId: "MARIA_CONTACT_456", // Otro Contact ID para testing
+      stripeCustomerId: "cus_test_456",
+      createdAt: new Date(),
+    };
+    this.users.set(2, user2);
+    this.currentUserId = 3;
 
     // Sample subscription
     const subscription: Subscription = {
@@ -217,7 +240,7 @@ export class MemStorage implements IStorage {
     });
     this.currentTutorId = 6;
 
-    // Sample classes
+    // Clases de prueba con vinculación High Level
     const classData = [
       {
         id: 1,
@@ -225,22 +248,40 @@ export class MemStorage implements IStorage {
         tutorId: 1,
         title: "Conversation Practice",
         description: "Practice conversational Spanish",
-        scheduledAt: new Date("2024-12-18T15:00:00"),
+        scheduledAt: new Date("2025-08-30T15:00:00"),
         duration: 60,
         status: "scheduled" as const,
-        meetingLink: "https://meet.example.com/abc123",
+        meetingLink: "https://meet.google.com/abc-defg-hij",
+        highLevelAppointmentId: "APPT_TEST_001",
+        highLevelContactId: "TEST_CONTACT_123",
         createdAt: new Date(),
       },
       {
         id: 2,
-        userId: 1,
+        userId: 2,
         tutorId: 2,
         title: "Grammar Intensive",
         description: "Focus on Spanish grammar rules",
-        scheduledAt: new Date("2024-12-20T10:00:00"),
+        scheduledAt: new Date("2025-08-31T10:00:00"),
         duration: 60,
         status: "scheduled" as const,
-        meetingLink: "https://meet.example.com/def456",
+        meetingLink: "https://meet.google.com/klm-nopq-rst",
+        highLevelAppointmentId: "APPT_TEST_002", 
+        highLevelContactId: "MARIA_CONTACT_456",
+        createdAt: new Date(),
+      },
+      {
+        id: 3,
+        userId: 1,
+        tutorId: 3,
+        title: "Business Spanish",
+        description: "Professional Spanish for work",
+        scheduledAt: new Date("2025-09-02T14:00:00"),
+        duration: 60,
+        status: "completed" as const,
+        meetingLink: "https://meet.google.com/uvw-xyza-bcd",
+        highLevelAppointmentId: "APPT_TEST_003",
+        highLevelContactId: "TEST_CONTACT_123",
         createdAt: new Date(),
       }
     ];
@@ -359,6 +400,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.email === email);
   }
 
+  async getUserByHighLevelContactId(contactId: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.highLevelContactId === contactId);
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
     const user: User = { 
@@ -397,6 +442,10 @@ export class MemStorage implements IStorage {
 
   async getUserSubscription(userId: number): Promise<Subscription | undefined> {
     return Array.from(this.subscriptions.values()).find(sub => sub.userId === userId);
+  }
+
+  async getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<Subscription | undefined> {
+    return Array.from(this.subscriptions.values()).find(sub => sub.stripeSubscriptionId === stripeSubscriptionId);
   }
 
   async createSubscription(subscriptionData: InsertSubscription): Promise<Subscription> {
@@ -452,6 +501,10 @@ export class MemStorage implements IStorage {
     };
     this.tutors.set(id, tutor);
     return tutor;
+  }
+
+  async getAllClasses(): Promise<Class[]> {
+    return Array.from(this.classes.values());
   }
 
   async getUserClasses(userId: number): Promise<Class[]> {
