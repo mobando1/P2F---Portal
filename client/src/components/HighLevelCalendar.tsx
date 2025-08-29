@@ -23,13 +23,12 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
         if (event.origin === 'https://api.leadconnectorhq.com' || event.origin.includes('leadconnectorhq.com')) {
           console.log('📅 Mensaje de High Level:', event.data);
           
-          // Manejar resize del iframe
+          // Manejar resize del iframe - ajustar al contenedor flexible
           if (event.data && event.data[0] === 'highlevel.setHeight') {
             const heightData = event.data[1];
             if (heightData && heightData.height && iframeRef.current) {
-              const newHeight = Math.max(heightData.height, 600);
-              iframeRef.current.style.height = `${newHeight}px`;
-              console.log(`📏 Ajustando altura del iframe: ${newHeight}px`);
+              // El iframe ya usa flex-1, así que no necesitamos altura fija
+              console.log(`📏 High Level solicita altura: ${heightData.height}px (usando flex para ajuste automático)`);
             }
           }
           
@@ -60,18 +59,18 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-2">
+      <DialogContent className="max-w-7xl w-[95vw] h-[95vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="p-4 pb-2 shrink-0">
           <DialogTitle className="text-xl font-semibold text-blue-800">
             Agendar Clase con {tutor.name}
           </DialogTitle>
-          <DialogDescription className="text-sm text-gray-600 mt-2">
+          <DialogDescription className="text-sm text-gray-600 mt-1">
             Selecciona una fecha y hora disponible para tu clase de español
           </DialogDescription>
         </DialogHeader>
         
-        <div className="px-6 pb-6 max-h-[calc(95vh-120px)] overflow-auto">
-          <div className="flex items-center justify-end mb-4 gap-2">
+        <div className="px-4 pb-4 flex-1 flex flex-col overflow-hidden">
+          <div className="flex items-center justify-end mb-2 gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
@@ -91,14 +90,14 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
             </Button>
           </div>
           
-          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white relative">
+          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white flex-1 min-h-0">
             <iframe
               ref={iframeRef}
               src={calendarUrl}
               style={{ 
                 width: '100%', 
-                height: '908px',
-                minHeight: '600px',
+                height: '100%',
+                minHeight: '800px',
                 border: 'none',
                 overflow: 'hidden',
                 display: 'block'
@@ -107,23 +106,12 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
               id="msgsndr-calendar"
               name="msgsndr-calendar"
               title={`Calendario de ${tutor.name}`}
-              className="w-full"
+              className="w-full h-full"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
               allow="geolocation; microphone; camera"
             />
           </div>
           
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h4 className="font-medium text-blue-800 mb-2">
-              📋 Información Importante:
-            </h4>
-            <ul className="text-sm text-blue-700 space-y-1">
-              <li>• Tu clase será descontada automáticamente de tu balance</li>
-              <li>• Recibirás confirmación por email con el enlace de Google Meet</li>
-              <li>• El sistema detectará automáticamente cuando la clase termine</li>
-              <li>• Los créditos se actualizarán en tiempo real</li>
-            </ul>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
