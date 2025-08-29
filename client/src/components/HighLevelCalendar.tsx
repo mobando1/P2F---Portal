@@ -59,45 +59,49 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl w-[95vw] h-[95vh] p-0 overflow-hidden flex flex-col">
-        <DialogHeader className="p-4 pb-2 shrink-0">
-          <DialogTitle className="text-xl font-semibold text-blue-800">
-            Agendar Clase con {tutor.name}
-          </DialogTitle>
-          <DialogDescription className="text-sm text-gray-600 mt-1">
-            Selecciona una fecha y hora disponible para tu clase de español
-          </DialogDescription>
+      <DialogContent className="max-w-[98vw] w-[98vw] h-[98vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="p-3 pb-1 shrink-0 bg-gradient-to-r from-blue-50 to-blue-100 border-b">
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-lg font-semibold text-blue-800">
+                Agendar Clase con {tutor.name}
+              </DialogTitle>
+              <DialogDescription className="text-sm text-gray-600">
+                Selecciona fecha y hora disponible
+              </DialogDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(calendarUrl, '_blank')}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                <ExternalLink className="w-4 h-4 mr-1" />
+                Nueva Ventana
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         </DialogHeader>
         
-        <div className="px-4 pb-4 flex-1 flex flex-col overflow-hidden">
-          <div className="flex items-center justify-end mb-2 gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(calendarUrl, '_blank')}
-              className="text-blue-600 border-blue-200 hover:bg-blue-50"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Abrir en Nueva Ventana
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+        <div className="px-3 pb-3 flex-1 flex flex-col overflow-hidden min-h-0">
           
-          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white flex-1 min-h-0">
+          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white flex-1 min-h-0 relative">
             <iframe
               ref={iframeRef}
               src={calendarUrl}
               style={{ 
                 width: '100%', 
                 height: '100%',
-                minHeight: '800px',
+                minHeight: '850px',
                 border: 'none',
                 overflow: 'hidden',
                 display: 'block'
@@ -112,25 +116,13 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
             />
           </div>
           
-          {/* Información Importante - Compacta */}
-          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 shrink-0">
-            <div className="grid grid-cols-2 gap-2 text-sm text-blue-700">
-              <div className="flex items-center">
-                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                Clase descontada automáticamente
-              </div>
-              <div className="flex items-center">
-                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                Confirmación por email
-              </div>
-              <div className="flex items-center">
-                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                Detección automática de asistencia
-              </div>
-              <div className="flex items-center">
-                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                Créditos actualizados en tiempo real
-              </div>
+          {/* Información Importante - Muy Compacta */}
+          <div className="mt-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-green-50 rounded-md border border-blue-100 shrink-0">
+            <div className="flex items-center justify-center space-x-6 text-xs text-blue-700">
+              <span className="flex items-center"><span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>Descuento automático</span>
+              <span className="flex items-center"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></span>Confirmación email</span>
+              <span className="flex items-center"><span className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-1.5"></span>Detección automática</span>
+              <span className="flex items-center"><span className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-1.5"></span>Créditos en tiempo real</span>
             </div>
           </div>
         </div>
