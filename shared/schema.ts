@@ -92,6 +92,7 @@ export const tutors = pgTable("tutors", {
   yearsOfExperience: integer("years_of_experience"),
   // Integración con High Level
   highLevelContactId: text("high_level_contact_id"),
+  highLevelCalendarId: text("high_level_calendar_id"), // ID del calendario para booking widget
   createdAt: timestamp("created_at").defaultNow(),
 });
 

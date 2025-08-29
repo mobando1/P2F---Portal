@@ -11,6 +11,7 @@ import { getCurrentUser, isAuthenticated } from "@/lib/auth";
 import { useLanguage, getLevelText } from "@/lib/i18n";
 import Header from "@/components/header";
 import { TutorCalendar } from "@/components/TutorCalendar";
+import { HighLevelCalendar } from "@/components/HighLevelCalendar";
 import { 
   Search, 
   Star, 
@@ -67,8 +68,15 @@ export default function TutorsPage() {
 
     const tutor = tutors?.find(t => t.id === tutorId);
     if (tutor) {
-      setSelectedTutor(tutor);
-      setShowCalendar(true);
+      // Usar calendario de High Level para Carolina Perilla (ID: 1)
+      if (tutor.id === 1 && tutor.highLevelCalendarId) {
+        setSelectedTutor(tutor);
+        setShowCalendar(true);
+      } else {
+        // Para otros tutores, usar el sistema interno por ahora
+        setSelectedTutor(tutor);
+        setShowCalendar(true);
+      }
     }
   };
 
@@ -311,24 +319,34 @@ export default function TutorsPage() {
         </div>
       </footer>
 
-      {/* Booking Calendar Dialog */}
-      <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-[#0A4A6E]">
-              {language === 'es' ? 'Reservar Clase' : 'Book Class'}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedTutor && user && (
-            <TutorCalendar
-              tutorId={selectedTutor.id}
-              tutorName={selectedTutor.name}
-              userId={user.id}
-              onBookingSuccess={handleBookingSuccess}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Booking Calendar Dialog - High Level para Carolina Perilla */}
+      {selectedTutor?.id === 1 && selectedTutor?.highLevelCalendarId ? (
+        <HighLevelCalendar
+          tutor={selectedTutor}
+          isOpen={showCalendar}
+          onClose={() => setShowCalendar(false)}
+          onBookingComplete={handleBookingSuccess}
+        />
+      ) : (
+        /* Booking Calendar Dialog - Sistema interno para otros tutores */
+        <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-[#0A4A6E]">
+                {language === 'es' ? 'Reservar Clase' : 'Book Class'}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedTutor && user && (
+              <TutorCalendar
+                tutorId={selectedTutor.id}
+                tutorName={selectedTutor.name}
+                userId={user.id}
+                onBookingSuccess={handleBookingSuccess}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

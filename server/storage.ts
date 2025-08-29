@@ -140,6 +140,7 @@ export class MemStorage implements IStorage {
         phone: null,
         avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=150&h=150&fit=crop&crop=face",
         highLevelContactId: "LuoLdvMdaZWRkidLCeQri",
+        highLevelCalendarId: "R5AR05D5vU38A6wUS0R7", // Calendar ID del iframe para pruebas reales
         createdAt: new Date(),
         isActive: true,
         specialization: "Spanish & English Conversation",
@@ -492,6 +493,7 @@ export class MemStorage implements IStorage {
       isActive: tutorData.isActive !== undefined ? tutorData.isActive : true,
       phone: tutorData.phone || null,
       highLevelContactId: tutorData.highLevelContactId || null,
+      highLevelCalendarId: tutorData.highLevelCalendarId || null,
       yearsOfExperience: tutorData.yearsOfExperience || 0,
       country: tutorData.country || null,
       timezone: tutorData.timezone || null,
