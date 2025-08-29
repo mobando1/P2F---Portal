@@ -59,8 +59,8 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[98vw] w-[98vw] h-[98vh] p-0 overflow-hidden flex flex-col">
-        <DialogHeader className="p-3 pb-1 shrink-0 bg-gradient-to-r from-blue-50 to-blue-100 border-b">
+      <DialogContent className="max-w-6xl w-[90vw] h-[90vh] p-0 overflow-hidden flex flex-col border-0 shadow-2xl">
+        <DialogHeader className="p-4 pb-2 shrink-0 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-lg font-semibold text-blue-800">
@@ -92,19 +92,21 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
           </div>
         </DialogHeader>
         
-        <div className="px-3 pb-3 flex-1 flex flex-col overflow-hidden min-h-0">
+        <div className="p-0 flex-1 flex flex-col overflow-hidden min-h-0">
           
-          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white flex-1 min-h-0 relative">
+          <div className="overflow-hidden bg-white flex-1 min-h-0 relative">
             <iframe
               ref={iframeRef}
               src={calendarUrl}
               style={{ 
                 width: '100%', 
                 height: '100%',
-                minHeight: '850px',
+                minHeight: '750px',
                 border: 'none',
+                outline: 'none',
                 overflow: 'hidden',
-                display: 'block'
+                display: 'block',
+                backgroundColor: 'transparent'
               }}
               scrolling="no"
               id="msgsndr-calendar"
@@ -116,8 +118,8 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
             />
           </div>
           
-          {/* Información Importante - Muy Compacta */}
-          <div className="mt-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-green-50 rounded-md border border-blue-100 shrink-0">
+          {/* Información Importante - Integrada */}
+          <div className="px-4 py-2 bg-gradient-to-r from-blue-50 to-green-50 border-t border-blue-100 shrink-0">
             <div className="flex items-center justify-center space-x-6 text-xs text-blue-700">
               <span className="flex items-center"><span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>Descuento automático</span>
               <span className="flex items-center"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></span>Confirmación email</span>
