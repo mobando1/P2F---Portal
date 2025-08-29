@@ -177,7 +177,7 @@ export default function TutorsPage() {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-[#0A4A6E]/70">
-            {t.showing} {filteredTutors.length} {t.of} {tutors.length} {t.tutorsText}
+            {t.showing} {filteredTutors.length} {t.of} {tutors?.length || 0} {t.tutorsText}
           </p>
         </div>
 
@@ -203,8 +203,8 @@ export default function TutorsPage() {
                   <div className="flex items-start space-x-4 mb-4">
                     <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100">
                       <img 
-                        src={tutor.avatar || `https://ui-avatars.com/api/?name=${tutor.name}&size=64`}
-                        alt={tutor.name}
+                        src={tutor.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(tutor.name || 'User')}&size=64`}
+                        alt={tutor.name || 'Tutor'}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -229,7 +229,7 @@ export default function TutorsPage() {
                   <div className="mb-4">
                     <div className="flex items-center mb-2">
                       <Languages className="w-4 h-4 text-[#1C7BB1] mr-2" />
-                      <span className="text-sm font-medium text-[#0A4A6E]">{t.language === 'es' ? 'Idiomas' : 'Languages'}</span>
+                      <span className="text-sm font-medium text-[#0A4A6E]">{language === 'es' ? 'Idiomas' : 'Languages'}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {tutor.languages && tutor.languages.map((lang) => (
@@ -257,11 +257,11 @@ export default function TutorsPage() {
                   <div className="mb-4">
                     <div className="flex items-center mb-2">
                       <Clock className="w-4 h-4 text-[#1C7BB1] mr-2" />
-                      <span className="text-sm font-medium text-[#0A4A6E]">{t.language === 'es' ? 'Experiencia' : 'Experience'}</span>
+                      <span className="text-sm font-medium text-[#0A4A6E]">{language === 'es' ? 'Experiencia' : 'Experience'}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       <Badge variant="secondary" className="text-xs">
-                        {tutor.yearsOfExperience} {t.language === 'es' ? 'años' : 'years'}
+                        {tutor.yearsOfExperience} {language === 'es' ? 'años' : 'years'}
                       </Badge>
                     </div>
                   </div>
