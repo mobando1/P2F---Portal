@@ -59,8 +59,8 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-2">
+      <DialogContent className="max-w-7xl w-[95vw] h-[95vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="p-4 pb-2 shrink-0">
           <DialogTitle className="text-xl font-semibold text-blue-800">
             Agendar Clase con {tutor.name}
           </DialogTitle>
@@ -69,8 +69,8 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
           </DialogDescription>
         </DialogHeader>
         
-        <div className="px-6 pb-6 max-h-[calc(90vh-120px)] overflow-auto">
-          <div className="flex items-center justify-end mb-4 gap-2">
+        <div className="px-4 pb-4 flex-1 flex flex-col min-h-0">
+          <div className="flex items-center justify-end mb-3 gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
@@ -90,14 +90,13 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
             </Button>
           </div>
           
-          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white relative">
+          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white relative flex-1 min-h-0">
             <iframe
               ref={iframeRef}
               src={calendarUrl}
               style={{ 
                 width: '100%', 
-                height: '908px',
-                minHeight: '600px',
+                height: '100%',
                 border: 'none',
                 overflow: 'hidden',
                 display: 'block'
@@ -106,22 +105,19 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
               id="msgsndr-calendar"
               name="msgsndr-calendar"
               title={`Calendario de ${tutor.name}`}
-              className="w-full"
+              className="w-full h-full"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
               allow="geolocation; microphone; camera"
             />
           </div>
           
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h4 className="font-medium text-blue-800 mb-2">
-              📋 Información Importante:
-            </h4>
-            <ul className="text-sm text-blue-700 space-y-1">
-              <li>• Tu clase será descontada automáticamente de tu balance</li>
-              <li>• Recibirás confirmación por email con el enlace de Google Meet</li>
-              <li>• El sistema detectará automáticamente cuando la clase termine</li>
-              <li>• Los créditos se actualizarán en tiempo real</li>
-            </ul>
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 shrink-0">
+            <div className="flex items-center justify-center space-x-6 text-sm text-blue-700">
+              <span className="flex items-center"><span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>Descuento automático</span>
+              <span className="flex items-center"><span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>Confirmación email</span>
+              <span className="flex items-center"><span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>Detección automática</span>
+              <span className="flex items-center"><span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>Créditos en tiempo real</span>
+            </div>
           </div>
         </div>
       </DialogContent>
