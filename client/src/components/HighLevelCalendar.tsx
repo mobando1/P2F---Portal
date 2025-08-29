@@ -112,6 +112,27 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
             />
           </div>
           
+          {/* Información Importante - Compacta */}
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 shrink-0">
+            <div className="grid grid-cols-2 gap-2 text-sm text-blue-700">
+              <div className="flex items-center">
+                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                Clase descontada automáticamente
+              </div>
+              <div className="flex items-center">
+                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                Confirmación por email
+              </div>
+              <div className="flex items-center">
+                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                Detección automática de asistencia
+              </div>
+              <div className="flex items-center">
+                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                Créditos actualizados en tiempo real
+              </div>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
