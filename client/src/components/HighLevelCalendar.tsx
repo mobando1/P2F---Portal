@@ -59,73 +59,69 @@ export function HighLevelCalendar({ tutor, isOpen, onClose, onBookingComplete }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl w-[90vw] h-[90vh] p-0 overflow-hidden flex flex-col border-0 shadow-2xl">
-        <DialogHeader className="p-4 pb-2 shrink-0 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-lg font-semibold text-blue-800">
-                Agendar Clase con {tutor.name}
-              </DialogTitle>
-              <DialogDescription className="text-sm text-gray-600">
-                Selecciona fecha y hora disponible
-              </DialogDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(calendarUrl, '_blank')}
-                className="text-blue-600 border-blue-200 hover:bg-blue-50"
-              >
-                <ExternalLink className="w-4 h-4 mr-1" />
-                Nueva Ventana
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+      <DialogContent className="max-w-5xl max-h-[90vh] p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="text-xl font-semibold text-blue-800">
+            Agendar Clase con {tutor.name}
+          </DialogTitle>
+          <DialogDescription className="text-sm text-gray-600 mt-2">
+            Selecciona una fecha y hora disponible para tu clase de español
+          </DialogDescription>
         </DialogHeader>
         
-        <div className="p-0 flex-1 flex flex-col overflow-hidden min-h-0">
+        <div className="px-6 pb-6 max-h-[calc(90vh-120px)] overflow-auto">
+          <div className="flex items-center justify-end mb-4 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open(calendarUrl, '_blank')}
+              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Abrir en Nueva Ventana
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
           
-          <div className="overflow-hidden bg-white flex-1 min-h-0 relative">
+          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white relative">
             <iframe
               ref={iframeRef}
               src={calendarUrl}
               style={{ 
                 width: '100%', 
-                height: '100%',
-                minHeight: '750px',
+                height: '908px',
+                minHeight: '600px',
                 border: 'none',
-                outline: 'none',
                 overflow: 'hidden',
-                display: 'block',
-                backgroundColor: 'transparent'
+                display: 'block'
               }}
               scrolling="no"
               id="msgsndr-calendar"
               name="msgsndr-calendar"
               title={`Calendario de ${tutor.name}`}
-              className="w-full h-full"
+              className="w-full"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
               allow="geolocation; microphone; camera"
             />
           </div>
           
-          {/* Información Importante - Integrada */}
-          <div className="px-4 py-2 bg-gradient-to-r from-blue-50 to-green-50 border-t border-blue-100 shrink-0">
-            <div className="flex items-center justify-center space-x-6 text-xs text-blue-700">
-              <span className="flex items-center"><span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>Descuento automático</span>
-              <span className="flex items-center"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></span>Confirmación email</span>
-              <span className="flex items-center"><span className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-1.5"></span>Detección automática</span>
-              <span className="flex items-center"><span className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-1.5"></span>Créditos en tiempo real</span>
-            </div>
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="font-medium text-blue-800 mb-2">
+              📋 Información Importante:
+            </h4>
+            <ul className="text-sm text-blue-700 space-y-1">
+              <li>• Tu clase será descontada automáticamente de tu balance</li>
+              <li>• Recibirás confirmación por email con el enlace de Google Meet</li>
+              <li>• El sistema detectará automáticamente cuando la clase termine</li>
+              <li>• Los créditos se actualizarán en tiempo real</li>
+            </ul>
           </div>
         </div>
       </DialogContent>
