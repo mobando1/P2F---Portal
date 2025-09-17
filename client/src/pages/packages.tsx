@@ -202,7 +202,6 @@ export default function PackagesPage() {
     try {
       // Obtener el usuario actual del localStorage o crear uno de prueba
       let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      console.log('Current user from localStorage:', currentUser);
       
       if (!currentUser || !currentUser.id) {
         // Crear usuario de prueba para desarrollo
@@ -214,71 +213,39 @@ export default function PackagesPage() {
           username: 'testuser'
         };
         localStorage.setItem('user', JSON.stringify(currentUser));
-        console.log('Created test user:', currentUser);
       }
 
-      console.log('Creating subscription for plan:', plan.id, 'user:', currentUser.id);
-
-      // Crear suscripción en Stripe directamente usando fetch
-      const requestBody = {
-        planId: plan.id,
-        userId: currentUser.id
-      };
-      
-      console.log('Request body:', requestBody);
-
-      const response = await fetch("/api/create-subscription", {
+      // Crear sesión de checkout en Stripe
+      const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          planId: plan.id,
+          userId: currentUser.id
+        }),
         credentials: "include",
       });
-
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error Response:', errorText);
         throw new Error(`API Error: ${response.status} - ${errorText}`);
       }
 
-      const responseText = await response.text();
-      console.log('Raw response text:', responseText);
+      const data = await response.json();
       
-      let data;
-      try {
-        data = JSON.parse(responseText);
-        console.log('Parsed response data:', data);
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        throw new Error(`Invalid JSON response: ${responseText}`);
-      }
-      
-      if (data.clientSecret) {
-        console.log('Redirecting to subscribe page with clientSecret');
-        window.location.href = `/subscribe?client_secret=${data.clientSecret}&plan_id=${plan.id}`;
-      } else if (data.subscriptionId) {
-        console.log('Subscription created successfully:', data.subscriptionId);
-        toast({
-          title: t.language === 'es' ? "Suscripción Creada" : "Subscription Created",
-          description: t.language === 'es' ? "Tu suscripción ha sido activada exitosamente." : "Your subscription has been activated successfully.",
-        });
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1500);
+      if (data.url) {
+        // Redirigir directamente al checkout de Stripe
+        window.location.href = data.url;
       } else {
-        console.error('Unexpected response format:', data);
-        throw new Error('No client secret or subscription ID received');
+        throw new Error('No checkout URL received');
       }
     } catch (error) {
-      console.error('Error creating subscription:', error);
-      console.error('Error stack:', error.stack);
+      console.error('Error creating checkout session:', error);
       toast({
-        title: t.language === 'es' ? "Error de Suscripción" : "Subscription Error",
-        description: error.message || (t.language === 'es' ? "No se pudo crear la suscripción. Intenta de nuevo." : "Could not create subscription. Please try again."),
+        title: t.language === 'es' ? "Error de Pago" : "Payment Error",
+        description: t.language === 'es' ? "No se pudo abrir el checkout. Intenta de nuevo." : "Could not open checkout. Please try again.",
         variant: "destructive",
       });
     } finally {

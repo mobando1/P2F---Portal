@@ -700,6 +700,65 @@ Equipo Passport2Fluency`;
     }
   });
 
+  // Create Stripe checkout session for subscription
+  app.post("/api/create-checkout-session", async (req, res) => {
+    try {
+      const { planId, userId } = req.body;
+      
+      if (!planId || !userId) {
+        return res.status(400).json({ message: "Missing required data" });
+      }
+
+      // Map plan IDs to Stripe Price IDs
+      const stripePriceIds = {
+        1: process.env.STRIPE_PRICE_ID_PLAN_1, // Starter Flow - $119.96
+        2: process.env.STRIPE_PRICE_ID_PLAN_2, // Momentum Plan - $219.99
+        3: process.env.STRIPE_PRICE_ID_PLAN_3, // Fluency Boost - $299.99
+      };
+
+      const priceId = stripePriceIds[planId as keyof typeof stripePriceIds];
+      
+      if (!priceId) {
+        return res.status(400).json({ message: "Invalid plan ID or Stripe Price ID not configured" });
+      }
+
+      // Get user for customer information
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Create checkout session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'subscription',
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        customer_email: user.email,
+        client_reference_id: userId.toString(),
+        metadata: {
+          userId: userId.toString(),
+          planId: planId.toString(),
+          platform: "passport2fluency"
+        },
+        success_url: `${req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.origin}/packages`,
+      });
+
+      res.json({ 
+        sessionId: session.id,
+        url: session.url 
+      });
+    } catch (error: any) {
+      console.error("Error creating checkout session:", error);
+      res.status(500).json({ message: "Error creating checkout session: " + error.message });
+    }
+  });
+
   // Webhook to handle successful payments and subscription events
   app.post("/api/stripe-webhook", express.raw({type: 'application/json'}), async (req, res) => {
     try {

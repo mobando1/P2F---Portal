@@ -92,7 +92,7 @@ export class MemStorage implements IStorage {
       trialCompleted: true,
       classCredits: 8,
       highLevelContactId: "TEST_CONTACT_123", // Contact ID de prueba para testing
-      stripeCustomerId: "cus_test_123",
+      stripeCustomerId: null,
       createdAt: new Date(),
     };
     this.users.set(1, user);
@@ -112,7 +112,7 @@ export class MemStorage implements IStorage {
       trialCompleted: true,
       classCredits: 12,
       highLevelContactId: "MARIA_CONTACT_456", // Otro Contact ID para testing
-      stripeCustomerId: "cus_test_456",
+      stripeCustomerId: null,
       createdAt: new Date(),
     };
     this.users.set(2, user2);
