@@ -10,8 +10,8 @@ import { TutorManagementService } from "./services/tutor-management";
 import { ClassSchedulerService } from "./services/class-scheduler";
 import { CalendarIntegrationService } from "./services/calendar-integration";
 
-// Usar claves de testing para pruebas
-const stripe = new Stripe(process.env.TESTING_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || "sk_test_fake_key", {
+// 🧪 FORZAR MODO TEST para pruebas con 4242 4242 4242 4242
+const stripe = new Stripe(process.env.TESTING_STRIPE_SECRET_KEY || "sk_test_fake_key", {
   apiVersion: "2024-06-20",
 });
 
@@ -45,7 +45,8 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.get("/api/stripe-debug", (req, res) => {
     const testingKey = process.env.TESTING_STRIPE_SECRET_KEY;
     const prodKey = process.env.STRIPE_SECRET_KEY;
-    const currentKey = testingKey || prodKey || "sk_test_fake_key";
+    // 🧪 FORZAR uso de testing key para pruebas
+    const currentKey = testingKey || "sk_test_fake_key";
     const isTestMode = currentKey.startsWith('sk_test_');
     
     res.json({
