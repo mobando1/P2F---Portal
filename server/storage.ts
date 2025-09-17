@@ -543,7 +543,9 @@ export class MemStorage implements IStorage {
       description: classData.description || null,
       duration: classData.duration || 60,
       status: classData.status || "scheduled",
-      meetingLink: classData.meetingLink || null
+      meetingLink: classData.meetingLink || null,
+      highLevelContactId: classData.highLevelContactId || null,
+      highLevelAppointmentId: classData.highLevelAppointmentId || null
     };
     this.classes.set(id, classItem);
     return classItem;
