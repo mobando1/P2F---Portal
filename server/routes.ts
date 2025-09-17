@@ -12,7 +12,7 @@ import { CalendarIntegrationService } from "./services/calendar-integration";
 
 // Usar claves de testing para pruebas
 const stripe = new Stripe(process.env.TESTING_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || "sk_test_fake_key", {
-  apiVersion: "2025-05-28.basil",
+  apiVersion: "2024-06-20",
 });
 
 // Configurar servicios de High Level
@@ -40,6 +40,23 @@ const calendarService = new CalendarIntegrationService(
 export async function registerRoutes(app: Express): Promise<Server> {
   // Servir archivos estáticos desde attached_assets
   app.use('/attached_assets', express.static('attached_assets'));
+
+  // 🧪 DEBUG: Ruta para verificar configuración de Stripe
+  app.get("/api/stripe-debug", (req, res) => {
+    const testingKey = process.env.TESTING_STRIPE_SECRET_KEY;
+    const prodKey = process.env.STRIPE_SECRET_KEY;
+    const currentKey = testingKey || prodKey || "sk_test_fake_key";
+    const isTestMode = currentKey.startsWith('sk_test_');
+    
+    res.json({
+      isTestMode,
+      keyType: isTestMode ? 'TEST' : 'LIVE',
+      keyPrefix: currentKey.substring(0, 12) + "...",
+      testingKeyExists: !!testingKey,
+      prodKeyExists: !!prodKey,
+      message: isTestMode ? "✅ MODO TEST - Debe funcionar con 4242..." : "❌ MODO LIVE - Requiere tarjetas reales"
+    });
+  });
   
   // Auth routes
   app.post("/api/auth/login", async (req, res) => {
@@ -663,7 +680,6 @@ Equipo Passport2Fluency`;
           recurring: { interval: 'month' },
           product_data: {
             name: `${currentPlan.name} - ${currentPlan.description}`,
-            description: `Plan mensual con ${currentPlan.classes} clases de español`,
           },
           metadata: {
             planId: planId.toString(),
@@ -775,7 +791,6 @@ Equipo Passport2Fluency`;
           recurring: { interval: 'month' },
           product_data: {
             name: `${currentPlan.name} - ${currentPlan.description}`,
-            description: `Plan mensual con ${currentPlan.classes} clases de español`,
           },
           metadata: {
             planId: planId.toString(),
