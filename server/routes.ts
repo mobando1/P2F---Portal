@@ -10,7 +10,8 @@ import { TutorManagementService } from "./services/tutor-management";
 import { ClassSchedulerService } from "./services/class-scheduler";
 import { CalendarIntegrationService } from "./services/calendar-integration";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_fake_key", {
+// Usar claves de testing para pruebas
+const stripe = new Stripe(process.env.TESTING_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || "sk_test_fake_key", {
   apiVersion: "2025-05-28.basil",
 });
 

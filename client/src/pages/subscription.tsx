@@ -10,7 +10,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { CheckCircle, Crown, Star } from "lucide-react";
 import Header from "@/components/header";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
+// Usar claves de testing para pruebas
+const stripePublicKey = import.meta.env.TESTING_VITE_STRIPE_PUBLIC_KEY || import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+const stripePromise = loadStripe(stripePublicKey!);
 
 const CheckoutForm = ({ planType, amount }: { planType: string; amount: number }) => {
   const stripe = useStripe();
