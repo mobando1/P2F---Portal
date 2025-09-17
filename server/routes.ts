@@ -636,17 +636,55 @@ Equipo Passport2Fluency`;
         return res.status(400).json({ message: "Missing required subscription data" });
       }
 
-      // Map plan IDs to Stripe Price IDs
-      const stripePriceIds = {
-        1: process.env.STRIPE_PRICE_ID_PLAN_1, // Starter Flow - 4 clases/mes
-        2: process.env.STRIPE_PRICE_ID_PLAN_2, // Momentum Plan - 8 clases/mes
-        3: process.env.STRIPE_PRICE_ID_PLAN_3, // Fluency Boost - 12 clases/mes
+      // Detectar si estamos en modo testing
+      const isTestMode = (process.env.TESTING_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || "").startsWith('sk_test_');
+
+      // Información de planes
+      const planInfo = {
+        1: { name: "Starter Flow", price: 11996, classes: 4, description: "4 clases por mes" },
+        2: { name: "Momentum Plan", price: 21999, classes: 8, description: "8 clases por mes" },
+        3: { name: "Fluency Boost", price: 29999, classes: 12, description: "12 clases por mes" },
       };
 
-      const priceId = stripePriceIds[planId as keyof typeof stripePriceIds];
-      
-      if (!priceId) {
-        return res.status(400).json({ message: "Invalid plan ID or Stripe Price ID not configured" });
+      const currentPlan = planInfo[planId as keyof typeof planInfo];
+      if (!currentPlan) {
+        return res.status(400).json({ message: "Invalid plan ID" });
+      }
+
+      let priceId: string;
+
+      if (isTestMode) {
+        // MODO TEST: Crear precio dinámico 
+        console.log(`🧪 Modo TEST detectado - Creando precio dinámico para ${currentPlan.name}`);
+        
+        const price = await stripe.prices.create({
+          unit_amount: currentPlan.price,
+          currency: 'usd',
+          recurring: { interval: 'month' },
+          product_data: {
+            name: `${currentPlan.name} - ${currentPlan.description}`,
+            description: `Plan mensual con ${currentPlan.classes} clases de español`,
+          },
+          metadata: {
+            planId: planId.toString(),
+            platform: "passport2fluency",
+            testMode: "true"
+          }
+        });
+        priceId = price.id;
+      } else {
+        // MODO PRODUCCIÓN: Usar Price IDs configurados
+        const stripePriceIds = {
+          1: process.env.STRIPE_PRICE_ID_PLAN_1, // Starter Flow - 4 clases/mes
+          2: process.env.STRIPE_PRICE_ID_PLAN_2, // Momentum Plan - 8 clases/mes
+          3: process.env.STRIPE_PRICE_ID_PLAN_3, // Fluency Boost - 12 clases/mes
+        };
+
+        priceId = stripePriceIds[planId as keyof typeof stripePriceIds];
+        
+        if (!priceId) {
+          return res.status(400).json({ message: "Invalid plan ID or Stripe Price ID not configured" });
+        }
       }
 
       // Get or create Stripe customer
@@ -710,17 +748,55 @@ Equipo Passport2Fluency`;
         return res.status(400).json({ message: "Missing required data" });
       }
 
-      // Map plan IDs to Stripe Price IDs
-      const stripePriceIds = {
-        1: process.env.STRIPE_PRICE_ID_PLAN_1, // Starter Flow - $119.96
-        2: process.env.STRIPE_PRICE_ID_PLAN_2, // Momentum Plan - $219.99
-        3: process.env.STRIPE_PRICE_ID_PLAN_3, // Fluency Boost - $299.99
+      // Detectar si estamos en modo testing
+      const isTestMode = (process.env.TESTING_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || "").startsWith('sk_test_');
+
+      // Información de planes
+      const planInfo = {
+        1: { name: "Starter Flow", price: 11996, classes: 4, description: "4 clases por mes" },
+        2: { name: "Momentum Plan", price: 21999, classes: 8, description: "8 clases por mes" },
+        3: { name: "Fluency Boost", price: 29999, classes: 12, description: "12 clases por mes" },
       };
 
-      const priceId = stripePriceIds[planId as keyof typeof stripePriceIds];
-      
-      if (!priceId) {
-        return res.status(400).json({ message: "Invalid plan ID or Stripe Price ID not configured" });
+      const currentPlan = planInfo[planId as keyof typeof planInfo];
+      if (!currentPlan) {
+        return res.status(400).json({ message: "Invalid plan ID" });
+      }
+
+      let priceId: string;
+
+      if (isTestMode) {
+        // MODO TEST: Crear precio dinámico 
+        console.log(`🧪 Checkout TEST - Creando precio dinámico para ${currentPlan.name}`);
+        
+        const price = await stripe.prices.create({
+          unit_amount: currentPlan.price,
+          currency: 'usd',
+          recurring: { interval: 'month' },
+          product_data: {
+            name: `${currentPlan.name} - ${currentPlan.description}`,
+            description: `Plan mensual con ${currentPlan.classes} clases de español`,
+          },
+          metadata: {
+            planId: planId.toString(),
+            platform: "passport2fluency",
+            testMode: "true"
+          }
+        });
+        priceId = price.id;
+      } else {
+        // MODO PRODUCCIÓN: Usar Price IDs configurados
+        const stripePriceIds = {
+          1: process.env.STRIPE_PRICE_ID_PLAN_1, // Starter Flow - $119.96
+          2: process.env.STRIPE_PRICE_ID_PLAN_2, // Momentum Plan - $219.99
+          3: process.env.STRIPE_PRICE_ID_PLAN_3, // Fluency Boost - $299.99
+        };
+
+        priceId = stripePriceIds[planId as keyof typeof stripePriceIds];
+        
+        if (!priceId) {
+          return res.status(400).json({ message: "Invalid plan ID or Stripe Price ID not configured" });
+        }
       }
 
       // Get user for customer information
