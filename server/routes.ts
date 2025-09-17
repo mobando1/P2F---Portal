@@ -671,7 +671,7 @@ Equipo Passport2Fluency`;
         await storage.updateUser(userId, { stripeCustomerId: customerId });
       }
 
-      // Create subscription
+      // Create subscription with proper metadata
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{
@@ -728,7 +728,7 @@ Equipo Passport2Fluency`;
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Create checkout session
+      // Create checkout session with proper subscription metadata
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         mode: 'subscription',
@@ -745,6 +745,14 @@ Equipo Passport2Fluency`;
           planId: planId.toString(),
           platform: "passport2fluency"
         },
+        // CRITICAL: Pass metadata to subscription object as well
+        subscription_data: {
+          metadata: {
+            userId: userId.toString(),
+            planId: planId.toString(),
+            platform: "passport2fluency"
+          }
+        },
         success_url: `${req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/packages`,
       });
@@ -759,113 +767,247 @@ Equipo Passport2Fluency`;
     }
   });
 
+  // Store processed webhook events for idempotency
+  const processedWebhookEvents = new Set<string>();
+
   // Webhook to handle successful payments and subscription events
   app.post("/api/stripe-webhook", express.raw({type: 'application/json'}), async (req, res) => {
+    let event;
+    
     try {
       const sig = req.headers['stripe-signature'] as string;
-      // In production, use your webhook secret
-      // const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
       
-      // For development, parse the event directly
-      const event = JSON.parse(req.body.toString());
+      // Verify webhook signature for security
+      if (process.env.STRIPE_WEBHOOK_SECRET) {
+        try {
+          event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        } catch (err: any) {
+          console.error(`❌ Webhook signature verification failed: ${err.message}`);
+          return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
+        }
+      } else {
+        // For development only - parse directly (not recommended for production)
+        event = JSON.parse(req.body.toString());
+        console.warn('⚠️ WARNING: Webhook running without signature verification - not safe for production!');
+      }
 
-      console.log(`🔔 Webhook received: ${event.type}`);
+      console.log(`🔔 Webhook received: ${event.type} (ID: ${event.id})`);
+      
+      // Idempotency check - prevent duplicate processing
+      if (processedWebhookEvents.has(event.id)) {
+        console.log(`⚠️ Event ${event.id} already processed, skipping`);
+        return res.json({received: true, processed: false, reason: 'duplicate'});
+      }
+      
+      processedWebhookEvents.add(event.id);
 
-      // Handle subscription checkout completion (NEW - main event for subscription payments)
+      // Handle subscription checkout completion (main event for subscription payments)
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
         console.log('📋 Checkout session completed:', session.id);
+        
+        // CRITICAL: Verify payment was successful before crediting
+        if (session.payment_status !== 'paid') {
+          console.log(`⚠️ Payment not completed yet. Status: ${session.payment_status}`);
+          return res.json({received: true, processed: false, reason: 'payment_not_completed'});
+        }
         
         // Only process subscription mode checkouts
         if (session.mode === 'subscription') {
           const { userId, planId } = session.metadata || {};
           
-          if (userId && planId) {
-            const planDetails = {
-              1: { name: 'Starter Flow', classesIncluded: 4, price: 119.96 },
-              2: { name: 'Momentum Plan', classesIncluded: 8, price: 219.99 },
-              3: { name: 'Fluency Boost', classesIncluded: 12, price: 299.99 },
-            };
+          if (!userId || !planId) {
+            console.error('❌ Missing userId or planId in session metadata:', session.metadata);
+            return res.status(400).json({ error: 'Missing required metadata' });
+          }
+          
+          const planDetails = {
+            1: { name: 'Starter Flow', classesIncluded: 4, price: 119.96 },
+            2: { name: 'Momentum Plan', classesIncluded: 8, price: 219.99 },
+            3: { name: 'Fluency Boost', classesIncluded: 12, price: 299.99 },
+          };
 
-            const plan = planDetails[parseInt(planId) as keyof typeof planDetails];
+          const plan = planDetails[parseInt(planId) as keyof typeof planDetails];
+          
+          if (!plan) {
+            console.error(`❌ Invalid plan ID: ${planId}`);
+            return res.status(400).json({ error: 'Invalid plan ID' });
+          }
+          
+          try {
+            // Check if user exists
+            const user = await storage.getUser(parseInt(userId));
+            if (!user) {
+              console.error(`❌ User not found: ${userId}`);
+              return res.status(404).json({ error: 'User not found' });
+            }
             
-            if (plan) {
-              // Update user with class credits
+            // Check if subscription already exists to prevent duplicates
+            const existingSubscription = await storage.getSubscriptionByStripeId(session.subscription as string);
+            if (existingSubscription) {
+              console.log(`⚠️ Subscription already exists for stripe ID: ${session.subscription}`);
+              return res.json({received: true, processed: false, reason: 'subscription_already_exists'});
+            }
+
+            // Update user with class credits
+            await storage.updateUser(parseInt(userId), {
+              classCredits: (user.classCredits || 0) + plan.classesIncluded
+            });
+            
+            console.log(`✅ Added ${plan.classesIncluded} class credits to user ${userId} for plan ${plan.name}`);
+
+            // Create subscription record
+            await storage.createSubscription({
+              userId: parseInt(userId),
+              planId: parseInt(planId),
+              stripeSubscriptionId: session.subscription as string,
+              status: 'active',
+              nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+            });
+            
+            console.log(`✅ Created subscription for user ${userId}, plan ${plan.name} (${plan.classesIncluded} classes)`);
+          } catch (error) {
+            console.error('❌ Error processing subscription checkout:', error);
+            return res.status(500).json({ error: 'Failed to process subscription' });
+          }
+        } else if (session.mode === 'payment') {
+          // Handle one-time package purchases
+          const { userId, packageId, type } = session.metadata || {};
+          
+          if (userId && packageId && type === 'package') {
+            try {
               const user = await storage.getUser(parseInt(userId));
               if (user) {
+                const packageCredits = {
+                  '1': 5,   // 5-class package
+                  '2': 10,  // 10-class package
+                  '3': 20,  // 20-class package
+                };
+                
+                const credits = packageCredits[packageId as keyof typeof packageCredits] || 0;
                 await storage.updateUser(parseInt(userId), {
-                  classCredits: (user.classCredits || 0) + plan.classesIncluded
+                  classCredits: (user.classCredits || 0) + credits
                 });
                 
-                console.log(`✅ Added ${plan.classesIncluded} class credits to user ${userId} for plan ${plan.name}`);
+                console.log(`✅ Added ${credits} class credits to user ${userId} for package ${packageId}`);
               }
-
-              // Create subscription record
-              await storage.createSubscription({
-                userId: parseInt(userId),
-                planId: parseInt(planId),
-                stripeSubscriptionId: session.subscription,
-                status: 'active',
-                nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-              });
-              
-              console.log(`✅ Created subscription for user ${userId}, plan ${plan.name} (${plan.classesIncluded} classes)`);
+            } catch (error) {
+              console.error('❌ Error processing package purchase:', error);
             }
           }
         }
       }
 
-      // Handle one-time payments (packages)
+      // Handle one-time payments (packages) - for direct payment intents
       if (event.type === 'payment_intent.succeeded') {
         const paymentIntent = event.data.object;
-        const { userId, type, packageId } = paymentIntent.metadata;
+        const { userId, type, packageId } = paymentIntent.metadata || {};
 
-        if (userId && type === 'package' && packageId) {
-          // Handle package purchase
-          const user = await storage.getUser(parseInt(userId));
-          if (user) {
-            // Add credits to user account based on package
+        // Only process if this is a package purchase and not part of a subscription
+        if (userId && type === 'package' && packageId && !paymentIntent.invoice) {
+          try {
+            const user = await storage.getUser(parseInt(userId));
+            if (!user) {
+              console.error(`❌ User not found for payment intent: ${userId}`);
+              return res.status(404).json({ error: 'User not found' });
+            }
+            
             const packageCredits = {
               '1': 5,   // 5-class package
               '2': 10,  // 10-class package
               '3': 20,  // 20-class package
             };
             
-            const credits = packageCredits[packageId as keyof typeof packageCredits] || 0;
+            const credits = packageCredits[packageId as keyof typeof packageCredits];
+            if (!credits) {
+              console.error(`❌ Invalid package ID: ${packageId}`);
+              return res.status(400).json({ error: 'Invalid package ID' });
+            }
+            
             await storage.updateUser(parseInt(userId), {
               classCredits: (user.classCredits || 0) + credits
             });
             
-            console.log(`✅ Added ${credits} class credits to user ${userId}`);
+            console.log(`✅ Added ${credits} class credits to user ${userId} for package ${packageId}`);
+          } catch (error) {
+            console.error('❌ Error processing package payment:', error);
           }
         }
       }
 
-      // Handle subscription creation
-      if (event.type === 'customer.subscription.created' || event.type === 'invoice.payment_succeeded') {
+      // Handle recurring subscription payments (invoice.payment_succeeded)
+      if (event.type === 'invoice.payment_succeeded') {
+        const invoice = event.data.object;
+        
+        // Only process if this is a subscription invoice (not one-time payment)
+        if (invoice.subscription && invoice.billing_reason === 'subscription_cycle') {
+          try {
+            // Find subscription by Stripe subscription ID
+            const dbSubscription = await storage.getSubscriptionByStripeId(invoice.subscription as string);
+            
+            if (!dbSubscription) {
+              console.log(`⚠️ Subscription not found in database: ${invoice.subscription}`);
+              return res.json({received: true, processed: false, reason: 'subscription_not_found'});
+            }
+            
+            // Get plan details
+            const planDetails = {
+              1: { name: 'Starter Flow', classesIncluded: 4 },
+              2: { name: 'Momentum Plan', classesIncluded: 8 },
+              3: { name: 'Fluency Boost', classesIncluded: 12 },
+            };
+            
+            const plan = planDetails[dbSubscription.planId as keyof typeof planDetails];
+            
+            if (plan) {
+              // Add class credits for recurring payment
+              const user = await storage.getUser(dbSubscription.userId);
+              if (user) {
+                await storage.updateUser(dbSubscription.userId, {
+                  classCredits: (user.classCredits || 0) + plan.classesIncluded
+                });
+                
+                // Update subscription next billing date
+                await storage.updateSubscription(dbSubscription.id, {
+                  nextBillingDate: new Date(invoice.lines.data[0].period.end * 1000),
+                  status: 'active'
+                });
+                
+                console.log(`✅ Recurring payment: Added ${plan.classesIncluded} credits to user ${dbSubscription.userId} for plan ${plan.name}`);
+              }
+            }
+          } catch (error) {
+            console.error('❌ Error processing recurring payment:', error);
+          }
+        }
+      }
+      
+      // Handle subscription creation (when subscription is first created)
+      if (event.type === 'customer.subscription.created') {
         const subscription = event.data.object;
         const { userId, planId } = subscription.metadata || {};
 
         if (userId && planId) {
-          const planDetails = {
-            1: { name: 'Starter Flow', classesIncluded: 4 },
-            2: { name: 'Momentum Plan', classesIncluded: 8 },
-            3: { name: 'Fluency Boost', classesIncluded: 12 },
-          };
-
-          const plan = planDetails[parseInt(planId) as keyof typeof planDetails];
-          
-          if (plan) {
-            // Create or update subscription in database
+          try {
+            // Check if subscription already exists
+            const existingSubscription = await storage.getSubscriptionByStripeId(subscription.id);
+            if (existingSubscription) {
+              console.log(`⚠️ Subscription already exists: ${subscription.id}`);
+              return res.json({received: true, processed: false, reason: 'subscription_already_exists'});
+            }
+            
+            // Create subscription record (credits will be added via checkout.session.completed or invoice.payment_succeeded)
             await storage.createSubscription({
               userId: parseInt(userId),
               planId: parseInt(planId),
               stripeSubscriptionId: subscription.id,
-              status: 'active',
+              status: subscription.status as 'active' | 'cancelled' | 'expired',
               nextBillingDate: new Date(subscription.current_period_end * 1000),
             });
             
-            console.log(`✅ Created subscription for user ${userId}, plan ${planId}`);
+            console.log(`✅ Created subscription record for user ${userId}, plan ${planId}`);
+          } catch (error) {
+            console.error('❌ Error creating subscription record:', error);
           }
         }
       }
@@ -884,10 +1026,25 @@ Equipo Passport2Fluency`;
         }
       }
 
-      res.json({received: true});
-    } catch (error) {
-      console.error('Webhook error:', error);
-      res.status(400).json({ message: "Webhook error" });
+      res.json({received: true, processed: true, eventId: event.id});
+    } catch (error: any) {
+      console.error(`❌ Webhook error for event ${event?.id || 'unknown'}:`, error);
+      
+      // Remove from processed events if processing failed
+      if (event?.id) {
+        processedWebhookEvents.delete(event.id);
+      }
+      
+      // Return appropriate error response
+      if (error.type === 'StripeSignatureVerificationError') {
+        res.status(400).json({ error: 'Invalid signature' });
+      } else {
+        res.status(500).json({ 
+          error: 'Webhook processing failed', 
+          message: error.message,
+          eventId: event?.id 
+        });
+      }
     }
   });
 
