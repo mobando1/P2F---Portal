@@ -37,7 +37,7 @@ const calendarService = new CalendarIntegrationService(
   process.env.HIGH_LEVEL_LOCATION_ID
 );
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise<void> {
   // Servir archivos estáticos desde attached_assets
   app.use('/attached_assets', express.static('attached_assets'));
 
@@ -1466,6 +1466,5 @@ Equipo Passport2Fluency`;
     console.log("🚀 Sistema de notificaciones automáticas iniciado");
   }
 
-  const httpServer = createServer(app);
-  return httpServer;
+  // Server is now created in index.ts
 }
