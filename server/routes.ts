@@ -771,6 +771,50 @@ Equipo Passport2Fluency`;
 
       console.log(`🔔 Webhook received: ${event.type}`);
 
+      // Handle subscription checkout completion (NEW - main event for subscription payments)
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        console.log('📋 Checkout session completed:', session.id);
+        
+        // Only process subscription mode checkouts
+        if (session.mode === 'subscription') {
+          const { userId, planId } = session.metadata || {};
+          
+          if (userId && planId) {
+            const planDetails = {
+              1: { name: 'Starter Flow', classesIncluded: 4, price: 119.96 },
+              2: { name: 'Momentum Plan', classesIncluded: 8, price: 219.99 },
+              3: { name: 'Fluency Boost', classesIncluded: 12, price: 299.99 },
+            };
+
+            const plan = planDetails[parseInt(planId) as keyof typeof planDetails];
+            
+            if (plan) {
+              // Update user with class credits
+              const user = await storage.getUser(parseInt(userId));
+              if (user) {
+                await storage.updateUser(parseInt(userId), {
+                  classCredits: (user.classCredits || 0) + plan.classesIncluded
+                });
+                
+                console.log(`✅ Added ${plan.classesIncluded} class credits to user ${userId} for plan ${plan.name}`);
+              }
+
+              // Create subscription record
+              await storage.createSubscription({
+                userId: parseInt(userId),
+                planId: parseInt(planId),
+                stripeSubscriptionId: session.subscription,
+                status: 'active',
+                nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+              });
+              
+              console.log(`✅ Created subscription for user ${userId}, plan ${plan.name} (${plan.classesIncluded} classes)`);
+            }
+          }
+        }
+      }
+
       // Handle one-time payments (packages)
       if (event.type === 'payment_intent.succeeded') {
         const paymentIntent = event.data.object;
