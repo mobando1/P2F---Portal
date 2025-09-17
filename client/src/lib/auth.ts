@@ -23,14 +23,48 @@ export interface RegisterData {
   username: string;
 }
 
+// Cambio crítico: usar localStorage para persistir la sesión durante redirecciones de Stripe
 let currentUser: AuthUser | null = null;
 
+const STORAGE_KEY = 'passport2fluency_user';
+
+// Cargar usuario desde localStorage al iniciar
+const loadUserFromStorage = (): AuthUser | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error('Error loading user from storage:', error);
+    localStorage.removeItem(STORAGE_KEY);
+  }
+  return null;
+};
+
+// Guardar usuario en localStorage
+const saveUserToStorage = (user: AuthUser | null) => {
+  try {
+    if (user) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  } catch (error) {
+    console.error('Error saving user to storage:', error);
+  }
+};
+
 export const getCurrentUser = (): AuthUser | null => {
+  if (!currentUser) {
+    currentUser = loadUserFromStorage();
+  }
   return currentUser;
 };
 
 export const setCurrentUser = (user: AuthUser | null) => {
   currentUser = user;
+  saveUserToStorage(user);
 };
 
 export const login = async (data: LoginData): Promise<AuthUser> => {
@@ -62,5 +96,6 @@ export const logout = () => {
 };
 
 export const isAuthenticated = (): boolean => {
-  return currentUser !== null;
+  // Importante: hidratar desde localStorage antes de verificar
+  return getCurrentUser() !== null;
 };
