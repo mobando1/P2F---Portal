@@ -855,45 +855,7 @@ Equipo Passport2Fluency`;
     }
   });
 
-  // Store processed webhook events for idempotency
-  const processedWebhookEvents = new Set<string>();
-
-  // Webhook to handle successful payments and subscription events
-  app.post("/api/stripe-webhook", express.raw({type: 'application/json'}), async (req, res) => {
-    console.log('🚀 WEBHOOK RECEIVED - RAW ENTRY');
-    console.log('📋 Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('📊 Body type:', typeof req.body);
-    console.log('📏 Body length:', req.body?.length || 'undefined');
-    
-    let event;
-    
-    try {
-      const sig = req.headers['stripe-signature'] as string;
-      console.log('🔐 Stripe signature present:', !!sig);
-      
-      // Verify webhook signature for security
-      if (process.env.STRIPE_WEBHOOK_SECRET) {
-        try {
-          event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-        } catch (err: any) {
-          console.error(`❌ Webhook signature verification failed: ${err.message}`);
-          return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
-        }
-      } else {
-        // For development only - parse directly (not recommended for production)
-        event = JSON.parse(req.body.toString());
-        console.warn('⚠️ WARNING: Webhook running without signature verification - not safe for production!');
-      }
-
-      console.log(`🔔 Webhook received: ${event.type} (ID: ${event.id})`);
-      
-      // Idempotency check - prevent duplicate processing
-      if (processedWebhookEvents.has(event.id)) {
-        console.log(`⚠️ Event ${event.id} already processed, skipping`);
-        return res.json({received: true, processed: false, reason: 'duplicate'});
-      }
-      
-      processedWebhookEvents.add(event.id);
+  // WEBHOOK MOVED TO server/index.ts to ensure proper middleware order
 
       // Handle subscription checkout completion (main event for subscription payments)
       if (event.type === 'checkout.session.completed') {
