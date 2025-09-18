@@ -860,10 +860,16 @@ Equipo Passport2Fluency`;
 
   // Webhook to handle successful payments and subscription events
   app.post("/api/stripe-webhook", express.raw({type: 'application/json'}), async (req, res) => {
+    console.log('🚀 WEBHOOK RECEIVED - RAW ENTRY');
+    console.log('📋 Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('📊 Body type:', typeof req.body);
+    console.log('📏 Body length:', req.body?.length || 'undefined');
+    
     let event;
     
     try {
       const sig = req.headers['stripe-signature'] as string;
+      console.log('🔐 Stripe signature present:', !!sig);
       
       // Verify webhook signature for security
       if (process.env.STRIPE_WEBHOOK_SECRET) {
