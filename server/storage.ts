@@ -7,6 +7,7 @@ import {
 
 export interface IStorage {
   // Users
+  getAllUsers(): Promise<User[]>;
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByHighLevelContactId(contactId: string): Promise<User | undefined>;
@@ -395,6 +396,10 @@ export class MemStorage implements IStorage {
     };
     this.userProgress.set(1, progress);
     this.currentProgressId = 2;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
   }
 
   async getUser(id: number): Promise<User | undefined> {

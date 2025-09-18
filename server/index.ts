@@ -64,6 +64,68 @@ async function startServer() {
         if (session.payment_status === 'paid') {
           const { userId, planId, packageId } = session.metadata || {};
           
+          // Handle direct Stripe link purchases (no metadata)
+          if (!userId) {
+            // Get customer email from either source
+            const customerEmail = session.customer_details?.email || (session as any).customer_email;
+            
+            if (!customerEmail) {
+              console.log(`⚠️ No customer email found in checkout session`);
+              processedEvents.add(event.id);
+              res.status(200).json({ received: true, processed: false, reason: 'no_email' });
+              return;
+            }
+            
+            console.log(`🔗 Processing direct Stripe link purchase for email: ${customerEmail}`);
+            
+            try {
+              // Find user by email instead of metadata userId
+              const users = await storage.getAllUsers();
+              const user = users.find(u => u.email?.toLowerCase() === customerEmail?.toLowerCase());
+              
+              if (user && customerEmail) {
+                // Determine package by amount in cents (more reliable than dollars)
+                const amountInCents = session.amount_total || 0;
+                console.log(`💰 Payment amount: ${amountInCents} cents ($${amountInCents/100})`);
+                
+                // Map amounts in cents to class packages (more precise)
+                const packageByAmount = {
+                  14995: { name: '5-Class Package', classes: 5, id: 1 },   // $149.95
+                  27490: { name: '10-Class Package', classes: 10, id: 2 }, // $274.90
+                  49980: { name: '20-Class Package', classes: 20, id: 3 }  // $499.80
+                };
+                
+                const packageInfo = packageByAmount[amountInCents as keyof typeof packageByAmount];
+                
+                if (packageInfo) {
+                  // Update user with class credits
+                  await storage.updateUser(user.id, {
+                    classCredits: (user.classCredits || 0) + packageInfo.classes
+                  });
+                  
+                  console.log(`✅ DIRECT LINK: Added ${packageInfo.classes} class credits to user ${user.id} (${customerEmail}) for ${packageInfo.name}`);
+                  processedEvents.add(event.id);
+                  res.json({received: true, processed: true, type: 'direct_link'});
+                  return;
+                } else {
+                  console.log(`⚠️ Unknown package amount: ${amountInCents} cents`);
+                  processedEvents.add(event.id);
+                  res.status(200).json({ received: true, processed: false, reason: 'unknown_amount' });
+                  return;
+                }
+              } else {
+                console.log(`❌ User not found with email: ${customerEmail}`);
+                // Mark as processed but log for manual review
+                processedEvents.add(event.id);
+                res.status(200).json({ received: true, processed: false, reason: 'user_not_found', email: customerEmail });
+                return;
+              }
+            } catch (error) {
+              console.error('❌ Error processing direct link purchase:', error);
+              return res.status(500).json({ error: 'Processing direct link failed - will retry' });
+            }
+          }
+          
           if (userId) {
             // Check if user exists
             const user = await storage.getUser(parseInt(userId));
@@ -220,6 +282,8 @@ async function startServer() {
       timestamp: new Date().toISOString()
     });
   });
+
+  // REMOVED: Insecure test endpoint for production safety
   
   // NOW add the regular body parsing middleware
   app.use(express.json());
