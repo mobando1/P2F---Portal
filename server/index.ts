@@ -26,14 +26,13 @@ async function startServer() {
       const sig = req.headers['stripe-signature'] as string;
       console.log('🔐 Stripe signature present:', !!sig);
       
-      // TEMPORARILY DISABLE signature verification to debug if events arrive
-      console.log('🧪 DEBUGGING: Temporarily disabled signature verification');
+      // PROPERLY verify webhook signature with Stripe
       try {
-        event = JSON.parse(req.body.toString());
-        console.log(`🔔 Webhook received (no verification): ${event.type} (ID: ${event.id})`);
-      } catch (parseError) {
-        console.error('❌ Failed to parse webhook body:', parseError);
-        return res.status(400).json({ error: 'Invalid JSON payload' });
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+        console.log(`🔔 Webhook verified and received: ${event.type} (ID: ${event.id})`);
+      } catch (err: any) {
+        console.error('❌ Webhook signature verification failed:', err.message);
+        return res.status(400).json({ error: `Webhook Error: ${err.message}` });
       }
 
       console.log(`✅ Processing webhook: ${event.type}`);
