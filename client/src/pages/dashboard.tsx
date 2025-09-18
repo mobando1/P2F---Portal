@@ -164,10 +164,8 @@ export default function Dashboard() {
   };
 
   const handleManageSubscription = () => {
-    toast({
-      title: "Manage Subscription",
-      description: "Opening subscription management portal...",
-    });
+    // Redirect to packages page to manage subscription and buy more classes
+    setLocation("/packages");
   };
 
   const handleCancelClass = (classId: number) => {

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useLanguage } from "@/lib/i18n";
+import { getCurrentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -142,53 +144,66 @@ export default function PackagesPage() {
   ];
 
   const handlePackagePurchase = async (packageItem: ClassPackage) => {
-    if (isProcessing) return;
+    console.log('🔔 PACKAGE PURCHASE CLICKED:', packageItem);
+    
+    if (isProcessing) {
+      console.log('⏸️ Already processing, returning');
+      return;
+    }
     
     setIsProcessing(true);
     setSelectedPackage(packageItem);
     
     try {
-      // Obtener el usuario actual del localStorage o crear uno de prueba
-      let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      // Obtener el usuario actual usando la función de autenticación correcta
+      const currentUser = getCurrentUser();
+      console.log('👤 Current user:', currentUser);
       
       if (!currentUser || !currentUser.id) {
-        // Crear usuario de prueba para desarrollo
-        currentUser = {
-          id: 1,
-          email: 'test@passport2fluency.com',
-          firstName: 'Test',
-          lastName: 'User',
-          username: 'testuser'
-        };
-        localStorage.setItem('user', JSON.stringify(currentUser));
+        console.log('❌ No user logged in');
+        toast({
+          title: "Error",
+          description: "Please login first",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
       }
 
-      // Crear PaymentIntent para paquete de clases
-      const response = await apiRequest("POST", "/api/create-payment-intent", {
-        amount: packageItem.price,
-        metadata: {
-          type: 'package',
-          packageId: packageItem.id,
-          packageName: packageItem.name,
-          classCount: packageItem.classCount,
-          userId: currentUser.id
-        }
-      });
+      // Enlaces directos de Stripe para cada paquete
+      const stripeLinks = {
+        1: 'https://buy.stripe.com/28E7sMfti4jFdYMbKCes00b', // 5 clases
+        2: 'https://buy.stripe.com/3cIfZi80Q6rN07WaGyes00c', // 10 clases  
+        3: 'https://buy.stripe.com/cNidRa0yo8zVbQE01Ues00d'  // 20 clases
+      };
 
-      const data = await response.json();
+      const link = stripeLinks[packageItem.id as keyof typeof stripeLinks];
+      console.log('🔗 Stripe link for package', packageItem.id, ':', link);
       
-      if (data.clientSecret) {
-        // Redirigir a página de checkout con el clientSecret
-        window.location.href = `/checkout?client_secret=${data.clientSecret}&type=package&id=${packageItem.id}`;
+      if (link) {
+        // Agregar metadata del usuario como parámetros de consulta para Stripe
+        const url = new URL(link);
+        url.searchParams.set('client_reference_id', currentUser.id.toString());
+        url.searchParams.set('prefilled_email', currentUser.email || '');
+        
+        const finalUrl = url.toString();
+        console.log('🚀 Redirecting to:', finalUrl);
+        
+        // Redirigir directamente a la página de Stripe
+        window.location.href = finalUrl;
+      } else {
+        console.log('❌ No link configured for package:', packageItem.id);
+        throw new Error('Package not configured');
       }
     } catch (error) {
-      console.error('Error creating payment:', error);
+      console.error('❌ Error redirecting to payment:', error);
       toast({
-        title: t.language === 'es' ? "Error de Pago" : "Payment Error",
-        description: t.language === 'es' ? "No se pudo procesar el pago. Intenta de nuevo." : "Could not process payment. Please try again.",
+        title: "Payment Error",
+        description: "Could not access payment. Please try again.",
         variant: "destructive",
       });
     } finally {
+      console.log('✅ Processing finished');
       setIsProcessing(false);
     }
   };
