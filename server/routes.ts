@@ -856,73 +856,15 @@ Equipo Passport2Fluency`;
   });
 
   // WEBHOOK MOVED TO server/index.ts to ensure proper middleware order
+  
+  /*
+  // TODO: Clean up corrupted webhook code below - temporarily commented
+  
+  // All webhook logic moved to server/index.ts for proper middleware order
 
-      // Handle subscription checkout completion (main event for subscription payments)
-      if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-        console.log('📋 Checkout session completed:', session.id);
-        
-        // CRITICAL: Verify payment was successful before crediting
-        if (session.payment_status !== 'paid') {
-          console.log(`⚠️ Payment not completed yet. Status: ${session.payment_status}`);
-          return res.json({received: true, processed: false, reason: 'payment_not_completed'});
-        }
-        
-        // Only process subscription mode checkouts
-        if (session.mode === 'subscription') {
-          const { userId, planId } = session.metadata || {};
-          
-          if (!userId || !planId) {
-            console.error('❌ Missing userId or planId in session metadata:', session.metadata);
-            return res.status(400).json({ error: 'Missing required metadata' });
-          }
-          
-          const planDetails = {
-            1: { name: 'Starter Flow', classesIncluded: 4, price: 119.96 },
-            2: { name: 'Momentum Plan', classesIncluded: 8, price: 219.99 },
-            3: { name: 'Fluency Boost', classesIncluded: 12, price: 299.99 },
-          };
-
-          const plan = planDetails[parseInt(planId) as keyof typeof planDetails];
-          
-          if (!plan) {
-            console.error(`❌ Invalid plan ID: ${planId}`);
-            return res.status(400).json({ error: 'Invalid plan ID' });
-          }
-          
-          try {
-            // Check if user exists
-            const user = await storage.getUser(parseInt(userId));
-            if (!user) {
-              console.error(`❌ User not found: ${userId}`);
-              return res.status(404).json({ error: 'User not found' });
-            }
+  // Rutas para gestión de profesores
             
-            // Check if subscription already exists to prevent duplicates
-            const existingSubscription = await storage.getSubscriptionByStripeId(session.subscription as string);
-            if (existingSubscription) {
-              console.log(`⚠️ Subscription already exists for stripe ID: ${session.subscription}`);
-              return res.json({received: true, processed: false, reason: 'subscription_already_exists'});
-            }
-
-            // Update user with class credits
-            await storage.updateUser(parseInt(userId), {
-              classCredits: (user.classCredits || 0) + plan.classesIncluded
-            });
-            
-            console.log(`✅ Added ${plan.classesIncluded} class credits to user ${userId} for plan ${plan.name}`);
-
-            // Create subscription record
-            await storage.createSubscription({
-              userId: parseInt(userId),
-              planId: parseInt(planId),
-              stripeSubscriptionId: session.subscription as string,
-              status: 'active',
-              nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-            });
-            
-            console.log(`✅ Created subscription for user ${userId}, plan ${plan.name} (${plan.classesIncluded} classes)`);
-          } catch (error) {
+  // ===== START TUTOR MANAGEMENT ROUTES =====
             console.error('❌ Error processing subscription checkout:', error);
             return res.status(500).json({ error: 'Failed to process subscription' });
           }
@@ -1103,8 +1045,9 @@ Equipo Passport2Fluency`;
       }
     }
   });
+  */
 
-  // Rutas para gestión de profesores
+  // Rutas para gestión de profesores  
   app.post("/api/tutors", async (req, res) => {
     try {
       const tutorData = req.body;
