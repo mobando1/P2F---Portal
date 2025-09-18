@@ -73,6 +73,11 @@ export const login = async (data: LoginData): Promise<AuthUser> => {
   
   if (result.user) {
     setCurrentUser(result.user);
+    
+    // CRITICAL: Clear QueryClient cache after login to prevent stale error cache
+    const { queryClient } = await import("@/lib/queryClient");
+    queryClient.clear();
+    
     return result.user;
   }
   

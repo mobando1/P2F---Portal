@@ -57,10 +57,29 @@ export default function Dashboard() {
     return null;
   }
 
-  // Queries
-  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery<DashboardData>({
+  // Queries with error handling
+  const { data: dashboardData, isLoading: isDashboardLoading, isError: isDashboardError, error: dashboardError } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard", user.id],
   });
+
+  // CRITICAL: Handle query errors - force session reset if dashboard fails to load
+  if (isDashboardError) {
+    console.error('Dashboard query failed:', dashboardError);
+    console.log('User ID:', user.id);
+    console.log('Query URL would be:', `/api/dashboard/${user.id}`);
+    
+    toast({
+      title: "Error de sesión",
+      description: "Recargando tu sesión...",
+      variant: "destructive",
+    });
+    
+    // Force logout and cache clear to recover from corrupted state
+    queryClient.clear();
+    localStorage.removeItem('passport2fluency_user');
+    setLocation("/login");
+    return null;
+  }
 
   const { data: tutors = [], isLoading: isTutorsLoading } = useQuery<Tutor[]>({
     queryKey: ["/api/tutors"],

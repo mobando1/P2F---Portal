@@ -29,11 +29,24 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Guard against undefined segments
+    if (queryKey.some(segment => segment === undefined || segment === null)) {
+      throw new Error(`Invalid queryKey contains undefined/null: ${JSON.stringify(queryKey)}`);
+    }
+    
     // Build URL from queryKey segments: ['/api/dashboard', userId] becomes '/api/dashboard/userId'
     const url = queryKey.join('/');
+    console.log('Fetching URL:', url);
+    
     const res = await fetch(url, {
       credentials: "include",
     });
+    
+    // Check if response is HTML (SPA fallback) instead of JSON
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error(`API returned non-JSON response for ${url}. Content-Type: ${contentType}`);
+    }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
