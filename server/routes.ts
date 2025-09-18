@@ -180,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           classesCompleted: progress?.classesCompleted || 0,
           learningHours: progress?.learningHours || "0.00",
           currentLevel: user.level,
-          remainingClasses: subscription ? Math.max((user.classCredits || 0), 0) : 0,
+          remainingClasses: Math.max((user.classCredits || 0), 0),
         },
       });
     } catch (error) {
