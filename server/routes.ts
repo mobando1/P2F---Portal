@@ -12,7 +12,7 @@ import { CalendarIntegrationService } from "./services/calendar-integration";
 
 // 🧪 FORZAR MODO TEST para pruebas con 4242 4242 4242 4242
 const stripe = new Stripe(process.env.TESTING_STRIPE_SECRET_KEY || "sk_test_fake_key", {
-  apiVersion: "2024-06-20",
+  apiVersion: "2025-06-30.basil",
 });
 
 // Configurar servicios de High Level
@@ -98,17 +98,9 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       const user = await storage.createUser(userData);
       
-      // Create default subscription
-      await storage.createSubscription({
-        userId: user.id,
-        planName: "Basic Plan",
-        planType: "basic",
-        classesLimit: 4,
-        classesUsed: 0,
-        price: "19.99",
-        status: "active",
-        nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      });
+      // Create default subscription - First create a basic plan if it doesn't exist
+      // For now, skip creating default subscription as it should be handled by Stripe integration
+      // This will be properly implemented when user purchases a plan
 
       // Create initial progress
       await storage.updateUserProgress(user.id, {
@@ -188,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           classesCompleted: progress?.classesCompleted || 0,
           learningHours: progress?.learningHours || "0.00",
           currentLevel: user.level,
-          remainingClasses: subscription ? (subscription.classesLimit || 0) - (subscription.classesUsed || 0) : 0,
+          remainingClasses: subscription ? Math.max((user.classCredits || 0), 0) : 0,
         },
       });
     } catch (error) {
@@ -239,16 +231,17 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "No active subscription found" });
       }
 
-      const remainingClasses = (subscription.classesLimit || 0) - (subscription.classesUsed || 0);
-      if (remainingClasses <= 0) {
-        return res.status(400).json({ message: "No remaining classes in your subscription" });
+      // Check user's class credits instead of subscription limits
+      const userClassCredits = await storage.getUser(classData.userId);
+      if (!userClassCredits || (userClassCredits.classCredits || 0) <= 0) {
+        return res.status(400).json({ message: "No remaining class credits available" });
       }
 
       const newClass = await storage.createClass(classData);
       
-      // Update subscription usage
-      await storage.updateSubscription(subscription.id, {
-        classesUsed: (subscription.classesUsed || 0) + 1,
+      // Deduct class credit from user instead of updating subscription
+      await storage.updateUser(classData.userId, {
+        classCredits: (userClassCredits.classCredits || 0) - 1,
       });
 
       // 🚀 ENVIAR NOTIFICACIONES AUTOMÁTICAS DUALES Y PROGRAMAR RECORDATORIOS
@@ -294,11 +287,11 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: "Class not found or not authorized" });
       }
 
-      // Refund the class to user's subscription
-      const subscription = await storage.getUserSubscription(userId);
-      if (subscription && (subscription.classesUsed || 0) > 0) {
-        await storage.updateSubscription(subscription.id, {
-          classesUsed: (subscription.classesUsed || 0) - 1,
+      // Refund the class credit to user
+      const user = await storage.getUser(userId);
+      if (user) {
+        await storage.updateUser(userId, {
+          classCredits: (user.classCredits || 0) + 1,
         });
       }
 
@@ -431,8 +424,9 @@ export async function registerRoutes(app: Express): Promise<void> {
           console.log(`✅ Clase ${classToUpdate.id} marcada como completada automáticamente`);
           
           // Descontar clase del balance del usuario
-          if (user.classCredits && user.classCredits > 0) {
-            const newCredits = user.classCredits - 1;
+          const currentCredits = user.classCredits || 0;
+          if (currentCredits > 0) {
+            const newCredits = currentCredits - 1;
             await storage.updateUser(user.id, { classCredits: newCredits });
             console.log(`💳 Créditos actualizados: ${user.firstName} ${user.lastName}`);
             console.log(`   - Créditos antes: ${user.classCredits}`);
@@ -443,7 +437,7 @@ export async function registerRoutes(app: Express): Promise<void> {
             if (progress) {
               await storage.updateUserProgress(user.id, {
                 classesCompleted: (progress.classesCompleted || 0) + 1,
-                learningHours: Number(progress.learningHours || 0) + (classToUpdate.duration / 60)
+                learningHours: (Number(progress.learningHours || 0) + (classToUpdate.duration / 60)).toString()
               });
             }
           } else {
@@ -546,11 +540,11 @@ Equipo Passport2Fluency`;
         processed: true,
         message: "Webhook procesado correctamente"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Error processing High Level webhook:", error);
       res.status(500).json({ 
         success: false, 
-        error: error.message,
+        error: error?.message || "Unknown error",
         message: "Error procesando webhook"
       });
     }
@@ -601,13 +595,12 @@ Equipo Passport2Fluency`;
   app.put("/api/subscription/:id", async (req, res) => {
     try {
       const subscriptionId = parseInt(req.params.id);
-      const { planType, planName, classesLimit, price } = req.body;
+      const { planId, status, nextBillingDate } = req.body;
       
       const updatedSubscription = await storage.updateSubscription(subscriptionId, {
-        planType,
-        planName,
-        classesLimit,
-        price,
+        planId,
+        status,
+        nextBillingDate,
       });
       
       if (!updatedSubscription) {
@@ -697,11 +690,12 @@ Equipo Passport2Fluency`;
           3: process.env.STRIPE_PRICE_ID_PLAN_3, // Fluency Boost - 12 clases/mes
         };
 
-        priceId = stripePriceIds[planId as keyof typeof stripePriceIds];
+        const selectedPriceId = stripePriceIds[planId as keyof typeof stripePriceIds];
         
-        if (!priceId) {
+        if (!selectedPriceId) {
           return res.status(400).json({ message: "Invalid plan ID or Stripe Price ID not configured" });
         }
+        priceId = selectedPriceId;
       }
 
       // Get or create Stripe customer
@@ -744,7 +738,7 @@ Equipo Passport2Fluency`;
       });
 
       const invoice = subscription.latest_invoice;
-      const paymentIntent = typeof invoice === 'string' ? null : invoice?.payment_intent;
+      const paymentIntent = typeof invoice === 'string' ? null : (invoice as any)?.payment_intent;
 
       res.json({ 
         clientSecret: paymentIntent?.client_secret,
@@ -808,11 +802,12 @@ Equipo Passport2Fluency`;
           3: process.env.STRIPE_PRICE_ID_PLAN_3, // Fluency Boost - $299.99
         };
 
-        priceId = stripePriceIds[planId as keyof typeof stripePriceIds];
+        const selectedPriceId = stripePriceIds[planId as keyof typeof stripePriceIds];
         
-        if (!priceId) {
+        if (!selectedPriceId) {
           return res.status(400).json({ message: "Invalid plan ID or Stripe Price ID not configured" });
         }
+        priceId = selectedPriceId;
       }
 
       // Get user for customer information
@@ -1258,6 +1253,11 @@ Equipo Passport2Fluency`;
         password: '',
         level: 'beginner',
         avatar: null,
+        userType: 'customer',
+        trialCompleted: true,
+        classCredits: 5,
+        highLevelContactId: null,
+        stripeCustomerId: null,
         createdAt: new Date()
       };
 
@@ -1276,21 +1276,26 @@ Equipo Passport2Fluency`;
         createdAt: new Date(),
         country: 'España',
         timezone: 'Europe/Madrid',
+        languages: ['Español', 'Inglés'],
         certifications: ['DELE'],
         yearsOfExperience: 5,
-        highLevelContactId: null
+        highLevelContactId: null,
+        highLevelCalendarId: null
       };
 
       const testClass = {
         id: 1,
         userId: 1,
         tutorId: 1,
+        title: 'Clase de Conversación',
+        description: 'Clase de prueba para notificaciones duales',
         scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Mañana
         duration: 60,
         status: 'scheduled',
-        notes: 'Clase de prueba',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        meetingLink: null,
+        highLevelAppointmentId: null,
+        highLevelContactId: null,
+        createdAt: new Date()
       };
 
       // Enviar notificación dual
@@ -1420,7 +1425,8 @@ Equipo Passport2Fluency`;
           highLevelContactId: contactId
         });
         
-        const newCredits = user.classCredits - 1;
+        const currentCredits = user.classCredits || 0;
+        const newCredits = Math.max(0, currentCredits - 1);
         await storage.updateUser(user.id, { classCredits: newCredits });
         
         console.log(`✅ Clase ${classToUpdate.id} marcada como completada`);
