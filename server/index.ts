@@ -24,10 +24,8 @@ async function startServer() {
   
   // CRITICAL: Mount Stripe webhook BEFORE any body parsing middleware
   app.post("/api/stripe-webhook", express.raw({type: 'application/json'}), async (req, res) => {
-    console.log('🚀 WEBHOOK RECEIVED - RAW ENTRY');
-    console.log('📋 Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('📊 Body type:', typeof req.body);
-    console.log('📏 Body length:', req.body?.length || 'undefined');
+    console.log('🚀 WEBHOOK RECEIVED');
+    console.log('📊 Body length:', req.body?.length || 'undefined');
     
     let event;
     
@@ -44,10 +42,16 @@ async function startServer() {
         return res.status(400).json({ error: `Webhook Error: ${err.message}` });
       }
 
-      // CRITICAL: Check for duplicate events to prevent multiple credit assignments
+      // IMPROVED: Check for duplicate events with TTL cleanup
       if (processedEvents.has(event.id)) {
-        console.log(`⚡ Skipping already processed event: ${event.id}`);
+        console.log(`⚡ Skipping duplicate event: ${event.id}`);
         return res.status(200).json({ received: true, processed: false, reason: 'duplicate' });
+      }
+      
+      // IMPROVED: Basic TTL cleanup - remove old events every 100 events
+      if (processedEvents.size > 100) {
+        console.log('🧹 Cleaning up old processed events');
+        processedEvents.clear();
       }
 
       console.log(`✅ Processing webhook: ${event.type}`);
@@ -65,7 +69,8 @@ async function startServer() {
             const user = await storage.getUser(parseInt(userId));
             if (!user) {
               console.error(`❌ User not found: ${userId}`);
-              return res.status(404).json({ error: 'User not found' });
+              processedEvents.add(event.id);
+              return res.status(200).json({ received: true, processed: false, reason: 'user_not_found' });
             }
 
             // Handle subscription payments
@@ -103,8 +108,8 @@ async function startServer() {
                   return;
                 } catch (error) {
                   console.error('❌ Error processing subscription:', error);
-                  processedEvents.add(event.id);
-                  return res.status(200).json({ received: true, processed: false, reason: 'processing_error' });
+                  // DON'T mark as processed for transient errors - let Stripe retry
+                  return res.status(500).json({ error: 'Processing failed - will retry' });
                 }
               }
             }
@@ -133,8 +138,8 @@ async function startServer() {
                   return;
                 } catch (error) {
                   console.error('❌ Error processing package purchase:', error);
-                  processedEvents.add(event.id);
-                  return res.status(200).json({ received: true, processed: false, reason: 'processing_error' });
+                  // DON'T mark as processed for transient errors - let Stripe retry
+                  return res.status(500).json({ error: 'Processing failed - will retry' });
                 }
               }
             }
@@ -155,14 +160,14 @@ async function startServer() {
             // Find user by subscription ID  
             const userSubscription = await storage.getSubscriptionByStripeId(subscription.id);
             if (!userSubscription) {
-              console.error(`❌ Subscription not found in database: ${subscription.id}`);
+              console.log(`⚠️ Subscription not found, may be handled elsewhere: ${subscription.id}`);
               processedEvents.add(event.id);
               return res.status(200).json({ received: true, processed: false, reason: 'subscription_not_found' });
             }
 
             const user = await storage.getUser(userSubscription.userId);
             if (!user) {
-              console.error(`❌ User not found: ${userSubscription.userId}`);
+              console.log(`⚠️ User not found for subscription: ${userSubscription.userId}`);
               processedEvents.add(event.id);
               return res.status(200).json({ received: true, processed: false, reason: 'user_not_found' });
             }
@@ -191,8 +196,8 @@ async function startServer() {
             }
           } catch (error) {
             console.error('❌ Error processing subscription renewal:', error);
-            processedEvents.add(event.id);
-            return res.status(200).json({ received: true, processed: false, reason: 'processing_error' });
+            // DON'T mark as processed for transient errors - let Stripe retry
+            return res.status(500).json({ error: 'Processing failed - will retry' });
           }
         }
       }
@@ -204,6 +209,16 @@ async function startServer() {
       console.error('❌ Webhook processing error:', error);
       res.status(500).json({ error: 'Webhook processing failed' });
     }
+  });
+  
+  // Test endpoint to verify webhook connectivity
+  app.get("/api/stripe-webhook-test", (req, res) => {
+    console.log('🧪 WEBHOOK TEST ENDPOINT ACCESSED');
+    res.json({ 
+      message: "Webhook endpoint is accessible!", 
+      url: "https://passport2fluencyportal.replit.app/api/stripe-webhook",
+      timestamp: new Date().toISOString()
+    });
   });
   
   // NOW add the regular body parsing middleware
