@@ -5,10 +5,19 @@ import { log, setupVite, serveStatic } from "./vite";
 import Stripe from "stripe";
 import { storage } from "./storage";
 
+// Validate required environment variables at startup
+if (!process.env.STRIPE_SECRET_KEY && !process.env.TESTING_STRIPE_SECRET_KEY) {
+  throw new Error('Missing required environment variable: STRIPE_SECRET_KEY');
+}
+if (!process.env.STRIPE_WEBHOOK_SECRET) {
+  throw new Error('Missing required environment variable: STRIPE_WEBHOOK_SECRET');
+}
+
 // Initialize Stripe with test key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.TESTING_STRIPE_SECRET_KEY || "", { 
-  apiVersion: "2025-06-30.basil" 
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.TESTING_STRIPE_SECRET_KEY || "");
+
+// Track processed webhook events to prevent duplicates
+const processedEvents = new Set<string>();
 
 async function startServer() {
   const app = express();
@@ -33,6 +42,12 @@ async function startServer() {
       } catch (err: any) {
         console.error('❌ Webhook signature verification failed:', err.message);
         return res.status(400).json({ error: `Webhook Error: ${err.message}` });
+      }
+
+      // CRITICAL: Check for duplicate events to prevent multiple credit assignments
+      if (processedEvents.has(event.id)) {
+        console.log(`⚡ Skipping already processed event: ${event.id}`);
+        return res.status(200).json({ received: true, processed: false, reason: 'duplicate' });
       }
 
       console.log(`✅ Processing webhook: ${event.type}`);
@@ -72,21 +87,24 @@ async function startServer() {
                   
                   console.log(`✅ Added ${plan.classesIncluded} class credits to user ${userId} for plan ${plan.name}`);
                   
-                  // Create subscription record
+                  // Create subscription record with proper billing date from Stripe
+                  const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
                   await storage.createSubscription({
                     userId: parseInt(userId),
                     planId: parseInt(planId),
                     stripeSubscriptionId: session.subscription as string,
                     status: 'active',
-                    nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+                    nextBillingDate: new Date((subscription as any).current_period_end * 1000),
                   });
                   
                   console.log(`✅ Created subscription for user ${userId}, plan ${plan.name}`);
+                  processedEvents.add(event.id);
                   res.json({received: true, processed: true});
                   return;
                 } catch (error) {
                   console.error('❌ Error processing subscription:', error);
-                  return res.status(500).json({ error: 'Failed to process subscription' });
+                  processedEvents.add(event.id);
+                  return res.status(200).json({ received: true, processed: false, reason: 'processing_error' });
                 }
               }
             }
@@ -110,19 +128,78 @@ async function startServer() {
                   });
                   
                   console.log(`✅ Added ${packageInfo.classes} class credits to user ${userId} for package ${packageInfo.name}`);
+                  processedEvents.add(event.id);
                   res.json({received: true, processed: true});
                   return;
                 } catch (error) {
                   console.error('❌ Error processing package purchase:', error);
-                  return res.status(500).json({ error: 'Failed to process package purchase' });
+                  processedEvents.add(event.id);
+                  return res.status(200).json({ received: true, processed: false, reason: 'processing_error' });
                 }
               }
             }
           }
         }
       }
+
+      // Handle subscription renewals
+      if (event.type === 'invoice.payment_succeeded') {
+        const invoice = event.data.object;
+        console.log('💳 Invoice payment succeeded:', invoice.id);
+        
+        if ((invoice as any).subscription && (invoice as any).billing_reason === 'subscription_cycle') {
+          try {
+            // Get subscription from Stripe to find the user
+            const subscription = await stripe.subscriptions.retrieve((invoice as any).subscription as string);
+            
+            // Find user by subscription ID  
+            const userSubscription = await storage.getSubscriptionByStripeId(subscription.id);
+            if (!userSubscription) {
+              console.error(`❌ Subscription not found in database: ${subscription.id}`);
+              processedEvents.add(event.id);
+              return res.status(200).json({ received: true, processed: false, reason: 'subscription_not_found' });
+            }
+
+            const user = await storage.getUser(userSubscription.userId);
+            if (!user) {
+              console.error(`❌ User not found: ${userSubscription.userId}`);
+              processedEvents.add(event.id);
+              return res.status(200).json({ received: true, processed: false, reason: 'user_not_found' });
+            }
+
+            // Add monthly credits based on plan
+            const planDetails = {
+              1: { name: 'Starter Flow', classesIncluded: 4 },
+              2: { name: 'Momentum Plan', classesIncluded: 8 },
+              3: { name: 'Fluency Boost', classesIncluded: 12 },
+            };
+
+            const plan = planDetails[userSubscription.planId as keyof typeof planDetails];
+            if (plan) {
+              await storage.updateUser(user.id, {
+                classCredits: (user.classCredits || 0) + plan.classesIncluded
+              });
+
+              // Update next billing date
+              await storage.updateSubscription(userSubscription.id, {
+                nextBillingDate: new Date((subscription as any).current_period_end * 1000),
+              });
+
+              console.log(`✅ Added ${plan.classesIncluded} renewal credits to user ${user.id} for plan ${plan.name}`);
+              processedEvents.add(event.id);
+              return res.status(200).json({ received: true, processed: true });
+            }
+          } catch (error) {
+            console.error('❌ Error processing subscription renewal:', error);
+            processedEvents.add(event.id);
+            return res.status(200).json({ received: true, processed: false, reason: 'processing_error' });
+          }
+        }
+      }
       
-      res.json({received: true});
+      // Mark event as processed and acknowledge receipt
+      processedEvents.add(event.id);
+      res.status(200).json({received: true});
     } catch (error: any) {
       console.error('❌ Webhook processing error:', error);
       res.status(500).json({ error: 'Webhook processing failed' });
