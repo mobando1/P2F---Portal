@@ -147,6 +147,28 @@ export default function Dashboard() {
     },
   });
 
+  // Customer Portal mutation
+  const customerPortalMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/create-customer-portal-session", {
+        userId: user.id,
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Redirect to Stripe Customer Portal
+      window.location.href = data.url;
+    },
+    onError: (error: any) => {
+      console.error("Error creating customer portal session:", error);
+      toast({
+        title: "Error",
+        description: "Unable to open subscription management. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Handlers
   const handleBookClass = (tutorId: number, scheduledAt: Date, time: string) => {
     bookClassMutation.mutate({ tutorId, scheduledAt, time });
@@ -164,8 +186,8 @@ export default function Dashboard() {
   };
 
   const handleManageSubscription = () => {
-    // Redirect to packages page to manage subscription and buy more classes
-    setLocation("/packages");
+    // Open Stripe Customer Portal for subscription management
+    customerPortalMutation.mutate();
   };
 
   const handleCancelClass = (classId: number) => {
