@@ -1,17 +1,27 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Crown } from "lucide-react";
+import { Crown, Loader2 } from "lucide-react";
 import type { Subscription } from "@shared/schema";
 
-interface SubscriptionCardProps {
-  subscription: Subscription;
-  onUpgrade: () => void;
-  onManage: () => void;
+// Extended subscription type with plan details
+interface SubscriptionWithPlan extends Subscription {
+  planName?: string;
+  planType?: string;
+  price?: number;
+  classesLimit?: number;
+  classesUsed?: number;
 }
 
-export default function SubscriptionCard({ subscription, onUpgrade, onManage }: SubscriptionCardProps) {
-  const usagePercentage = subscription.classesLimit 
+interface SubscriptionCardProps {
+  subscription: SubscriptionWithPlan;
+  onUpgrade: () => void;
+  onManage: () => void;
+  isManaging?: boolean;
+}
+
+export default function SubscriptionCard({ subscription, onUpgrade, onManage, isManaging = false }: SubscriptionCardProps) {
+  const usagePercentage = subscription.classesLimit && subscription.classesUsed
     ? (subscription.classesUsed / subscription.classesLimit) * 100 
     : 0;
 
@@ -93,8 +103,16 @@ export default function SubscriptionCard({ subscription, onUpgrade, onManage }: 
               variant="outline"
               className="w-full"
               onClick={onManage}
+              disabled={isManaging}
             >
-              Manage Subscription
+              {isManaging ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Opening Portal...
+                </>
+              ) : (
+                "Manage Subscription"
+              )}
             </Button>
           </div>
         </div>

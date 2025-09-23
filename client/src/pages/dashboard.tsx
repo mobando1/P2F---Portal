@@ -49,7 +49,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = getCurrentUser();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Redirect if not authenticated
   if (!isAuthenticated() || !user) {
@@ -299,7 +299,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-white/90">
-                    {t.language === 'es' ? 'Clases Restantes' : 'Remaining Classes'}
+                    {language === 'es' ? 'Clases Restantes' : 'Remaining Classes'}
                   </p>
                   <p className="text-2xl font-bold text-white">{stats.remainingClasses}</p>
                 </div>
@@ -309,7 +309,7 @@ export default function Dashboard() {
                     size="sm"
                     className="bg-white text-[#1C7BB1] hover:bg-white/90 font-medium"
                   >
-                    {t.language === 'es' ? 'Comprar Más' : 'Buy More'}
+                    {language === 'es' ? 'Comprar Más' : 'Buy More'}
                   </Button>
                 </div>
               </div>
@@ -373,6 +373,7 @@ export default function Dashboard() {
                 subscription={dashboardData.subscription}
                 onUpgrade={handleUpgradeSubscription}
                 onManage={handleManageSubscription}
+                isManaging={customerPortalMutation.isPending}
               />
             )}
 

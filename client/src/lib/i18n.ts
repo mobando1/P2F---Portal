@@ -16,7 +16,7 @@ export interface Translations {
   logout: string;
   
   // Dashboard
-  welcome: string;
+  welcomeName: string;
   continueJourney: string;
   classesBooked: string;
   classesCompleted: string;
