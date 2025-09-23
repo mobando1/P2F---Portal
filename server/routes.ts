@@ -888,14 +888,37 @@ Equipo Passport2Fluency`;
         await storage.updateUser(userId, { stripeCustomerId: customerId });
       }
 
-      // Create Customer Portal session - usar URL simple para desarrollo
-      const returnUrl = 'http://localhost:5000/dashboard';
+      // Create Customer Portal session - usar URL real del entorno
+      const baseUrl = req.headers.origin || 
+                      `${req.protocol}://${req.get('host')}`;
+      const returnUrl = `${baseUrl}/dashboard`;
       
+      console.log('🔗 Creating Customer Portal with customerId:', customerId);
       console.log('🔗 Creating Customer Portal with return_url:', returnUrl);
       
+      // Primero crear la configuración directamente
+      console.log('🔧 Creating Customer Portal configuration...');
+      
+      const configuration = await stripe.billingPortal.configurations.create({
+        business_profile: {
+          headline: 'Passport2Fluency',
+          privacy_policy_url: 'https://portal.passport2fluency.com/privacy',
+          terms_of_service_url: 'https://portal.passport2fluency.com/terms',
+        },
+        features: {
+          invoice_history: { enabled: true },
+          payment_method_update: { enabled: true },
+          subscription_cancel: { enabled: true }
+        }
+      });
+      
+      console.log('✅ Created Customer Portal configuration:', configuration.id);
+      
+      // Crear sesión con la nueva configuración
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: customerId,
         return_url: returnUrl,
+        configuration: configuration.id,
       });
 
       res.json({ 
