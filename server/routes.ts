@@ -888,10 +888,14 @@ Equipo Passport2Fluency`;
         await storage.updateUser(userId, { stripeCustomerId: customerId });
       }
 
-      // Create Customer Portal session
+      // Create Customer Portal session - usar URL simple para desarrollo
+      const returnUrl = 'http://localhost:5000/dashboard';
+      
+      console.log('🔗 Creating Customer Portal with return_url:', returnUrl);
+      
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: customerId,
-        return_url: `${req.headers.origin}/dashboard`,
+        return_url: returnUrl,
       });
 
       res.json({ 
