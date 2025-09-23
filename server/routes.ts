@@ -855,6 +855,54 @@ Equipo Passport2Fluency`;
     }
   });
 
+  // Create Customer Portal Session for subscription management
+  app.post("/api/create-customer-portal-session", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      // Get user information
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      let customerId = user.stripeCustomerId;
+      
+      // If user doesn't have a Stripe customer ID, create one
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          metadata: {
+            userId: userId.toString(),
+            platform: "passport2fluency"
+          }
+        });
+        customerId = customer.id;
+        
+        // Update user with new customer ID
+        await storage.updateUser(userId, { stripeCustomerId: customerId });
+      }
+
+      // Create Customer Portal session
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${req.headers.origin}/dashboard`,
+      });
+
+      res.json({ 
+        url: portalSession.url 
+      });
+    } catch (error: any) {
+      console.error("Error creating customer portal session:", error);
+      res.status(500).json({ message: "Error creating customer portal session: " + error.message });
+    }
+  });
+
   // WEBHOOK MOVED TO server/index.ts to ensure proper middleware order
   
   /*
