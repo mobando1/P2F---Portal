@@ -169,6 +169,28 @@ export default function Dashboard() {
     },
   });
 
+  // Upgrade Portal mutation
+  const upgradePortalMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/create-upgrade-portal-session", {
+        userId: user.id,
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Redirect to Stripe Upgrade Portal
+      window.location.href = data.url;
+    },
+    onError: (error: any) => {
+      console.error("Error creating upgrade portal session:", error);
+      toast({
+        title: "Error",
+        description: "Unable to open plan upgrade. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Handlers
   const handleBookClass = (tutorId: number, scheduledAt: Date, time: string) => {
     bookClassMutation.mutate({ tutorId, scheduledAt, time });
@@ -182,7 +204,8 @@ export default function Dashboard() {
   };
 
   const handleUpgradeSubscription = () => {
-    setLocation("/subscription");
+    // Open Stripe Upgrade Portal for plan upgrades
+    upgradePortalMutation.mutate();
   };
 
   const handleManageSubscription = () => {
@@ -374,6 +397,7 @@ export default function Dashboard() {
                 onUpgrade={handleUpgradeSubscription}
                 onManage={handleManageSubscription}
                 isManaging={customerPortalMutation.isPending}
+                isUpgrading={upgradePortalMutation.isPending}
               />
             )}
 

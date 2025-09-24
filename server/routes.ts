@@ -930,6 +930,81 @@ Equipo Passport2Fluency`;
     }
   });
 
+  // Create Customer Portal session for upgrades
+  app.post("/api/create-upgrade-portal-session", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      // Get user information
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      let customerId = user.stripeCustomerId;
+      
+      // If user doesn't have a Stripe customer ID, create one
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          metadata: {
+            userId: userId.toString(),
+            platform: "passport2fluency"
+          }
+        });
+        customerId = customer.id;
+        
+        // Update user with new customer ID
+        await storage.updateUser(userId, { stripeCustomerId: customerId });
+      }
+
+      // Create Upgrade Portal session - usar URL real del entorno
+      const baseUrl = req.headers.origin || 
+                      `${req.protocol}://${req.get('host')}`;
+      const returnUrl = `${baseUrl}/dashboard`;
+      
+      console.log('🔗 Creating Upgrade Portal with customerId:', customerId);
+      console.log('🔗 Creating Upgrade Portal with return_url:', returnUrl);
+      
+      // Crear configuración específica para upgrades
+      console.log('🔧 Creating Upgrade Portal configuration...');
+      
+      const upgradeConfiguration = await stripe.billingPortal.configurations.create({
+        business_profile: {
+          headline: 'Passport2Fluency - Upgrade Your Plan',
+          privacy_policy_url: 'https://portal.passport2fluency.com/privacy',
+          terms_of_service_url: 'https://portal.passport2fluency.com/terms',
+        },
+        features: {
+          invoice_history: { enabled: true },
+          payment_method_update: { enabled: true },
+          subscription_cancel: { enabled: false } // No permitir cancel en upgrade portal
+        }
+      });
+      
+      console.log('✅ Created Upgrade Portal configuration:', upgradeConfiguration.id);
+      
+      // Crear sesión con la configuración de upgrade
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: returnUrl,
+        configuration: upgradeConfiguration.id,
+      });
+
+      res.json({ 
+        url: portalSession.url 
+      });
+    } catch (error: any) {
+      console.error("Error creating upgrade portal session:", error);
+      res.status(500).json({ message: "Error creating upgrade portal session: " + error.message });
+    }
+  });
+
   // WEBHOOK MOVED TO server/index.ts to ensure proper middleware order
   
   /*

@@ -18,9 +18,10 @@ interface SubscriptionCardProps {
   onUpgrade: () => void;
   onManage: () => void;
   isManaging?: boolean;
+  isUpgrading?: boolean;
 }
 
-export default function SubscriptionCard({ subscription, onUpgrade, onManage, isManaging = false }: SubscriptionCardProps) {
+export default function SubscriptionCard({ subscription, onUpgrade, onManage, isManaging = false, isUpgrading = false }: SubscriptionCardProps) {
   const usagePercentage = subscription.classesLimit && subscription.classesUsed
     ? (subscription.classesUsed / subscription.classesLimit) * 100 
     : 0;
@@ -96,8 +97,16 @@ export default function SubscriptionCard({ subscription, onUpgrade, onManage, is
             <Button
               className="w-full"
               onClick={onUpgrade}
+              disabled={isUpgrading}
             >
-              Upgrade Plan
+              {isUpgrading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Opening Upgrade...
+                </>
+              ) : (
+                "Upgrade Plan"
+              )}
             </Button>
             <Button
               variant="outline"
