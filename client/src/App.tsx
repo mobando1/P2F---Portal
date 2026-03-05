@@ -1,21 +1,37 @@
+import { lazy, Suspense } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/lib/i18n";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { isAuthenticated } from "@/lib/auth";
 
-import Dashboard from "@/pages/dashboard";
-import Login from "@/pages/login";
-import SubscriptionPage from "@/pages/subscription";
-import PackagesPage from "@/pages/packages";
-import TutorsPage from "@/pages/tutors";
-import CheckoutPage from "@/pages/checkout";
-import SubscribePage from "@/pages/subscribe";
-import ContactPage from "@/pages/contact";
-import NotFound from "@/pages/not-found";
-import AdminPage from "@/pages/admin";
+// Lazy-loaded pages for code splitting
+const HomePage = lazy(() => import("@/pages/home"));
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const Login = lazy(() => import("@/pages/login"));
+const PackagesPage = lazy(() => import("@/pages/packages"));
+const TutorsPage = lazy(() => import("@/pages/tutors"));
+const TutorProfilePage = lazy(() => import("@/pages/tutor-profile"));
+const BookingConfirmation = lazy(() => import("@/pages/booking-confirmation"));
+const CheckoutPage = lazy(() => import("@/pages/checkout"));
+const SubscribePage = lazy(() => import("@/pages/subscribe"));
+const ContactPage = lazy(() => import("@/pages/contact"));
+const ProfilePage = lazy(() => import("@/pages/profile"));
+const SettingsPage = lazy(() => import("@/pages/settings"));
+const AIPracticePage = lazy(() => import("@/pages/ai-practice"));
+const AdminPage = lazy(() => import("@/pages/admin"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated()) {
@@ -26,52 +42,86 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/dashboard">
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/tutors">
-        <ProtectedRoute>
-          <TutorsPage />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/packages">
-        <ProtectedRoute>
-          <PackagesPage />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/subscription">
-        <Redirect to="/packages" />
-      </Route>
-      <Route path="/checkout" component={CheckoutPage} />
-      <Route path="/subscribe" component={SubscribePage} />
-      <Route path="/contact" component={ContactPage} />
-      <Route path="/admin">
-        <ProtectedRoute>
-          <AdminPage />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/">
-        {isAuthenticated() ? <Redirect to="/dashboard" /> : <Redirect to="/login" />}
-      </Route>
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={<LoadingFallback />}>
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route path="/home">
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/dashboard">
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/tutors">
+          <ProtectedRoute>
+            <TutorsPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/tutor/:id">
+          <ProtectedRoute>
+            <TutorProfilePage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/booking-confirmation">
+          <ProtectedRoute>
+            <BookingConfirmation />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/packages">
+          <ProtectedRoute>
+            <PackagesPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/subscription">
+          <Redirect to="/packages" />
+        </Route>
+        <Route path="/checkout" component={CheckoutPage} />
+        <Route path="/subscribe" component={SubscribePage} />
+        <Route path="/contact" component={ContactPage} />
+        <Route path="/profile">
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/settings">
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/ai-practice">
+          <ProtectedRoute>
+            <AIPracticePage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin">
+          <ProtectedRoute>
+            <AdminPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/">
+          {isAuthenticated() ? <Redirect to="/home" /> : <Redirect to="/login" />}
+        </Route>
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </LanguageProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <LanguageProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </LanguageProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

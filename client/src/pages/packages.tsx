@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/i18n";
 import { getCurrentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { Check, CreditCard, Calendar, Star, Clock, Users, Shield } from "lucide-
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
+import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 interface ClassPackage {
   id: number;
@@ -33,7 +35,7 @@ interface SubscriptionPlan {
 }
 
 export default function PackagesPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const [selectedPackage, setSelectedPackage] = useState<ClassPackage | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
@@ -49,12 +51,12 @@ export default function PackagesPage() {
       price: 119.96,
       discountPercent: 0,
       features: [
-        t.language === 'es' ? 'Progreso constante' : 'Steady progress',
-        t.language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
-        t.language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
-        t.language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
-        t.language === 'es' ? 'Soporte del profesor' : 'Teacher support',
-        t.language === 'es' ? 'Sin contrato' : 'No contract'
+        language === 'es' ? 'Progreso constante' : 'Steady progress',
+        language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
+        language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
+        language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
+        language === 'es' ? 'Soporte del profesor' : 'Teacher support',
+        language === 'es' ? 'Sin contrato' : 'No contract'
       ],
     },
     {
@@ -65,13 +67,13 @@ export default function PackagesPage() {
       price: 219.99,
       discountPercent: 18, // vs 2 × $119.96
       features: [
-        t.language === 'es' ? 'Progreso más rápido' : 'Faster progress',
-        t.language === 'es' ? 'Mejora conversacional semanal' : 'Weekly conversational improvement',
-        t.language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
-        t.language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
-        t.language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
-        t.language === 'es' ? 'Soporte del profesor' : 'Teacher support',
-        t.language === 'es' ? 'Sin contrato' : 'No contract'
+        language === 'es' ? 'Progreso más rápido' : 'Faster progress',
+        language === 'es' ? 'Mejora conversacional semanal' : 'Weekly conversational improvement',
+        language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
+        language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
+        language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
+        language === 'es' ? 'Soporte del profesor' : 'Teacher support',
+        language === 'es' ? 'Sin contrato' : 'No contract'
       ],
       popular: true,
     },
@@ -83,12 +85,12 @@ export default function PackagesPage() {
       price: 299.99,
       discountPercent: 25, // vs 3 × $119.96
       features: [
-        t.language === 'es' ? 'Para estudiantes serios que quieren resultados rápidos' : 'For serious learners who want results fast',
-        t.language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
-        t.language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
-        t.language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
-        t.language === 'es' ? 'Soporte del profesor' : 'Teacher support',
-        t.language === 'es' ? 'Sin contrato' : 'No contract'
+        language === 'es' ? 'Para estudiantes serios que quieren resultados rápidos' : 'For serious learners who want results fast',
+        language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
+        language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
+        language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
+        language === 'es' ? 'Soporte del profesor' : 'Teacher support',
+        language === 'es' ? 'Sin contrato' : 'No contract'
       ],
     },
   ];
@@ -118,7 +120,7 @@ export default function PackagesPage() {
   const classPackages: ClassPackage[] = [
     {
       id: 1,
-      name: t.language === 'es' ? 'Paquete de 5 Clases' : '5-Class Package',
+      name: language === 'es' ? 'Paquete de 5 Clases' : '5-Class Package',
       classCount: 5,
       price: 149.95,
       discountPercent: 0,
@@ -126,7 +128,7 @@ export default function PackagesPage() {
     },
     {
       id: 2,
-      name: t.language === 'es' ? 'Paquete de 10 Clases' : '10-Class Package',
+      name: language === 'es' ? 'Paquete de 10 Clases' : '10-Class Package',
       classCount: 10,
       price: 274.90,
       discountPercent: 8,
@@ -135,7 +137,7 @@ export default function PackagesPage() {
     },
     {
       id: 3,
-      name: t.language === 'es' ? 'Paquete de 20 Clases' : '20-Class Package',
+      name: language === 'es' ? 'Paquete de 20 Clases' : '20-Class Package',
       classCount: 20,
       price: 499.80,
       discountPercent: 17,
@@ -215,19 +217,12 @@ export default function PackagesPage() {
     setSelectedPlan(plan);
     
     try {
-      // Obtener el usuario actual del localStorage o crear uno de prueba
-      let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      
+      const currentUser = getCurrentUser();
+
       if (!currentUser || !currentUser.id) {
-        // Crear usuario de prueba para desarrollo
-        currentUser = {
-          id: 1,
-          email: 'test@passport2fluency.com',
-          firstName: 'Test',
-          lastName: 'User',
-          username: 'testuser'
-        };
-        localStorage.setItem('user', JSON.stringify(currentUser));
+        toast({ title: "Error", description: "Please log in to purchase a plan", variant: "destructive" });
+        setIsProcessing(false);
+        return;
       }
 
       // Crear sesión de checkout en Stripe
@@ -259,8 +254,8 @@ export default function PackagesPage() {
     } catch (error) {
       console.error('Error creating checkout session:', error);
       toast({
-        title: t.language === 'es' ? "Error de Pago" : "Payment Error",
-        description: t.language === 'es' ? "No se pudo abrir el checkout. Intenta de nuevo." : "Could not open checkout. Please try again.",
+        title: language === 'es' ? "Error de Pago" : "Payment Error",
+        description: language === 'es' ? "No se pudo abrir el checkout. Intenta de nuevo." : "Could not open checkout. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -275,12 +270,17 @@ export default function PackagesPage() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section ACTUALIZADO */}
-        <div className="text-center mb-12 bg-gradient-to-r from-[#F59E1C] to-[#F59E1C]/80 text-white rounded-xl p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12 bg-gradient-to-r from-[#F59E1C] to-[#F59E1C]/80 text-white rounded-xl p-8"
+        >
           <h1 className="text-5xl font-bold mb-4">
-            {t.language === 'es' ? '🚀 ¡NUEVO! Planes Optimizados para Tu Éxito' : '🚀 NEW! Optimized Plans for Your Success'}
+            {language === 'es' ? '🚀 ¡NUEVO! Planes Optimizados para Tu Éxito' : '🚀 NEW! Optimized Plans for Your Success'}
           </h1>
           <p className="text-2xl mb-8 opacity-90">
-            {t.language === 'es' 
+            {language === 'es' 
               ? 'Ahora con garantía de 30 días y profesores nativos certificados'
               : 'Now with 30-day guarantee and certified native teachers'
             }
@@ -288,26 +288,26 @@ export default function PackagesPage() {
           <div className="flex items-center justify-center gap-6 text-lg">
             <div className="flex items-center gap-2">
               <Star className="w-6 h-6 text-white" />
-              <span className="font-semibold">{t.language === 'es' ? 'Profesores nativos' : 'Native teachers'}</span>
+              <span className="font-semibold">{language === 'es' ? 'Profesores nativos' : 'Native teachers'}</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-6 h-6 text-white" />
-              <span className="font-semibold">{t.language === 'es' ? 'Horarios 24/7' : '24/7 schedules'}</span>
+              <span className="font-semibold">{language === 'es' ? 'Horarios 24/7' : '24/7 schedules'}</span>
             </div>
             <div className="flex items-center gap-2">
               <Shield className="w-6 h-6 text-white" />
-              <span className="font-semibold">{t.language === 'es' ? 'Garantía 30 días' : '30-day guarantee'}</span>
+              <span className="font-semibold">{language === 'es' ? 'Garantía 30 días' : '30-day guarantee'}</span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         <Tabs defaultValue="subscriptions" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-8">
             <TabsTrigger value="subscriptions">
-              {t.language === 'es' ? 'Planes Mensuales' : 'Monthly Plans'}
+              {language === 'es' ? 'Planes Mensuales' : 'Monthly Plans'}
             </TabsTrigger>
             <TabsTrigger value="packages">
-              {t.language === 'es' ? 'Paquetes de Clases' : 'Class Packages'}
+              {language === 'es' ? 'Paquetes de Clases' : 'Class Packages'}
             </TabsTrigger>
           </TabsList>
 
@@ -315,10 +315,10 @@ export default function PackagesPage() {
           <TabsContent value="packages">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-[#0A4A6E] mb-2">
-                {t.language === 'es' ? 'Paquetes de Clases' : 'Class Packages'}
+                {language === 'es' ? 'Paquetes de Clases' : 'Class Packages'}
               </h2>
               <p className="text-[#0A4A6E]/70">
-                {t.language === 'es' 
+                {language === 'es' 
                   ? 'Para estudiantes que prefieren flexibilidad total'
                   : 'For students who prefer complete flexibility'
                 }
@@ -330,7 +330,7 @@ export default function PackagesPage() {
                 <Card key={pkg.id} className={`relative ${pkg.popular ? 'ring-2 ring-[#1C7BB1]' : ''}`}>
                   {pkg.popular && (
                     <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-[#F59E1C] text-white">
-                      {t.language === 'es' ? 'Más Popular' : 'Most Popular'}
+                      {language === 'es' ? 'Más Popular' : 'Most Popular'}
                     </Badge>
                   )}
                   <CardHeader className="text-center">
@@ -340,11 +340,11 @@ export default function PackagesPage() {
                         ${pkg.price}
                       </div>
                       <div className="text-sm text-[#0A4A6E]/60">
-                        ${pkg.perClassPrice} {t.language === 'es' ? 'por clase' : 'per class'}
+                        ${pkg.perClassPrice} {language === 'es' ? 'por clase' : 'per class'}
                       </div>
                       {pkg.discountPercent > 0 && (
                         <Badge variant="secondary" className="mt-2">
-                          {pkg.discountPercent}% {t.language === 'es' ? 'descuento' : 'off'}
+                          {pkg.discountPercent}% {language === 'es' ? 'descuento' : 'off'}
                         </Badge>
                       )}
                     </CardDescription>
@@ -353,15 +353,15 @@ export default function PackagesPage() {
                     <div className="space-y-2 mb-6">
                       <div className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-[#1C7BB1]" />
-                        <span className="text-sm">{pkg.classCount} {t.language === 'es' ? 'clases individuales' : 'individual classes'}</span>
+                        <span className="text-sm">{pkg.classCount} {language === 'es' ? 'clases individuales' : 'individual classes'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-[#1C7BB1]" />
-                        <span className="text-sm">{t.language === 'es' ? 'Válido por 6 meses' : 'Valid for 6 months'}</span>
+                        <span className="text-sm">{language === 'es' ? 'Válido por 6 meses' : 'Valid for 6 months'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-[#1C7BB1]" />
-                        <span className="text-sm">{t.language === 'es' ? 'Horarios flexibles' : 'Flexible schedules'}</span>
+                        <span className="text-sm">{language === 'es' ? 'Horarios flexibles' : 'Flexible schedules'}</span>
                       </div>
                     </div>
                     <Button 
@@ -372,12 +372,12 @@ export default function PackagesPage() {
                       {isProcessing && selectedPackage?.id === pkg.id ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          {t.language === 'es' ? 'Procesando...' : 'Processing...'}
+                          {language === 'es' ? 'Procesando...' : 'Processing...'}
                         </>
                       ) : (
                         <>
                           <CreditCard className="w-4 h-4 mr-2" />
-                          {t.language === 'es' ? 'Comprar Ahora' : 'Buy Now'}
+                          {language === 'es' ? 'Comprar Ahora' : 'Buy Now'}
                         </>
                       )}
                     </Button>
@@ -391,22 +391,23 @@ export default function PackagesPage() {
           <TabsContent value="subscriptions">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-[#0A4A6E] mb-2">
-                {t.language === 'es' ? 'Planes Mensuales' : 'Monthly Plans'}
+                {language === 'es' ? 'Planes Mensuales' : 'Monthly Plans'}
               </h2>
               <p className="text-[#0A4A6E]/70">
-                {t.language === 'es' 
+                {language === 'es' 
                   ? 'Elige la frecuencia que mejor se adapte a tu estilo de vida'
                   : 'Choose the frequency that best fits your lifestyle'
                 }
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {subscriptionPlans.map((plan) => (
-                <Card key={plan.id} className={`relative ${plan.popular ? 'ring-2 ring-[#F59E1C] scale-105' : ''}`}>
+                <motion.div key={plan.id} variants={fadeInUp} whileHover={{ y: -6, boxShadow: "0 20px 50px rgba(28, 123, 177, 0.12)" }} transition={{ duration: 0.25 }}>
+                <Card className={`relative ${plan.popular ? 'ring-2 ring-[#F59E1C] scale-105' : ''}`}>
                   {plan.popular && (
                     <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-[#F59E1C] text-white">
-                      {t.language === 'es' ? 'MÁS POPULAR' : 'MOST POPULAR'}
+                      {language === 'es' ? 'MÁS POPULAR' : 'MOST POPULAR'}
                     </Badge>
                   )}
                   <CardHeader className="text-center">
@@ -416,14 +417,14 @@ export default function PackagesPage() {
                         ${plan.price}
                       </div>
                       <div className="text-lg text-[#0A4A6E]/80 mb-1">
-                        {t.language === 'es' ? 'Por Mes' : 'Per Month'}
+                        {language === 'es' ? 'Por Mes' : 'Per Month'}
                       </div>
                       <div className="text-sm text-[#0A4A6E]/60">
-                        ${(plan.price / plan.classesIncluded).toFixed(2)} {t.language === 'es' ? 'por clase' : 'per class'}
+                        ${(plan.price / (plan.classesIncluded || 0)).toFixed(2)} {language === 'es' ? 'por clase' : 'per class'}
                       </div>
                       {plan.discountPercent > 0 && (
                         <Badge variant="secondary" className="mt-2 bg-[#F59E1C]/20 text-[#F59E1C]">
-                          {plan.discountPercent}% {t.language === 'es' ? 'descuento' : 'off'}
+                          {plan.discountPercent}% {language === 'es' ? 'descuento' : 'off'}
                         </Badge>
                       )}
                     </CardDescription>
@@ -448,22 +449,23 @@ export default function PackagesPage() {
                       {isProcessing && selectedPlan?.id === plan.id ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          {t.language === 'es' ? 'Creando suscripción...' : 'Creating subscription...'}
+                          {language === 'es' ? 'Creando suscripción...' : 'Creating subscription...'}
                         </>
                       ) : (
                         <>
                           <CreditCard className="w-4 h-4 mr-2" />
                           {plan.popular 
-                            ? (t.language === 'es' ? 'Elegir Este Plan' : 'Choose This Plan')
-                            : (t.language === 'es' ? 'Comenzar Ahora' : 'Start Learning Now')
+                            ? (language === 'es' ? 'Elegir Este Plan' : 'Choose This Plan')
+                            : (language === 'es' ? 'Comenzar Ahora' : 'Start Learning Now')
                           }
                         </>
                       )}
                     </Button>
                   </CardContent>
                 </Card>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </TabsContent>
         </Tabs>
 
@@ -471,10 +473,10 @@ export default function PackagesPage() {
         <div className="bg-gradient-to-r from-[#1C7BB1] to-[#0A4A6E] text-white rounded-lg p-8 mb-8">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-4">
-              {t.language === 'es' ? '¿Por qué elegir Passport2Fluency?' : 'Why Choose Passport2Fluency?'}
+              {language === 'es' ? '¿Por qué elegir Passport2Fluency?' : 'Why Choose Passport2Fluency?'}
             </h2>
             <p className="text-xl mb-8 opacity-90">
-              {t.language === 'es' 
+              {language === 'es' 
                 ? 'Únete a más de 5,000 estudiantes que han logrado la fluidez'
                 : 'Join over 5,000 students who have achieved fluency'
               }
@@ -486,10 +488,10 @@ export default function PackagesPage() {
                   <Users className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">
-                  {t.language === 'es' ? 'Profesores Nativos' : 'Native Teachers'}
+                  {language === 'es' ? 'Profesores Nativos' : 'Native Teachers'}
                 </h3>
                 <p className="opacity-90">
-                  {t.language === 'es' 
+                  {language === 'es' 
                     ? 'Certificados y con experiencia comprobada'
                     : 'Certified with proven experience'
                   }
@@ -501,10 +503,10 @@ export default function PackagesPage() {
                   <Shield className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">
-                  {t.language === 'es' ? 'Garantía 30 Días' : '30-Day Guarantee'}
+                  {language === 'es' ? 'Garantía 30 Días' : '30-Day Guarantee'}
                 </h3>
                 <p className="opacity-90">
-                  {t.language === 'es' 
+                  {language === 'es' 
                     ? 'Si no estás satisfecho, te devolvemos tu dinero'
                     : 'If not satisfied, we refund your money'
                   }
@@ -516,10 +518,10 @@ export default function PackagesPage() {
                   <Calendar className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">
-                  {t.language === 'es' ? 'Horarios Flexibles' : 'Flexible Schedules'}
+                  {language === 'es' ? 'Horarios Flexibles' : 'Flexible Schedules'}
                 </h3>
                 <p className="opacity-90">
-                  {t.language === 'es' 
+                  {language === 'es' 
                     ? 'Reserva clases 24/7, adapta a tu vida'
                     : 'Book classes 24/7, adapt to your life'
                   }
@@ -532,7 +534,7 @@ export default function PackagesPage() {
                 <Star key={star} className="w-6 h-6 text-[#F59E1C] fill-current" />
               ))}
               <span className="ml-2 text-lg font-semibold">
-                4.9/5 {t.language === 'es' ? 'estrellas' : 'stars'}
+                4.9/5 {language === 'es' ? 'estrellas' : 'stars'}
               </span>
             </div>
           </div>
@@ -541,10 +543,10 @@ export default function PackagesPage() {
           <Card className="bg-white border-[#1C7BB1]/20">
             <CardContent className="py-8">
               <h3 className="text-2xl font-bold text-[#0A4A6E] mb-4">
-                {t.language === 'es' ? 'Garantía de Satisfacción' : 'Satisfaction Guarantee'}
+                {language === 'es' ? 'Garantía de Satisfacción' : 'Satisfaction Guarantee'}
               </h3>
               <p className="text-[#0A4A6E]/70 mb-6">
-                {t.language === 'es' 
+                {language === 'es' 
                   ? 'Si no estás completamente satisfecho con tu primera clase, te devolvemos el dinero.'
                   : 'If you\'re not completely satisfied with your first class, we\'ll refund your money.'
                 }
@@ -553,19 +555,19 @@ export default function PackagesPage() {
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-[#1C7BB1]" />
                   <span className="text-sm text-[#0A4A6E]">
-                    {t.language === 'es' ? 'Garantía de 30 días' : '30-day guarantee'}
+                    {language === 'es' ? 'Garantía de 30 días' : '30-day guarantee'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-[#1C7BB1]" />
                   <span className="text-sm text-[#0A4A6E]">
-                    {t.language === 'es' ? 'Cancela cuando quieras' : 'Cancel anytime'}
+                    {language === 'es' ? 'Cancela cuando quieras' : 'Cancel anytime'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-[#1C7BB1]" />
                   <span className="text-sm text-[#0A4A6E]">
-                    {t.language === 'es' ? 'Soporte 24/7' : '24/7 support'}
+                    {language === 'es' ? 'Soporte 24/7' : '24/7 support'}
                   </span>
                 </div>
               </div>

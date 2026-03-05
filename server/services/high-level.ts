@@ -146,6 +146,15 @@ Equipo Passport2Fluency`;
       password: '',
       level: 'tutor',
       avatar: tutor.avatar,
+      userType: 'trial',
+      trialCompleted: false,
+      classCredits: 0,
+      highLevelContactId: null,
+      trialTutorId: null,
+      stripeCustomerId: null,
+      aiSubscriptionActive: false,
+      aiMessagesUsed: 0,
+      aiMessagesResetAt: null,
       createdAt: new Date()
     };
 
@@ -226,6 +235,15 @@ Passport2Fluency`;
       password: '',
       level: 'tutor',
       avatar: tutor.avatar,
+      userType: 'trial',
+      trialCompleted: false,
+      classCredits: 0,
+      highLevelContactId: null,
+      trialTutorId: null,
+      stripeCustomerId: null,
+      aiSubscriptionActive: false,
+      aiMessagesUsed: 0,
+      aiMessagesResetAt: null,
       createdAt: new Date()
     };
 
@@ -306,6 +324,15 @@ Equipo Passport2Fluency`;
       password: '',
       level: 'tutor',
       avatar: tutor.avatar,
+      userType: 'trial',
+      trialCompleted: false,
+      classCredits: 0,
+      highLevelContactId: null,
+      trialTutorId: null,
+      stripeCustomerId: null,
+      aiSubscriptionActive: false,
+      aiMessagesUsed: 0,
+      aiMessagesResetAt: null,
       createdAt: new Date()
     };
 

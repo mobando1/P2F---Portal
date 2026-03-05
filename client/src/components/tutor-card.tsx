@@ -56,10 +56,7 @@ export default function TutorCard({ tutor, onBook }: TutorCardProps) {
               </span>
             </div>
             
-            <div className="flex items-center justify-between mt-3">
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">${tutor.hourlyRate}/hr</span>
-              </div>
+            <div className="flex items-center justify-end mt-3">
               <Button
                 size="sm"
                 onClick={() => onBook(tutor.id)}

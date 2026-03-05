@@ -1,5 +1,5 @@
 import { type Tutor, type InsertTutor } from "@shared/schema";
-import { storage } from "../storage-simple";
+import { storage } from "../storage";
 import { HighLevelService } from "./high-level";
 
 interface TutorProfileData {
@@ -59,11 +59,20 @@ export class TutorManagementService {
             firstName: tutorData.name.split(' ')[0],
             lastName: tutorData.name.split(' ').slice(1).join(' '),
             email: tutorData.email,
-            phone: tutorData.phone,
+            phone: tutorData.phone ?? null,
             username: '',
             password: '',
             level: 'teacher',
-            avatar: tutorData.profileImage,
+            avatar: tutorData.profileImage ?? null,
+            userType: 'trial',
+            trialCompleted: false,
+            classCredits: 0,
+            highLevelContactId: null,
+            trialTutorId: null,
+            stripeCustomerId: null,
+            aiSubscriptionActive: false,
+            aiMessagesUsed: 0,
+            aiMessagesResetAt: null,
             createdAt: new Date()
           });
           

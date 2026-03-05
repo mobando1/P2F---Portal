@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { getCurrentUser, logout } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
@@ -10,15 +11,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Settings } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
+import { LogOut, User, Settings, Menu, Sparkles } from "lucide-react";
 import LanguageSwitcher from "./language-switcher";
 
 export default function Header() {
   const user = getCurrentUser();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [scrolled, setScrolled] = useState(false);
 
-  const handleLogout = () => {
-    logout();
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
     window.location.href = "/login";
   };
 
@@ -26,47 +40,55 @@ export default function Header() {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
+  const navLinks = [
+    { href: "/home", label: language === 'es' ? 'Inicio' : 'Home' },
+    { href: "/tutors", label: language === 'es' ? 'Profesores' : 'Tutors' },
+    { href: "/dashboard", label: language === 'es' ? 'Mi Panel' : 'My Dashboard' },
+    { href: "/ai-practice", label: language === 'es' ? 'Practice Partner' : 'Practice Partner' },
+    { href: "/packages", label: language === 'es' ? 'Planes' : 'Plans' },
+    { href: "/contact", label: t.contact },
+  ];
+
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <header
+      className={`sticky top-0 z-50 border-b transition-all duration-300 ${
+        scrolled
+          ? "bg-white/80 backdrop-blur-lg border-gray-200/50 shadow-sm"
+          : "bg-white border-gray-200 shadow-sm"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className={`flex justify-between items-center transition-all duration-300 ${scrolled ? "h-14" : "h-16"}`}>
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/">
               <div className="flex-shrink-0 flex items-center">
-                <img 
-                  src="/attached_assets/a1c5a1_9514ede9e3124d7a9adf78f5dcf07f28~mv2_1752436886046.png" 
-                  alt="Passport2Fluency" 
-                  className="h-10 w-auto cursor-pointer"
+                <img
+                  src="/attached_assets/a1c5a1_9514ede9e3124d7a9adf78f5dcf07f28~mv2_1752436886046.png"
+                  alt="Passport2Fluency"
+                  className={`w-auto cursor-pointer transition-all duration-300 ${scrolled ? "h-8" : "h-10"}`}
                 />
               </div>
             </Link>
           </div>
 
-          {/* Navigation Menu */}
-          <nav className="hidden md:flex space-x-8">
-            <Link href="/dashboard" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              {t.dashboard}
-            </Link>
-            <Link href="/tutors" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              {t.tutors}
-            </Link>
-            <Link href="/packages" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              {t.language === 'es' ? 'Planes' : 'Plans'}
-            </Link>
-            {/* Temporalmente oculto hasta implementar sistema de roles */}
-            {/* <Link href="/admin" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              {t.admin}
-            </Link> */}
-            <a href="#" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              {t.about}
-            </a>
-            <Link href="/contact" className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium">
-              {t.contact}
-            </Link>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex space-x-6 lg:space-x-8">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium text-sm ${
+                  link.href === "/ai-practice" ? "flex items-center gap-1" : ""
+                }`}
+              >
+                {link.href === "/ai-practice" && <Sparkles className="w-3.5 h-3.5 text-[#F59E1C]" />}
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
-          {/* User Profile & Login */}
+          {/* Desktop User Profile & Login */}
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
             {user ? (
@@ -92,14 +114,18 @@ export default function Header() {
                       </div>
                     </div>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </DropdownMenuItem>
+                    <Link href="/profile">
+                      <DropdownMenuItem className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        {language === 'es' ? 'Perfil' : 'Profile'}
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/settings">
+                      <DropdownMenuItem className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        {language === 'es' ? 'Configuracion' : 'Settings'}
+                      </DropdownMenuItem>
+                    </Link>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
@@ -113,25 +139,83 @@ export default function Header() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-4">
                 <Link href="/login">
-                  <Button variant="outline" className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white">
+                  <Button variant="outline" className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white transition-all">
                     {t.login}
                   </Button>
                 </Link>
                 <Link href="/login">
-                  <Button className="bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white">
+                  <Button className="bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white shadow-md shadow-[#F59E1C]/20 transition-all">
                     {t.signup}
                   </Button>
                 </Link>
               </div>
             )}
-            
-            <button className="md:hidden">
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+
+            {/* Mobile Menu */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="md:hidden p-2">
+                  <Menu className="w-6 h-6 text-gray-600" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[280px] sm:w-[350px]">
+                <div className="flex flex-col gap-6 mt-6">
+                  {user && (
+                    <div className="flex items-center gap-3 pb-4 border-b">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={user.avatar || ""} alt={user.firstName} />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {getInitials(user.firstName, user.lastName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{user.firstName} {user.lastName}</p>
+                        <p className="text-sm text-muted-foreground">Level {user.level}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <nav className="flex flex-col gap-4">
+                    {navLinks.map((link) => (
+                      <SheetClose asChild key={link.href}>
+                        <Link href={link.href} className="text-gray-700 hover:text-[#1C7BB1] font-medium text-lg flex items-center gap-2">
+                          {link.href === "/ai-practice" && <Sparkles className="w-4 h-4 text-[#F59E1C]" />}
+                          {link.label}
+                        </Link>
+                      </SheetClose>
+                    ))}
+                  </nav>
+
+                  <div className="pt-4 border-t">
+                    {user ? (
+                      <Button variant="outline" className="w-full" onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        {t.logout}
+                      </Button>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <SheetClose asChild>
+                          <Link href="/login">
+                            <Button variant="outline" className="w-full border-[#1C7BB1] text-[#1C7BB1]">
+                              {t.login}
+                            </Button>
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Link href="/login">
+                            <Button className="w-full bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white">
+                              {t.signup}
+                            </Button>
+                          </Link>
+                        </SheetClose>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>

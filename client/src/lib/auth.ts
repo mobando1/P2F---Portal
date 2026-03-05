@@ -8,6 +8,9 @@ export interface AuthUser {
   username: string;
   level: string;
   avatar?: string;
+  trialCompleted?: boolean;
+  userType?: string;
+  classCredits?: number;
 }
 
 export interface LoginData {
@@ -23,12 +26,10 @@ export interface RegisterData {
   username: string;
 }
 
-// Cambio crítico: usar localStorage para persistir la sesión durante redirecciones de Stripe
 let currentUser: AuthUser | null = null;
 
 const STORAGE_KEY = 'passport2fluency_user';
 
-// Cargar usuario desde localStorage al iniciar
 const loadUserFromStorage = (): AuthUser | null => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -42,7 +43,6 @@ const loadUserFromStorage = (): AuthUser | null => {
   return null;
 };
 
-// Guardar usuario en localStorage
 const saveUserToStorage = (user: AuthUser | null) => {
   try {
     if (user) {
@@ -70,37 +70,57 @@ export const setCurrentUser = (user: AuthUser | null) => {
 export const login = async (data: LoginData): Promise<AuthUser> => {
   const response = await apiRequest("POST", "/api/auth/login", data);
   const result = await response.json();
-  
+
   if (result.user) {
     setCurrentUser(result.user);
-    
-    // CRITICAL: Clear QueryClient cache after login to prevent stale error cache
+
     const { queryClient } = await import("@/lib/queryClient");
     queryClient.clear();
-    
+
     return result.user;
   }
-  
+
   throw new Error("Login failed");
 };
 
 export const register = async (data: RegisterData): Promise<AuthUser> => {
   const response = await apiRequest("POST", "/api/auth/register", data);
   const result = await response.json();
-  
+
   if (result.user) {
     setCurrentUser(result.user);
     return result.user;
   }
-  
+
   throw new Error("Registration failed");
 };
 
-export const logout = () => {
+export const logout = async () => {
+  try {
+    await apiRequest("POST", "/api/auth/logout");
+  } catch {
+    // Continue with local logout even if server call fails
+  }
   setCurrentUser(null);
 };
 
+export const validateSession = async (): Promise<AuthUser | null> => {
+  try {
+    const response = await fetch("/api/auth/me", { credentials: "include" });
+    if (response.ok) {
+      const result = await response.json();
+      if (result.user) {
+        setCurrentUser(result.user);
+        return result.user;
+      }
+    }
+  } catch {
+    // Session invalid
+  }
+  setCurrentUser(null);
+  return null;
+};
+
 export const isAuthenticated = (): boolean => {
-  // Importante: hidratar desde localStorage antes de verificar
   return getCurrentUser() !== null;
 };

@@ -216,7 +216,6 @@ export default function EnhancedCalendar({ remainingClasses, tutors, onBookClass
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4" />
                         <span>{tutor.name}</span>
-                        <span className="text-sm text-gray-500">- ${tutor.hourlyRate}/hr</span>
                       </div>
                     </SelectItem>
                   ))}

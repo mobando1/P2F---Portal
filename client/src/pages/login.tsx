@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { login, register } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
-import { Mail, Lock, LogIn, UserPlus, User } from "lucide-react";
+import { Mail, Lock, LogIn, UserPlus, User, Phone } from "lucide-react";
 import LanguageSwitcher from "@/components/language-switcher";
 
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   
   // Detectar si viene desde compra de plan
@@ -33,6 +34,7 @@ export default function Login() {
     firstName: "",
     lastName: "",
     username: "",
+    phone: "",
   });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -42,20 +44,20 @@ export default function Login() {
     try {
       await login(loginData);
       toast({
-        title: "Welcome back!",
-        description: "You have been successfully logged in.",
+        title: t.welcomeBack,
+        description: language === 'es' ? "Has iniciado sesión exitosamente." : "You have been successfully logged in.",
       });
       
       // Redirigir según el contexto
       if (fromPurchase && selectedPlan) {
         setLocation(`/packages?plan=${selectedPlan}`);
       } else {
-        setLocation("/dashboard");
+        setLocation("/home");
       }
     } catch (error) {
       toast({
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
+        title: t.loginFailed,
+        description: t.checkCredentials,
         variant: "destructive",
       });
     } finally {
@@ -70,20 +72,20 @@ export default function Login() {
     try {
       await register(registerData);
       toast({
-        title: "Account created!",
-        description: "Welcome to EspañolPro. Your learning journey begins now.",
+        title: t.accountCreated,
+        description: t.journeyBegins,
       });
       
       // Redirigir según el contexto
       if (fromPurchase && selectedPlan) {
         setLocation(`/packages?plan=${selectedPlan}`);
       } else {
-        setLocation("/dashboard");
+        setLocation("/home");
       }
     } catch (error) {
       toast({
-        title: "Registration failed",
-        description: "Please check your information and try again.",
+        title: t.registrationFailed,
+        description: t.checkCredentials,
         variant: "destructive",
       });
     } finally {
@@ -99,12 +101,17 @@ export default function Login() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#F59E1C]/5 rounded-full blur-3xl"></div>
       </div>
       
-      <div className="max-w-md w-full relative z-10">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="max-w-md w-full relative z-10"
+      >
         {/* Language Switcher */}
         <div className="absolute top-0 right-0 z-20">
           <LanguageSwitcher />
         </div>
-        
+
         {/* Logo y mensaje de bienvenida */}
         <div className="text-center mb-8">
           <div className="relative inline-block">
@@ -126,13 +133,13 @@ export default function Login() {
           <div className="mt-6 p-4 bg-gradient-to-r from-[#1C7BB1]/5 to-[#F59E1C]/5 rounded-lg border border-[#1C7BB1]/20">
             <p className="text-sm text-[#0A4A6E] text-center">
               {fromPurchase ? (
-                t.language === 'es' 
+                language === 'es' 
                   ? '¡Estás a un paso de comenzar! Inicia sesión o regístrate para completar tu compra.'
                   : 'You\'re one step away from starting! Sign in or register to complete your purchase.'
               ) : (
-                t.language === 'es' 
-                  ? 'Accede a tu portal para comprar paquetes de clases, gestionar tu suscripción y reservar con tus profesores favoritos.'
-                  : 'Access your portal to buy class packages, manage your subscription, and book with your favorite teachers.'
+                language === 'es'
+                  ? '¡Regístrate y reserva tu primera clase GRATIS! Elige tu profesor favorito y comienza a aprender hoy.'
+                  : 'Sign up and book your first class FREE! Choose your favorite tutor and start learning today.'
               )}
             </p>
           </div>
@@ -163,7 +170,7 @@ export default function Login() {
                   <div className="space-y-2 group">
                     <Label htmlFor="email" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
                       <Mail className="w-4 h-4 text-[#1C7BB1]" />
-                      Correo Electrónico
+                      {t.email}
                     </Label>
                     <div className="relative">
                       <Input
@@ -182,7 +189,7 @@ export default function Login() {
                   <div className="space-y-2 group">
                     <Label htmlFor="password" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
                       <Lock className="w-4 h-4 text-[#1C7BB1]" />
-                      Contraseña
+                      {t.password}
                     </Label>
                     <div className="relative">
                       <Input
@@ -205,10 +212,10 @@ export default function Login() {
                         id="remember" 
                         className="rounded text-[#1C7BB1] focus:ring-[#1C7BB1] border-[#1C7BB1]/20" 
                       />
-                      <label htmlFor="remember" className="text-[#0A4A6E]">Recordarme</label>
+                      <label htmlFor="remember" className="text-[#0A4A6E]">{t.rememberMe}</label>
                     </div>
                     <a href="#" className="text-[#1C7BB1] hover:text-[#0A4A6E] transition-colors duration-300">
-                      ¿Olvidaste tu contraseña?
+                      {t.forgotPassword}
                     </a>
                   </div>
                   
@@ -220,12 +227,12 @@ export default function Login() {
                     {isLoading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Iniciando sesión...
+                        {t.loggingIn}
                       </>
                     ) : (
                       <>
                         <LogIn className="w-4 h-4" />
-                        Iniciar Sesión
+                        {t.login}
                       </>
                     )}
                   </Button>
@@ -235,7 +242,7 @@ export default function Login() {
                     <div className="mt-6 p-4 bg-gradient-to-r from-[#EAF4FA] to-[#F8F9FA] rounded-lg border border-[#1C7BB1]/20 shadow-sm">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-2 h-2 bg-[#1C7BB1] rounded-full animate-pulse"></div>
-                        <p className="text-sm font-medium text-[#0A4A6E]">Credenciales de Prueba:</p>
+                        <p className="text-sm font-medium text-[#0A4A6E]">{t.demoCredentials}:</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-xs text-[#0A4A6E] font-mono bg-white/50 px-2 py-1 rounded">
@@ -256,7 +263,7 @@ export default function Login() {
                     <div className="space-y-2 group">
                       <Label htmlFor="firstName" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
                         <User className="w-4 h-4 text-[#1C7BB1]" />
-                        Nombre
+                        {t.firstName}
                       </Label>
                       <div className="relative">
                         <Input
@@ -274,7 +281,7 @@ export default function Login() {
                     <div className="space-y-2 group">
                       <Label htmlFor="lastName" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
                         <User className="w-4 h-4 text-[#1C7BB1]" />
-                        Apellido
+                        {t.lastName}
                       </Label>
                       <div className="relative">
                         <Input
@@ -293,7 +300,7 @@ export default function Login() {
                   <div className="space-y-2 group">
                     <Label htmlFor="username" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
                       <User className="w-4 h-4 text-[#1C7BB1]" />
-                      Nombre de usuario
+                      {t.username}
                     </Label>
                     <div className="relative">
                       <Input
@@ -309,9 +316,27 @@ export default function Login() {
                   </div>
                   
                   <div className="space-y-2 group">
+                    <Label htmlFor="phone" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-[#1C7BB1]" />
+                      {language === 'es' ? 'Teléfono (opcional)' : 'Phone (optional)'}
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+1 234 567 8900"
+                        value={registerData.phone}
+                        onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                        className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20 h-12 text-base transition-all duration-300 pl-10 focus:shadow-lg focus:shadow-[#1C7BB1]/10"
+                      />
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1C7BB1]/40 w-4 h-4" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 group">
                     <Label htmlFor="registerEmail" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
                       <Mail className="w-4 h-4 text-[#1C7BB1]" />
-                      Correo Electrónico
+                      {t.email}
                     </Label>
                     <div className="relative">
                       <Input
@@ -330,7 +355,7 @@ export default function Login() {
                   <div className="space-y-2 group">
                     <Label htmlFor="registerPassword" className="text-[#0A4A6E] font-medium text-sm flex items-center gap-2">
                       <Lock className="w-4 h-4 text-[#1C7BB1]" />
-                      Contraseña
+                      {t.password}
                     </Label>
                     <div className="relative">
                       <Input
@@ -354,9 +379,9 @@ export default function Login() {
                       required
                     />
                     <label htmlFor="terms" className="text-[#0A4A6E]">
-                      Acepto los{' '}
+                      {language === 'es' ? 'Acepto los' : 'I accept the'}{' '}
                       <a href="#" className="text-[#1C7BB1] hover:text-[#0A4A6E] transition-colors duration-300">
-                        términos y condiciones
+                        {language === 'es' ? 'términos y condiciones' : 'terms and conditions'}
                       </a>
                     </label>
                   </div>
@@ -369,12 +394,12 @@ export default function Login() {
                     {isLoading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Registrando...
+                        {t.registering}
                       </>
                     ) : (
                       <>
                         <UserPlus className="w-4 h-4" />
-                        Registrarse
+                        {t.signup}
                       </>
                     )}
                   </Button>
@@ -383,7 +408,7 @@ export default function Login() {
             </Tabs>
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
     </div>
   );
 }

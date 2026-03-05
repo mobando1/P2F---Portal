@@ -1,8 +1,13 @@
-import { 
+import bcrypt from "bcryptjs";
+import {
   users, tutors, classes, videos, subscriptions, userProgress,
-  type User, type InsertUser, type Tutor, type InsertTutor, 
+  type User, type InsertUser, type Tutor, type InsertTutor,
   type Class, type InsertClass, type Video, type InsertVideo,
-  type Subscription, type InsertSubscription, type UserProgress, type InsertUserProgress
+  type Subscription, type InsertSubscription, type UserProgress, type InsertUserProgress,
+  type ContactSubmission, type InsertContactSubmission,
+  type Review, type InsertReview,
+  type AiConversation, type InsertAiConversation,
+  type AiMessage, type InsertAiMessage
 } from "@shared/schema";
 
 export interface IStorage {
@@ -26,7 +31,17 @@ export interface IStorage {
   // Tutors
   getAllTutors(): Promise<Tutor[]>;
   getTutor(id: number): Promise<Tutor | undefined>;
+  getTutorsByCategory(classType?: string, languageTaught?: string): Promise<Tutor[]>;
   createTutor(tutor: InsertTutor): Promise<Tutor>;
+  updateTutor(id: number, data: Partial<InsertTutor>): Promise<Tutor | undefined>;
+
+  // Reviews
+  getReviewsByTutor(tutorId: number): Promise<Review[]>;
+  createReview(review: InsertReview): Promise<Review>;
+  getUserReviewForTutor(userId: number, tutorId: number): Promise<Review | undefined>;
+
+  // Trial
+  hasUsedTrial(userId: number): Promise<boolean>;
 
   // Classes
   getAllClasses(): Promise<Class[]>;
@@ -44,6 +59,40 @@ export interface IStorage {
   // User Progress
   getUserProgress(userId: number): Promise<UserProgress | undefined>;
   updateUserProgress(userId: number, progress: Partial<InsertUserProgress>): Promise<UserProgress>;
+
+  // Contact Submissions
+  createContactSubmission(data: InsertContactSubmission): Promise<ContactSubmission>;
+
+  // AI Practice Partner
+  createAiConversation(data: InsertAiConversation): Promise<AiConversation>;
+  getAiConversations(userId: number): Promise<AiConversation[]>;
+  getAiConversation(id: number): Promise<AiConversation | undefined>;
+  getAiMessages(conversationId: number): Promise<AiMessage[]>;
+  addAiMessage(data: InsertAiMessage): Promise<AiMessage>;
+  updateAiConversationTitle(id: number, title: string): Promise<void>;
+  getUserAiUsage(userId: number): Promise<number>;
+  incrementAiUsage(userId: number): Promise<void>;
+  resetAiUsage(userId: number): Promise<void>;
+
+  // AI Admin Stats
+  getAiAdminStats(): Promise<{
+    totalConversations: number;
+    totalMessages: number;
+    activeUsers: number;
+    userStats: Array<{
+      userId: number;
+      userName: string;
+      conversationCount: number;
+      messageCount: number;
+      lastActive: Date | null;
+    }>;
+  }>;
+}
+
+/** Strip password from user object before sending to client */
+export function sanitizeUser(user: User): Omit<User, "password"> {
+  const { password, ...safeUser } = user;
+  return safeUser;
 }
 
 export class MemStorage implements IStorage {
@@ -59,6 +108,15 @@ export class MemStorage implements IStorage {
   private currentVideoId: number;
   private currentSubscriptionId: number;
   private currentProgressId: number;
+  private contactSubmissions: Map<number, ContactSubmission>;
+  private currentContactSubmissionId: number;
+  private reviewsMap: Map<number, Review>;
+  private currentReviewId: number;
+  private aiConversationsMap: Map<number, AiConversation>;
+  private aiMessagesMap: Map<number, AiMessage>;
+  private currentAiConversationId: number;
+  private currentAiMessageId: number;
+  private initialized: Promise<void>;
 
   constructor() {
     this.users = new Map();
@@ -73,17 +131,27 @@ export class MemStorage implements IStorage {
     this.currentVideoId = 1;
     this.currentSubscriptionId = 1;
     this.currentProgressId = 1;
+    this.contactSubmissions = new Map();
+    this.currentContactSubmissionId = 1;
+    this.reviewsMap = new Map();
+    this.currentReviewId = 1;
+    this.aiConversationsMap = new Map();
+    this.aiMessagesMap = new Map();
+    this.currentAiConversationId = 1;
+    this.currentAiMessageId = 1;
 
-    this.initializeData();
+    this.initialized = this.initializeData();
   }
 
-  private initializeData() {
-    // Usuario de prueba vinculado con High Level
+  private async initializeData() {
+    const hashedPassword = await bcrypt.hash("password123", 12);
+
+    // Test user linked with High Level
     const user: User = {
       id: 1,
       username: "juan_sanchez",
-      email: "juan.sanchez@example.com", 
-      password: "password123",
+      email: "juan.sanchez@example.com",
+      password: hashedPassword,
       firstName: "Juan",
       lastName: "Sánchez",
       phone: "+1-555-0123",
@@ -92,18 +160,21 @@ export class MemStorage implements IStorage {
       userType: "customer",
       trialCompleted: true,
       classCredits: 8,
-      highLevelContactId: "TEST_CONTACT_123", // Contact ID de prueba para testing
+      highLevelContactId: "TEST_CONTACT_123",
+      trialTutorId: null,
       stripeCustomerId: null,
+      aiSubscriptionActive: false,
+      aiMessagesUsed: 0,
+      aiMessagesResetAt: null,
       createdAt: new Date(),
     };
     this.users.set(1, user);
 
-    // Usuario adicional para pruebas
     const user2: User = {
       id: 2,
-      username: "maria_rodriguez", 
+      username: "maria_rodriguez",
       email: "maria.rodriguez@example.com",
-      password: "password123",
+      password: hashedPassword,
       firstName: "María",
       lastName: "Rodríguez",
       phone: "+1-555-0124",
@@ -112,8 +183,12 @@ export class MemStorage implements IStorage {
       userType: "customer",
       trialCompleted: true,
       classCredits: 12,
-      highLevelContactId: "MARIA_CONTACT_456", // Otro Contact ID para testing
+      highLevelContactId: "MARIA_CONTACT_456",
+      trialTutorId: null,
       stripeCustomerId: null,
+      aiSubscriptionActive: false,
+      aiMessagesUsed: 0,
+      aiMessagesResetAt: null,
       createdAt: new Date(),
     };
     this.users.set(2, user2);
@@ -141,7 +216,7 @@ export class MemStorage implements IStorage {
         phone: null,
         avatar: "/attached_assets/teachers/carolina-perilla.jpg",
         highLevelContactId: "LuoLdvMdaZWRkidLCeQri",
-        highLevelCalendarId: "R5AR05D5vU38A6wUS0R7", // Calendar ID del iframe para pruebas reales
+        highLevelCalendarId: "R5AR05D5vU38A6wUS0R7",
         createdAt: new Date(),
         isActive: true,
         specialization: "Lead Instructor • Bilingual Education",
@@ -149,6 +224,8 @@ export class MemStorage implements IStorage {
         rating: "4.9",
         reviewCount: 156,
         hourlyRate: "$35.00",
+        classType: "adults",
+        languageTaught: "spanish",
         country: "Colombia",
         timezone: "America/Bogota",
         languages: ["Spanish", "English", "French"],
@@ -170,6 +247,8 @@ export class MemStorage implements IStorage {
         rating: "4.9",
         reviewCount: 98,
         hourlyRate: "$30.00",
+        classType: "adults",
+        languageTaught: "spanish",
         country: "Venezuela",
         timezone: "America/Caracas",
         languages: ["Spanish", "English"],
@@ -191,6 +270,8 @@ export class MemStorage implements IStorage {
         rating: "4.8",
         reviewCount: 167,
         hourlyRate: "$32.00",
+        classType: "adults",
+        languageTaught: "spanish",
         country: "Colombia",
         timezone: "America/Bogota",
         languages: ["Spanish", "English"],
@@ -212,6 +293,8 @@ export class MemStorage implements IStorage {
         rating: "4.9",
         reviewCount: 142,
         hourlyRate: "$28.00",
+        classType: "kids",
+        languageTaught: "spanish",
         country: "Colombia",
         timezone: "America/Bogota",
         languages: ["Spanish", "English"],
@@ -233,6 +316,8 @@ export class MemStorage implements IStorage {
         rating: "4.8",
         reviewCount: 87,
         hourlyRate: "$30.00",
+        classType: "adults",
+        languageTaught: "spanish",
         country: "Colombia",
         timezone: "America/Bogota",
         languages: ["Spanish", "English"],
@@ -246,7 +331,7 @@ export class MemStorage implements IStorage {
     });
     this.currentTutorId = 6;
 
-    // Clases de prueba con vinculación High Level
+    // Test classes with High Level linking
     const classData = [
       {
         id: 1,
@@ -257,6 +342,8 @@ export class MemStorage implements IStorage {
         scheduledAt: new Date("2025-08-30T15:00:00"),
         duration: 60,
         status: "scheduled" as const,
+        isTrial: false,
+        classCategory: "adults-spanish",
         meetingLink: "https://meet.google.com/abc-defg-hij",
         highLevelAppointmentId: "APPT_TEST_001",
         highLevelContactId: "TEST_CONTACT_123",
@@ -271,8 +358,10 @@ export class MemStorage implements IStorage {
         scheduledAt: new Date("2025-08-31T10:00:00"),
         duration: 60,
         status: "scheduled" as const,
+        isTrial: false,
+        classCategory: "adults-spanish",
         meetingLink: "https://meet.google.com/klm-nopq-rst",
-        highLevelAppointmentId: "APPT_TEST_002", 
+        highLevelAppointmentId: "APPT_TEST_002",
         highLevelContactId: "MARIA_CONTACT_456",
         createdAt: new Date(),
       },
@@ -285,6 +374,8 @@ export class MemStorage implements IStorage {
         scheduledAt: new Date("2025-09-02T14:00:00"),
         duration: 60,
         status: "completed" as const,
+        isTrial: false,
+        classCategory: "adults-spanish",
         meetingLink: "https://meet.google.com/uvw-xyza-bcd",
         highLevelAppointmentId: "APPT_TEST_003",
         highLevelContactId: "TEST_CONTACT_123",
@@ -295,88 +386,16 @@ export class MemStorage implements IStorage {
     classData.forEach(classItem => {
       this.classes.set(classItem.id, classItem);
     });
-    this.currentClassId = 3;
+    this.currentClassId = 4;
 
     // Sample videos
     const videoData = [
-      {
-        id: 1,
-        title: "Spanish Grammar Basics",
-        description: "Master the fundamentals of Spanish grammar",
-        instructor: "Prof. Ana García",
-        level: "Beginner",
-        duration: "24:15",
-        thumbnailUrl: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&h=400&fit=crop",
-        videoUrl: "https://example.com/video1.mp4",
-        category: "Grammar",
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: 2,
-        title: "Conversation Techniques",
-        description: "Improve your speaking confidence",
-        instructor: "Prof. Carlos Mendez",
-        level: "Intermediate",
-        duration: "18:42",
-        thumbnailUrl: "https://images.unsplash.com/photo-1588072432836-e10032774350?w=600&h=400&fit=crop",
-        videoUrl: "https://example.com/video2.mp4",
-        category: "Speaking",
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: 3,
-        title: "Business Spanish",
-        description: "Professional Spanish for the workplace",
-        instructor: "Prof. Isabella Torres",
-        level: "Advanced",
-        duration: "32:08",
-        thumbnailUrl: "https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&h=400&fit=crop",
-        videoUrl: "https://example.com/video3.mp4",
-        category: "Business",
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: 4,
-        title: "Pronunciation Mastery",
-        description: "Perfect your Spanish accent",
-        instructor: "Prof. Miguel Ruiz",
-        level: "All Levels",
-        duration: "15:30",
-        thumbnailUrl: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&h=400&fit=crop",
-        videoUrl: "https://example.com/video4.mp4",
-        category: "Pronunciation",
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: 5,
-        title: "Cultural Insights",
-        description: "Understanding Hispanic cultures",
-        instructor: "Prof. Sofia Vargas",
-        level: "Intermediate",
-        duration: "21:45",
-        thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
-        videoUrl: "https://example.com/video5.mp4",
-        category: "Culture",
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: 6,
-        title: "Advanced Writing",
-        description: "Master complex writing structures",
-        instructor: "Prof. Eduardo Morales",
-        level: "Advanced",
-        duration: "28:12",
-        thumbnailUrl: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=400&fit=crop",
-        videoUrl: "https://example.com/video6.mp4",
-        category: "Writing",
-        isActive: true,
-        createdAt: new Date(),
-      }
+      { id: 1, title: "Spanish Grammar Basics", description: "Master the fundamentals of Spanish grammar", instructor: "Prof. Ana García", level: "Beginner", duration: "24:15", thumbnailUrl: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&h=400&fit=crop", videoUrl: "https://example.com/video1.mp4", category: "Grammar", isActive: true, createdAt: new Date() },
+      { id: 2, title: "Conversation Techniques", description: "Improve your speaking confidence", instructor: "Prof. Carlos Mendez", level: "Intermediate", duration: "18:42", thumbnailUrl: "https://images.unsplash.com/photo-1588072432836-e10032774350?w=600&h=400&fit=crop", videoUrl: "https://example.com/video2.mp4", category: "Speaking", isActive: true, createdAt: new Date() },
+      { id: 3, title: "Business Spanish", description: "Professional Spanish for the workplace", instructor: "Prof. Isabella Torres", level: "Advanced", duration: "32:08", thumbnailUrl: "https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&h=400&fit=crop", videoUrl: "https://example.com/video3.mp4", category: "Business", isActive: true, createdAt: new Date() },
+      { id: 4, title: "Pronunciation Mastery", description: "Perfect your Spanish accent", instructor: "Prof. Miguel Ruiz", level: "All Levels", duration: "15:30", thumbnailUrl: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&h=400&fit=crop", videoUrl: "https://example.com/video4.mp4", category: "Pronunciation", isActive: true, createdAt: new Date() },
+      { id: 5, title: "Cultural Insights", description: "Understanding Hispanic cultures", instructor: "Prof. Sofia Vargas", level: "Intermediate", duration: "21:45", thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop", videoUrl: "https://example.com/video5.mp4", category: "Culture", isActive: true, createdAt: new Date() },
+      { id: 6, title: "Advanced Writing", description: "Master complex writing structures", instructor: "Prof. Eduardo Morales", level: "Advanced", duration: "28:12", thumbnailUrl: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=400&fit=crop", videoUrl: "https://example.com/video6.mp4", category: "Writing", isActive: true, createdAt: new Date() }
     ];
 
     videoData.forEach(video => {
@@ -398,27 +417,38 @@ export class MemStorage implements IStorage {
     this.currentProgressId = 2;
   }
 
+  private async ensureInitialized() {
+    await this.initialized;
+  }
+
   async getAllUsers(): Promise<User[]> {
+    await this.ensureInitialized();
     return Array.from(this.users.values());
   }
 
   async getUser(id: number): Promise<User | undefined> {
+    await this.ensureInitialized();
     return this.users.get(id);
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
+    await this.ensureInitialized();
     return Array.from(this.users.values()).find(user => user.email === email);
   }
 
   async getUserByHighLevelContactId(contactId: string): Promise<User | undefined> {
+    await this.ensureInitialized();
     return Array.from(this.users.values()).find(user => user.highLevelContactId === contactId);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    await this.ensureInitialized();
     const id = this.currentUserId++;
-    const user: User = { 
-      ...insertUser, 
-      id, 
+    const hashedPassword = await bcrypt.hash(insertUser.password, 12);
+    const user: User = {
+      ...insertUser,
+      id,
+      password: hashedPassword,
       createdAt: new Date(),
       level: insertUser.level || "A1",
       avatar: insertUser.avatar || null,
@@ -427,42 +457,56 @@ export class MemStorage implements IStorage {
       trialCompleted: insertUser.trialCompleted || false,
       classCredits: insertUser.classCredits || 0,
       highLevelContactId: insertUser.highLevelContactId || null,
-      stripeCustomerId: insertUser.stripeCustomerId || null
+      trialTutorId: insertUser.trialTutorId || null,
+      stripeCustomerId: insertUser.stripeCustomerId || null,
+      aiSubscriptionActive: insertUser.aiSubscriptionActive || false,
+      aiMessagesUsed: insertUser.aiMessagesUsed || 0,
+      aiMessagesResetAt: insertUser.aiMessagesResetAt || null
     };
     this.users.set(id, user);
     return user;
   }
 
   async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    await this.ensureInitialized();
     const user = this.users.get(id);
     if (!user) return undefined;
-    
+
+    // If password is being updated, hash it
+    if (userData.password) {
+      userData.password = await bcrypt.hash(userData.password, 12);
+    }
+
     const updatedUser = { ...user, ...userData };
     this.users.set(id, updatedUser);
     return updatedUser;
   }
 
   async authenticateUser(email: string, password: string): Promise<User | null> {
+    await this.ensureInitialized();
     const user = await this.getUserByEmail(email);
-    if (user && user.password === password) {
+    if (user && await bcrypt.compare(password, user.password)) {
       return user;
     }
     return null;
   }
 
   async getUserSubscription(userId: number): Promise<Subscription | undefined> {
+    await this.ensureInitialized();
     return Array.from(this.subscriptions.values()).find(sub => sub.userId === userId);
   }
 
   async getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<Subscription | undefined> {
+    await this.ensureInitialized();
     return Array.from(this.subscriptions.values()).find(sub => sub.stripeSubscriptionId === stripeSubscriptionId);
   }
 
   async createSubscription(subscriptionData: InsertSubscription): Promise<Subscription> {
+    await this.ensureInitialized();
     const id = this.currentSubscriptionId++;
-    const subscription: Subscription = { 
-      ...subscriptionData, 
-      id, 
+    const subscription: Subscription = {
+      ...subscriptionData,
+      id,
       createdAt: new Date(),
       status: subscriptionData.status || "active",
       stripeSubscriptionId: subscriptionData.stripeSubscriptionId || null,
@@ -473,33 +517,39 @@ export class MemStorage implements IStorage {
   }
 
   async updateSubscription(id: number, subscriptionData: Partial<InsertSubscription>): Promise<Subscription | undefined> {
+    await this.ensureInitialized();
     const subscription = this.subscriptions.get(id);
     if (!subscription) return undefined;
-    
+
     const updatedSubscription = { ...subscription, ...subscriptionData };
     this.subscriptions.set(id, updatedSubscription);
     return updatedSubscription;
   }
 
   async getAllTutors(): Promise<Tutor[]> {
+    await this.ensureInitialized();
     return Array.from(this.tutors.values()).filter(tutor => tutor.isActive);
   }
 
   async getTutor(id: number): Promise<Tutor | undefined> {
+    await this.ensureInitialized();
     return this.tutors.get(id);
   }
 
   async createTutor(tutorData: InsertTutor): Promise<Tutor> {
+    await this.ensureInitialized();
     const id = this.currentTutorId++;
-    const tutor: Tutor = { 
-      ...tutorData, 
-      id, 
+    const tutor: Tutor = {
+      ...tutorData,
+      id,
       createdAt: new Date(),
       bio: tutorData.bio || null,
       avatar: tutorData.avatar || null,
       rating: tutorData.rating || "5.00",
       reviewCount: tutorData.reviewCount || 0,
       isActive: tutorData.isActive !== undefined ? tutorData.isActive : true,
+      classType: tutorData.classType || "adults",
+      languageTaught: tutorData.languageTaught || "spanish",
       phone: tutorData.phone || null,
       highLevelContactId: tutorData.highLevelContactId || null,
       highLevelCalendarId: tutorData.highLevelCalendarId || null,
@@ -515,24 +565,23 @@ export class MemStorage implements IStorage {
   }
 
   async getAllClasses(): Promise<Class[]> {
+    await this.ensureInitialized();
     return Array.from(this.classes.values());
   }
 
   async getUserClasses(userId: number): Promise<Class[]> {
+    await this.ensureInitialized();
     return Array.from(this.classes.values())
       .filter(classItem => classItem.userId === userId)
       .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   }
 
-  async getClass(classId: number): Promise<Class | undefined> {
-    return this.classes.get(classId);
-  }
-
   async getUpcomingClasses(userId: number): Promise<Class[]> {
+    await this.ensureInitialized();
     const now = new Date();
     return Array.from(this.classes.values())
-      .filter(classItem => 
-        classItem.userId === userId && 
+      .filter(classItem =>
+        classItem.userId === userId &&
         classItem.status === "scheduled" &&
         new Date(classItem.scheduledAt) > now
       )
@@ -540,14 +589,17 @@ export class MemStorage implements IStorage {
   }
 
   async createClass(classData: InsertClass): Promise<Class> {
+    await this.ensureInitialized();
     const id = this.currentClassId++;
-    const classItem: Class = { 
-      ...classData, 
-      id, 
+    const classItem: Class = {
+      ...classData,
+      id,
       createdAt: new Date(),
       description: classData.description || null,
       duration: classData.duration || 60,
       status: classData.status || "scheduled",
+      isTrial: classData.isTrial || false,
+      classCategory: classData.classCategory || null,
       meetingLink: classData.meetingLink || null,
       highLevelContactId: classData.highLevelContactId || null,
       highLevelAppointmentId: classData.highLevelAppointmentId || null
@@ -557,37 +609,42 @@ export class MemStorage implements IStorage {
   }
 
   async updateClass(id: number, classData: Partial<InsertClass>): Promise<Class | undefined> {
+    await this.ensureInitialized();
     const classItem = this.classes.get(id);
     if (!classItem) return undefined;
-    
+
     const updatedClass = { ...classItem, ...classData };
     this.classes.set(id, updatedClass);
     return updatedClass;
   }
 
   async cancelClass(id: number, userId: number): Promise<boolean> {
+    await this.ensureInitialized();
     const classItem = this.classes.get(id);
     if (!classItem || classItem.userId !== userId) return false;
-    
+
     const updatedClass = { ...classItem, status: "cancelled" as const };
     this.classes.set(id, updatedClass);
     return true;
   }
 
   async getAllVideos(): Promise<Video[]> {
+    await this.ensureInitialized();
     return Array.from(this.videos.values()).filter(video => video.isActive);
   }
 
   async getVideosByLevel(level: string): Promise<Video[]> {
+    await this.ensureInitialized();
     return Array.from(this.videos.values())
       .filter(video => video.isActive && (video.level === level || video.level === "All Levels"));
   }
 
   async createVideo(videoData: InsertVideo): Promise<Video> {
+    await this.ensureInitialized();
     const id = this.currentVideoId++;
-    const video: Video = { 
-      ...videoData, 
-      id, 
+    const video: Video = {
+      ...videoData,
+      id,
       createdAt: new Date(),
       description: videoData.description || null,
       thumbnailUrl: videoData.thumbnailUrl || null,
@@ -599,23 +656,25 @@ export class MemStorage implements IStorage {
   }
 
   async getUserProgress(userId: number): Promise<UserProgress | undefined> {
+    await this.ensureInitialized();
     return Array.from(this.userProgress.values()).find(progress => progress.userId === userId);
   }
 
   async updateUserProgress(userId: number, progressData: Partial<InsertUserProgress>): Promise<UserProgress> {
+    await this.ensureInitialized();
     let progress = Array.from(this.userProgress.values()).find(p => p.userId === userId);
-    
+
     if (!progress) {
       const id = this.currentProgressId++;
-      progress = { 
-        id, 
-        userId, 
+      progress = {
+        id,
+        userId,
         classesCompleted: 0,
         learningHours: "0.00",
         currentStreak: 0,
         totalVideosWatched: 0,
         updatedAt: new Date(),
-        ...progressData 
+        ...progressData
       };
       this.userProgress.set(id, progress);
     } else {
@@ -623,9 +682,201 @@ export class MemStorage implements IStorage {
       this.userProgress.set(progress.id, updatedProgress);
       progress = updatedProgress;
     }
-    
+
     return progress;
+  }
+
+  async getTutorsByCategory(classType?: string, languageTaught?: string): Promise<Tutor[]> {
+    await this.ensureInitialized();
+    let result = Array.from(this.tutors.values()).filter(t => t.isActive);
+    if (classType) result = result.filter(t => t.classType === classType);
+    if (languageTaught) result = result.filter(t => t.languageTaught === languageTaught);
+    return result;
+  }
+
+  async updateTutor(id: number, data: Partial<InsertTutor>): Promise<Tutor | undefined> {
+    await this.ensureInitialized();
+    const tutor = this.tutors.get(id);
+    if (!tutor) return undefined;
+    const updated = { ...tutor, ...data };
+    this.tutors.set(id, updated);
+    return updated;
+  }
+
+  async getReviewsByTutor(tutorId: number): Promise<Review[]> {
+    await this.ensureInitialized();
+    return Array.from(this.reviewsMap.values())
+      .filter(r => r.tutorId === tutorId)
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+  }
+
+  async createReview(review: InsertReview): Promise<Review> {
+    await this.ensureInitialized();
+    const id = this.currentReviewId++;
+    const newReview: Review = {
+      ...review,
+      id,
+      comment: review.comment || null,
+      classId: review.classId || null,
+      createdAt: new Date(),
+    };
+    this.reviewsMap.set(id, newReview);
+    return newReview;
+  }
+
+  async getUserReviewForTutor(userId: number, tutorId: number): Promise<Review | undefined> {
+    await this.ensureInitialized();
+    return Array.from(this.reviewsMap.values())
+      .find(r => r.userId === userId && r.tutorId === tutorId);
+  }
+
+  async hasUsedTrial(userId: number): Promise<boolean> {
+    await this.ensureInitialized();
+    const user = this.users.get(userId);
+    return user?.trialCompleted === true;
+  }
+
+  async createContactSubmission(data: InsertContactSubmission): Promise<ContactSubmission> {
+    await this.ensureInitialized();
+    const id = this.currentContactSubmissionId++;
+    const submission: ContactSubmission = {
+      ...data,
+      id,
+      phone: data.phone || null,
+      level: data.level || null,
+      preferredContact: data.preferredContact || null,
+      status: data.status || "new",
+      createdAt: new Date(),
+    };
+    this.contactSubmissions.set(id, submission);
+    return submission;
+  }
+
+  // AI Practice Partner
+  async createAiConversation(data: InsertAiConversation): Promise<AiConversation> {
+    await this.ensureInitialized();
+    const id = this.currentAiConversationId++;
+    const conv: AiConversation = {
+      id,
+      userId: data.userId,
+      title: data.title || "New Conversation",
+      language: data.language || "spanish",
+      mode: data.mode || "chat",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.aiConversationsMap.set(id, conv);
+    return conv;
+  }
+
+  async getAiConversations(userId: number): Promise<AiConversation[]> {
+    await this.ensureInitialized();
+    return Array.from(this.aiConversationsMap.values())
+      .filter(c => c.userId === userId)
+      .sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0));
+  }
+
+  async getAiConversation(id: number): Promise<AiConversation | undefined> {
+    await this.ensureInitialized();
+    return this.aiConversationsMap.get(id);
+  }
+
+  async getAiMessages(conversationId: number): Promise<AiMessage[]> {
+    await this.ensureInitialized();
+    return Array.from(this.aiMessagesMap.values())
+      .filter(m => m.conversationId === conversationId)
+      .sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
+  }
+
+  async addAiMessage(data: InsertAiMessage): Promise<AiMessage> {
+    await this.ensureInitialized();
+    const id = this.currentAiMessageId++;
+    const message: AiMessage = {
+      id,
+      conversationId: data.conversationId,
+      role: data.role,
+      content: data.content,
+      corrections: data.corrections || null,
+      createdAt: new Date(),
+    };
+    this.aiMessagesMap.set(id, message);
+    // Update conversation updatedAt
+    const conv = this.aiConversationsMap.get(data.conversationId);
+    if (conv) {
+      conv.updatedAt = new Date();
+    }
+    return message;
+  }
+
+  async updateAiConversationTitle(id: number, title: string): Promise<void> {
+    await this.ensureInitialized();
+    const conv = this.aiConversationsMap.get(id);
+    if (conv) conv.title = title;
+  }
+
+  async getUserAiUsage(userId: number): Promise<number> {
+    await this.ensureInitialized();
+    const user = this.users.get(userId);
+    return user?.aiMessagesUsed || 0;
+  }
+
+  async incrementAiUsage(userId: number): Promise<void> {
+    await this.ensureInitialized();
+    const user = this.users.get(userId);
+    if (user) {
+      user.aiMessagesUsed = (user.aiMessagesUsed || 0) + 1;
+    }
+  }
+
+  async resetAiUsage(userId: number): Promise<void> {
+    await this.ensureInitialized();
+    const user = this.users.get(userId);
+    if (user) {
+      user.aiMessagesUsed = 0;
+      user.aiMessagesResetAt = new Date();
+    }
+  }
+
+  async getAiAdminStats() {
+    await this.ensureInitialized();
+    const allConversations = Array.from(this.aiConversationsMap.values());
+    const allMessages = Array.from(this.aiMessagesMap.values());
+    const userIds = Array.from(new Set(allConversations.map(c => c.userId)));
+
+    const userStats = userIds.map(userId => {
+      const user = this.users.get(userId);
+      const convs = allConversations.filter(c => c.userId === userId);
+      const convIds = new Set(convs.map(c => c.id));
+      const msgs = allMessages.filter(m => convIds.has(m.conversationId));
+      const lastConv = convs.sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0))[0];
+      return {
+        userId,
+        userName: user ? `${user.firstName} ${user.lastName}` : "Unknown",
+        conversationCount: convs.length,
+        messageCount: msgs.length,
+        lastActive: lastConv?.updatedAt || null,
+      };
+    });
+
+    return {
+      totalConversations: allConversations.length,
+      totalMessages: allMessages.length,
+      activeUsers: userIds.length,
+      userStats,
+    };
   }
 }
 
-export const storage = new MemStorage();
+// Use DatabaseStorage when DATABASE_URL is available, MemStorage otherwise
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
+function createStorage(): IStorage {
+  if (process.env.DATABASE_URL) {
+    const { DatabaseStorage } = require("./storage-database");
+    return new DatabaseStorage();
+  }
+  return new MemStorage();
+}
+
+export const storage = createStorage();

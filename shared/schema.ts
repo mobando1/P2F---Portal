@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, time } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, time, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -19,8 +19,14 @@ export const users = pgTable("users", {
   classCredits: integer("class_credits").default(1), // 1 clase gratis inicial
   // Integración con High Level
   highLevelContactId: text("high_level_contact_id"),
+  // Trial tracking
+  trialTutorId: integer("trial_tutor_id"),
   // Stripe para pagos
   stripeCustomerId: text("stripe_customer_id"),
+  // AI Practice Partner
+  aiSubscriptionActive: boolean("ai_subscription_active").default(false),
+  aiMessagesUsed: integer("ai_messages_used").default(0),
+  aiMessagesResetAt: timestamp("ai_messages_reset_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -83,6 +89,9 @@ export const tutors = pgTable("tutors", {
   reviewCount: integer("review_count").default(0),
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull(),
   isActive: boolean("is_active").default(true),
+  // Categoría de clase que enseña
+  classType: text("class_type").notNull().default("adults"), // 'adults' | 'kids'
+  languageTaught: text("language_taught").notNull().default("spanish"), // 'spanish' | 'english'
   // Información adicional para profesores
   phone: text("phone"),
   country: text("country"),
@@ -92,7 +101,7 @@ export const tutors = pgTable("tutors", {
   yearsOfExperience: integer("years_of_experience"),
   // Integración con High Level
   highLevelContactId: text("high_level_contact_id"),
-  highLevelCalendarId: text("high_level_calendar_id"), // ID del calendario para booking widget
+  highLevelCalendarId: text("high_level_calendar_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -130,6 +139,8 @@ export const classes = pgTable("classes", {
   scheduledAt: timestamp("scheduled_at").notNull(),
   duration: integer("duration").notNull().default(60), // minutes
   status: text("status").notNull().default("scheduled"), // 'scheduled', 'completed', 'cancelled'
+  isTrial: boolean("is_trial").default(false),
+  classCategory: text("class_category"), // 'adults-spanish', 'kids-spanish', etc.
   meetingLink: text("meeting_link"),
   // Vinculación con High Level para tracking automático
   highLevelAppointmentId: text("high_level_appointment_id"),
@@ -151,6 +162,29 @@ export const videos = pgTable("videos", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const contactSubmissions = pgTable("contact_submissions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  level: text("level"),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  preferredContact: text("preferred_contact"),
+  status: text("status").notNull().default("new"), // 'new', 'read', 'replied'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  tutorId: integer("tutor_id").references(() => tutors.id).notNull(),
+  rating: integer("rating").notNull(), // 1-5
+  comment: text("comment"),
+  classId: integer("class_id").references(() => classes.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const userProgress = pgTable("user_progress", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
@@ -159,6 +193,26 @@ export const userProgress = pgTable("user_progress", {
   currentStreak: integer("current_streak").default(0),
   totalVideosWatched: integer("total_videos_watched").default(0),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// AI Practice Partner tables
+export const aiConversations = pgTable("ai_conversations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull().default("New Conversation"),
+  language: text("language").notNull().default("spanish"), // 'spanish' | 'english'
+  mode: text("mode").notNull().default("chat"), // 'chat' | 'voice' | 'grammar'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const aiMessages = pgTable("ai_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").references(() => aiConversations.id).notNull(),
+  role: text("role").notNull(), // 'user' | 'assistant' | 'system'
+  content: text("content").notNull(),
+  corrections: jsonb("corrections"), // JSON array of grammar corrections
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Insert schemas
@@ -218,6 +272,27 @@ export const insertHighLevelConfigSchema = createInsertSchema(highLevelConfig).o
   updatedAt: true,
 });
 
+export const insertContactSubmissionSchema = createInsertSchema(contactSubmissions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertReviewSchema = createInsertSchema(reviews).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiConversationSchema = createInsertSchema(aiConversations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiMessageSchema = createInsertSchema(aiMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Login schema
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -257,5 +332,17 @@ export type InsertVideo = z.infer<typeof insertVideoSchema>;
 
 export type UserProgress = typeof userProgress.$inferSelect;
 export type InsertUserProgress = z.infer<typeof insertUserProgressSchema>;
+
+export type ContactSubmission = typeof contactSubmissions.$inferSelect;
+export type InsertContactSubmission = z.infer<typeof insertContactSubmissionSchema>;
+
+export type Review = typeof reviews.$inferSelect;
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+
+export type AiConversation = typeof aiConversations.$inferSelect;
+export type InsertAiConversation = z.infer<typeof insertAiConversationSchema>;
+
+export type AiMessage = typeof aiMessages.$inferSelect;
+export type InsertAiMessage = z.infer<typeof insertAiMessageSchema>;
 
 export type LoginData = z.infer<typeof loginSchema>;

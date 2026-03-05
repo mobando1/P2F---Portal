@@ -41,6 +41,7 @@ export class CalendarIntegrationService {
       // Obtener disponibilidad del calendario de High Level
       const availability = await this.highLevelService.getCalendarAvailability(
         tutor.highLevelContactId,
+        date,
         date
       );
 
@@ -103,7 +104,8 @@ export class CalendarIntegrationService {
         const classData = {
           userId,
           tutorId,
-          scheduledDate: new Date(`${date}T${startTime}`),
+          title: `Clase de Español - ${tutor.name}`,
+          scheduledAt: new Date(`${date}T${startTime}`),
           duration: 60,
           status: 'scheduled' as const,
           notes: `Clase reservada con ${tutor.name}`,
@@ -127,7 +129,7 @@ export class CalendarIntegrationService {
       // Crear cita en High Level
       const appointmentData = {
         contactId: user.highLevelContactId || '',
-        calendarId: tutor.highLevelContactId || '',
+        tutorId: tutor.highLevelContactId || '',
         title: `Clase de Español - ${user.firstName} ${user.lastName}`,
         startTime: `${date}T${startTime}:00`,
         endTime: `${date}T${endTime}:00`,
@@ -142,7 +144,8 @@ export class CalendarIntegrationService {
         const classData = {
           userId,
           tutorId,
-          scheduledDate: new Date(`${date}T${startTime}`),
+          title: `Clase de Español - ${user.firstName} ${user.lastName}`,
+          scheduledAt: new Date(`${date}T${startTime}`),
           duration: 60,
           status: 'scheduled' as const,
           notes: `Clase reservada con ${tutor.name}`,
@@ -178,7 +181,7 @@ export class CalendarIntegrationService {
    */
   async cancelClass(classId: number, userId: number): Promise<{ success: boolean; message?: string }> {
     try {
-      const classItem = await storage.getClass(classId);
+      const classItem = await storage.getAllClasses().then(c => c.find(cl => cl.id === classId));
       
       if (!classItem || classItem.userId !== userId) {
         return { success: false, message: 'Class not found or not authorized' };
@@ -190,7 +193,7 @@ export class CalendarIntegrationService {
 
       // Verificar que la clase no sea en las próximas 24 horas
       const now = new Date();
-      const classDate = new Date(classItem.scheduledDate);
+      const classDate = new Date(classItem.scheduledAt);
       const hoursDiff = (classDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
       if (hoursDiff < 24) {
@@ -247,15 +250,15 @@ export class CalendarIntegrationService {
 
     try {
       // Notificar al estudiante
-      await this.highLevelService.sendSMS(
+      await this.highLevelService.sendCustomMessage(
         user.highLevelContactId,
-        `✅ Clase confirmada con ${tutor.name} el ${classData.scheduledDate.toLocaleDateString()} a las ${classData.scheduledDate.toLocaleTimeString()}. Te enviaremos un recordatorio 24h antes.`
+        `✅ Clase confirmada con ${tutor.name} el ${classData.scheduledAt.toLocaleDateString()} a las ${classData.scheduledAt.toLocaleTimeString()}. Te enviaremos un recordatorio 24h antes.`
       );
 
       // Notificar al profesor
-      await this.highLevelService.sendSMS(
+      await this.highLevelService.sendCustomMessage(
         tutor.highLevelContactId,
-        `📚 Nueva clase asignada: ${user.firstName} ${user.lastName} el ${classData.scheduledDate.toLocaleDateString()} a las ${classData.scheduledDate.toLocaleTimeString()}. Especialización: ${tutor.specialization}`
+        `📚 Nueva clase asignada: ${user.firstName} ${user.lastName} el ${classData.scheduledAt.toLocaleDateString()} a las ${classData.scheduledAt.toLocaleTimeString()}. Especialización: ${tutor.specialization}`
       );
     } catch (error) {
       console.error('Error sending booking notifications:', error);

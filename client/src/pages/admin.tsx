@@ -9,16 +9,19 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
-import { 
-  Users, 
-  UserPlus, 
-  MessageSquare, 
-  Settings, 
+import {
+  Users,
+  UserPlus,
+  MessageSquare,
+  Settings,
   Upload,
   CheckCircle,
   XCircle,
   Clock,
-  Globe
+  Globe,
+  Sparkles,
+  MessageCircle,
+  TrendingUp
 } from "lucide-react";
 
 interface TutorData {
@@ -33,17 +36,21 @@ interface TutorData {
   yearsOfExperience?: number;
   hourlyRate: number;
   profileImage?: string;
+  classType: string;
+  languageTaught: string;
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'tutors' | 'highlevel' | 'settings'>('tutors');
+  const [activeTab, setActiveTab] = useState<'tutors' | 'ai-stats' | 'highlevel' | 'settings'>('tutors');
   const [showAddTutor, setShowAddTutor] = useState(false);
   const [newTutor, setNewTutor] = useState<TutorData>({
     name: '',
     email: '',
     specialization: '',
     bio: '',
-    hourlyRate: 25
+    hourlyRate: 25,
+    classType: 'adults',
+    languageTaught: 'spanish',
   });
   const [highLevelConfig, setHighLevelConfig] = useState({
     apiKey: '',
@@ -55,19 +62,34 @@ export default function AdminPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // AI Admin Stats
+  const { data: aiStats, isLoading: isAiStatsLoading } = useQuery<{
+    totalConversations: number;
+    totalMessages: number;
+    activeUsers: number;
+    userStats: Array<{
+      userId: number;
+      userName: string;
+      conversationCount: number;
+      messageCount: number;
+      lastActive: string | null;
+    }>;
+  }>({
+    queryKey: ['/api/ai/admin-stats'],
+    queryFn: () => apiRequest('GET', '/api/ai/admin-stats').then(res => res.json()),
+    enabled: activeTab === 'ai-stats',
+  });
+
   // Obtener lista de tutores
   const { data: tutors, isLoading } = useQuery({
     queryKey: ['/api/tutors'],
-    queryFn: () => apiRequest('/api/tutors').then(res => res.json())
+    queryFn: () => apiRequest('GET', '/api/tutors').then(res => res.json())
   });
 
   // Crear nuevo tutor
   const createTutorMutation = useMutation({
-    mutationFn: (tutorData: TutorData) => 
-      apiRequest('/api/tutors', {
-        method: 'POST',
-        body: JSON.stringify(tutorData)
-      }).then(res => res.json()),
+    mutationFn: (tutorData: TutorData) =>
+      apiRequest('POST', '/api/tutors', tutorData).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tutors'] });
       setShowAddTutor(false);
@@ -76,7 +98,9 @@ export default function AdminPage() {
         email: '',
         specialization: '',
         bio: '',
-        hourlyRate: 25
+        hourlyRate: 25,
+        classType: 'adults',
+        languageTaught: 'spanish',
       });
       toast({
         title: "Profesor creado",
@@ -95,9 +119,7 @@ export default function AdminPage() {
   // Cargar profesores de ejemplo
   const seedTutorsMutation = useMutation({
     mutationFn: () => 
-      apiRequest('/api/tutors/bulk-import', {
-        method: 'POST',
-        body: JSON.stringify({
+      apiRequest('POST', '/api/tutors/bulk-import', {
           tutors: [
             {
               name: "María Elena González",
@@ -139,7 +161,6 @@ export default function AdminPage() {
               profileImage: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&crop=face"
             }
           ]
-        })
       }).then(res => res.json()),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['/api/tutors'] });
@@ -160,9 +181,7 @@ export default function AdminPage() {
   // Probar conexión High Level
   const testHighLevelMutation = useMutation({
     mutationFn: () => 
-      apiRequest('/api/high-level/test-connection', {
-        method: 'POST'
-      }).then(res => res.json()),
+      apiRequest('POST', '/api/high-level/test-connection').then(res => res.json()),
     onSuccess: (result) => {
       toast({
         title: result.connected ? "Conexión exitosa" : "Conexión fallida",
@@ -182,12 +201,9 @@ export default function AdminPage() {
   // Enviar mensaje de prueba
   const sendTestMessageMutation = useMutation({
     mutationFn: () => 
-      apiRequest('/api/high-level/send-test-message', {
-        method: 'POST',
-        body: JSON.stringify({
+      apiRequest('POST', '/api/high-level/send-test-message', {
           email: highLevelConfig.testEmail,
           message: highLevelConfig.testMessage
-        })
       }).then(res => res.json()),
     onSuccess: () => {
       toast({
@@ -207,9 +223,7 @@ export default function AdminPage() {
   // Probar notificaciones duales (alumno + profesor)
   const testDualNotificationsMutation = useMutation({
     mutationFn: () => 
-      apiRequest('/api/high-level/test-dual-notifications', {
-        method: 'POST'
-      }).then(res => res.json()),
+      apiRequest('POST', '/api/high-level/test-dual-notifications').then(res => res.json()),
     onSuccess: (result) => {
       toast({
         title: "Notificaciones duales enviadas",
@@ -261,6 +275,17 @@ export default function AdminPage() {
               >
                 <Users className="inline w-4 h-4 mr-2" />
                 Profesores
+              </button>
+              <button
+                onClick={() => setActiveTab('ai-stats')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'ai-stats'
+                    ? 'border-[#F59E1C] text-[#F59E1C]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Sparkles className="inline w-4 h-4 mr-2" />
+                AI Practice
               </button>
               <button
                 onClick={() => setActiveTab('highlevel')}
@@ -339,6 +364,12 @@ export default function AdminPage() {
                             <Badge variant={tutor.isActive ? "default" : "secondary"}>
                               {tutor.isActive ? "Activo" : "Inactivo"}
                             </Badge>
+                            <Badge variant="outline">
+                              {tutor.classType === 'kids' ? 'Niños' : 'Adultos'}
+                            </Badge>
+                            <Badge variant="outline">
+                              {tutor.languageTaught === 'english' ? 'Inglés' : 'Español'}
+                            </Badge>
                             {tutor.country && (
                               <Badge variant="outline">
                                 <Globe className="w-3 h-3 mr-1" />
@@ -396,6 +427,33 @@ export default function AdminPage() {
                       </div>
                     </div>
                     
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="classType">Tipo de Clase *</Label>
+                        <select
+                          id="classType"
+                          value={newTutor.classType}
+                          onChange={(e) => setNewTutor({...newTutor, classType: e.target.value})}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        >
+                          <option value="adults">Adultos</option>
+                          <option value="kids">Niños</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor="languageTaught">Idioma que Enseña *</Label>
+                        <select
+                          id="languageTaught"
+                          value={newTutor.languageTaught}
+                          onChange={(e) => setNewTutor({...newTutor, languageTaught: e.target.value})}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        >
+                          <option value="spanish">Español</option>
+                          <option value="english">Inglés</option>
+                        </select>
+                      </div>
+                    </div>
+
                     <div>
                       <Label htmlFor="specialization">Especialización *</Label>
                       <Input
@@ -474,6 +532,127 @@ export default function AdminPage() {
                 </div>
               </Card>
             )}
+          </div>
+        )}
+
+        {activeTab === 'ai-stats' && (
+          <div className="space-y-6">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="border-0 shadow-md">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-lg bg-[#F59E1C]/10">
+                      <MessageCircle className="h-6 w-6 text-[#F59E1C]" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Total Mensajes AI</p>
+                      <p className="text-2xl font-bold text-gray-900">{aiStats?.totalMessages ?? 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-md">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-lg bg-[#1C7BB1]/10">
+                      <MessageSquare className="h-6 w-6 text-[#1C7BB1]" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Conversaciones</p>
+                      <p className="text-2xl font-bold text-gray-900">{aiStats?.totalConversations ?? 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-md">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-lg bg-green-100">
+                      <Users className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Estudiantes Activos</p>
+                      <p className="text-2xl font-bold text-gray-900">{aiStats?.activeUsers ?? 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Student Usage Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-[#F59E1C]" />
+                  Práctica AI por Estudiante
+                </CardTitle>
+                <p className="text-sm text-gray-500">
+                  Ve cuánto practican tus estudiantes con el AI Practice Partner para planificar mejor tus clases
+                </p>
+              </CardHeader>
+              <CardContent>
+                {isAiStatsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#F59E1C]"></div>
+                    <p className="mt-2 text-gray-600">Cargando estadísticas...</p>
+                  </div>
+                ) : aiStats?.userStats && aiStats.userStats.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Estudiante</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Conversaciones</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Mensajes</th>
+                          <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">Última Actividad</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {aiStats.userStats
+                          .sort((a, b) => b.messageCount - a.messageCount)
+                          .map((stat) => (
+                          <tr key={stat.userId} className="border-b border-gray-50 hover:bg-gray-50/50">
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center">
+                                  <span className="text-xs font-bold text-[#1C7BB1]">
+                                    {stat.userName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                  </span>
+                                </div>
+                                <span className="font-medium text-gray-900">{stat.userName}</span>
+                              </div>
+                            </td>
+                            <td className="text-center py-3 px-4">
+                              <Badge variant="secondary">{stat.conversationCount}</Badge>
+                            </td>
+                            <td className="text-center py-3 px-4">
+                              <span className="font-semibold text-[#0A4A6E]">{stat.messageCount}</span>
+                            </td>
+                            <td className="text-right py-3 px-4 text-sm text-gray-500">
+                              {stat.lastActive
+                                ? new Date(stat.lastActive).toLocaleDateString('es-ES', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })
+                                : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Sparkles className="mx-auto h-12 w-12 text-[#F59E1C]/40 mb-4" />
+                    <p className="text-gray-500">Ningún estudiante ha usado el AI Practice Partner aún</p>
+                    <p className="text-sm text-gray-400 mt-1">Las estadísticas aparecerán aquí cuando los estudiantes practiquen</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         )}
 

@@ -1,4 +1,4 @@
-import { storage } from "../storage-simple";
+import { storage } from "../storage";
 import { HighLevelService } from "./high-level";
 
 export class ClassSchedulerService {
@@ -84,29 +84,8 @@ export class ClassSchedulerService {
     }
   }
 
-  // Método auxiliar para obtener todos los usuarios (esto podría optimizarse)
   private async getAllUsers() {
-    // Esto es una implementación simplificada
-    // En producción, deberías tener un método más eficiente
-    const users = [];
-    
-    try {
-      // Intentar obtener usuarios del 1 al 1000 (ajustar según necesidad)
-      for (let i = 1; i <= 1000; i++) {
-        try {
-          const user = await storage.getUser(i);
-          if (user) {
-            users.push(user);
-          }
-        } catch {
-          // Usuario no existe, continuar
-        }
-      }
-    } catch (error) {
-      console.error("Error obteniendo usuarios:", error);
-    }
-
-    return users;
+    return storage.getAllUsers();
   }
 
   // Programar recordatorio específico para una clase (alternativa más precisa)

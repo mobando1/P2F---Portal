@@ -98,6 +98,36 @@ export interface Translations {
   country: string;
   rating: string;
   
+  // Profile page
+  profile: string;
+  settings: string;
+  editProfile: string;
+  memberSince: string;
+  changePassword: string;
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+  saveChanges: string;
+  languagePreference: string;
+
+  // Contact page
+  contactUs: string;
+  yourName: string;
+  phoneNumber: string;
+  subject: string;
+  yourMessage: string;
+  sendMessage: string;
+  messageSent: string;
+
+  // Packages
+  classCredits: string;
+  perMonth: string;
+  perClass: string;
+  mostPopular: string;
+  bestValue: string;
+  subscribe: string;
+  buyNow: string;
+
   // Months
   january: string;
   february: string;
@@ -226,7 +256,37 @@ export const translations: Record<Language, Translations> = {
     reviews: 'reseñas',
     country: 'país',
     rating: 'calificación',
-    
+
+    // Profile page
+    profile: 'Perfil',
+    settings: 'Configuración',
+    editProfile: 'Editar Perfil',
+    memberSince: 'Miembro desde',
+    changePassword: 'Cambiar Contraseña',
+    currentPassword: 'Contraseña Actual',
+    newPassword: 'Nueva Contraseña',
+    confirmPassword: 'Confirmar Contraseña',
+    saveChanges: 'Guardar Cambios',
+    languagePreference: 'Preferencia de Idioma',
+
+    // Contact page
+    contactUs: 'Contáctanos',
+    yourName: 'Tu Nombre',
+    phoneNumber: 'Teléfono',
+    subject: 'Asunto',
+    yourMessage: 'Tu Mensaje',
+    sendMessage: 'Enviar Mensaje',
+    messageSent: 'Mensaje Enviado',
+
+    // Packages
+    classCredits: 'Créditos de Clases',
+    perMonth: 'por mes',
+    perClass: 'por clase',
+    mostPopular: 'Más Popular',
+    bestValue: 'Mejor Valor',
+    subscribe: 'Suscribirse',
+    buyNow: 'Comprar Ahora',
+
     // Months
     january: 'Enero',
     february: 'Febrero',
@@ -354,7 +414,37 @@ export const translations: Record<Language, Translations> = {
     reviews: 'reviews',
     country: 'country',
     rating: 'rating',
-    
+
+    // Profile page
+    profile: 'Profile',
+    settings: 'Settings',
+    editProfile: 'Edit Profile',
+    memberSince: 'Member since',
+    changePassword: 'Change Password',
+    currentPassword: 'Current Password',
+    newPassword: 'New Password',
+    confirmPassword: 'Confirm Password',
+    saveChanges: 'Save Changes',
+    languagePreference: 'Language Preference',
+
+    // Contact page
+    contactUs: 'Contact Us',
+    yourName: 'Your Name',
+    phoneNumber: 'Phone Number',
+    subject: 'Subject',
+    yourMessage: 'Your Message',
+    sendMessage: 'Send Message',
+    messageSent: 'Message Sent',
+
+    // Packages
+    classCredits: 'Class Credits',
+    perMonth: 'per month',
+    perClass: 'per class',
+    mostPopular: 'Most Popular',
+    bestValue: 'Best Value',
+    subscribe: 'Subscribe',
+    buyNow: 'Buy Now',
+
     // Months
     january: 'January',
     february: 'February',

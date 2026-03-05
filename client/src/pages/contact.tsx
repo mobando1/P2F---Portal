@@ -1,11 +1,12 @@
 import { useState } from "react";
 import Header from "@/components/header";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 
 export default function Contact() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,17 +24,23 @@ export default function Contact() {
     setIsSubmitting(true);
 
     try {
-      // Aquí podrías enviar los datos a tu backend o servicio de email
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulamos envío
-      
+      await apiRequest("POST", "/api/contact", {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        level: formData.currentLevel || undefined,
+        subject: formData.subject,
+        message: formData.message,
+        preferredContact: formData.preferredContact || undefined,
+      });
+
       toast({
-        title: t.language === 'es' ? "Mensaje Enviado" : "Message Sent",
-        description: t.language === 'es' 
-          ? "Gracias por contactarnos. Te responderemos dentro de 24 horas." 
+        title: language === 'es' ? "Mensaje Enviado" : "Message Sent",
+        description: language === 'es'
+          ? "Gracias por contactarnos. Te responderemos dentro de 24 horas."
           : "Thank you for contacting us. We'll respond within 24 hours.",
       });
-      
-      // Limpiar formulario
+
       setFormData({
         name: '',
         email: '',
@@ -45,9 +52,9 @@ export default function Contact() {
       });
     } catch (error) {
       toast({
-        title: t.language === 'es' ? "Error" : "Error",
-        description: t.language === 'es' 
-          ? "Hubo un problema enviando tu mensaje. Intenta de nuevo." 
+        title: language === 'es' ? "Error" : "Error",
+        description: language === 'es'
+          ? "Hubo un problema enviando tu mensaje. Intenta de nuevo."
           : "There was a problem sending your message. Please try again.",
         variant: "destructive",
       });
@@ -71,10 +78,10 @@ export default function Contact() {
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-[#0A4A6E] mb-4">
-            {t.language === 'es' ? 'Contáctanos' : 'Contact Us'}
+            {language === 'es' ? 'Contáctanos' : 'Contact Us'}
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            {t.language === 'es' 
+            {language === 'es' 
               ? 'Estamos aquí para ayudarte en tu camino hacia la fluidez en español. ¡Ponte en contacto con nosotros!'
               : 'We\'re here to help you on your journey to Spanish fluency. Get in touch with us!'
             }
@@ -85,7 +92,7 @@ export default function Contact() {
           {/* Información de Contacto */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-bold text-[#0A4A6E] mb-6">
-              {t.language === 'es' ? 'Información de Contacto' : 'Contact Information'}
+              {language === 'es' ? 'Información de Contacto' : 'Contact Information'}
             </h2>
             
             <div className="space-y-6">
@@ -95,11 +102,11 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-[#0A4A6E]">
-                    {t.language === 'es' ? 'Teléfono' : 'Phone'}
+                    {language === 'es' ? 'Teléfono' : 'Phone'}
                   </h3>
                   <p className="text-gray-600">+1 (555) 123-4567</p>
                   <p className="text-sm text-gray-500">
-                    {t.language === 'es' ? 'Lunes a Viernes, 9:00 AM - 6:00 PM EST' : 'Monday to Friday, 9:00 AM - 6:00 PM EST'}
+                    {language === 'es' ? 'Lunes a Viernes, 9:00 AM - 6:00 PM EST' : 'Monday to Friday, 9:00 AM - 6:00 PM EST'}
                   </p>
                 </div>
               </div>
@@ -110,11 +117,11 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-[#0A4A6E]">
-                    {t.language === 'es' ? 'Correo Electrónico' : 'Email'}
+                    {language === 'es' ? 'Correo Electrónico' : 'Email'}
                   </h3>
                   <p className="text-gray-600">info@passport2fluency.com</p>
                   <p className="text-sm text-gray-500">
-                    {t.language === 'es' ? 'Respuesta en menos de 24 horas' : 'Response within 24 hours'}
+                    {language === 'es' ? 'Respuesta en menos de 24 horas' : 'Response within 24 hours'}
                   </p>
                 </div>
               </div>
@@ -125,13 +132,13 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-[#0A4A6E]">
-                    {t.language === 'es' ? 'Horarios de Atención' : 'Business Hours'}
+                    {language === 'es' ? 'Horarios de Atención' : 'Business Hours'}
                   </h3>
                   <p className="text-gray-600">
-                    {t.language === 'es' ? 'Lunes - Viernes: 9:00 AM - 6:00 PM EST' : 'Monday - Friday: 9:00 AM - 6:00 PM EST'}
+                    {language === 'es' ? 'Lunes - Viernes: 9:00 AM - 6:00 PM EST' : 'Monday - Friday: 9:00 AM - 6:00 PM EST'}
                   </p>
                   <p className="text-gray-600">
-                    {t.language === 'es' ? 'Sábados: 10:00 AM - 2:00 PM EST' : 'Saturday: 10:00 AM - 2:00 PM EST'}
+                    {language === 'es' ? 'Sábados: 10:00 AM - 2:00 PM EST' : 'Saturday: 10:00 AM - 2:00 PM EST'}
                   </p>
                 </div>
               </div>
@@ -142,13 +149,13 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-[#0A4A6E]">
-                    {t.language === 'es' ? 'Ubicación' : 'Location'}
+                    {language === 'es' ? 'Ubicación' : 'Location'}
                   </h3>
                   <p className="text-gray-600">
-                    {t.language === 'es' ? 'Clases virtuales en línea' : 'Online virtual classes'}
+                    {language === 'es' ? 'Clases virtuales en línea' : 'Online virtual classes'}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {t.language === 'es' ? 'Desde cualquier lugar del mundo' : 'From anywhere in the world'}
+                    {language === 'es' ? 'Desde cualquier lugar del mundo' : 'From anywhere in the world'}
                   </p>
                 </div>
               </div>
@@ -158,14 +165,14 @@ export default function Contact() {
           {/* Formulario de Contacto */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-bold text-[#0A4A6E] mb-6">
-              {t.language === 'es' ? 'Envíanos un Mensaje' : 'Send us a Message'}
+              {language === 'es' ? 'Envíanos un Mensaje' : 'Send us a Message'}
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
-                    {t.language === 'es' ? 'Nombre Completo' : 'Full Name'} *
+                    {language === 'es' ? 'Nombre Completo' : 'Full Name'} *
                   </label>
                   <input
                     type="text"
@@ -174,13 +181,13 @@ export default function Contact() {
                     onChange={handleInputChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1C7BB1] focus:border-transparent"
-                    placeholder={t.language === 'es' ? 'Tu nombre completo' : 'Your full name'}
+                    placeholder={language === 'es' ? 'Tu nombre completo' : 'Your full name'}
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
-                    {t.language === 'es' ? 'Correo Electrónico' : 'Email'} *
+                    {language === 'es' ? 'Correo Electrónico' : 'Email'} *
                   </label>
                   <input
                     type="email"
@@ -189,7 +196,7 @@ export default function Contact() {
                     onChange={handleInputChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1C7BB1] focus:border-transparent"
-                    placeholder={t.language === 'es' ? 'tu@email.com' : 'your@email.com'}
+                    placeholder={language === 'es' ? 'tu@email.com' : 'your@email.com'}
                   />
                 </div>
               </div>
@@ -197,7 +204,7 @@ export default function Contact() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
-                    {t.language === 'es' ? 'Teléfono' : 'Phone'}
+                    {language === 'es' ? 'Teléfono' : 'Phone'}
                   </label>
                   <input
                     type="tel"
@@ -211,7 +218,7 @@ export default function Contact() {
                 
                 <div>
                   <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
-                    {t.language === 'es' ? 'Nivel Actual de Español' : 'Current Spanish Level'}
+                    {language === 'es' ? 'Nivel Actual de Español' : 'Current Spanish Level'}
                   </label>
                   <select
                     name="currentLevel"
@@ -220,16 +227,16 @@ export default function Contact() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1C7BB1] focus:border-transparent"
                   >
                     <option value="">
-                      {t.language === 'es' ? 'Seleccionar nivel' : 'Select level'}
+                      {language === 'es' ? 'Seleccionar nivel' : 'Select level'}
                     </option>
                     <option value="beginner">
-                      {t.language === 'es' ? 'Principiante' : 'Beginner'}
+                      {language === 'es' ? 'Principiante' : 'Beginner'}
                     </option>
                     <option value="intermediate">
-                      {t.language === 'es' ? 'Intermedio' : 'Intermediate'}
+                      {language === 'es' ? 'Intermedio' : 'Intermediate'}
                     </option>
                     <option value="advanced">
-                      {t.language === 'es' ? 'Avanzado' : 'Advanced'}
+                      {language === 'es' ? 'Avanzado' : 'Advanced'}
                     </option>
                   </select>
                 </div>
@@ -237,7 +244,7 @@ export default function Contact() {
 
               <div>
                 <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
-                  {t.language === 'es' ? 'Asunto' : 'Subject'} *
+                  {language === 'es' ? 'Asunto' : 'Subject'} *
                 </label>
                 <input
                   type="text"
@@ -246,13 +253,13 @@ export default function Contact() {
                   onChange={handleInputChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1C7BB1] focus:border-transparent"
-                  placeholder={t.language === 'es' ? 'Motivo de tu consulta' : 'Reason for your inquiry'}
+                  placeholder={language === 'es' ? 'Motivo de tu consulta' : 'Reason for your inquiry'}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
-                  {t.language === 'es' ? 'Mensaje' : 'Message'} *
+                  {language === 'es' ? 'Mensaje' : 'Message'} *
                 </label>
                 <textarea
                   name="message"
@@ -261,7 +268,7 @@ export default function Contact() {
                   required
                   rows={6}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1C7BB1] focus:border-transparent resize-none"
-                  placeholder={t.language === 'es' 
+                  placeholder={language === 'es' 
                     ? 'Cuéntanos cómo podemos ayudarte con tu aprendizaje de español...'
                     : 'Tell us how we can help you with your Spanish learning...'
                   }
@@ -270,7 +277,7 @@ export default function Contact() {
 
               <div>
                 <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
-                  {t.language === 'es' ? 'Forma Preferida de Contacto' : 'Preferred Contact Method'}
+                  {language === 'es' ? 'Forma Preferida de Contacto' : 'Preferred Contact Method'}
                 </label>
                 <div className="flex gap-4">
                   <label className="flex items-center">
@@ -282,7 +289,7 @@ export default function Contact() {
                       onChange={handleInputChange}
                       className="mr-2"
                     />
-                    {t.language === 'es' ? 'Correo' : 'Email'}
+                    {language === 'es' ? 'Correo' : 'Email'}
                   </label>
                   <label className="flex items-center">
                     <input
@@ -293,7 +300,7 @@ export default function Contact() {
                       onChange={handleInputChange}
                       className="mr-2"
                     />
-                    {t.language === 'es' ? 'Teléfono' : 'Phone'}
+                    {language === 'es' ? 'Teléfono' : 'Phone'}
                   </label>
                 </div>
               </div>
@@ -309,8 +316,8 @@ export default function Contact() {
                   <Send className="w-5 h-5" />
                 )}
                 {isSubmitting 
-                  ? (t.language === 'es' ? 'Enviando...' : 'Sending...')
-                  : (t.language === 'es' ? 'Enviar Mensaje' : 'Send Message')
+                  ? (language === 'es' ? 'Enviando...' : 'Sending...')
+                  : (language === 'es' ? 'Enviar Mensaje' : 'Send Message')
                 }
               </button>
             </form>
@@ -320,16 +327,16 @@ export default function Contact() {
         {/* FAQ Section */}
         <div className="mt-16 bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-2xl font-bold text-[#0A4A6E] mb-8 text-center">
-            {t.language === 'es' ? 'Preguntas Frecuentes' : 'Frequently Asked Questions'}
+            {language === 'es' ? 'Preguntas Frecuentes' : 'Frequently Asked Questions'}
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <h3 className="font-semibold text-[#0A4A6E] mb-2">
-                {t.language === 'es' ? '¿Cómo funciona el programa?' : 'How does the program work?'}
+                {language === 'es' ? '¿Cómo funciona el programa?' : 'How does the program work?'}
               </h3>
               <p className="text-gray-600">
-                {t.language === 'es' 
+                {language === 'es' 
                   ? 'Nuestro programa ofrece clases personalizadas con profesores nativos certificados, materiales interactivos y seguimiento de progreso.'
                   : 'Our program offers personalized classes with certified native teachers, interactive materials, and progress tracking.'
                 }
@@ -338,10 +345,10 @@ export default function Contact() {
             
             <div>
               <h3 className="font-semibold text-[#0A4A6E] mb-2">
-                {t.language === 'es' ? '¿Puedo cancelar mi suscripción?' : 'Can I cancel my subscription?'}
+                {language === 'es' ? '¿Puedo cancelar mi suscripción?' : 'Can I cancel my subscription?'}
               </h3>
               <p className="text-gray-600">
-                {t.language === 'es' 
+                {language === 'es' 
                   ? 'Sí, puedes cancelar tu suscripción en cualquier momento. Ofrecemos una garantía de 30 días.'
                   : 'Yes, you can cancel your subscription at any time. We offer a 30-day guarantee.'
                 }
@@ -350,10 +357,10 @@ export default function Contact() {
             
             <div>
               <h3 className="font-semibold text-[#0A4A6E] mb-2">
-                {t.language === 'es' ? '¿Qué nivel necesito para empezar?' : 'What level do I need to start?'}
+                {language === 'es' ? '¿Qué nivel necesito para empezar?' : 'What level do I need to start?'}
               </h3>
               <p className="text-gray-600">
-                {t.language === 'es' 
+                {language === 'es' 
                   ? 'Aceptamos estudiantes de todos los niveles, desde principiante absoluto hasta avanzado.'
                   : 'We accept students of all levels, from absolute beginner to advanced.'
                 }
@@ -362,10 +369,10 @@ export default function Contact() {
             
             <div>
               <h3 className="font-semibold text-[#0A4A6E] mb-2">
-                {t.language === 'es' ? '¿Las clases son en grupo o individuales?' : 'Are classes group or individual?'}
+                {language === 'es' ? '¿Las clases son en grupo o individuales?' : 'Are classes group or individual?'}
               </h3>
               <p className="text-gray-600">
-                {t.language === 'es' 
+                {language === 'es' 
                   ? 'Ofrecemos clases individuales personalizadas para maximizar tu aprendizaje.'
                   : 'We offer personalized individual classes to maximize your learning.'
                 }

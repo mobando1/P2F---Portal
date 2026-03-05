@@ -1,0 +1,82 @@
+import type { Express } from "express";
+import { storage } from "../storage";
+import { requireAuth } from "./auth";
+import { z } from "zod";
+
+const createReviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().optional(),
+  classId: z.number().int().optional(),
+});
+
+export function registerReviewRoutes(app: Express) {
+  // Get reviews for a tutor
+  app.get("/api/tutors/:id/reviews", async (req, res) => {
+    try {
+      const tutorId = parseInt(req.params.id);
+      if (isNaN(tutorId)) {
+        return res.status(400).json({ message: "Invalid tutor ID" });
+      }
+
+      const reviews = await storage.getReviewsByTutor(tutorId);
+
+      // Enrich with user names
+      const enriched = await Promise.all(
+        reviews.map(async (review) => {
+          const user = await storage.getUser(review.userId);
+          return {
+            ...review,
+            userName: user ? `${user.firstName} ${user.lastName.charAt(0)}.` : "Anonymous",
+          };
+        })
+      );
+
+      res.json(enriched);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Create a review for a tutor (authenticated)
+  app.post("/api/tutors/:id/reviews", requireAuth, async (req, res) => {
+    try {
+      const tutorId = parseInt(req.params.id);
+      const userId = (req.session as any).userId;
+
+      if (isNaN(tutorId)) {
+        return res.status(400).json({ message: "Invalid tutor ID" });
+      }
+
+      const parsed = createReviewSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid review data", errors: parsed.error.errors });
+      }
+
+      // Check if user already reviewed this tutor
+      const existing = await storage.getUserReviewForTutor(userId, tutorId);
+      if (existing) {
+        return res.status(400).json({ message: "You have already reviewed this tutor" });
+      }
+
+      const review = await storage.createReview({
+        userId,
+        tutorId,
+        rating: parsed.data.rating,
+        comment: parsed.data.comment,
+        classId: parsed.data.classId,
+      });
+
+      // Update tutor's average rating and review count
+      const allReviews = await storage.getReviewsByTutor(tutorId);
+      const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+      await storage.updateTutor(tutorId, {
+        rating: avgRating.toFixed(2),
+        reviewCount: allReviews.length,
+      });
+
+      res.status(201).json(review);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+}
