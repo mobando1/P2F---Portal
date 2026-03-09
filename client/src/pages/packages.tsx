@@ -146,23 +146,15 @@ export default function PackagesPage() {
   ];
 
   const handlePackagePurchase = async (packageItem: ClassPackage) => {
-    console.log('🔔 PACKAGE PURCHASE CLICKED:', packageItem);
-    
-    if (isProcessing) {
-      console.log('⏸️ Already processing, returning');
-      return;
-    }
-    
+    if (isProcessing) return;
+
     setIsProcessing(true);
     setSelectedPackage(packageItem);
-    
+
     try {
-      // Obtener el usuario actual usando la función de autenticación correcta
       const currentUser = getCurrentUser();
-      console.log('👤 Current user:', currentUser);
-      
+
       if (!currentUser || !currentUser.id) {
-        console.log('❌ No user logged in');
         toast({
           title: "Error",
           description: "Please login first",
@@ -173,39 +165,29 @@ export default function PackagesPage() {
       }
 
       // Enlaces directos de Stripe para cada paquete
-      const stripeLinks = {
+      const stripeLinks: Record<number, string> = {
         1: 'https://buy.stripe.com/28E7sMfti4jFdYMbKCes00b', // 5 clases
-        2: 'https://buy.stripe.com/3cIfZi80Q6rN07WaGyes00c', // 10 clases  
+        2: 'https://buy.stripe.com/3cIfZi80Q6rN07WaGyes00c', // 10 clases
         3: 'https://buy.stripe.com/cNidRa0yo8zVbQE01Ues00d'  // 20 clases
       };
 
-      const link = stripeLinks[packageItem.id as keyof typeof stripeLinks];
-      console.log('🔗 Stripe link for package', packageItem.id, ':', link);
-      
+      const link = stripeLinks[packageItem.id];
+
       if (link) {
-        // Agregar metadata del usuario como parámetros de consulta para Stripe
         const url = new URL(link);
         url.searchParams.set('client_reference_id', currentUser.id.toString());
         url.searchParams.set('prefilled_email', currentUser.email || '');
-        
-        const finalUrl = url.toString();
-        console.log('🚀 Redirecting to:', finalUrl);
-        
-        // Redirigir directamente a la página de Stripe
-        window.location.href = finalUrl;
+        window.location.href = url.toString();
       } else {
-        console.log('❌ No link configured for package:', packageItem.id);
         throw new Error('Package not configured');
       }
     } catch (error) {
-      console.error('❌ Error redirecting to payment:', error);
       toast({
         title: "Payment Error",
         description: "Could not access payment. Please try again.",
         variant: "destructive",
       });
     } finally {
-      console.log('✅ Processing finished');
       setIsProcessing(false);
     }
   };

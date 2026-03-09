@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Mic, MicOff, Square } from "lucide-react";
+import { Mic, Square } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface VoiceInputProps {
@@ -85,27 +85,30 @@ export function VoiceInput({ onTranscript, language, disabled }: VoiceInputProps
 
   return (
     <div className="relative">
-      <button
+      <motion.button
         type="button"
         onClick={isListening ? stopListening : startListening}
         disabled={disabled}
-        className={`p-2.5 rounded-full transition-all ${
+        aria-label={isListening ? "Stop recording" : "Start voice recording"}
+        whileHover={{ scale: disabled ? 1 : 1.05 }}
+        whileTap={{ scale: disabled ? 1 : 0.95 }}
+        className={`p-2.5 rounded-xl transition-all ${
           isListening
-            ? "bg-red-500 text-white shadow-lg shadow-red-200"
-            : "bg-gray-100 text-gray-500 hover:bg-[#1C7BB1]/10 hover:text-[#1C7BB1]"
-        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+            ? "bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-300/40"
+            : "bg-gray-100 text-gray-500 hover:bg-blue-50 hover:text-blue-600"
+        } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
       >
         {isListening ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-      </button>
+      </motion.button>
 
       {/* Listening pulse animation */}
       <AnimatePresence>
         {isListening && (
           <motion.div
-            initial={{ scale: 1, opacity: 0.5 }}
-            animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+            initial={{ scale: 1, opacity: 0.4 }}
+            animate={{ scale: [1, 1.6, 1], opacity: [0.4, 0, 0.4] }}
             transition={{ duration: 1.5, repeat: Infinity }}
-            className="absolute inset-0 rounded-full bg-red-400 -z-10"
+            className="absolute inset-0 rounded-xl bg-red-400 -z-10"
           />
         )}
       </AnimatePresence>
@@ -117,7 +120,7 @@ export function VoiceInput({ onTranscript, language, disabled }: VoiceInputProps
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap max-w-[200px] truncate"
+            className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap max-w-[200px] truncate shadow-lg"
           >
             {interim}...
           </motion.div>
@@ -131,7 +134,6 @@ export function VoiceInput({ onTranscript, language, disabled }: VoiceInputProps
 export function speakText(text: string, language: "spanish" | "english") {
   if (!window.speechSynthesis) return;
 
-  // Cancel any ongoing speech
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);

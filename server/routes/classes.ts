@@ -239,11 +239,12 @@ export function registerClassRoutes(app: Express) {
   });
 
   // Book a class with specific tutor
-  app.post("/api/calendar/book", async (req, res) => {
+  app.post("/api/calendar/book", requireAuth, async (req, res) => {
     try {
-      const { userId, tutorId, date, startTime, endTime } = req.body;
+      const userId = (req as any).userId;
+      const { tutorId, date, startTime, endTime } = req.body;
 
-      if (!userId || !tutorId || !date || !startTime || !endTime) {
+      if (!tutorId || !date || !startTime || !endTime) {
         return res.status(400).json({ message: "All fields are required" });
       }
 
@@ -267,14 +268,10 @@ export function registerClassRoutes(app: Express) {
   });
 
   // Cancel a class (enhanced version via calendar)
-  app.put("/api/calendar/cancel/:classId", async (req, res) => {
+  app.put("/api/calendar/cancel/:classId", requireAuth, async (req, res) => {
     try {
       const classId = parseInt(req.params.classId);
-      const { userId } = req.body;
-
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
-      }
+      const userId = (req as any).userId;
 
       const result = await calendarService.cancelClass(classId, userId);
 

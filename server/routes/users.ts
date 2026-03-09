@@ -128,7 +128,7 @@ export function registerUserRoutes(app: Express) {
   });
 
   // Subscription management
-  app.put("/api/subscription/:id", async (req, res) => {
+  app.put("/api/subscription/:id", requireAuth, async (req, res) => {
     try {
       const subscriptionId = parseInt(req.params.id);
       const { planId, status, nextBillingDate } = req.body;

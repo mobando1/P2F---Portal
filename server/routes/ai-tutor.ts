@@ -86,9 +86,20 @@ export function registerAiTutorRoutes(app: Express) {
         return res.status(404).json({ error: "Conversation not found" });
       }
 
-      // Check AI access
-      const user = await storage.getUser(userId);
+      // Check AI access (with daily reset)
+      let user = await storage.getUser(userId);
       if (!user) return res.status(401).json({ error: "User not found" });
+
+      // Reset daily counter if 24h have passed
+      if (user.aiMessagesResetAt) {
+        const lastReset = new Date(user.aiMessagesResetAt).getTime();
+        const now = Date.now();
+        if (now - lastReset >= 24 * 60 * 60 * 1000) {
+          await storage.resetAiUsage(userId);
+          user = await storage.getUser(userId);
+          if (!user) return res.status(401).json({ error: "User not found" });
+        }
+      }
 
       const access = hasAiAccess(user);
       if (!access.hasAccess) {
@@ -168,8 +179,18 @@ export function registerAiTutorRoutes(app: Express) {
   app.get("/api/ai/usage", requireAuth, async (req, res) => {
     try {
       const userId = (req as any).userId;
-      const user = await storage.getUser(userId);
+      let user = await storage.getUser(userId);
       if (!user) return res.status(401).json({ error: "User not found" });
+
+      // Reset daily counter if 24h have passed
+      if (user.aiMessagesResetAt) {
+        const lastReset = new Date(user.aiMessagesResetAt).getTime();
+        if (Date.now() - lastReset >= 24 * 60 * 60 * 1000) {
+          await storage.resetAiUsage(userId);
+          user = await storage.getUser(userId);
+          if (!user) return res.status(401).json({ error: "User not found" });
+        }
+      }
 
       const access = hasAiAccess(user);
       res.json({

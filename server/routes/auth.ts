@@ -24,6 +24,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.session?.userId) {
     return res.status(401).json({ message: "Not authenticated" });
   }
+  (req as any).userId = req.session.userId;
   next();
 }
 
@@ -32,6 +33,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
   if (!req.session?.userId) {
     return res.status(401).json({ message: "Not authenticated" });
   }
+  (req as any).userId = req.session.userId;
 
   const user = await storage.getUser(req.session.userId);
   if (!user || user.userType !== "admin") {

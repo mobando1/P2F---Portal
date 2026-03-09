@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { MessageSquare, Mic, BookOpen } from "lucide-react";
 
 type Mode = "chat" | "voice" | "grammar";
@@ -16,7 +17,7 @@ const modes: { id: Mode; icon: typeof MessageSquare; labelEs: string; labelEn: s
 
 export function ModeSelector({ mode, onChange, language }: ModeSelectorProps) {
   return (
-    <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+    <div className="relative flex gap-0.5 p-1 bg-gray-100/80 rounded-xl">
       {modes.map((m) => {
         const Icon = m.icon;
         const isActive = mode === m.id;
@@ -24,14 +25,21 @@ export function ModeSelector({ mode, onChange, language }: ModeSelectorProps) {
           <button
             key={m.id}
             onClick={() => onChange(m.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-              isActive
-                ? "bg-white text-[#1C7BB1] shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors z-10 flex-1 justify-center"
           >
-            <Icon className="w-3.5 h-3.5" />
-            <span>{language === "es" ? m.labelEs : m.labelEn}</span>
+            {isActive && (
+              <motion.div
+                layoutId="mode-pill"
+                className="absolute inset-0 bg-white rounded-lg shadow-sm"
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              />
+            )}
+            <span className={`relative flex items-center gap-1.5 ${
+              isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
+            }`}>
+              <Icon className="w-3.5 h-3.5" />
+              <span>{language === "es" ? m.labelEs : m.labelEn}</span>
+            </span>
           </button>
         );
       })}

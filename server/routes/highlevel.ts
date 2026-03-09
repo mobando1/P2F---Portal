@@ -13,24 +13,25 @@ export function registerHighLevelRoutes(app: Express) {
   app.post("/api/high-level/webhook", async (req, res) => {
     try {
       const webhookData = req.body;
-      console.log("Webhook recibido de High Level:", JSON.stringify(webhookData, null, 2));
+
+      // Basic validation — reject empty or malformed payloads
+      if (!webhookData || typeof webhookData !== "object") {
+        return res.status(400).json({ success: false, message: "Invalid payload" });
+      }
 
       // Process completed appointment event
       if (webhookData.appointmentId && webhookData.status === "completed") {
         const appointmentId = webhookData.appointmentId;
         const contactId = webhookData.contactId;
 
-        console.log(`Procesando clase completada:`);
-        console.log(`   - Appointment ID: ${appointmentId}`);
-        console.log(`   - Contact ID: ${contactId}`);
+        if (!contactId) {
+          return res.status(400).json({ success: false, message: "Missing contactId" });
+        }
 
         const user = await storage.getUserByHighLevelContactId(contactId);
         if (!user) {
-          console.log(`Usuario no encontrado con contactId: ${contactId}`);
           return res.json({ success: false, message: "Usuario no encontrado" });
         }
-
-        console.log(`Usuario encontrado: ${user.firstName} ${user.lastName} (${user.email})`);
 
         const classes = await storage.getAllClasses();
         const classToUpdate = classes.find(
@@ -45,15 +46,10 @@ export function registerHighLevelRoutes(app: Express) {
             highLevelAppointmentId: appointmentId,
             highLevelContactId: contactId,
           });
-          console.log(`Clase ${classToUpdate.id} marcada como completada automaticamente`);
-
           const currentCredits = user.classCredits || 0;
           if (currentCredits > 0) {
             const newCredits = currentCredits - 1;
             await storage.updateUser(user.id, { classCredits: newCredits });
-            console.log(`Creditos actualizados: ${user.firstName} ${user.lastName}`);
-            console.log(`   - Creditos antes: ${user.classCredits}`);
-            console.log(`   - Creditos despues: ${newCredits}`);
 
             const progress = await storage.getUserProgress(user.id);
             if (progress) {
