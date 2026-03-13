@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { storage } from "../storage";
 import { requireAuth } from "./auth";
+import { gamificationService } from "../services/gamification";
 import { z } from "zod";
 
 const createReviewSchema = z.object({
@@ -20,16 +21,27 @@ export function registerReviewRoutes(app: Express) {
 
       const reviews = await storage.getReviewsByTutor(tutorId);
 
-      // Enrich with user names
-      const enriched = await Promise.all(
-        reviews.map(async (review) => {
-          const user = await storage.getUser(review.userId);
-          return {
-            ...review,
-            userName: user ? `${user.firstName} ${user.lastName.charAt(0)}.` : "Anonymous",
-          };
-        })
-      );
+      // Batch-fetch unique users to avoid N+1
+      const uniqueUserIds = Array.from(new Set(reviews.map(r => r.userId)));
+      const userMap = new Map<number, { name: string; avatar: string | null }>();
+      for (const uid of uniqueUserIds) {
+        const user = await storage.getUser(uid);
+        if (user) {
+          userMap.set(uid, {
+            name: `${user.firstName} ${user.lastName.charAt(0)}.`,
+            avatar: user.avatar || null,
+          });
+        }
+      }
+
+      const enriched = reviews.map(review => {
+        const userData = userMap.get(review.userId);
+        return {
+          ...review,
+          userName: userData?.name || "Anonymous",
+          userAvatar: userData?.avatar || null,
+        };
+      });
 
       res.json(enriched);
     } catch (error) {
@@ -41,7 +53,7 @@ export function registerReviewRoutes(app: Express) {
   app.post("/api/tutors/:id/reviews", requireAuth, async (req, res) => {
     try {
       const tutorId = parseInt(req.params.id);
-      const userId = (req.session as any).userId;
+      const userId = req.session.userId!;
 
       if (isNaN(tutorId)) {
         return res.status(400).json({ message: "Invalid tutor ID" });
@@ -73,6 +85,9 @@ export function registerReviewRoutes(app: Express) {
         rating: avgRating.toFixed(2),
         reviewCount: allReviews.length,
       });
+
+      // Check gamification for first review
+      gamificationService.onReviewGiven(userId);
 
       res.status(201).json(review);
     } catch (error) {

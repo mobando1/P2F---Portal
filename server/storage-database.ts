@@ -1,17 +1,42 @@
 import bcrypt from "bcryptjs";
 import {
   users, tutors, classes, subscriptions, videos, userProgress, contactSubmissions, reviews,
-  aiConversations, aiMessages,
+  aiConversations, aiMessages, tutorAvailability, tutorAvailabilityExceptions, notifications,
+  achievements, supportTickets, supportMessages, conversations, directMessages,
+  userNotificationPreferences, classPurchases, emailCampaignEvents,
   type User, type InsertUser, type Tutor, type InsertTutor,
   type Class, type InsertClass, type Subscription, type InsertSubscription,
   type Video, type InsertVideo, type UserProgress, type InsertUserProgress,
   type ContactSubmission, type InsertContactSubmission,
   type Review, type InsertReview,
   type AiConversation, type InsertAiConversation,
-  type AiMessage, type InsertAiMessage
+  type AiMessage, type InsertAiMessage,
+  type TutorAvailability, type InsertTutorAvailability,
+  type TutorAvailabilityException, type InsertTutorAvailabilityException,
+  type Notification, type InsertNotification,
+  type Achievement, type InsertAchievement,
+  type SupportTicket, type InsertSupportTicket,
+  type SupportMessage, type InsertSupportMessage,
+  type Conversation, type InsertConversation,
+  type DirectMessage, type InsertDirectMessage,
+  type UserNotificationPreferences, type InsertUserNotificationPreferences,
+  type ClassPurchase,
+  type EmailCampaignEvent,
+  crmNotes, crmTasks, crmTags, crmUserTags,
+  type CrmNote, type InsertCrmNote,
+  type CrmTask, type InsertCrmTask,
+  type CrmTag, type InsertCrmTag,
+  emailTemplates, audienceSegments, campaigns, campaignRecipients, offers, communicationLog,
+  type EmailTemplate, type InsertEmailTemplate,
+  type AudienceSegment, type InsertAudienceSegment,
+  type Campaign, type InsertCampaign,
+  type CampaignRecipient, type InsertCampaignRecipient,
+  type Offer, type InsertOffer,
+  type CommunicationLogEntry, type InsertCommunicationLog,
+  aiStudentProfiles, aiSavedCorrections, aiVocabulary,
 } from "@shared/schema";
 import { db as maybeDb } from "./db";
-import { eq, and, gt, desc, asc, sql } from "drizzle-orm";
+import { eq, and, or, not, gt, gte, lte, lt, desc, asc, sql, inArray } from "drizzle-orm";
 import type { IStorage } from "./storage";
 
 function getDb() {
@@ -32,11 +57,6 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await this.db.select().from(users).where(eq(users.email, email));
-    return user || undefined;
-  }
-
-  async getUserByHighLevelContactId(contactId: string): Promise<User | undefined> {
-    const [user] = await this.db.select().from(users).where(eq(users.highLevelContactId, contactId));
     return user || undefined;
   }
 
@@ -116,6 +136,11 @@ export class DatabaseStorage implements IStorage {
     return tutor || undefined;
   }
 
+  async getTutorByUserId(userId: number): Promise<Tutor | undefined> {
+    const [tutor] = await this.db.select().from(tutors).where(eq(tutors.userId, userId));
+    return tutor || undefined;
+  }
+
   async createTutor(tutorData: InsertTutor): Promise<Tutor> {
     const [tutor] = await this.db
       .insert(tutors)
@@ -165,6 +190,15 @@ export class DatabaseStorage implements IStorage {
 
   async getAllClasses(): Promise<Class[]> {
     return await this.db.select().from(classes);
+  }
+
+  async getClassById(id: number): Promise<Class | undefined> {
+    const [cls] = await this.db.select().from(classes).where(eq(classes.id, id));
+    return cls || undefined;
+  }
+
+  async getScheduledClasses(): Promise<Class[]> {
+    return await this.db.select().from(classes).where(eq(classes.status, "scheduled"));
   }
 
   async getUserClasses(userId: number): Promise<Class[]> {
@@ -334,6 +368,289 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
   }
 
+  // AI Student Profile & Progress
+  async getAiStudentProfile(userId: number): Promise<any> {
+    const rows = await this.db.select().from(aiStudentProfiles).where(eq(aiStudentProfiles.userId, userId));
+    return rows[0] || null;
+  }
+
+  async upsertAiStudentProfile(userId: number, data: any): Promise<any> {
+    const existing = await this.getAiStudentProfile(userId);
+    if (existing) {
+      const [updated] = await this.db.update(aiStudentProfiles)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(aiStudentProfiles.userId, userId))
+        .returning();
+      return updated;
+    }
+    const [created] = await this.db.insert(aiStudentProfiles)
+      .values({ userId, ...data })
+      .returning();
+    return created;
+  }
+
+  async getAiProgressStats(userId: number): Promise<any> {
+    // Get conversation counts
+    const convos = await this.db.select().from(aiConversations).where(eq(aiConversations.userId, userId));
+    const convoIds = convos.map(c => c.id);
+
+    let totalMessages = 0;
+    let totalCorrections = 0;
+    const allCorrections: any[] = [];
+
+    if (convoIds.length > 0) {
+      const msgs = await this.db.select().from(aiMessages)
+        .where(and(inArray(aiMessages.conversationId, convoIds), eq(aiMessages.role, "user")));
+      totalMessages = msgs.length;
+
+      const corrMsgs = await this.db.select().from(aiMessages)
+        .where(and(inArray(aiMessages.conversationId, convoIds), not(sql`${aiMessages.corrections} IS NULL`)));
+      for (const m of corrMsgs) {
+        const corrs = (m.corrections as any[]) || [];
+        allCorrections.push(...corrs);
+      }
+      totalCorrections = allCorrections.length;
+    }
+
+    const errorMap = new Map<string, number>();
+    for (const c of allCorrections) {
+      if (c.original && c.corrected) {
+        const key = `${c.original} → ${c.corrected}`;
+        errorMap.set(key, (errorMap.get(key) || 0) + 1);
+      }
+    }
+    const topErrors = Array.from(errorMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([error, count]) => ({ error, count }));
+
+    return {
+      totalConversations: convos.length,
+      totalMessages,
+      totalCorrections,
+      topErrors,
+      languageBreakdown: {
+        spanish: convos.filter(c => c.language === "spanish").length,
+        english: convos.filter(c => c.language === "english").length,
+      },
+      modeBreakdown: {
+        chat: convos.filter(c => c.mode === "chat").length,
+        voice: convos.filter(c => c.mode === "voice").length,
+        grammar: convos.filter(c => c.mode === "grammar").length,
+      },
+    };
+  }
+
+  async saveAiCorrection(data: any): Promise<any> {
+    const [correction] = await this.db.insert(aiSavedCorrections).values(data).returning();
+    return correction;
+  }
+
+  async getAiSavedCorrections(userId: number): Promise<any[]> {
+    return await this.db.select().from(aiSavedCorrections)
+      .where(eq(aiSavedCorrections.userId, userId))
+      .orderBy(desc(aiSavedCorrections.createdAt));
+  }
+
+  async deleteAiCorrection(id: number, userId: number): Promise<void> {
+    await this.db.delete(aiSavedCorrections)
+      .where(and(eq(aiSavedCorrections.id, id), eq(aiSavedCorrections.userId, userId)));
+  }
+
+  // AI Vocabulary
+  async saveAiVocabulary(data: { userId: number; messageId?: number | null; word: string; translation: string; context?: string | null; language: string }): Promise<any> {
+    const [vocab] = await this.db.insert(aiVocabulary).values(data).returning();
+    return vocab;
+  }
+
+  async getAiVocabulary(userId: number): Promise<any[]> {
+    return await this.db.select().from(aiVocabulary)
+      .where(eq(aiVocabulary.userId, userId))
+      .orderBy(desc(aiVocabulary.createdAt));
+  }
+
+  async deleteAiVocabulary(id: number, userId: number): Promise<void> {
+    await this.db.delete(aiVocabulary)
+      .where(and(eq(aiVocabulary.id, id), eq(aiVocabulary.userId, userId)));
+  }
+
+  async updateAiVocabularyMastery(id: number, userId: number, mastery: number): Promise<any> {
+    const [updated] = await this.db.update(aiVocabulary)
+      .set({ mastery, lastReviewedAt: new Date() })
+      .where(and(eq(aiVocabulary.id, id), eq(aiVocabulary.userId, userId)))
+      .returning();
+    return updated || null;
+  }
+
+  // Tutor Availability
+  async getTutorAvailability(tutorId: number): Promise<TutorAvailability[]> {
+    return await this.db.select().from(tutorAvailability)
+      .where(and(eq(tutorAvailability.tutorId, tutorId), eq(tutorAvailability.isAvailable, true)));
+  }
+
+  async setTutorAvailability(tutorId: number, slots: InsertTutorAvailability[]): Promise<TutorAvailability[]> {
+    // Delete existing availability for this tutor
+    await this.db.delete(tutorAvailability).where(eq(tutorAvailability.tutorId, tutorId));
+    // Insert new slots
+    if (slots.length === 0) return [];
+    const values = slots.map(s => ({ ...s, tutorId }));
+    return await this.db.insert(tutorAvailability).values(values).returning();
+  }
+
+  async deleteTutorAvailability(tutorId: number): Promise<void> {
+    await this.db.delete(tutorAvailability).where(eq(tutorAvailability.tutorId, tutorId));
+  }
+
+  // Availability Exceptions
+  async getTutorExceptions(tutorId: number, startDate: Date, endDate: Date): Promise<TutorAvailabilityException[]> {
+    return await this.db.select().from(tutorAvailabilityExceptions)
+      .where(and(
+        eq(tutorAvailabilityExceptions.tutorId, tutorId),
+        gte(tutorAvailabilityExceptions.date, startDate),
+        lte(tutorAvailabilityExceptions.date, endDate)
+      ));
+  }
+
+  async createTutorException(exception: InsertTutorAvailabilityException): Promise<TutorAvailabilityException> {
+    const [exc] = await this.db.insert(tutorAvailabilityExceptions).values(exception).returning();
+    return exc;
+  }
+
+  async deleteTutorException(id: number, tutorId?: number): Promise<boolean> {
+    const conditions = [eq(tutorAvailabilityExceptions.id, id)];
+    if (tutorId !== undefined) conditions.push(eq(tutorAvailabilityExceptions.tutorId, tutorId));
+    const result = await this.db.delete(tutorAvailabilityExceptions)
+      .where(and(...conditions)).returning();
+    return result.length > 0;
+  }
+
+  // Conflict Detection
+  async getTutorClassesForDate(tutorId: number, date: Date): Promise<Class[]> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return await this.db.select().from(classes)
+      .where(and(
+        eq(classes.tutorId, tutorId),
+        eq(classes.status, "scheduled"),
+        gte(classes.scheduledAt, startOfDay),
+        lte(classes.scheduledAt, endOfDay)
+      ));
+  }
+
+  async checkConflict(tutorId: number, scheduledAt: Date, duration: number): Promise<boolean> {
+    const endTime = new Date(scheduledAt.getTime() + duration * 60 * 1000);
+    // Check for overlapping classes: existing class starts before new ends AND existing class ends after new starts
+    const conflicts = await this.db.select().from(classes)
+      .where(and(
+        eq(classes.tutorId, tutorId),
+        eq(classes.status, "scheduled"),
+        lt(classes.scheduledAt, endTime),
+        gt(sql`${classes.scheduledAt} + interval '1 minute' * ${classes.duration}`, scheduledAt)
+      ));
+    return conflicts.length > 0;
+  }
+
+  // Notifications
+  async getNotifications(userId: number): Promise<Notification[]> {
+    return await this.db.select().from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async createNotification(data: InsertNotification): Promise<Notification> {
+    const [notification] = await this.db.insert(notifications).values(data).returning();
+    return notification;
+  }
+
+  async markNotificationRead(id: number, userId?: number): Promise<boolean> {
+    const conditions = [eq(notifications.id, id)];
+    if (userId !== undefined) conditions.push(eq(notifications.userId, userId));
+    const result = await this.db.update(notifications)
+      .set({ isRead: true })
+      .where(and(...conditions))
+      .returning();
+    return result.length > 0;
+  }
+
+  async markAllNotificationsRead(userId: number): Promise<void> {
+    await this.db.update(notifications)
+      .set({ isRead: true })
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+  }
+
+  async getUnreadNotificationCount(userId: number): Promise<number> {
+    const result = await this.db.select({ count: sql<number>`count(*)`.as("count") })
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+    return Number(result[0]?.count || 0);
+  }
+
+  // Achievements
+  async getAchievements(userId: number): Promise<Achievement[]> {
+    return await this.db.select().from(achievements)
+      .where(eq(achievements.userId, userId))
+      .orderBy(desc(achievements.unlockedAt));
+  }
+
+  async createAchievement(data: InsertAchievement): Promise<Achievement> {
+    const [achievement] = await this.db.insert(achievements).values(data).returning();
+    return achievement;
+  }
+
+  async hasAchievement(userId: number, type: string): Promise<boolean> {
+    const result = await this.db.select().from(achievements)
+      .where(and(eq(achievements.userId, userId), eq(achievements.type, type)));
+    return result.length > 0;
+  }
+
+  // Support Tickets
+  async createSupportTicket(data: InsertSupportTicket): Promise<SupportTicket> {
+    const [ticket] = await this.db.insert(supportTickets).values(data).returning();
+    return ticket;
+  }
+
+  async getSupportTickets(userId?: number): Promise<SupportTicket[]> {
+    if (userId) {
+      return await this.db.select().from(supportTickets)
+        .where(eq(supportTickets.userId, userId))
+        .orderBy(desc(supportTickets.updatedAt));
+    }
+    return await this.db.select().from(supportTickets)
+      .orderBy(desc(supportTickets.updatedAt));
+  }
+
+  async getSupportTicket(id: number): Promise<SupportTicket | undefined> {
+    const [ticket] = await this.db.select().from(supportTickets)
+      .where(eq(supportTickets.id, id));
+    return ticket || undefined;
+  }
+
+  async updateSupportTicket(id: number, data: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined> {
+    const [ticket] = await this.db.update(supportTickets)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(supportTickets.id, id))
+      .returning();
+    return ticket || undefined;
+  }
+
+  async getSupportMessages(ticketId: number): Promise<SupportMessage[]> {
+    return await this.db.select().from(supportMessages)
+      .where(eq(supportMessages.ticketId, ticketId))
+      .orderBy(asc(supportMessages.createdAt));
+  }
+
+  async createSupportMessage(data: InsertSupportMessage): Promise<SupportMessage> {
+    const [message] = await this.db.insert(supportMessages).values(data).returning();
+    // Update ticket timestamp
+    await this.db.update(supportTickets)
+      .set({ updatedAt: new Date() })
+      .where(eq(supportTickets.id, data.ticketId));
+    return message;
+  }
+
   async getAiAdminStats() {
     const allConvs = await this.db.select().from(aiConversations);
     const msgCounts = await this.db
@@ -373,5 +690,437 @@ export class DatabaseStorage implements IStorage {
       activeUsers: userIds.length,
       userStats,
     };
+  }
+
+  // Direct Messaging
+  async getConversations(userId: number) {
+    return await this.db.select().from(conversations)
+      .where(or(eq(conversations.participantA, userId), eq(conversations.participantB, userId)))
+      .orderBy(desc(conversations.lastMessageAt));
+  }
+
+  async getOrCreateConversation(userA: number, userB: number) {
+    const existing = await this.db.select().from(conversations)
+      .where(
+        or(
+          and(eq(conversations.participantA, userA), eq(conversations.participantB, userB)),
+          and(eq(conversations.participantA, userB), eq(conversations.participantB, userA))
+        )
+      );
+    if (existing.length > 0) return existing[0];
+    const [conv] = await this.db.insert(conversations).values({ participantA: userA, participantB: userB }).returning();
+    return conv;
+  }
+
+  async getMessages(conversationId: number, limit = 50, offset = 0) {
+    return await this.db.select().from(directMessages)
+      .where(eq(directMessages.conversationId, conversationId))
+      .orderBy(asc(directMessages.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async createMessage(data: InsertDirectMessage) {
+    const [msg] = await this.db.insert(directMessages).values(data).returning();
+    await this.db.update(conversations).set({ lastMessageAt: new Date() })
+      .where(eq(conversations.id, data.conversationId));
+    return msg;
+  }
+
+  async markMessagesAsRead(conversationId: number, userId: number) {
+    await this.db.update(directMessages).set({ isRead: true })
+      .where(and(
+        eq(directMessages.conversationId, conversationId),
+        not(eq(directMessages.senderId, userId)),
+        eq(directMessages.isRead, false)
+      ));
+  }
+
+  async getUnreadMessageCount(userId: number) {
+    const convs = await this.getConversations(userId);
+    if (convs.length === 0) return 0;
+    const convIds = convs.map(c => c.id);
+    const result = await this.db.select({ count: sql<number>`count(*)` })
+      .from(directMessages)
+      .where(and(
+        inArray(directMessages.conversationId, convIds),
+        not(eq(directMessages.senderId, userId)),
+        eq(directMessages.isRead, false)
+      ));
+    return Number(result[0]?.count || 0);
+  }
+
+  // Notification Preferences
+  async getNotificationPreferences(userId: number) {
+    const results = await this.db.select().from(userNotificationPreferences)
+      .where(eq(userNotificationPreferences.userId, userId));
+    return results[0];
+  }
+
+  async upsertNotificationPreferences(userId: number, prefs: Partial<InsertUserNotificationPreferences>) {
+    const existing = await this.getNotificationPreferences(userId);
+    if (existing) {
+      const [updated] = await this.db.update(userNotificationPreferences)
+        .set(prefs).where(eq(userNotificationPreferences.userId, userId)).returning();
+      return updated;
+    }
+    const [created] = await this.db.insert(userNotificationPreferences)
+      .values({ userId, ...prefs }).returning();
+    return created;
+  }
+
+  // Payment History
+  async getPaymentHistory(userId: number) {
+    return await this.db.select().from(classPurchases)
+      .where(eq(classPurchases.userId, userId))
+      .orderBy(desc(classPurchases.createdAt));
+  }
+
+  // Atomic credit operations
+  async deductClassCredit(userId: number): Promise<User | undefined> {
+    const [user] = await this.db
+      .update(users)
+      .set({ classCredits: sql`${users.classCredits} - 1` })
+      .where(and(eq(users.id, userId), gt(users.classCredits, 0)))
+      .returning();
+    return user || undefined;
+  }
+
+  async refundClassCredit(userId: number): Promise<User | undefined> {
+    const [user] = await this.db
+      .update(users)
+      .set({ classCredits: sql`COALESCE(${users.classCredits}, 0) + 1` })
+      .where(eq(users.id, userId))
+      .returning();
+    return user || undefined;
+  }
+
+  // Atomic class completion (prevents double-complete)
+  async completeClassIfScheduled(classId: number): Promise<Class | undefined> {
+    const [cls] = await this.db
+      .update(classes)
+      .set({ status: "completed" })
+      .where(and(eq(classes.id, classId), eq(classes.status, "scheduled")))
+      .returning();
+    return cls || undefined;
+  }
+
+  // Tutor-specific class query (performance)
+  async getClassesByTutor(tutorId: number): Promise<Class[]> {
+    return await this.db.select().from(classes).where(eq(classes.tutorId, tutorId));
+  }
+
+  // Email Campaign Events
+  async getEmailCampaignEvents(userId: number): Promise<EmailCampaignEvent[]> {
+    return await this.db.select().from(emailCampaignEvents)
+      .where(eq(emailCampaignEvents.userId, userId))
+      .orderBy(desc(emailCampaignEvents.sentAt));
+  }
+
+  async createEmailCampaignEvent(userId: number, step: string): Promise<EmailCampaignEvent> {
+    const [event] = await this.db.insert(emailCampaignEvents)
+      .values({ userId, campaignStep: step })
+      .returning();
+    return event;
+  }
+
+  // CRM
+  async getStudentsCRM(params: { status?: string; search?: string; page?: number; limit?: number }): Promise<{ students: User[]; total: number }> {
+    const conditions = [not(eq(users.userType, "admin")), not(eq(users.userType, "tutor"))];
+    if (params.status) conditions.push(eq(users.userType, params.status));
+    if (params.search) {
+      const s = `%${params.search.toLowerCase()}%`;
+      conditions.push(or(
+        sql`LOWER(${users.firstName} || ' ' || ${users.lastName}) LIKE ${s}`,
+        sql`LOWER(${users.email}) LIKE ${s}`
+      )!);
+    }
+
+    const where = and(...conditions);
+    const countResult = await this.db.select({ count: sql<number>`count(*)` }).from(users).where(where);
+    const total = Number(countResult[0]?.count || 0);
+
+    const page = params.page || 1;
+    const limit = params.limit || 50;
+    const offset = (page - 1) * limit;
+
+    const students = await this.db.select().from(users)
+      .where(where)
+      .orderBy(desc(users.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return { students, total };
+  }
+
+  // Delete User (cascading — delete all related data)
+  async deleteUser(id: number) {
+    await this.db.delete(emailCampaignEvents).where(eq(emailCampaignEvents.userId, id));
+    await this.db.delete(notifications).where(eq(notifications.userId, id));
+    await this.db.delete(achievements).where(eq(achievements.userId, id));
+    await this.db.delete(userProgress).where(eq(userProgress.userId, id));
+    await this.db.delete(reviews).where(eq(reviews.userId, id));
+    await this.db.delete(userNotificationPreferences).where(eq(userNotificationPreferences.userId, id));
+    await this.db.delete(classPurchases).where(eq(classPurchases.userId, id));
+    await this.db.delete(subscriptions).where(eq(subscriptions.userId, id));
+    await this.db.delete(classes).where(eq(classes.userId, id));
+    // Messages: delete messages in conversations, then conversations
+    const userConvs = await this.db.select().from(conversations)
+      .where(or(eq(conversations.participantA, id), eq(conversations.participantB, id)));
+    if (userConvs.length > 0) {
+      const convIds = userConvs.map(c => c.id);
+      await this.db.delete(directMessages).where(inArray(directMessages.conversationId, convIds));
+      await this.db.delete(conversations).where(inArray(conversations.id, convIds));
+    }
+    // Support
+    const userTickets = await this.db.select().from(supportTickets).where(eq(supportTickets.userId, id));
+    if (userTickets.length > 0) {
+      const ticketIds = userTickets.map(t => t.id);
+      await this.db.delete(supportMessages).where(inArray(supportMessages.ticketId, ticketIds));
+      await this.db.delete(supportTickets).where(eq(supportTickets.userId, id));
+    }
+    // AI
+    const userAiConvs = await this.db.select().from(aiConversations).where(eq(aiConversations.userId, id));
+    if (userAiConvs.length > 0) {
+      const aiConvIds = userAiConvs.map(c => c.id);
+      await this.db.delete(aiMessages).where(inArray(aiMessages.conversationId, aiConvIds));
+      await this.db.delete(aiConversations).where(eq(aiConversations.userId, id));
+    }
+    // CRM data
+    await this.db.delete(crmNotes).where(eq(crmNotes.userId, id));
+    await this.db.delete(crmTasks).where(eq(crmTasks.userId, id));
+    await this.db.delete(crmUserTags).where(eq(crmUserTags.userId, id));
+    // Finally delete user
+    await this.db.delete(users).where(eq(users.id, id));
+    return true;
+  }
+
+  // ── CRM Notes ──
+  async getCrmNotes(userId: number): Promise<CrmNote[]> {
+    return await this.db.select().from(crmNotes)
+      .where(eq(crmNotes.userId, userId))
+      .orderBy(desc(crmNotes.createdAt));
+  }
+
+  async createCrmNote(data: InsertCrmNote): Promise<CrmNote> {
+    const [note] = await this.db.insert(crmNotes).values(data).returning();
+    return note;
+  }
+
+  async deleteCrmNote(id: number): Promise<boolean> {
+    const result = await this.db.delete(crmNotes).where(eq(crmNotes.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // ── CRM Tasks ──
+  async getCrmTasks(params: { userId?: number; assignedTo?: number; status?: string }): Promise<CrmTask[]> {
+    const conditions = [];
+    if (params.userId) conditions.push(eq(crmTasks.userId, params.userId));
+    if (params.assignedTo) conditions.push(eq(crmTasks.assignedTo, params.assignedTo));
+    if (params.status) conditions.push(eq(crmTasks.status, params.status));
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+    return await this.db.select().from(crmTasks)
+      .where(where)
+      .orderBy(asc(crmTasks.dueDate));
+  }
+
+  async createCrmTask(data: InsertCrmTask): Promise<CrmTask> {
+    const [task] = await this.db.insert(crmTasks).values(data).returning();
+    return task;
+  }
+
+  async updateCrmTask(id: number, data: Partial<InsertCrmTask & { status: string; completedAt: Date | null }>): Promise<CrmTask | undefined> {
+    const [task] = await this.db.update(crmTasks).set(data).where(eq(crmTasks.id, id)).returning();
+    return task;
+  }
+
+  async deleteCrmTask(id: number): Promise<boolean> {
+    const result = await this.db.delete(crmTasks).where(eq(crmTasks.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // ── CRM Tags ──
+  async getAllCrmTags(): Promise<CrmTag[]> {
+    return await this.db.select().from(crmTags).orderBy(asc(crmTags.name));
+  }
+
+  async createCrmTag(data: InsertCrmTag): Promise<CrmTag> {
+    const [tag] = await this.db.insert(crmTags).values(data).returning();
+    return tag;
+  }
+
+  async deleteCrmTag(id: number): Promise<boolean> {
+    await this.db.delete(crmUserTags).where(eq(crmUserTags.tagId, id));
+    const result = await this.db.delete(crmTags).where(eq(crmTags.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getUserCrmTags(userId: number): Promise<CrmTag[]> {
+    const rows = await this.db
+      .select({ tag: crmTags })
+      .from(crmUserTags)
+      .innerJoin(crmTags, eq(crmUserTags.tagId, crmTags.id))
+      .where(eq(crmUserTags.userId, userId));
+    return rows.map(r => r.tag);
+  }
+
+  async addUserCrmTag(userId: number, tagId: number): Promise<void> {
+    await this.db.insert(crmUserTags).values({ userId, tagId }).onConflictDoNothing();
+  }
+
+  async removeUserCrmTag(userId: number, tagId: number): Promise<void> {
+    await this.db.delete(crmUserTags)
+      .where(and(eq(crmUserTags.userId, userId), eq(crmUserTags.tagId, tagId)));
+  }
+
+  // ── CRM Funnel Metrics ──
+  async getCrmFunnel(): Promise<{ stage: string; count: number }[]> {
+    const result = await this.db
+      .select({
+        stage: users.userType,
+        count: sql<number>`count(*)`,
+      })
+      .from(users)
+      .where(and(not(eq(users.userType, "admin")), not(eq(users.userType, "tutor"))))
+      .groupBy(users.userType);
+    return result.map(r => ({ stage: r.stage, count: Number(r.count) }));
+  }
+
+  // ===== Email Templates =====
+  async getEmailTemplates(): Promise<EmailTemplate[]> {
+    return await this.db.select().from(emailTemplates).orderBy(desc(emailTemplates.createdAt));
+  }
+
+  async getEmailTemplate(id: number): Promise<EmailTemplate | undefined> {
+    const [template] = await this.db.select().from(emailTemplates).where(eq(emailTemplates.id, id));
+    return template;
+  }
+
+  async createEmailTemplate(data: InsertEmailTemplate): Promise<EmailTemplate> {
+    const [template] = await this.db.insert(emailTemplates).values(data).returning();
+    return template;
+  }
+
+  async updateEmailTemplate(id: number, data: Partial<InsertEmailTemplate>): Promise<EmailTemplate | undefined> {
+    const [template] = await this.db.update(emailTemplates).set({ ...data, updatedAt: new Date() }).where(eq(emailTemplates.id, id)).returning();
+    return template;
+  }
+
+  async deleteEmailTemplate(id: number): Promise<boolean> {
+    const result = await this.db.delete(emailTemplates).where(eq(emailTemplates.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // ===== Audience Segments =====
+  async getAudienceSegments(): Promise<AudienceSegment[]> {
+    return await this.db.select().from(audienceSegments).orderBy(desc(audienceSegments.createdAt));
+  }
+
+  async getAudienceSegment(id: number): Promise<AudienceSegment | undefined> {
+    const [segment] = await this.db.select().from(audienceSegments).where(eq(audienceSegments.id, id));
+    return segment;
+  }
+
+  async createAudienceSegment(data: InsertAudienceSegment): Promise<AudienceSegment> {
+    const [segment] = await this.db.insert(audienceSegments).values(data).returning();
+    return segment;
+  }
+
+  async updateAudienceSegment(id: number, data: Partial<InsertAudienceSegment>): Promise<AudienceSegment | undefined> {
+    const [segment] = await this.db.update(audienceSegments).set({ ...data, updatedAt: new Date() }).where(eq(audienceSegments.id, id)).returning();
+    return segment;
+  }
+
+  async deleteAudienceSegment(id: number): Promise<boolean> {
+    const result = await this.db.delete(audienceSegments).where(eq(audienceSegments.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // ===== Campaigns =====
+  async getCampaigns(): Promise<Campaign[]> {
+    return await this.db.select().from(campaigns).orderBy(desc(campaigns.createdAt));
+  }
+
+  async getCampaign(id: number): Promise<Campaign | undefined> {
+    const [campaign] = await this.db.select().from(campaigns).where(eq(campaigns.id, id));
+    return campaign;
+  }
+
+  async createCampaign(data: InsertCampaign): Promise<Campaign> {
+    const [campaign] = await this.db.insert(campaigns).values(data).returning();
+    return campaign;
+  }
+
+  async updateCampaign(id: number, data: Partial<InsertCampaign & { status: string; sentAt: Date }>): Promise<Campaign | undefined> {
+    const [campaign] = await this.db.update(campaigns).set({ ...data, updatedAt: new Date() }).where(eq(campaigns.id, id)).returning();
+    return campaign;
+  }
+
+  async deleteCampaign(id: number): Promise<boolean> {
+    // Only delete draft campaigns
+    const result = await this.db.delete(campaigns).where(and(eq(campaigns.id, id), eq(campaigns.status, "draft")));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // ===== Campaign Recipients =====
+  async getCampaignRecipients(campaignId: number): Promise<CampaignRecipient[]> {
+    return await this.db.select().from(campaignRecipients).where(eq(campaignRecipients.campaignId, campaignId));
+  }
+
+  async createCampaignRecipient(data: InsertCampaignRecipient): Promise<CampaignRecipient> {
+    const [recipient] = await this.db.insert(campaignRecipients).values(data).returning();
+    return recipient;
+  }
+
+  async updateCampaignRecipient(id: number, data: Partial<CampaignRecipient>): Promise<CampaignRecipient | undefined> {
+    const [recipient] = await this.db.update(campaignRecipients).set(data).where(eq(campaignRecipients.id, id)).returning();
+    return recipient;
+  }
+
+  // ===== Offers =====
+  async getOffers(): Promise<Offer[]> {
+    return await this.db.select().from(offers).orderBy(desc(offers.createdAt));
+  }
+
+  async getOffer(id: number): Promise<Offer | undefined> {
+    const [offer] = await this.db.select().from(offers).where(eq(offers.id, id));
+    return offer;
+  }
+
+  async getOfferByCode(code: string): Promise<Offer | undefined> {
+    const [offer] = await this.db.select().from(offers).where(eq(offers.code, code));
+    return offer;
+  }
+
+  async createOffer(data: InsertOffer): Promise<Offer> {
+    const [offer] = await this.db.insert(offers).values(data).returning();
+    return offer;
+  }
+
+  async updateOffer(id: number, data: Partial<InsertOffer>): Promise<Offer | undefined> {
+    const [offer] = await this.db.update(offers).set(data).where(eq(offers.id, id)).returning();
+    return offer;
+  }
+
+  async deleteOffer(id: number): Promise<boolean> {
+    const result = await this.db.delete(offers).where(eq(offers.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async incrementOfferUsage(id: number): Promise<void> {
+    await this.db.update(offers).set({ usedCount: sql`${offers.usedCount} + 1` }).where(eq(offers.id, id));
+  }
+
+  // ===== Communication Log =====
+  async getCommunicationLog(userId: number): Promise<CommunicationLogEntry[]> {
+    return await this.db.select().from(communicationLog)
+      .where(eq(communicationLog.userId, userId))
+      .orderBy(desc(communicationLog.createdAt));
+  }
+
+  async createCommunicationLog(data: InsertCommunicationLog): Promise<CommunicationLogEntry> {
+    const [entry] = await this.db.insert(communicationLog).values(data).returning();
+    return entry;
   }
 }

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { getCurrentUser, logout } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,8 +19,10 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
-import { LogOut, User, Settings, Menu, Sparkles } from "lucide-react";
+import { LogOut, User, Settings, Menu, Sparkles, GraduationCap, MessageCircle, ChevronDown } from "lucide-react";
 import LanguageSwitcher from "./language-switcher";
+import CurrencySwitcher from "./currency-switcher";
+import NotificationBell from "./NotificationBell";
 
 export default function Header() {
   const user = getCurrentUser();
@@ -31,23 +35,42 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/messages/unread"],
+    queryFn: () => apiRequest("GET", "/api/messages/unread").then(r => r.json()),
+    enabled: !!user,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
+  });
+
   const handleLogout = async () => {
     await logout();
-    window.location.href = "/login";
+    window.location.href = "https://www.passport2fluency.com";
   };
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
-  const navLinks = [
+  const isTutor = user?.userType === "tutor" || user?.userType === "admin";
+  const isAdmin = user?.userType === "admin";
+  const unreadMessages = unreadData?.count || 0;
+
+  const primaryLinks = [
     { href: "/home", label: language === 'es' ? 'Inicio' : 'Home' },
     { href: "/tutors", label: language === 'es' ? 'Profesores' : 'Tutors' },
     { href: "/dashboard", label: language === 'es' ? 'Mi Panel' : 'My Dashboard' },
+    ...(isAdmin ? [{ href: "/admin", label: 'Admin' }] : []),
+  ];
+
+  const secondaryLinks = [
     { href: "/ai-practice", label: language === 'es' ? 'Practice Partner' : 'Practice Partner' },
     { href: "/packages", label: language === 'es' ? 'Planes' : 'Plans' },
+    ...(isTutor ? [{ href: "/tutor-portal", label: language === 'es' ? 'Portal Tutor' : 'Tutor Portal' }] : []),
     { href: "/contact", label: t.contact },
   ];
+
+  const navLinks = [...primaryLinks, ...secondaryLinks];
 
   return (
     <header
@@ -73,24 +96,55 @@ export default function Header() {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-6 lg:space-x-8">
-            {navLinks.map((link) => (
+          <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
+            {primaryLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium text-sm ${
-                  link.href === "/ai-practice" ? "flex items-center gap-1" : ""
-                }`}
+                className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium text-sm"
               >
-                {link.href === "/ai-practice" && <Sparkles className="w-3.5 h-3.5 text-[#F59E1C]" />}
                 {link.label}
               </Link>
             ))}
+            {/* More dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1 text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium text-sm">
+                  {language === 'es' ? 'Más' : 'More'}
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-48">
+                {secondaryLinks.map((link) => (
+                  <Link key={link.href} href={link.href}>
+                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
+                      {link.href === "/ai-practice" && <Sparkles className="w-3.5 h-3.5 text-[#F59E1C]" />}
+                      {link.href === "/tutor-portal" && <GraduationCap className="w-3.5 h-3.5 text-[#1C7BB1]" />}
+                      {link.label}
+                    </DropdownMenuItem>
+                  </Link>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
           {/* Desktop User Profile & Login */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <LanguageSwitcher />
+            <CurrencySwitcher />
+            {user && (
+              <Link href="/messages">
+                <Button variant="ghost" size="sm" className="relative h-8 w-8 p-0" aria-label={unreadMessages > 0 ? `${unreadMessages} unread messages` : "Messages"}>
+                  <MessageCircle className="h-4 w-4 text-gray-600" />
+                  {unreadMessages > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full bg-[#1C7BB1] text-white text-[10px] flex items-center justify-center px-1">
+                      {unreadMessages}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            )}
+            {user && <NotificationBell />}
             {user ? (
               <div className="hidden md:flex items-center space-x-3">
                 <DropdownMenu>
@@ -127,7 +181,7 @@ export default function Header() {
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                       <LogOut className="mr-2 h-4 w-4" />
                       {t.logout}
                     </DropdownMenuItem>
@@ -182,15 +236,27 @@ export default function Header() {
                       <SheetClose asChild key={link.href}>
                         <Link href={link.href} className="text-gray-700 hover:text-[#1C7BB1] font-medium text-lg flex items-center gap-2">
                           {link.href === "/ai-practice" && <Sparkles className="w-4 h-4 text-[#F59E1C]" />}
+                          {link.href === "/tutor-portal" && <GraduationCap className="w-4 h-4 text-[#1C7BB1]" />}
                           {link.label}
                         </Link>
                       </SheetClose>
                     ))}
+                    {user && (
+                      <SheetClose asChild>
+                        <Link href="/messages" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-lg flex items-center gap-2">
+                          <MessageCircle className="w-4 h-4 text-[#1C7BB1]" />
+                          {language === 'es' ? 'Mensajes' : 'Messages'}
+                          {unreadMessages > 0 && (
+                            <span className="text-xs bg-[#1C7BB1] text-white px-1.5 py-0.5 rounded-full">{unreadMessages}</span>
+                          )}
+                        </Link>
+                      </SheetClose>
+                    )}
                   </nav>
 
                   <div className="pt-4 border-t">
                     {user ? (
-                      <Button variant="outline" className="w-full" onClick={handleLogout}>
+                      <Button variant="outline" className="w-full text-red-600 border-red-200" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         {t.logout}
                       </Button>

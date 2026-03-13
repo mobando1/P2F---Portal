@@ -3,20 +3,14 @@ import { storage } from "../storage";
 import { TutorManagementService } from "../services/tutor-management";
 import { requireAuth, requireAdmin } from "./auth";
 
-const tutorManagement = new TutorManagementService(
-  process.env.HIGH_LEVEL_API_KEY,
-  process.env.HIGH_LEVEL_LOCATION_ID
-);
+const tutorManagement = new TutorManagementService();
 
 export function registerTutorRoutes(app: Express) {
   // Get tutors (with optional category filters)
   app.get("/api/tutors", async (req, res) => {
     try {
-      const { classType, language, search, minRating } = req.query;
-      let result = await storage.getTutorsByCategory(
-        classType as string | undefined,
-        language as string | undefined
-      );
+      const { search, minRating } = req.query;
+      let result = await storage.getAllTutors();
       if (search && typeof search === "string") {
         const term = search.toLowerCase();
         result = result.filter(t =>

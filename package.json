@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
+    "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^0.10.4",
@@ -53,6 +54,7 @@
     "cmdk": "^1.1.1",
     "connect-pg-simple": "^10.0.0",
     "date-fns": "^3.6.0",
+    "date-fns-tz": "^3.2.0",
     "drizzle-orm": "^0.39.1",
     "drizzle-zod": "^0.7.0",
     "embla-carousel-react": "^8.6.0",
@@ -76,6 +78,7 @@
     "react-intersection-observer": "^10.0.3",
     "react-resizable-panels": "^2.1.7",
     "recharts": "^2.15.2",
+    "resend": "^6.9.3",
     "stripe": "^18.3.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",

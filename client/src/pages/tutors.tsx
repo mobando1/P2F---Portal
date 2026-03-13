@@ -281,6 +281,7 @@ export default function TutorsPage() {
                                 <img
                                   src={tutor.avatar}
                                   alt={tutor.name}
+                                  loading="lazy"
                                   className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                                 />
                               ) : (
@@ -294,7 +295,7 @@ export default function TutorsPage() {
                             <div className="flex-1 min-w-0">
                               <div>
                                 <h3 className="text-lg font-bold text-[#0A4A6E]">{tutor.name}</h3>
-                                <p className="text-sm text-[#1C7BB1] font-medium">{tutor.specialization}</p>
+                                <p className="text-sm text-[#1C7BB1] font-medium">{isEs && tutor.specializationEs ? tutor.specializationEs : tutor.specialization}</p>
                               </div>
 
                               <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-600">
@@ -319,7 +320,7 @@ export default function TutorsPage() {
 
                               {tutor.bio && (
                                 <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                                  {tutor.bio}
+                                  {isEs && tutor.bioEs ? tutor.bioEs : tutor.bio}
                                 </p>
                               )}
 

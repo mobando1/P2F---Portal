@@ -15,6 +15,25 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          router: ["wouter"],
+          query: ["@tanstack/react-query"],
+          ui: [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-avatar",
+            "@radix-ui/react-tooltip",
+          ],
+          charts: ["recharts"],
+          animation: ["framer-motion"],
+        },
+      },
+    },
   },
   server: {
     fs: {

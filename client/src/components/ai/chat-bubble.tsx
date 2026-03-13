@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Bot, User, Volume2 } from "lucide-react";
+import { User, Volume2, VolumeX } from "lucide-react";
 import { GrammarHighlight } from "./grammar-highlight";
+import { LingoMascot } from "./mascot";
 
 interface GrammarCorrection {
   original: string;
@@ -13,10 +14,12 @@ interface ChatBubbleProps {
   content: string;
   corrections?: GrammarCorrection[] | null;
   onSpeak?: (text: string) => void;
+  isSpeaking?: boolean;
   isLatest?: boolean;
+  onSaveCorrection?: (correction: GrammarCorrection) => void;
 }
 
-export function ChatBubble({ role, content, corrections, onSpeak, isLatest }: ChatBubbleProps) {
+export function ChatBubble({ role, content, corrections, onSpeak, isSpeaking, isLatest, onSaveCorrection }: ChatBubbleProps) {
   const isUser = role === "user";
 
   return (
@@ -31,10 +34,10 @@ export function ChatBubble({ role, content, corrections, onSpeak, isLatest }: Ch
         className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ring-2 ring-offset-1 ${
           isUser
             ? "bg-gradient-to-br from-blue-600 to-blue-700 ring-blue-200"
-            : "bg-gradient-to-br from-amber-400 to-orange-500 ring-amber-200"
+            : "bg-gradient-to-br from-amber-50 to-orange-50 ring-amber-200"
         }`}
       >
-        {isUser ? <User className="w-3.5 h-3.5 text-white" /> : <Bot className="w-3.5 h-3.5 text-white" />}
+        {isUser ? <User className="w-3.5 h-3.5 text-white" /> : <LingoMascot size="sm" />}
       </div>
 
       {/* Bubble */}
@@ -46,20 +49,33 @@ export function ChatBubble({ role, content, corrections, onSpeak, isLatest }: Ch
         }`}
       >
         {!isUser && corrections && corrections.length > 0 ? (
-          <GrammarHighlight content={content} corrections={corrections} />
+          <GrammarHighlight content={content} corrections={corrections} onSaveCorrection={onSaveCorrection} />
         ) : (
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">
+            {isUser ? content : content.replace(/\[vocab:\s*"[^"]+"\s*=\s*"[^"]+"\]/g, "").trim()}
+          </p>
         )}
 
         {/* Speak button for AI messages */}
         {!isUser && onSpeak && (
           <button
             onClick={() => onSpeak(content)}
-            aria-label="Listen to message"
-            className="mt-2 flex items-center gap-1.5 text-xs text-gray-400 hover:text-blue-600 transition-colors group"
+            aria-label={isSpeaking ? "Stop speaking" : "Listen to message"}
+            className={`mt-2 flex items-center gap-1.5 text-xs transition-colors group ${
+              isSpeaking ? "text-blue-600" : "text-gray-400 hover:text-blue-600"
+            }`}
           >
-            <Volume2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-            <span>Listen</span>
+            {isSpeaking ? (
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              >
+                <VolumeX className="w-3.5 h-3.5" />
+              </motion.div>
+            ) : (
+              <Volume2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+            )}
+            <span>{isSpeaking ? "Stop" : "Listen"}</span>
           </button>
         )}
       </div>

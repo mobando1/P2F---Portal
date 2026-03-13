@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().url().optional(),
-  SESSION_SECRET: z.string().min(32).optional(),
+  DATABASE_URL: z.string().url(),
+  SESSION_SECRET: z.string().min(32),
   STRIPE_SECRET_KEY: z.string().optional(),
   TESTING_STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
@@ -10,9 +10,9 @@ const envSchema = z.object({
   STRIPE_PRICE_ID_PLAN_1: z.string().optional(),
   STRIPE_PRICE_ID_PLAN_2: z.string().optional(),
   STRIPE_PRICE_ID_PLAN_3: z.string().optional(),
-  HIGH_LEVEL_API_KEY: z.string().optional(),
-  HIGH_LEVEL_LOCATION_ID: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().default(3000),
 });

@@ -36,7 +36,6 @@ export const getQueryFn: <T>(options: {
     
     // Build URL from queryKey segments: ['/api/dashboard', userId] becomes '/api/dashboard/userId'
     const url = queryKey.join('/');
-    console.log('Fetching URL:', url);
     
     const res = await fetch(url, {
       credentials: "include",
@@ -61,8 +60,12 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchOnWindowFocus: true,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 2,
+      staleTime: 2 * 60 * 1000, // 2 minutes
+      retry: (failureCount, error) => {
+        // Don't retry on client errors (4xx) - they won't recover
+        if (error instanceof Error && /^4\d{2}:/.test(error.message)) return false;
+        return failureCount < 2;
+      },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     },
     mutations: {

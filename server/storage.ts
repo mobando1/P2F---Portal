@@ -7,7 +7,29 @@ import {
   type ContactSubmission, type InsertContactSubmission,
   type Review, type InsertReview,
   type AiConversation, type InsertAiConversation,
-  type AiMessage, type InsertAiMessage
+  type AiMessage, type InsertAiMessage,
+  type TutorAvailability, type InsertTutorAvailability,
+  type TutorAvailabilityException, type InsertTutorAvailabilityException,
+  type Notification, type InsertNotification,
+  type Achievement, type InsertAchievement,
+  type SupportTicket, type InsertSupportTicket,
+  type SupportMessage, type InsertSupportMessage,
+  type Conversation, type InsertConversation,
+  type DirectMessage, type InsertDirectMessage,
+  type UserNotificationPreferences, type InsertUserNotificationPreferences,
+  type ClassPurchase,
+  type EmailCampaignEvent, type InsertEmailCampaignEvent,
+  type CrmNote, type InsertCrmNote,
+  type CrmTask, type InsertCrmTask,
+  type CrmTag, type InsertCrmTag,
+  type EmailTemplate, type InsertEmailTemplate,
+  type AudienceSegment, type InsertAudienceSegment,
+  type Campaign, type InsertCampaign,
+  type CampaignRecipient, type InsertCampaignRecipient,
+  type Offer, type InsertOffer,
+  type CommunicationLogEntry, type InsertCommunicationLog,
+  type AiStudentProfile, type InsertAiStudentProfile,
+  type AiSavedCorrection, type InsertAiSavedCorrection,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -15,7 +37,6 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  getUserByHighLevelContactId(contactId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
 
@@ -31,6 +52,7 @@ export interface IStorage {
   // Tutors
   getAllTutors(): Promise<Tutor[]>;
   getTutor(id: number): Promise<Tutor | undefined>;
+  getTutorByUserId(userId: number): Promise<Tutor | undefined>;
   getTutorsByCategory(classType?: string, languageTaught?: string): Promise<Tutor[]>;
   createTutor(tutor: InsertTutor): Promise<Tutor>;
   updateTutor(id: number, data: Partial<InsertTutor>): Promise<Tutor | undefined>;
@@ -45,6 +67,8 @@ export interface IStorage {
 
   // Classes
   getAllClasses(): Promise<Class[]>;
+  getClassById(id: number): Promise<Class | undefined>;
+  getScheduledClasses(): Promise<Class[]>;
   getUserClasses(userId: number): Promise<Class[]>;
   getUpcomingClasses(userId: number): Promise<Class[]>;
   createClass(classData: InsertClass): Promise<Class>;
@@ -74,6 +98,113 @@ export interface IStorage {
   incrementAiUsage(userId: number): Promise<void>;
   resetAiUsage(userId: number): Promise<void>;
 
+  // AI Student Profile & Progress
+  getAiStudentProfile(userId: number): Promise<any>;
+  upsertAiStudentProfile(userId: number, data: any): Promise<any>;
+  getAiProgressStats(userId: number): Promise<any>;
+
+  // AI Saved Corrections
+  saveAiCorrection(data: any): Promise<any>;
+  getAiSavedCorrections(userId: number): Promise<any[]>;
+  deleteAiCorrection(id: number, userId: number): Promise<void>;
+
+  // AI Vocabulary
+  saveAiVocabulary(data: { userId: number; messageId?: number | null; word: string; translation: string; context?: string | null; language: string }): Promise<any>;
+  getAiVocabulary(userId: number): Promise<any[]>;
+  deleteAiVocabulary(id: number, userId: number): Promise<void>;
+  updateAiVocabularyMastery(id: number, userId: number, mastery: number): Promise<any>;
+
+  // Tutor Availability
+  getTutorAvailability(tutorId: number): Promise<TutorAvailability[]>;
+  setTutorAvailability(tutorId: number, slots: InsertTutorAvailability[]): Promise<TutorAvailability[]>;
+  deleteTutorAvailability(tutorId: number): Promise<void>;
+
+  // Availability Exceptions
+  getTutorExceptions(tutorId: number, startDate: Date, endDate: Date): Promise<TutorAvailabilityException[]>;
+  createTutorException(exception: InsertTutorAvailabilityException): Promise<TutorAvailabilityException>;
+  deleteTutorException(id: number, tutorId?: number): Promise<boolean>;
+
+  // Conflict Detection
+  getTutorClassesForDate(tutorId: number, date: Date): Promise<Class[]>;
+  checkConflict(tutorId: number, scheduledAt: Date, duration: number): Promise<boolean>;
+
+  // Notifications
+  getNotifications(userId: number): Promise<Notification[]>;
+  createNotification(data: InsertNotification): Promise<Notification>;
+  markNotificationRead(id: number, userId?: number): Promise<boolean>;
+  markAllNotificationsRead(userId: number): Promise<void>;
+  getUnreadNotificationCount(userId: number): Promise<number>;
+
+  // Achievements
+  getAchievements(userId: number): Promise<Achievement[]>;
+  createAchievement(data: InsertAchievement): Promise<Achievement>;
+  hasAchievement(userId: number, type: string): Promise<boolean>;
+
+  // Support Tickets
+  createSupportTicket(data: InsertSupportTicket): Promise<SupportTicket>;
+  getSupportTickets(userId?: number): Promise<SupportTicket[]>;
+  getSupportTicket(id: number): Promise<SupportTicket | undefined>;
+  updateSupportTicket(id: number, data: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined>;
+  getSupportMessages(ticketId: number): Promise<SupportMessage[]>;
+  createSupportMessage(data: InsertSupportMessage): Promise<SupportMessage>;
+
+  // Direct Messaging
+  getConversations(userId: number): Promise<Conversation[]>;
+  getOrCreateConversation(userA: number, userB: number): Promise<Conversation>;
+  getMessages(conversationId: number, limit?: number, offset?: number): Promise<DirectMessage[]>;
+  createMessage(data: InsertDirectMessage): Promise<DirectMessage>;
+  markMessagesAsRead(conversationId: number, userId: number): Promise<void>;
+  getUnreadMessageCount(userId: number): Promise<number>;
+
+  // Notification Preferences
+  getNotificationPreferences(userId: number): Promise<UserNotificationPreferences | undefined>;
+  upsertNotificationPreferences(userId: number, prefs: Partial<InsertUserNotificationPreferences>): Promise<UserNotificationPreferences>;
+
+  // Payment History
+  getPaymentHistory(userId: number): Promise<ClassPurchase[]>;
+
+  // Atomic credit operations
+  deductClassCredit(userId: number): Promise<User | undefined>;
+  refundClassCredit(userId: number): Promise<User | undefined>;
+
+  // Atomic class completion (prevents double-complete)
+  completeClassIfScheduled(classId: number): Promise<Class | undefined>;
+
+  // Tutor-specific class query (performance)
+  getClassesByTutor(tutorId: number): Promise<Class[]>;
+
+  // Email Campaign Events
+  getEmailCampaignEvents(userId: number): Promise<EmailCampaignEvent[]>;
+  createEmailCampaignEvent(userId: number, step: string): Promise<EmailCampaignEvent>;
+
+  // CRM
+  getStudentsCRM(params: { status?: string; search?: string; page?: number; limit?: number }): Promise<{ students: User[]; total: number }>;
+
+  // CRM Notes
+  getCrmNotes(userId: number): Promise<CrmNote[]>;
+  createCrmNote(data: InsertCrmNote): Promise<CrmNote>;
+  deleteCrmNote(id: number): Promise<boolean>;
+
+  // CRM Tasks
+  getCrmTasks(params: { userId?: number; assignedTo?: number; status?: string }): Promise<CrmTask[]>;
+  createCrmTask(data: InsertCrmTask): Promise<CrmTask>;
+  updateCrmTask(id: number, data: Partial<InsertCrmTask & { status: string; completedAt: Date | null }>): Promise<CrmTask | undefined>;
+  deleteCrmTask(id: number): Promise<boolean>;
+
+  // CRM Tags
+  getAllCrmTags(): Promise<CrmTag[]>;
+  createCrmTag(data: InsertCrmTag): Promise<CrmTag>;
+  deleteCrmTag(id: number): Promise<boolean>;
+  getUserCrmTags(userId: number): Promise<CrmTag[]>;
+  addUserCrmTag(userId: number, tagId: number): Promise<void>;
+  removeUserCrmTag(userId: number, tagId: number): Promise<void>;
+
+  // CRM Metrics
+  getCrmFunnel(): Promise<{ stage: string; count: number }[]>;
+
+  // Delete User
+  deleteUser(id: number): Promise<boolean>;
+
   // AI Admin Stats
   getAiAdminStats(): Promise<{
     totalConversations: number;
@@ -87,6 +218,45 @@ export interface IStorage {
       lastActive: Date | null;
     }>;
   }>;
+
+  // Email Templates
+  getEmailTemplates(): Promise<EmailTemplate[]>;
+  getEmailTemplate(id: number): Promise<EmailTemplate | undefined>;
+  createEmailTemplate(data: InsertEmailTemplate): Promise<EmailTemplate>;
+  updateEmailTemplate(id: number, data: Partial<InsertEmailTemplate>): Promise<EmailTemplate | undefined>;
+  deleteEmailTemplate(id: number): Promise<boolean>;
+
+  // Audience Segments
+  getAudienceSegments(): Promise<AudienceSegment[]>;
+  getAudienceSegment(id: number): Promise<AudienceSegment | undefined>;
+  createAudienceSegment(data: InsertAudienceSegment): Promise<AudienceSegment>;
+  updateAudienceSegment(id: number, data: Partial<InsertAudienceSegment>): Promise<AudienceSegment | undefined>;
+  deleteAudienceSegment(id: number): Promise<boolean>;
+
+  // Campaigns
+  getCampaigns(): Promise<Campaign[]>;
+  getCampaign(id: number): Promise<Campaign | undefined>;
+  createCampaign(data: InsertCampaign): Promise<Campaign>;
+  updateCampaign(id: number, data: Partial<InsertCampaign & { status: string; sentAt: Date }>): Promise<Campaign | undefined>;
+  deleteCampaign(id: number): Promise<boolean>;
+
+  // Campaign Recipients
+  getCampaignRecipients(campaignId: number): Promise<CampaignRecipient[]>;
+  createCampaignRecipient(data: InsertCampaignRecipient): Promise<CampaignRecipient>;
+  updateCampaignRecipient(id: number, data: Partial<CampaignRecipient>): Promise<CampaignRecipient | undefined>;
+
+  // Offers
+  getOffers(): Promise<Offer[]>;
+  getOffer(id: number): Promise<Offer | undefined>;
+  getOfferByCode(code: string): Promise<Offer | undefined>;
+  createOffer(data: InsertOffer): Promise<Offer>;
+  updateOffer(id: number, data: Partial<InsertOffer>): Promise<Offer | undefined>;
+  deleteOffer(id: number): Promise<boolean>;
+  incrementOfferUsage(id: number): Promise<void>;
+
+  // Communication Log
+  getCommunicationLog(userId: number): Promise<CommunicationLogEntry[]>;
+  createCommunicationLog(data: InsertCommunicationLog): Promise<CommunicationLogEntry>;
 }
 
 /** Strip password from user object before sending to client */
@@ -116,6 +286,27 @@ export class MemStorage implements IStorage {
   private aiMessagesMap: Map<number, AiMessage>;
   private currentAiConversationId: number;
   private currentAiMessageId: number;
+  private tutorAvailabilityMap: Map<number, TutorAvailability>;
+  private currentTutorAvailabilityId: number;
+  private tutorAvailabilityExceptionsMap: Map<number, TutorAvailabilityException>;
+  private currentTutorAvailabilityExceptionId: number;
+  private notificationsMap: Map<number, Notification>;
+  private currentNotificationId: number;
+  private achievementsMap: Map<number, Achievement>;
+  private currentAchievementId: number;
+  private supportTicketsMap: Map<number, SupportTicket>;
+  private currentSupportTicketId: number;
+  private supportMessagesMap: Map<number, SupportMessage>;
+  private currentSupportMessageId: number;
+  private conversationsMap: Map<number, Conversation>;
+  private currentConversationId: number;
+  private directMessagesMap: Map<number, DirectMessage>;
+  private currentDirectMessageId: number;
+  private notifPrefsMap: Map<number, UserNotificationPreferences>;
+  private currentNotifPrefsId: number;
+  private classPurchasesMap: Map<number, ClassPurchase>;
+  private campaignEventsMap: Map<number, EmailCampaignEvent>;
+  private currentCampaignEventId: number;
   private initialized: Promise<void>;
 
   constructor() {
@@ -139,16 +330,67 @@ export class MemStorage implements IStorage {
     this.aiMessagesMap = new Map();
     this.currentAiConversationId = 1;
     this.currentAiMessageId = 1;
+    this.tutorAvailabilityMap = new Map();
+    this.currentTutorAvailabilityId = 1;
+    this.tutorAvailabilityExceptionsMap = new Map();
+    this.currentTutorAvailabilityExceptionId = 1;
+    this.notificationsMap = new Map();
+    this.currentNotificationId = 1;
+    this.achievementsMap = new Map();
+    this.currentAchievementId = 1;
+    this.supportTicketsMap = new Map();
+    this.currentSupportTicketId = 1;
+    this.supportMessagesMap = new Map();
+    this.currentSupportMessageId = 1;
+    this.conversationsMap = new Map();
+    this.currentConversationId = 1;
+    this.directMessagesMap = new Map();
+    this.currentDirectMessageId = 1;
+    this.notifPrefsMap = new Map();
+    this.currentNotifPrefsId = 1;
+    this.classPurchasesMap = new Map();
+    this.campaignEventsMap = new Map();
+    this.currentCampaignEventId = 1;
 
     this.initialized = this.initializeData();
   }
 
   private async initializeData() {
     const hashedPassword = await bcrypt.hash("password123", 12);
+    const adminPassword = await bcrypt.hash("admin123", 12);
 
-    // Test user linked with High Level
+    // Admin user
+    const adminUser: User = {
+      id: this.currentUserId++,
+      username: "admin_p2f",
+      email: "admin@p2f.com",
+      password: adminPassword,
+      firstName: "Admin",
+      lastName: "P2F",
+      phone: null,
+      level: "A1",
+      avatar: null,
+      userType: "admin",
+      trialCompleted: false,
+      classCredits: 0,
+      trialTutorId: null,
+      stripeCustomerId: null,
+      aiSubscriptionActive: false,
+      aiMessagesUsed: 0,
+      aiMessagesResetAt: null,
+      timezone: null,
+      currency: "USD",
+      profileImage: null,
+      autoconfirmMode: "all",
+      calendarConnected: false,
+      lastActivityAt: null,
+      createdAt: new Date(),
+    };
+    this.users.set(adminUser.id, adminUser);
+
+    // Test user
     const user: User = {
-      id: 1,
+      id: this.currentUserId++,
       username: "juan_sanchez",
       email: "juan.sanchez@example.com",
       password: hashedPassword,
@@ -160,12 +402,17 @@ export class MemStorage implements IStorage {
       userType: "customer",
       trialCompleted: true,
       classCredits: 8,
-      highLevelContactId: "TEST_CONTACT_123",
       trialTutorId: null,
       stripeCustomerId: null,
       aiSubscriptionActive: false,
       aiMessagesUsed: 0,
       aiMessagesResetAt: null,
+      timezone: "America/New_York",
+      currency: "USD",
+      profileImage: null,
+      autoconfirmMode: "all",
+      calendarConnected: false,
+      lastActivityAt: new Date(),
       createdAt: new Date(),
     };
     this.users.set(1, user);
@@ -183,12 +430,17 @@ export class MemStorage implements IStorage {
       userType: "customer",
       trialCompleted: true,
       classCredits: 12,
-      highLevelContactId: "MARIA_CONTACT_456",
       trialTutorId: null,
       stripeCustomerId: null,
       aiSubscriptionActive: false,
       aiMessagesUsed: 0,
       aiMessagesResetAt: null,
+      timezone: "America/New_York",
+      currency: "USD",
+      profileImage: null,
+      autoconfirmMode: "all",
+      calendarConnected: false,
+      lastActivityAt: new Date(),
       createdAt: new Date(),
     };
     this.users.set(2, user2);
@@ -215,12 +467,13 @@ export class MemStorage implements IStorage {
         email: "carolsur191919@gmail.com",
         phone: null,
         avatar: "/attached_assets/teachers/carolina-perilla.jpg",
-        highLevelContactId: "LuoLdvMdaZWRkidLCeQri",
-        highLevelCalendarId: "R5AR05D5vU38A6wUS0R7",
+
         createdAt: new Date(),
         isActive: true,
         specialization: "Lead Instructor • Bilingual Education",
+        specializationEs: "Instructora Principal • Educación Bilingüe",
         bio: "International Relations graduate with a Master's in English Teaching Methodology and 15+ years of experience. Currently pursuing a Doctorate in Educational Sciences. Specializes in bilingual education and cross-cultural communication. Trilingual (Spanish/English C1/French B2).",
+        bioEs: "Graduada en Relaciones Internacionales con Maestría en Metodología de Enseñanza de Inglés y más de 15 años de experiencia. Especialista en educación bilingüe y comunicación intercultural.",
         rating: "4.9",
         reviewCount: 156,
         hourlyRate: "$35.00",
@@ -231,6 +484,7 @@ export class MemStorage implements IStorage {
         languages: ["Spanish", "English", "French"],
         certifications: ["M.A. English Teaching Methodology", "Doctorate Student Educational Sciences", "International Relations Graduate"],
         yearsOfExperience: 15,
+        userId: null,
       },
       {
         id: 2,
@@ -238,12 +492,13 @@ export class MemStorage implements IStorage {
         email: "evelyn@passport2fluency.com",
         phone: null,
         avatar: "/attached_assets/teachers/evelyn-salcedo.jpg",
-        highLevelContactId: "BrcSUKNCvlqeJUqd8l6",
-        highLevelCalendarId: null,
+
         createdAt: new Date(),
         isActive: true,
         specialization: "Spanish Language Specialist • Cultural Connection",
+        specializationEs: "Especialista en Español • Conexión Cultural",
         bio: "Passionate about languages and connecting people across cultures. 5+ years of experience teaching Spanish and English to children, youth, and adults. Helps students discover and enjoy Spanish through natural, practical, and fluent learning methods.",
+        bioEs: "Apasionada por los idiomas y por conectar personas entre culturas. Más de 5 años de experiencia enseñando español e inglés.",
         rating: "4.9",
         reviewCount: 98,
         hourlyRate: "$30.00",
@@ -254,6 +509,7 @@ export class MemStorage implements IStorage {
         languages: ["Spanish", "English"],
         certifications: ["Cultural Connection Expert", "Natural Language Learning Specialist", "Multi-Age Teaching Certified"],
         yearsOfExperience: 5,
+        userId: null,
       },
       {
         id: 3,
@@ -261,12 +517,13 @@ export class MemStorage implements IStorage {
         email: "coach@passport2fluency.com",
         phone: "(210) 201-4490",
         avatar: "/attached_assets/teachers/diego-felipe-rodriguez.jpg",
-        highLevelContactId: "97rAcKTET2Y8pXmnE7",
-        highLevelCalendarId: null,
+
         createdAt: new Date(),
         isActive: true,
         specialization: "Spanish Instructor & Education Specialist",
+        specializationEs: "Instructor de Español y Especialista en Educación",
         bio: "Physical Education professor with a Master's in Physical Culture Pedagogy and currently pursuing a PhD in Education. Expert in creating engaging, active learning environments for Spanish instruction with innovative methodologies.",
+        bioEs: "Profesor de Educación Física con Maestría en Pedagogía de Cultura Física. Experto en crear ambientes de aprendizaje dinámicos y participativos.",
         rating: "4.8",
         reviewCount: 167,
         hourlyRate: "$32.00",
@@ -277,6 +534,7 @@ export class MemStorage implements IStorage {
         languages: ["Spanish", "English"],
         certifications: ["M.A. Physical Culture Pedagogy", "PhD Student in Education", "Spanish & Physical Education Specialist"],
         yearsOfExperience: 8,
+        userId: null,
       },
       {
         id: 4,
@@ -284,12 +542,13 @@ export class MemStorage implements IStorage {
         email: "gloria@passport2fluency.com",
         phone: "(312) 312-1826",
         avatar: "/attached_assets/teachers/gloria-cardona.jpg",
-        highLevelContactId: "FVFbwsXbe6LdJKAJetJye",
-        highLevelCalendarId: null,
+
         createdAt: new Date(),
         isActive: true,
         specialization: "Children's Specialist • Kids Spanish Expert",
+        specializationEs: "Especialista en Niños • Experta en Español Infantil",
         bio: "Elementary education specialist with 8+ years making Spanish fun for kids. Expert in interactive games and storytelling methods that engage children and make language learning an exciting adventure.",
+        bioEs: "Especialista en educación primaria con más de 8 años haciendo que el español sea divertido para los niños.",
         rating: "4.9",
         reviewCount: 142,
         hourlyRate: "$28.00",
@@ -300,6 +559,7 @@ export class MemStorage implements IStorage {
         languages: ["Spanish", "English"],
         certifications: ["Elementary Education Specialist", "Kids Spanish Expert", "Interactive Learning Specialist"],
         yearsOfExperience: 8,
+        userId: null,
       },
       {
         id: 5,
@@ -307,12 +567,13 @@ export class MemStorage implements IStorage {
         email: "johanna@passport2fluency.com",
         phone: null,
         avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face",
-        highLevelContactId: "zTpvGMpxRnIM5gKqz3kws",
-        highLevelCalendarId: null,
+
         createdAt: new Date(),
         isActive: true,
         specialization: "Cultural Immersion Expert • Anthropology",
+        specializationEs: "Experta en Inmersión Cultural • Antropología",
         bio: "Anthropology graduate from Universidad Nacional specializing in Colombian and Latin American culture. Helps students understand regional dialects, customs, and cultural nuances for authentic Spanish immersion.",
+        bioEs: "Graduada en Antropología especializada en cultura colombiana y latinoamericana. Ayuda a los estudiantes a comprender dialectos regionales y matices culturales.",
         rating: "4.8",
         reviewCount: 87,
         hourlyRate: "$30.00",
@@ -323,6 +584,7 @@ export class MemStorage implements IStorage {
         languages: ["Spanish", "English"],
         certifications: ["B.A. Anthropology Universidad Nacional", "Cultural Immersion Expert", "Regional Dialects Specialist"],
         yearsOfExperience: 6,
+        userId: null,
       }
     ];
 
@@ -331,7 +593,7 @@ export class MemStorage implements IStorage {
     });
     this.currentTutorId = 6;
 
-    // Test classes with High Level linking
+    // Test classes
     const classData = [
       {
         id: 1,
@@ -344,9 +606,7 @@ export class MemStorage implements IStorage {
         status: "scheduled" as const,
         isTrial: false,
         classCategory: "adults-spanish",
-        meetingLink: "https://meet.google.com/abc-defg-hij",
-        highLevelAppointmentId: "APPT_TEST_001",
-        highLevelContactId: "TEST_CONTACT_123",
+        meetingLink: "https://meet.jit.si/P2F-Carolina-Perilla-class1",
         createdAt: new Date(),
       },
       {
@@ -360,9 +620,7 @@ export class MemStorage implements IStorage {
         status: "scheduled" as const,
         isTrial: false,
         classCategory: "adults-spanish",
-        meetingLink: "https://meet.google.com/klm-nopq-rst",
-        highLevelAppointmentId: "APPT_TEST_002",
-        highLevelContactId: "MARIA_CONTACT_456",
+        meetingLink: "https://meet.jit.si/P2F-Evelyn-Salcedo-class2",
         createdAt: new Date(),
       },
       {
@@ -376,9 +634,7 @@ export class MemStorage implements IStorage {
         status: "completed" as const,
         isTrial: false,
         classCategory: "adults-spanish",
-        meetingLink: "https://meet.google.com/uvw-xyza-bcd",
-        highLevelAppointmentId: "APPT_TEST_003",
-        highLevelContactId: "TEST_CONTACT_123",
+        meetingLink: "https://meet.jit.si/P2F-Diego-Rodriguez-class3",
         createdAt: new Date(),
       }
     ];
@@ -436,11 +692,6 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.email === email);
   }
 
-  async getUserByHighLevelContactId(contactId: string): Promise<User | undefined> {
-    await this.ensureInitialized();
-    return Array.from(this.users.values()).find(user => user.highLevelContactId === contactId);
-  }
-
   async createUser(insertUser: InsertUser): Promise<User> {
     await this.ensureInitialized();
     const id = this.currentUserId++;
@@ -456,12 +707,17 @@ export class MemStorage implements IStorage {
       userType: insertUser.userType || "student",
       trialCompleted: insertUser.trialCompleted || false,
       classCredits: insertUser.classCredits || 0,
-      highLevelContactId: insertUser.highLevelContactId || null,
       trialTutorId: insertUser.trialTutorId || null,
       stripeCustomerId: insertUser.stripeCustomerId || null,
       aiSubscriptionActive: insertUser.aiSubscriptionActive || false,
       aiMessagesUsed: insertUser.aiMessagesUsed || 0,
-      aiMessagesResetAt: insertUser.aiMessagesResetAt || null
+      aiMessagesResetAt: insertUser.aiMessagesResetAt || null,
+      timezone: insertUser.timezone || "America/New_York",
+      currency: insertUser.currency || "USD",
+      profileImage: insertUser.profileImage || null,
+      autoconfirmMode: insertUser.autoconfirmMode || "all",
+      calendarConnected: insertUser.calendarConnected || false,
+      lastActivityAt: new Date(),
     };
     this.users.set(id, user);
     return user;
@@ -536,6 +792,11 @@ export class MemStorage implements IStorage {
     return this.tutors.get(id);
   }
 
+  async getTutorByUserId(userId: number): Promise<Tutor | undefined> {
+    await this.ensureInitialized();
+    return Array.from(this.tutors.values()).find(t => t.userId === userId);
+  }
+
   async createTutor(tutorData: InsertTutor): Promise<Tutor> {
     await this.ensureInitialized();
     const id = this.currentTutorId++;
@@ -544,6 +805,8 @@ export class MemStorage implements IStorage {
       id,
       createdAt: new Date(),
       bio: tutorData.bio || null,
+      bioEs: tutorData.bioEs || null,
+      specializationEs: tutorData.specializationEs || null,
       avatar: tutorData.avatar || null,
       rating: tutorData.rating || "5.00",
       reviewCount: tutorData.reviewCount || 0,
@@ -551,8 +814,7 @@ export class MemStorage implements IStorage {
       classType: tutorData.classType || "adults",
       languageTaught: tutorData.languageTaught || "spanish",
       phone: tutorData.phone || null,
-      highLevelContactId: tutorData.highLevelContactId || null,
-      highLevelCalendarId: tutorData.highLevelCalendarId || null,
+      userId: tutorData.userId || null,
       yearsOfExperience: tutorData.yearsOfExperience || 0,
       country: tutorData.country || null,
       timezone: tutorData.timezone || null,
@@ -567,6 +829,16 @@ export class MemStorage implements IStorage {
   async getAllClasses(): Promise<Class[]> {
     await this.ensureInitialized();
     return Array.from(this.classes.values());
+  }
+
+  async getClassById(id: number): Promise<Class | undefined> {
+    await this.ensureInitialized();
+    return this.classes.get(id);
+  }
+
+  async getScheduledClasses(): Promise<Class[]> {
+    await this.ensureInitialized();
+    return Array.from(this.classes.values()).filter(c => c.status === "scheduled");
   }
 
   async getUserClasses(userId: number): Promise<Class[]> {
@@ -601,8 +873,6 @@ export class MemStorage implements IStorage {
       isTrial: classData.isTrial || false,
       classCategory: classData.classCategory || null,
       meetingLink: classData.meetingLink || null,
-      highLevelContactId: classData.highLevelContactId || null,
-      highLevelAppointmentId: classData.highLevelAppointmentId || null
     };
     this.classes.set(id, classItem);
     return classItem;
@@ -762,6 +1032,7 @@ export class MemStorage implements IStorage {
       title: data.title || "New Conversation",
       language: data.language || "spanish",
       mode: data.mode || "chat",
+      scenario: data.scenario || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -837,6 +1108,355 @@ export class MemStorage implements IStorage {
     }
   }
 
+  // AI Student Profile & Progress (in-memory stubs)
+  private aiStudentProfilesMap = new Map<number, any>();
+  private aiSavedCorrectionsMap = new Map<number, any>();
+  private currentAiCorrectionId = 1;
+  private aiVocabularyMap = new Map<number, any>();
+  private currentAiVocabularyId = 1;
+
+  async getAiStudentProfile(userId: number): Promise<any> {
+    return this.aiStudentProfilesMap.get(userId) || null;
+  }
+
+  async upsertAiStudentProfile(userId: number, data: any): Promise<any> {
+    const existing = this.aiStudentProfilesMap.get(userId) || { userId };
+    const updated = { ...existing, ...data, updatedAt: new Date() };
+    this.aiStudentProfilesMap.set(userId, updated);
+    return updated;
+  }
+
+  async getAiProgressStats(userId: number): Promise<any> {
+    await this.ensureInitialized();
+    const allConvos = Array.from(this.aiConversationsMap.values());
+    const convos = allConvos.filter((c: AiConversation) => c.userId === userId);
+    const convoIds = new Set(convos.map((c: AiConversation) => c.id));
+    const allMsgs = Array.from(this.aiMessagesMap.values());
+    const userMsgs = allMsgs.filter(
+      (m: AiMessage) => convoIds.has(m.conversationId) && m.role === "user"
+    );
+    const correctionMsgs = allMsgs.filter(
+      (m: AiMessage) => convoIds.has(m.conversationId) && m.corrections
+    );
+    const allCorrections = correctionMsgs.flatMap((m: any) => m.corrections || []);
+
+    const errorMap = new Map<string, number>();
+    for (const c of allCorrections) {
+      const key = `${c.original} → ${c.corrected}`;
+      errorMap.set(key, (errorMap.get(key) || 0) + 1);
+    }
+    const topErrors = Array.from(errorMap.entries())
+      .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([error, count]: [string, number]) => ({ error, count }));
+
+    return {
+      totalConversations: convos.length,
+      totalMessages: userMsgs.length,
+      totalCorrections: allCorrections.length,
+      topErrors,
+      languageBreakdown: {
+        spanish: convos.filter((c: AiConversation) => c.language === "spanish").length,
+        english: convos.filter((c: AiConversation) => c.language === "english").length,
+      },
+      modeBreakdown: {
+        chat: convos.filter((c: AiConversation) => c.mode === "chat").length,
+        voice: convos.filter((c: AiConversation) => c.mode === "voice").length,
+        grammar: convos.filter((c: AiConversation) => c.mode === "grammar").length,
+      },
+    };
+  }
+
+  async saveAiCorrection(data: any): Promise<any> {
+    const id = this.currentAiCorrectionId++;
+    const correction = { id, ...data, createdAt: new Date() };
+    this.aiSavedCorrectionsMap.set(id, correction);
+    return correction;
+  }
+
+  async getAiSavedCorrections(userId: number): Promise<any[]> {
+    return Array.from(this.aiSavedCorrectionsMap.values())
+      .filter(c => c.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async deleteAiCorrection(id: number, userId: number): Promise<void> {
+    const correction = this.aiSavedCorrectionsMap.get(id);
+    if (correction && correction.userId === userId) {
+      this.aiSavedCorrectionsMap.delete(id);
+    }
+  }
+
+  // AI Vocabulary
+  async saveAiVocabulary(data: { userId: number; messageId?: number | null; word: string; translation: string; context?: string | null; language: string }): Promise<any> {
+    const id = this.currentAiVocabularyId++;
+    const vocab = { id, ...data, mastery: 0, lastReviewedAt: null, createdAt: new Date() };
+    this.aiVocabularyMap.set(id, vocab);
+    return vocab;
+  }
+
+  async getAiVocabulary(userId: number): Promise<any[]> {
+    return Array.from(this.aiVocabularyMap.values())
+      .filter(v => v.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async deleteAiVocabulary(id: number, userId: number): Promise<void> {
+    const vocab = this.aiVocabularyMap.get(id);
+    if (vocab && vocab.userId === userId) {
+      this.aiVocabularyMap.delete(id);
+    }
+  }
+
+  async updateAiVocabularyMastery(id: number, userId: number, mastery: number): Promise<any> {
+    const vocab = this.aiVocabularyMap.get(id);
+    if (vocab && vocab.userId === userId) {
+      vocab.mastery = mastery;
+      vocab.lastReviewedAt = new Date();
+      this.aiVocabularyMap.set(id, vocab);
+      return vocab;
+    }
+    return null;
+  }
+
+  // Tutor Availability
+  async getTutorAvailability(tutorId: number): Promise<TutorAvailability[]> {
+    await this.ensureInitialized();
+    return Array.from(this.tutorAvailabilityMap.values())
+      .filter(a => a.tutorId === tutorId && a.isAvailable);
+  }
+
+  async setTutorAvailability(tutorId: number, slots: InsertTutorAvailability[]): Promise<TutorAvailability[]> {
+    await this.ensureInitialized();
+    // Delete existing availability for this tutor
+    Array.from(this.tutorAvailabilityMap.entries()).forEach(([id, a]) => {
+      if (a.tutorId === tutorId) this.tutorAvailabilityMap.delete(id);
+    });
+    // Insert new slots
+    const result: TutorAvailability[] = [];
+    for (const slot of slots) {
+      const id = this.currentTutorAvailabilityId++;
+      const availability: TutorAvailability = {
+        id,
+        tutorId,
+        dayOfWeek: slot.dayOfWeek,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        isAvailable: slot.isAvailable !== undefined ? slot.isAvailable : true,
+        createdAt: new Date(),
+      };
+      this.tutorAvailabilityMap.set(id, availability);
+      result.push(availability);
+    }
+    return result;
+  }
+
+  async deleteTutorAvailability(tutorId: number): Promise<void> {
+    await this.ensureInitialized();
+    Array.from(this.tutorAvailabilityMap.entries()).forEach(([id, a]) => {
+      if (a.tutorId === tutorId) this.tutorAvailabilityMap.delete(id);
+    });
+  }
+
+  // Availability Exceptions
+  async getTutorExceptions(tutorId: number, startDate: Date, endDate: Date): Promise<TutorAvailabilityException[]> {
+    await this.ensureInitialized();
+    return Array.from(this.tutorAvailabilityExceptionsMap.values())
+      .filter(e => e.tutorId === tutorId && e.date >= startDate && e.date <= endDate);
+  }
+
+  async createTutorException(exception: InsertTutorAvailabilityException): Promise<TutorAvailabilityException> {
+    await this.ensureInitialized();
+    const id = this.currentTutorAvailabilityExceptionId++;
+    const exc: TutorAvailabilityException = {
+      id,
+      tutorId: exception.tutorId,
+      date: exception.date,
+      isBlocked: exception.isBlocked !== undefined ? exception.isBlocked : true,
+      startTime: exception.startTime || null,
+      endTime: exception.endTime || null,
+      reason: exception.reason || null,
+      createdAt: new Date(),
+    };
+    this.tutorAvailabilityExceptionsMap.set(id, exc);
+    return exc;
+  }
+
+  async deleteTutorException(id: number, tutorId?: number): Promise<boolean> {
+    await this.ensureInitialized();
+    if (tutorId !== undefined) {
+      const exc = this.tutorAvailabilityExceptionsMap.get(id);
+      if (!exc || exc.tutorId !== tutorId) return false;
+    }
+    return this.tutorAvailabilityExceptionsMap.delete(id);
+  }
+
+  // Conflict Detection
+  async getTutorClassesForDate(tutorId: number, date: Date): Promise<Class[]> {
+    await this.ensureInitialized();
+    const dateStr = date.toISOString().split('T')[0];
+    return Array.from(this.classes.values())
+      .filter(c =>
+        c.tutorId === tutorId &&
+        c.status === 'scheduled' &&
+        new Date(c.scheduledAt).toISOString().split('T')[0] === dateStr
+      );
+  }
+
+  async checkConflict(tutorId: number, scheduledAt: Date, duration: number): Promise<boolean> {
+    await this.ensureInitialized();
+    const newStart = scheduledAt.getTime();
+    const newEnd = newStart + duration * 60 * 1000;
+
+    return Array.from(this.classes.values()).some(c => {
+      if (c.tutorId !== tutorId || c.status !== 'scheduled') return false;
+      const existingStart = new Date(c.scheduledAt).getTime();
+      const existingEnd = existingStart + (c.duration || 60) * 60 * 1000;
+      return newStart < existingEnd && newEnd > existingStart;
+    });
+  }
+
+  // Notifications
+  async getNotifications(userId: number): Promise<Notification[]> {
+    await this.ensureInitialized();
+    return Array.from(this.notificationsMap.values())
+      .filter(n => n.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async createNotification(data: InsertNotification): Promise<Notification> {
+    await this.ensureInitialized();
+    const id = this.currentNotificationId++;
+    const notification: Notification = {
+      id,
+      userId: data.userId,
+      type: data.type,
+      title: data.title,
+      message: data.message,
+      link: data.link || null,
+      isRead: false,
+      createdAt: new Date(),
+    };
+    this.notificationsMap.set(id, notification);
+    return notification;
+  }
+
+  async markNotificationRead(id: number, userId?: number): Promise<boolean> {
+    await this.ensureInitialized();
+    const n = this.notificationsMap.get(id);
+    if (!n) return false;
+    if (userId !== undefined && n.userId !== userId) return false;
+    n.isRead = true;
+    return true;
+  }
+
+  async markAllNotificationsRead(userId: number): Promise<void> {
+    await this.ensureInitialized();
+    Array.from(this.notificationsMap.values()).forEach(n => {
+      if (n.userId === userId) n.isRead = true;
+    });
+  }
+
+  async getUnreadNotificationCount(userId: number): Promise<number> {
+    await this.ensureInitialized();
+    return Array.from(this.notificationsMap.values())
+      .filter(n => n.userId === userId && !n.isRead).length;
+  }
+
+  // Achievements
+  async getAchievements(userId: number): Promise<Achievement[]> {
+    await this.ensureInitialized();
+    return Array.from(this.achievementsMap.values())
+      .filter(a => a.userId === userId)
+      .sort((a, b) => (b.unlockedAt?.getTime() || 0) - (a.unlockedAt?.getTime() || 0));
+  }
+
+  async createAchievement(data: InsertAchievement): Promise<Achievement> {
+    await this.ensureInitialized();
+    const id = this.currentAchievementId++;
+    const achievement: Achievement = {
+      id,
+      userId: data.userId,
+      type: data.type,
+      title: data.title,
+      description: data.description,
+      icon: data.icon,
+      unlockedAt: new Date(),
+    };
+    this.achievementsMap.set(id, achievement);
+    return achievement;
+  }
+
+  async hasAchievement(userId: number, type: string): Promise<boolean> {
+    await this.ensureInitialized();
+    return Array.from(this.achievementsMap.values())
+      .some(a => a.userId === userId && a.type === type);
+  }
+
+  // Support Tickets
+  async createSupportTicket(data: InsertSupportTicket): Promise<SupportTicket> {
+    await this.ensureInitialized();
+    const id = this.currentSupportTicketId++;
+    const ticket: SupportTicket = {
+      id,
+      userId: data.userId,
+      subject: data.subject,
+      category: data.category,
+      status: data.status || "open",
+      priority: data.priority || "normal",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.supportTicketsMap.set(id, ticket);
+    return ticket;
+  }
+
+  async getSupportTickets(userId?: number): Promise<SupportTicket[]> {
+    await this.ensureInitialized();
+    let tickets = Array.from(this.supportTicketsMap.values());
+    if (userId) tickets = tickets.filter(t => t.userId === userId);
+    return tickets.sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0));
+  }
+
+  async getSupportTicket(id: number): Promise<SupportTicket | undefined> {
+    await this.ensureInitialized();
+    return this.supportTicketsMap.get(id);
+  }
+
+  async updateSupportTicket(id: number, data: Partial<InsertSupportTicket>): Promise<SupportTicket | undefined> {
+    await this.ensureInitialized();
+    const ticket = this.supportTicketsMap.get(id);
+    if (!ticket) return undefined;
+    const updated = { ...ticket, ...data, updatedAt: new Date() };
+    this.supportTicketsMap.set(id, updated);
+    return updated;
+  }
+
+  async getSupportMessages(ticketId: number): Promise<SupportMessage[]> {
+    await this.ensureInitialized();
+    return Array.from(this.supportMessagesMap.values())
+      .filter(m => m.ticketId === ticketId)
+      .sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
+  }
+
+  async createSupportMessage(data: InsertSupportMessage): Promise<SupportMessage> {
+    await this.ensureInitialized();
+    const id = this.currentSupportMessageId++;
+    const message: SupportMessage = {
+      id,
+      ticketId: data.ticketId,
+      userId: data.userId,
+      message: data.message,
+      isAdmin: data.isAdmin || false,
+      createdAt: new Date(),
+    };
+    this.supportMessagesMap.set(id, message);
+    // Update ticket updatedAt
+    const ticket = this.supportTicketsMap.get(data.ticketId);
+    if (ticket) ticket.updatedAt = new Date();
+    return message;
+  }
+
   async getAiAdminStats() {
     await this.ensureInitialized();
     const allConversations = Array.from(this.aiConversationsMap.values());
@@ -865,6 +1485,252 @@ export class MemStorage implements IStorage {
       userStats,
     };
   }
+
+  // Direct Messaging
+  async getConversations(userId: number) {
+    await this.ensureInitialized();
+    return Array.from(this.conversationsMap.values())
+      .filter(c => c.participantA === userId || c.participantB === userId)
+      .sort((a, b) => (b.lastMessageAt?.getTime() || 0) - (a.lastMessageAt?.getTime() || 0));
+  }
+
+  async getOrCreateConversation(userA: number, userB: number) {
+    await this.ensureInitialized();
+    const existing = Array.from(this.conversationsMap.values()).find(
+      c => (c.participantA === userA && c.participantB === userB) ||
+           (c.participantA === userB && c.participantB === userA)
+    );
+    if (existing) return existing;
+    const id = this.currentConversationId++;
+    const conv: Conversation = { id, participantA: userA, participantB: userB, lastMessageAt: new Date(), createdAt: new Date() };
+    this.conversationsMap.set(id, conv);
+    return conv;
+  }
+
+  async getMessages(conversationId: number, limit = 50, offset = 0) {
+    await this.ensureInitialized();
+    return Array.from(this.directMessagesMap.values())
+      .filter(m => m.conversationId === conversationId)
+      .sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0))
+      .slice(offset, offset + limit);
+  }
+
+  async createMessage(data: InsertDirectMessage) {
+    await this.ensureInitialized();
+    const id = this.currentDirectMessageId++;
+    const msg: DirectMessage = { id, ...data, isRead: false, createdAt: new Date() };
+    this.directMessagesMap.set(id, msg);
+    const conv = this.conversationsMap.get(data.conversationId);
+    if (conv) conv.lastMessageAt = new Date();
+    return msg;
+  }
+
+  async markMessagesAsRead(conversationId: number, userId: number) {
+    await this.ensureInitialized();
+    for (const msg of Array.from(this.directMessagesMap.values())) {
+      if (msg.conversationId === conversationId && msg.senderId !== userId) {
+        msg.isRead = true;
+      }
+    }
+  }
+
+  async getUnreadMessageCount(userId: number) {
+    await this.ensureInitialized();
+    const convs = await this.getConversations(userId);
+    let count = 0;
+    for (const conv of convs) {
+      for (const msg of Array.from(this.directMessagesMap.values())) {
+        if (msg.conversationId === conv.id && msg.senderId !== userId && !msg.isRead) count++;
+      }
+    }
+    return count;
+  }
+
+  // Notification Preferences
+  async getNotificationPreferences(userId: number) {
+    await this.ensureInitialized();
+    return Array.from(this.notifPrefsMap.values()).find(p => p.userId === userId);
+  }
+
+  async upsertNotificationPreferences(userId: number, prefs: Partial<InsertUserNotificationPreferences>) {
+    await this.ensureInitialized();
+    const existing = Array.from(this.notifPrefsMap.values()).find(p => p.userId === userId);
+    if (existing) {
+      Object.assign(existing, prefs);
+      return existing;
+    }
+    const id = this.currentNotifPrefsId++;
+    const np: UserNotificationPreferences = {
+      id, userId,
+      emailBooking: prefs.emailBooking ?? true,
+      emailCancellation: prefs.emailCancellation ?? true,
+      emailReminder: prefs.emailReminder ?? true,
+      emailMessages: prefs.emailMessages ?? true,
+      emailAchievements: prefs.emailAchievements ?? true,
+    };
+    this.notifPrefsMap.set(id, np);
+    return np;
+  }
+
+  // Payment History
+  async getPaymentHistory(userId: number) {
+    await this.ensureInitialized();
+    return Array.from(this.classPurchasesMap.values())
+      .filter(p => p.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  // Email Campaign Events
+  async getEmailCampaignEvents(userId: number): Promise<EmailCampaignEvent[]> {
+    await this.ensureInitialized();
+    return Array.from(this.campaignEventsMap.values()).filter(e => e.userId === userId);
+  }
+
+  async createEmailCampaignEvent(userId: number, step: string): Promise<EmailCampaignEvent> {
+    await this.ensureInitialized();
+    const id = this.currentCampaignEventId++;
+    const event: EmailCampaignEvent = { id, userId, campaignStep: step, sentAt: new Date() };
+    this.campaignEventsMap.set(id, event);
+    return event;
+  }
+
+  // CRM
+  async getStudentsCRM(params: { status?: string; search?: string; page?: number; limit?: number }): Promise<{ students: User[]; total: number }> {
+    await this.ensureInitialized();
+    let students = Array.from(this.users.values()).filter(u => u.userType !== "admin" && u.userType !== "tutor");
+    if (params.status) students = students.filter(u => u.userType === params.status);
+    if (params.search) {
+      const s = params.search.toLowerCase();
+      students = students.filter(u =>
+        `${u.firstName} ${u.lastName}`.toLowerCase().includes(s) ||
+        u.email.toLowerCase().includes(s)
+      );
+    }
+    const total = students.length;
+    const page = params.page || 1;
+    const limit = params.limit || 50;
+    const offset = (page - 1) * limit;
+    return { students: students.slice(offset, offset + limit), total };
+  }
+
+  // Atomic credit operations
+  async deductClassCredit(userId: number): Promise<User | undefined> {
+    await this.ensureInitialized();
+    const user = this.users.get(userId);
+    if (!user || (user.classCredits || 0) <= 0) return undefined;
+    user.classCredits = (user.classCredits || 0) - 1;
+    return user;
+  }
+
+  async refundClassCredit(userId: number): Promise<User | undefined> {
+    await this.ensureInitialized();
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    user.classCredits = (user.classCredits || 0) + 1;
+    return user;
+  }
+
+  // Atomic class completion
+  async completeClassIfScheduled(classId: number): Promise<Class | undefined> {
+    await this.ensureInitialized();
+    const cls = this.classes.get(classId);
+    if (!cls || cls.status !== "scheduled") return undefined;
+    cls.status = "completed";
+    return cls;
+  }
+
+  // Tutor-specific class query
+  async getClassesByTutor(tutorId: number): Promise<Class[]> {
+    await this.ensureInitialized();
+    return Array.from(this.classes.values()).filter(c => c.tutorId === tutorId);
+  }
+
+  // CRM Notes (MemStorage stubs)
+  async getCrmNotes(_userId: number): Promise<CrmNote[]> { return []; }
+  async createCrmNote(data: InsertCrmNote): Promise<CrmNote> {
+    return { id: 1, ...data, createdAt: new Date() } as CrmNote;
+  }
+  async deleteCrmNote(_id: number): Promise<boolean> { return true; }
+
+  // CRM Tasks (MemStorage stubs)
+  async getCrmTasks(_params: { userId?: number; assignedTo?: number; status?: string }): Promise<CrmTask[]> { return []; }
+  async createCrmTask(data: InsertCrmTask): Promise<CrmTask> {
+    return { id: 1, ...data, status: "pending", completedAt: null, createdAt: new Date() } as CrmTask;
+  }
+  async updateCrmTask(_id: number, _data: Partial<InsertCrmTask & { status: string; completedAt: Date | null }>): Promise<CrmTask | undefined> { return undefined; }
+  async deleteCrmTask(_id: number): Promise<boolean> { return true; }
+
+  // CRM Tags (MemStorage stubs)
+  async getAllCrmTags(): Promise<CrmTag[]> { return []; }
+  async createCrmTag(data: InsertCrmTag): Promise<CrmTag> {
+    return { id: 1, ...data, createdAt: new Date() } as CrmTag;
+  }
+  async deleteCrmTag(_id: number): Promise<boolean> { return true; }
+  async getUserCrmTags(_userId: number): Promise<CrmTag[]> { return []; }
+  async addUserCrmTag(_userId: number, _tagId: number): Promise<void> {}
+  async removeUserCrmTag(_userId: number, _tagId: number): Promise<void> {}
+
+  // CRM Metrics (MemStorage stubs)
+  async getCrmFunnel(): Promise<{ stage: string; count: number }[]> { return []; }
+
+  // Delete User (cascading)
+  async deleteUser(id: number) {
+    await this.ensureInitialized();
+    // Helper to delete matching entries from a map
+    const deleteFrom = <T>(map: Map<number, T>, pred: (v: T) => boolean) => {
+      for (const [key, val] of Array.from(map.entries())) {
+        if (pred(val)) map.delete(key);
+      }
+    };
+    deleteFrom(this.notificationsMap, n => n.userId === id);
+    deleteFrom(this.achievementsMap, a => a.userId === id);
+    deleteFrom(this.userProgress, p => p.userId === id);
+    deleteFrom(this.reviewsMap, r => r.userId === id);
+    deleteFrom(this.conversationsMap, c => c.participantA === id || c.participantB === id);
+    deleteFrom(this.directMessagesMap, m => m.senderId === id);
+    deleteFrom(this.supportTicketsMap, t => t.userId === id);
+    deleteFrom(this.supportMessagesMap, m => m.userId === id);
+    deleteFrom(this.aiConversationsMap, c => c.userId === id);
+    deleteFrom(this.classes, c => c.userId === id);
+    deleteFrom(this.subscriptions, s => s.userId === id);
+    deleteFrom(this.classPurchasesMap, p => p.userId === id);
+    deleteFrom(this.notifPrefsMap, p => p.userId === id);
+    return this.users.delete(id);
+  }
+
+  // ===== Campaign System Stubs (MemStorage) =====
+  async getEmailTemplates(): Promise<EmailTemplate[]> { return []; }
+  async getEmailTemplate(_id: number): Promise<EmailTemplate | undefined> { return undefined; }
+  async createEmailTemplate(data: InsertEmailTemplate): Promise<EmailTemplate> { return { id: 1, ...data, isActive: true, createdAt: new Date(), updatedAt: new Date() } as EmailTemplate; }
+  async updateEmailTemplate(_id: number, _data: Partial<InsertEmailTemplate>): Promise<EmailTemplate | undefined> { return undefined; }
+  async deleteEmailTemplate(_id: number): Promise<boolean> { return false; }
+
+  async getAudienceSegments(): Promise<AudienceSegment[]> { return []; }
+  async getAudienceSegment(_id: number): Promise<AudienceSegment | undefined> { return undefined; }
+  async createAudienceSegment(data: InsertAudienceSegment): Promise<AudienceSegment> { return { id: 1, ...data, isActive: true, createdAt: new Date(), updatedAt: new Date() } as AudienceSegment; }
+  async updateAudienceSegment(_id: number, _data: Partial<InsertAudienceSegment>): Promise<AudienceSegment | undefined> { return undefined; }
+  async deleteAudienceSegment(_id: number): Promise<boolean> { return false; }
+
+  async getCampaigns(): Promise<Campaign[]> { return []; }
+  async getCampaign(_id: number): Promise<Campaign | undefined> { return undefined; }
+  async createCampaign(data: InsertCampaign): Promise<Campaign> { return { id: 1, ...data, totalRecipients: 0, totalSent: 0, totalOpened: 0, totalClicked: 0, createdAt: new Date(), updatedAt: new Date() } as Campaign; }
+  async updateCampaign(_id: number, _data: Partial<InsertCampaign>): Promise<Campaign | undefined> { return undefined; }
+  async deleteCampaign(_id: number): Promise<boolean> { return false; }
+
+  async getCampaignRecipients(_campaignId: number): Promise<CampaignRecipient[]> { return []; }
+  async createCampaignRecipient(data: InsertCampaignRecipient): Promise<CampaignRecipient> { return { id: 1, ...data, createdAt: new Date() } as CampaignRecipient; }
+  async updateCampaignRecipient(_id: number, _data: Partial<CampaignRecipient>): Promise<CampaignRecipient | undefined> { return undefined; }
+
+  async getOffers(): Promise<Offer[]> { return []; }
+  async getOffer(_id: number): Promise<Offer | undefined> { return undefined; }
+  async getOfferByCode(_code: string): Promise<Offer | undefined> { return undefined; }
+  async createOffer(data: InsertOffer): Promise<Offer> { return { id: 1, ...data, usedCount: 0, createdAt: new Date() } as Offer; }
+  async updateOffer(_id: number, _data: Partial<InsertOffer>): Promise<Offer | undefined> { return undefined; }
+  async deleteOffer(_id: number): Promise<boolean> { return false; }
+  async incrementOfferUsage(_id: number): Promise<void> {}
+
+  async getCommunicationLog(_userId: number): Promise<CommunicationLogEntry[]> { return []; }
+  async createCommunicationLog(data: InsertCommunicationLog): Promise<CommunicationLogEntry> { return { id: 1, ...data, createdAt: new Date() } as CommunicationLogEntry; }
 }
 
 // Use DatabaseStorage when DATABASE_URL is available, MemStorage otherwise

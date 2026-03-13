@@ -8,6 +8,7 @@ import Stripe from "stripe";
 import { storage } from "./storage";
 import crypto from "crypto";
 import { config } from "./config";
+import { PLAN_DETAILS, PACKAGE_DETAILS, AMOUNT_TO_PACKAGE } from "./constants/plans";
 
 // Initialize Stripe - allow running without keys in development
 const stripeKey = config.STRIPE_SECRET_KEY || config.TESTING_STRIPE_SECRET_KEY;
@@ -98,18 +99,11 @@ async function startServer() {
               }
 
               try {
-                const allUsers = await storage.getAllUsers();
-                const user = allUsers.find(u => u.email?.toLowerCase() === customerEmail?.toLowerCase());
+                const user = await storage.getUserByEmail(customerEmail.toLowerCase());
 
                 if (user) {
                   const amountInCents = checkoutSession.amount_total || 0;
-                  const packageByAmount: Record<number, { name: string; classes: number }> = {
-                    14995: { name: '5-Class Package', classes: 5 },
-                    27490: { name: '10-Class Package', classes: 10 },
-                    49980: { name: '20-Class Package', classes: 20 }
-                  };
-
-                  const packageInfo = packageByAmount[amountInCents];
+                  const packageInfo = AMOUNT_TO_PACKAGE[amountInCents];
 
                   if (packageInfo) {
                     await storage.updateUser(user.id, {
@@ -137,11 +131,7 @@ async function startServer() {
               }
 
               if (checkoutSession.mode === 'subscription' && planId) {
-                const planDetails: Record<number, { name: string; classesIncluded: number }> = {
-                  1: { name: 'Starter Flow', classesIncluded: 4 },
-                  2: { name: 'Momentum Plan', classesIncluded: 8 },
-                  3: { name: 'Fluency Boost', classesIncluded: 12 },
-                };
+                const planDetails = PLAN_DETAILS;
 
                 const plan = planDetails[parseInt(planId)];
 
@@ -171,12 +161,7 @@ async function startServer() {
               }
 
               if (checkoutSession.mode === 'payment' && packageId) {
-                const packageDetails: Record<number, { name: string; classes: number }> = {
-                  1: { name: '5 Clases', classes: 5 },
-                  2: { name: '10 Clases', classes: 10 },
-                  3: { name: '20 Clases', classes: 20 },
-                  4: { name: '30 Clases', classes: 30 },
-                };
+                const packageDetails = PACKAGE_DETAILS;
 
                 const packageInfo = packageDetails[parseInt(packageId)];
 
@@ -278,6 +263,19 @@ async function startServer() {
     await setupVite(app, server);
   } else {
     serveStatic(app);
+  }
+
+  // Start autoconfirmation periodic check
+  try {
+    const { autoconfirmService } = await import("./services/autoconfirm");
+    autoconfirmService.startPeriodicCheck();
+    log("Autoconfirmation service started");
+
+    const { dripCampaignService } = await import("./services/drip-campaign");
+    dripCampaignService.startPeriodicCheck();
+    log("Drip campaign service started");
+  } catch (error) {
+    console.error("Failed to start background services:", error);
   }
 
   server.listen(config.PORT, "0.0.0.0", () => {

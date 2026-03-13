@@ -1,12 +1,9 @@
-import { HighLevelService } from './high-level';
 import { storage } from '../storage';
+import { availabilityService, type TimeSlot } from './availability';
+import { notificationService } from './notification';
+import crypto from 'crypto';
 
-export interface TimeSlot {
-  start: string;
-  end: string;
-  available: boolean;
-  appointmentId?: string;
-}
+export type { TimeSlot };
 
 export interface CalendarAvailability {
   tutorId: number;
@@ -15,37 +12,13 @@ export interface CalendarAvailability {
 }
 
 export class CalendarIntegrationService {
-  private highLevelService?: HighLevelService;
-
-  constructor(apiKey?: string, locationId?: string) {
-    if (apiKey && locationId) {
-      this.highLevelService = new HighLevelService(apiKey, locationId);
-    }
-  }
-
   /**
    * Obtiene disponibilidad de un profesor específico para una fecha
+   * Usa el AvailabilityService con datos reales de la BD
    */
   async getTutorAvailability(tutorId: number, date: string): Promise<TimeSlot[]> {
     try {
-      const tutor = await storage.getTutor(tutorId);
-      if (!tutor || !tutor.highLevelContactId) {
-        throw new Error('Tutor not found or missing High Level contact ID');
-      }
-
-      if (!this.highLevelService) {
-        // Retornar slots mockeados para desarrollo
-        return this.getMockAvailability(date);
-      }
-
-      // Obtener disponibilidad del calendario de High Level
-      const availability = await this.highLevelService.getCalendarAvailability(
-        tutor.highLevelContactId,
-        date,
-        date
-      );
-
-      return availability;
+      return await availabilityService.getAvailableSlots(tutorId, date);
     } catch (error) {
       console.error('Error getting tutor availability:', error);
       return [];
@@ -78,6 +51,7 @@ export class CalendarIntegrationService {
 
   /**
    * Reserva una clase con un profesor específico
+   * Valida disponibilidad y conflictos antes de crear
    */
   async bookClassWithTutor(
     userId: number,
@@ -85,7 +59,7 @@ export class CalendarIntegrationService {
     date: string,
     startTime: string,
     endTime: string
-  ): Promise<{ success: boolean; appointmentId?: string; message?: string }> {
+  ): Promise<{ success: boolean; classId?: number; meetingLink?: string; message?: string }> {
     try {
       const user = await storage.getUser(userId);
       const tutor = await storage.getTutor(tutorId);
@@ -99,77 +73,51 @@ export class CalendarIntegrationService {
         return { success: false, message: 'No class credits available' };
       }
 
-      if (!this.highLevelService) {
-        // Crear clase en storage para desarrollo
-        const classData = {
-          userId,
-          tutorId,
-          title: `Clase de Español - ${tutor.name}`,
-          scheduledAt: new Date(`${date}T${startTime}`),
-          duration: 60,
-          status: 'scheduled' as const,
-          notes: `Clase reservada con ${tutor.name}`,
-          highLevelAppointmentId: `mock_${Date.now()}`
-        };
+      const scheduledAt = new Date(`${date}T${startTime}`);
+      const duration = 60;
 
-        await storage.createClass(classData);
-        
-        // Reducir créditos
-        await storage.updateUser(userId, {
-          classCredits: user.classCredits - 1
-        });
-
-        return { 
-          success: true, 
-          appointmentId: classData.highLevelAppointmentId,
-          message: 'Class booked successfully (development mode)'
-        };
+      // Validar disponibilidad y conflictos
+      const validation = await availabilityService.validateBooking(tutorId, scheduledAt, duration);
+      if (!validation.valid) {
+        return { success: false, message: validation.reason };
       }
 
-      // Crear cita en High Level
-      const appointmentData = {
-        contactId: user.highLevelContactId || '',
-        tutorId: tutor.highLevelContactId || '',
-        title: `Clase de Español - ${user.firstName} ${user.lastName}`,
-        startTime: `${date}T${startTime}:00`,
-        endTime: `${date}T${endTime}:00`,
-        description: `Clase con ${tutor.name} - ${tutor.specialization}`,
-        notes: `Estudiante: ${user.firstName} ${user.lastName} (${user.email})`
+      // Generar link de videollamada (Jitsi Meet)
+      const meetingLink = this.generateMeetingLink(tutor.name);
+
+      // Crear clase en storage
+      const classData = {
+        userId,
+        tutorId,
+        title: `${tutor.languageTaught === 'spanish' ? 'Spanish' : 'English'} Class - ${tutor.name}`,
+        scheduledAt,
+        duration,
+        status: 'scheduled' as const,
+        meetingLink,
       };
 
-      const appointment = await this.highLevelService.createAppointment(appointmentData);
+      const newClass = await storage.createClass(classData);
 
-      if (appointment.success) {
-        // Crear registro de clase en storage
-        const classData = {
-          userId,
-          tutorId,
-          title: `Clase de Español - ${user.firstName} ${user.lastName}`,
-          scheduledAt: new Date(`${date}T${startTime}`),
-          duration: 60,
-          status: 'scheduled' as const,
-          notes: `Clase reservada con ${tutor.name}`,
-          highLevelAppointmentId: appointment.appointmentId
-        };
+      // Reducir créditos
+      await storage.updateUser(userId, {
+        classCredits: user.classCredits - 1
+      });
 
-        await storage.createClass(classData);
-        
-        // Reducir créditos
-        await storage.updateUser(userId, {
-          classCredits: user.classCredits - 1
-        });
+      // Send notifications
+      notificationService.onClassBooked({
+        studentId: userId,
+        tutorId,
+        classId: newClass.id,
+        scheduledAt,
+        meetingLink,
+      });
 
-        // Enviar notificaciones
-        await this.sendBookingNotifications(user, tutor, classData);
-
-        return {
-          success: true,
-          appointmentId: appointment.appointmentId,
-          message: 'Class booked successfully'
-        };
-      }
-
-      return { success: false, message: 'Failed to create appointment in High Level' };
+      return {
+        success: true,
+        classId: newClass.id,
+        meetingLink,
+        message: 'Class booked successfully'
+      };
     } catch (error) {
       console.error('Error booking class:', error);
       return { success: false, message: 'Internal server error' };
@@ -181,8 +129,9 @@ export class CalendarIntegrationService {
    */
   async cancelClass(classId: number, userId: number): Promise<{ success: boolean; message?: string }> {
     try {
-      const classItem = await storage.getAllClasses().then(c => c.find(cl => cl.id === classId));
-      
+      const allClasses = await storage.getAllClasses();
+      const classItem = allClasses.find(cl => cl.id === classId);
+
       if (!classItem || classItem.userId !== userId) {
         return { success: false, message: 'Class not found or not authorized' };
       }
@@ -191,18 +140,13 @@ export class CalendarIntegrationService {
         return { success: false, message: 'Class already cancelled' };
       }
 
-      // Verificar que la clase no sea en las próximas 24 horas
+      // Verificar que la clase no sea en las próximas 12 horas
       const now = new Date();
       const classDate = new Date(classItem.scheduledAt);
       const hoursDiff = (classDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-      if (hoursDiff < 24) {
-        return { success: false, message: 'Cannot cancel class within 24 hours' };
-      }
-
-      // Cancelar en High Level
-      if (this.highLevelService && classItem.highLevelAppointmentId) {
-        await this.highLevelService.cancelAppointment(classItem.highLevelAppointmentId);
+      if (hoursDiff < 12) {
+        return { success: false, message: 'Cannot cancel class within 12 hours' };
       }
 
       // Actualizar estado en storage
@@ -216,6 +160,13 @@ export class CalendarIntegrationService {
         });
       }
 
+      // Send notifications
+      notificationService.onClassCancelled({
+        studentId: userId,
+        tutorId: classItem.tutorId,
+        scheduledAt: classDate,
+      });
+
       return { success: true, message: 'Class cancelled successfully' };
     } catch (error) {
       console.error('Error cancelling class:', error);
@@ -224,44 +175,11 @@ export class CalendarIntegrationService {
   }
 
   /**
-   * Obtiene disponibilidad mockeada para desarrollo
+   * Genera un link de Jitsi Meet para la clase
    */
-  private getMockAvailability(date: string): TimeSlot[] {
-    const slots: TimeSlot[] = [];
-    const startHour = 9;
-    const endHour = 17;
-
-    for (let hour = startHour; hour < endHour; hour++) {
-      slots.push({
-        start: `${hour.toString().padStart(2, '0')}:00`,
-        end: `${(hour + 1).toString().padStart(2, '0')}:00`,
-        available: Math.random() > 0.3 // 70% disponibilidad
-      });
-    }
-
-    return slots;
-  }
-
-  /**
-   * Envía notificaciones de reserva
-   */
-  private async sendBookingNotifications(user: any, tutor: any, classData: any) {
-    if (!this.highLevelService) return;
-
-    try {
-      // Notificar al estudiante
-      await this.highLevelService.sendCustomMessage(
-        user.highLevelContactId,
-        `✅ Clase confirmada con ${tutor.name} el ${classData.scheduledAt.toLocaleDateString()} a las ${classData.scheduledAt.toLocaleTimeString()}. Te enviaremos un recordatorio 24h antes.`
-      );
-
-      // Notificar al profesor
-      await this.highLevelService.sendCustomMessage(
-        tutor.highLevelContactId,
-        `📚 Nueva clase asignada: ${user.firstName} ${user.lastName} el ${classData.scheduledAt.toLocaleDateString()} a las ${classData.scheduledAt.toLocaleTimeString()}. Especialización: ${tutor.specialization}`
-      );
-    } catch (error) {
-      console.error('Error sending booking notifications:', error);
-    }
+  private generateMeetingLink(tutorName: string): string {
+    const hash = crypto.randomBytes(4).toString('hex');
+    const safeName = tutorName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+    return `https://meet.jit.si/P2F-${safeName}-${hash}`;
   }
 }

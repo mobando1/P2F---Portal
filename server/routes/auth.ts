@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
 import { storage, sanitizeUser } from "../storage";
 import { loginSchema, insertUserSchema } from "@shared/schema";
+import { dripCampaignService } from "../services/drip-campaign";
 
 // Extend express-session types
 declare module "express-session" {
@@ -13,18 +14,29 @@ declare module "express-session" {
 // Rate limiting for auth endpoints
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: process.env.NODE_ENV === "development" ? 100 : 10,
   message: { message: "Too many attempts, please try again later" },
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// Rate-limited lastActivityAt tracking (max 1 update per hour per user)
+const lastActivityCache = new Map<number, number>();
+function trackActivity(userId: number): void {
+  const now = Date.now();
+  const lastUpdate = lastActivityCache.get(userId) || 0;
+  if (now - lastUpdate > 60 * 60 * 1000) { // 1 hour
+    lastActivityCache.set(userId, now);
+    storage.updateUser(userId, { lastActivityAt: new Date() } as any).catch(() => {});
+  }
+}
 
 // Authentication middleware
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.session?.userId) {
     return res.status(401).json({ message: "Not authenticated" });
   }
-  (req as any).userId = req.session.userId;
+  trackActivity(req.session.userId);
   next();
 }
 
@@ -33,11 +45,24 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
   if (!req.session?.userId) {
     return res.status(401).json({ message: "Not authenticated" });
   }
-  (req as any).userId = req.session.userId;
 
   const user = await storage.getUser(req.session.userId);
   if (!user || user.userType !== "admin") {
     return res.status(403).json({ message: "Forbidden: admin access required" });
+  }
+
+  next();
+}
+
+// Tutor authorization middleware
+export async function requireTutor(req: Request, res: Response, next: NextFunction) {
+  if (!req.session?.userId) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const user = await storage.getUser(req.session.userId);
+  if (!user || (user.userType !== "tutor" && user.userType !== "admin")) {
+    return res.status(403).json({ message: "Forbidden: tutor access required" });
   }
 
   next();
@@ -57,7 +82,13 @@ export function registerAuthRoutes(app: Express) {
       // Set server-side session
       req.session.userId = user.id;
 
-      res.json({ user: sanitizeUser(user) });
+      // Include tutor profile if user is a tutor
+      let tutorProfile = null;
+      if (user.userType === "tutor") {
+        tutorProfile = await storage.getTutorByUserId(user.id) || null;
+      }
+
+      res.json({ user: sanitizeUser(user), tutorProfile });
     } catch (error) {
       res.status(400).json({ message: "Invalid request data" });
     }
@@ -85,6 +116,9 @@ export function registerAuthRoutes(app: Express) {
 
       // Set server-side session
       req.session.userId = user.id;
+
+      // Send welcome email (fire-and-forget)
+      dripCampaignService.onUserRegistered(user.id);
 
       res.status(201).json({ user: sanitizeUser(user) });
     } catch (error) {

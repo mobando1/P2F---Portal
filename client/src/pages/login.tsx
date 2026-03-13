@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { login, register } from "@/lib/auth";
+import { login, register, getCurrentUser, getSmartRedirect } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 import { Mail, Lock, LogIn, UserPlus, User, Phone } from "lucide-react";
 import LanguageSwitcher from "@/components/language-switcher";
@@ -47,12 +47,13 @@ export default function Login() {
         title: t.welcomeBack,
         description: language === 'es' ? "Has iniciado sesión exitosamente." : "You have been successfully logged in.",
       });
-      
+
       // Redirigir según el contexto
+      const loggedUser = getCurrentUser();
       if (fromPurchase && selectedPlan) {
         setLocation(`/packages?plan=${selectedPlan}`);
       } else {
-        setLocation("/home");
+        setLocation(getSmartRedirect(loggedUser));
       }
     } catch (error) {
       toast({
@@ -77,10 +78,11 @@ export default function Login() {
       });
       
       // Redirigir según el contexto
+      const newUser = getCurrentUser();
       if (fromPurchase && selectedPlan) {
         setLocation(`/packages?plan=${selectedPlan}`);
       } else {
-        setLocation("/home");
+        setLocation(getSmartRedirect(newUser));
       }
     } catch (error) {
       toast({

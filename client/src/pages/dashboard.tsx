@@ -24,7 +24,12 @@ import {
   X,
   Sparkles,
   MessageCircle,
-  TrendingUp
+  TrendingUp,
+  Flame,
+  Trophy,
+  LifeBuoy,
+  Gift,
+  ShoppingCart,
 } from "lucide-react";
 
 // Animated counter hook
@@ -84,6 +89,18 @@ export default function Dashboard() {
   // Queries
   const { data: dashboardData, isLoading: isDashboardLoading, isError: isDashboardError, error: dashboardError } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard", user.id],
+  });
+
+  const { data: achievements } = useQuery<Array<{
+    id: number;
+    type: string;
+    title: string;
+    description: string;
+    icon: string;
+    unlockedAt: string;
+  }>>({
+    queryKey: ["/api/achievements", user.id],
+    queryFn: () => apiRequest("GET", `/api/achievements/${user.id}`).then(res => res.json()),
   });
 
   const { data: aiUsage } = useQuery<{
@@ -215,6 +232,114 @@ export default function Dashboard() {
           </h1>
           <p className="text-[#0A4A6E]/70">{t.continueJourney}</p>
         </motion.div>
+
+        {/* Trial Flow Banner */}
+        {!user.trialCompleted && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="mb-6"
+          >
+            <Card className="border-0 shadow-lg bg-gradient-to-r from-[#F59E1C] to-[#e08a0e] text-white">
+              <CardContent className="p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    <Gift className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">
+                      {language === 'es' ? 'Clase de Prueba Gratis Disponible' : 'Free Trial Class Available'}
+                    </h3>
+                    <p className="text-white/80 text-sm">
+                      {language === 'es'
+                        ? 'Reserva tu primera clase de 50 minutos sin costo'
+                        : 'Book your first 50-minute class at no cost'}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setLocation("/tutors")}
+                  className="bg-white text-[#F59E1C] hover:bg-white/90 font-bold"
+                >
+                  {language === 'es' ? 'Reservar Ahora' : 'Book Now'}
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {user.trialCompleted && (user.classCredits ?? 0) > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="mb-6"
+          >
+            <Card className="border-0 shadow-lg bg-gradient-to-r from-[#1C7BB1] to-[#0A4A6E] text-white">
+              <CardContent className="p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    <Sparkles className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">
+                      {language === 'es'
+                        ? `${user.classCredits} Clase${(user.classCredits ?? 0) > 1 ? 's' : ''} Gratis`
+                        : `${user.classCredits} Free Class${(user.classCredits ?? 0) > 1 ? 'es' : ''}`}
+                    </h3>
+                    <p className="text-white/80 text-sm">
+                      {language === 'es'
+                        ? 'Tienes créditos disponibles para agendar tu próxima clase'
+                        : 'You have credits available to schedule your next class'}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setLocation("/tutors")}
+                  className="bg-white text-[#1C7BB1] hover:bg-white/90 font-bold"
+                >
+                  {language === 'es' ? 'Reservar Ahora' : 'Book Now'}
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {user.trialCompleted && (user.classCredits ?? 0) === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="mb-6"
+          >
+            <Card className="border-0 shadow-lg bg-gradient-to-r from-[#0A4A6E] to-[#1C7BB1] text-white">
+              <CardContent className="p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    <ShoppingCart className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">
+                      {language === 'es' ? 'Continúa Aprendiendo' : 'Keep Learning'}
+                    </h3>
+                    <p className="text-white/80 text-sm">
+                      {language === 'es'
+                        ? 'Compra un paquete de clases para seguir practicando'
+                        : 'Buy a class package to continue practicing'}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setLocation("/packages")}
+                  className="bg-[#F59E1C] text-white hover:bg-[#e08a0e] font-bold"
+                >
+                  {language === 'es' ? 'Ver Paquetes' : 'View Packages'}
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Stats Cards */}
         <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6 mb-8">
@@ -363,9 +488,14 @@ export default function Dashboard() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleCancelClass(classItem.id)}
+                          disabled={cancelClassMutation.isPending}
                           className="text-[#0A4A6E]/40 hover:text-red-500 flex-shrink-0"
                         >
-                          <X className="h-4 w-4" />
+                          {cancelClassMutation.isPending ? (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          ) : (
+                            <X className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     ))
@@ -451,6 +581,51 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
+            {/* Achievements / Gamification */}
+            <Card className="border-0 shadow-lg overflow-hidden">
+              <div className="bg-gradient-to-r from-[#0A4A6E] to-[#1C7BB1] p-4">
+                <div className="flex items-center gap-2 text-white mb-1">
+                  <Trophy className="h-5 w-5" />
+                  <h2 className="text-lg font-bold">
+                    {language === 'es' ? 'Logros' : 'Achievements'}
+                  </h2>
+                </div>
+                {(dashboardData?.progress?.currentStreak ?? 0) > 0 && (
+                  <div className="flex items-center gap-1 text-white/90 text-sm">
+                    <Flame className="h-4 w-4 text-orange-300" />
+                    <span>
+                      {language === 'es'
+                        ? `Racha: ${dashboardData?.progress?.currentStreak} días`
+                        : `Streak: ${dashboardData?.progress?.currentStreak} days`}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <CardContent className="p-4">
+                {achievements && achievements.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-3">
+                    {achievements.slice(0, 6).map((a) => (
+                      <div
+                        key={a.id}
+                        className="flex flex-col items-center text-center p-2 rounded-lg bg-[#EAF4FA]/50 hover:bg-[#EAF4FA] transition-colors"
+                        title={a.description}
+                      >
+                        <span className="text-2xl mb-1">{a.icon}</span>
+                        <span className="text-[10px] font-medium text-[#0A4A6E] leading-tight">{a.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Trophy className="mx-auto h-8 w-8 text-[#1C7BB1]/30 mb-2" />
+                    <p className="text-xs text-[#0A4A6E]/50">
+                      {language === 'es' ? 'Completa clases para desbloquear logros' : 'Complete classes to unlock achievements'}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Quick Actions */}
             <Card>
               <CardContent className="p-6">
@@ -489,10 +664,10 @@ export default function Dashboard() {
                   <Button
                     variant="ghost"
                     className="w-full justify-start hover:bg-[#EAF4FA]"
-                    onClick={() => setLocation("/contact")}
+                    onClick={() => setLocation("/support")}
                   >
-                    <Headphones className="mr-3 h-4 w-4 text-[#1C7BB1]" />
-                    {language === 'es' ? 'Contactar Soporte' : 'Contact Support'}
+                    <LifeBuoy className="mr-3 h-4 w-4 text-[#1C7BB1]" />
+                    {language === 'es' ? 'Soporte' : 'Support'}
                   </Button>
                 </div>
               </CardContent>

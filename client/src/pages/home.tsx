@@ -4,9 +4,10 @@ import { useInView } from "react-intersection-observer";
 import { getCurrentUser } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 import Header from "@/components/header";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Users, BookOpen, Search, Calendar, Star, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { GraduationCap, Users, BookOpen, Search, Calendar, Star, Sparkles, ArrowRight } from "lucide-react";
 import { fadeInUp, staggerContainer, scaleIn } from "@/lib/animations";
 
 const categories = [
@@ -15,8 +16,11 @@ const categories = [
     language: "spanish",
     icon: GraduationCap,
     gradient: "from-[#1C7BB1] to-[#0A4A6E]",
+    accentColor: "#1C7BB1",
     labelEs: "Espanol para Adultos",
     labelEn: "Spanish for Adults",
+    badgeLabelEs: "Espanol",
+    badgeLabelEn: "Spanish",
     descEs: "Clases personalizadas para profesionales y adultos que quieren dominar el espanol",
     descEn: "Personalized classes for professionals and adults who want to master Spanish",
   },
@@ -25,8 +29,11 @@ const categories = [
     language: "spanish",
     icon: Users,
     gradient: "from-[#F59E1C] to-[#e08a0e]",
+    accentColor: "#F59E1C",
     labelEs: "Espanol para Ninos",
     labelEn: "Spanish for Kids",
+    badgeLabelEs: "Espanol",
+    badgeLabelEn: "Spanish",
     descEs: "Clases divertidas e interactivas disenadas especialmente para ninos y jovenes",
     descEn: "Fun, interactive classes designed especially for children and teens",
   },
@@ -35,8 +42,11 @@ const categories = [
     language: "english",
     icon: BookOpen,
     gradient: "from-[#0A4A6E] to-[#1C7BB1]",
+    accentColor: "#0A4A6E",
     labelEs: "Ingles para Adultos",
     labelEn: "English for Adults",
+    badgeLabelEs: "Ingles",
+    badgeLabelEn: "English",
     descEs: "Mejora tu ingles con profesores nativos y metodos probados",
     descEn: "Improve your English with native speakers and proven methods",
   },
@@ -45,8 +55,11 @@ const categories = [
     language: "english",
     icon: Star,
     gradient: "from-[#1C7BB1] to-[#F59E1C]",
+    accentColor: "#F59E1C",
     labelEs: "Ingles para Ninos",
     labelEn: "English for Kids",
+    badgeLabelEs: "Ingles",
+    badgeLabelEn: "English",
     descEs: "Aprende ingles de forma natural con juegos y actividades creativas",
     descEn: "Learn English naturally through games and creative activities",
   },
@@ -93,18 +106,31 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-10"
+          className="text-center mb-12"
         >
-          <h1 className="text-3xl md:text-4xl font-bold text-[#0A4A6E] mb-3">
+          <Badge className="bg-[#F59E1C]/10 text-[#F59E1C] border-0 px-4 py-1.5 text-sm font-semibold mb-4 inline-flex">
+            {isEs ? "Tu primera clase es GRATIS" : "Your first class is FREE"}
+          </Badge>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#0A4A6E] mb-4">
             {isEs
               ? `${user?.firstName ? `Hola, ${user.firstName}!` : "Bienvenido!"} Elige tu camino`
               : `${user?.firstName ? `Hi, ${user.firstName}!` : "Welcome!"} Choose your path`}
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-4">
             {isEs
-              ? "Tu primera clase de 50 minutos es GRATIS. Selecciona una categoria y encuentra al profesor perfecto."
-              : "Your first 50-minute class is FREE. Select a category and find your perfect tutor."}
+              ? "Selecciona una categoria y encuentra al profesor perfecto para ti."
+              : "Select a category and find your perfect tutor."}
           </p>
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+            <div className="flex items-center gap-1">
+              <Star className="w-4 h-4 fill-[#F59E1C] text-[#F59E1C]" />
+              <span className="font-semibold text-[#0A4A6E]">4.9</span>
+            </div>
+            <span>·</span>
+            <span>{isEs ? "500+ clases completadas" : "500+ classes completed"}</span>
+            <span>·</span>
+            <span>{isEs ? "Profesores certificados" : "Certified tutors"}</span>
+          </div>
         </motion.div>
 
         {/* Category Cards */}
@@ -112,32 +138,53 @@ export default function HomePage() {
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-16 max-w-4xl mx-auto"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 max-w-6xl mx-auto"
         >
           {categories.map((cat) => {
             const Icon = cat.icon;
             return (
               <motion.div key={`${cat.classType}-${cat.language}`} variants={fadeInUp}>
                 <Link href={`/tutors?classType=${cat.classType}&language=${cat.language}`}>
-                  <motion.div whileHover={{ y: -6, boxShadow: "0 20px 50px rgba(10, 74, 110, 0.15)" }} whileTap={{ scale: 0.98 }}>
-                    <Card className="cursor-pointer overflow-hidden border-0 shadow-lg">
-                      <div className={`bg-gradient-to-br ${cat.gradient} p-8 text-white min-h-[200px] flex flex-col justify-between`}>
-                        <div>
-                          <Icon className="w-10 h-10 mb-4 opacity-90" />
-                          <h3 className="text-2xl font-bold mb-2">
-                            {isEs ? cat.labelEs : cat.labelEn}
-                          </h3>
-                          <p className="text-white/80 text-sm leading-relaxed">
-                            {isEs ? cat.descEs : cat.descEn}
-                          </p>
+                  <motion.div
+                    whileHover={{ y: -6, boxShadow: "0 20px 50px rgba(10, 74, 110, 0.12)" }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.25 }}
+                    className="group"
+                  >
+                    <Card className="cursor-pointer overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow">
+                      {/* Gradient header */}
+                      <div className={`bg-gradient-to-br ${cat.gradient} h-36 relative overflow-hidden flex items-center justify-center`}>
+                        <div className="absolute -top-6 -right-6 w-28 h-28 bg-white/15 rounded-full blur-2xl" />
+                        <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-white/10 rounded-full blur-xl" />
+                        <div className="relative w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                          <Icon className="w-8 h-8 text-white" />
                         </div>
-                        <Button
-                          variant="secondary"
-                          className="mt-4 bg-white text-[#0A4A6E] hover:bg-white/90 w-fit"
-                        >
-                          {isEs ? "Ver Profesores" : "Browse Tutors"} →
-                        </Button>
                       </div>
+                      {/* Content */}
+                      <CardContent className="p-5">
+                        <Badge
+                          className="border-0 mb-3 text-xs font-semibold"
+                          style={{
+                            backgroundColor: `${cat.accentColor}15`,
+                            color: cat.accentColor,
+                          }}
+                        >
+                          {isEs ? cat.badgeLabelEs : cat.badgeLabelEn}
+                        </Badge>
+                        <h3 className="text-base font-bold text-[#0A4A6E] mb-2 leading-tight">
+                          {isEs ? cat.labelEs : cat.labelEn}
+                        </h3>
+                        <p className="text-sm text-gray-500 leading-relaxed mb-4 line-clamp-2">
+                          {isEs ? cat.descEs : cat.descEn}
+                        </p>
+                        <Button
+                          className="w-full text-white text-sm"
+                          style={{ backgroundColor: cat.accentColor }}
+                        >
+                          {isEs ? "Ver Profesores" : "Browse Tutors"}
+                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </CardContent>
                     </Card>
                   </motion.div>
                 </Link>

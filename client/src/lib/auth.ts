@@ -124,3 +124,22 @@ export const validateSession = async (): Promise<AuthUser | null> => {
 export const isAuthenticated = (): boolean => {
   return getCurrentUser() !== null;
 };
+
+export const getSmartRedirect = (user: AuthUser | null): string => {
+  if (!user) return "/login";
+
+  switch (user.userType) {
+    case "admin":
+      return "/admin";
+    case "tutor":
+      return "/tutor-portal";
+    case "customer":
+      return "/dashboard";
+    case "lead":
+      return "/packages";
+    case "trial":
+    default:
+      if (user.trialCompleted) return "/packages";
+      return "/home";
+  }
+};

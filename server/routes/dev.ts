@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { storage } from "../storage";
+import { notificationService } from "../services/notification";
 
 /**
  * Development-only routes for testing and debugging.
@@ -12,96 +13,65 @@ export function registerDevRoutes(app: Express) {
     return;
   }
 
-  // Test webhook endpoint - simulates a High Level webhook
-  app.post("/api/test-webhook", async (_req, res) => {
+  // Health check endpoint
+  app.get("/api/dev/health", async (_req, res) => {
     try {
-      console.log("PRUEBA DE WEBHOOK - Simulando High Level...");
+      const users = await storage.getAllUsers();
+      const tutors = await storage.getAllTutors();
+      const classes = await storage.getAllClasses();
 
-      const testWebhookData = {
-        appointmentId: "APPT_TEST_001",
-        contactId: "TEST_CONTACT_123",
-        status: "completed",
-        appointmentTitle: "Conversation Practice - Test",
-        startTime: "2025-08-30T15:00:00Z",
-        endTime: "2025-08-30T16:00:00Z",
-        studentEmail: "juan.sanchez@example.com",
-        studentName: "Juan Sanchez",
+      res.json({
+        status: "ok",
+        counts: {
+          users: users.length,
+          tutors: tutors.length,
+          classes: classes.length,
+        },
         timestamp: new Date().toISOString(),
-      };
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        status: "error",
+        error: error.message,
+      });
+    }
+  });
 
-      console.log(
-        "Simulando datos de High Level:",
-        JSON.stringify(testWebhookData, null, 2)
-      );
+  // Test notification endpoint - simulates a class booking notification
+  app.post("/api/dev/test-notification", async (_req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const tutors = await storage.getAllTutors();
 
-      const contactId = testWebhookData.contactId;
-      const appointmentId = testWebhookData.appointmentId;
-
-      const user = await storage.getUserByHighLevelContactId(contactId);
-      if (!user) {
+      if (users.length === 0 || tutors.length === 0) {
         return res.json({
           success: false,
-          message: `Usuario no encontrado con contactId: ${contactId}`,
-          testData: testWebhookData,
+          message: "No users or tutors found to test with",
         });
       }
 
-      console.log(
-        `Usuario encontrado: ${user.firstName} ${user.lastName} (${user.email})`
-      );
-      console.log(`Creditos actuales: ${user.classCredits}`);
+      const testUser = users[0];
+      const testTutor = tutors[0];
 
-      const classes = await storage.getAllClasses();
-      const classToUpdate = classes.find(
-        (c) =>
-          c.highLevelAppointmentId === appointmentId ||
-          (c.userId === user.id && c.status === "scheduled")
-      );
+      await notificationService.onClassBooked({
+        studentId: testUser.id,
+        tutorId: testTutor.id,
+        classId: 999,
+        scheduledAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      });
 
-      if (classToUpdate) {
-        await storage.updateClass(classToUpdate.id, {
-          status: "completed",
-          highLevelAppointmentId: appointmentId,
-          highLevelContactId: contactId,
-        });
-
-        const currentCredits = user.classCredits || 0;
-        const newCredits = Math.max(0, currentCredits - 1);
-        await storage.updateUser(user.id, { classCredits: newCredits });
-
-        console.log(`Clase ${classToUpdate.id} marcada como completada`);
-        console.log(`Creditos actualizados: ${user.classCredits} -> ${newCredits}`);
-
-        res.json({
-          success: true,
-          message: "Webhook de prueba ejecutado exitosamente",
-          details: {
-            usuario: `${user.firstName} ${user.lastName}`,
-            email: user.email,
-            creditosAntes: user.classCredits,
-            creditosDespues: newCredits,
-            claseId: classToUpdate.id,
-            appointmentId: appointmentId,
-          },
-          testData: testWebhookData,
-        });
-      } else {
-        res.json({
-          success: false,
-          message: "No se encontro clase para procesar",
-          details: {
-            usuario: `${user.firstName} ${user.lastName}`,
-            appointmentId: appointmentId,
-            clasesDisponibles: classes.filter((c) => c.userId === user.id).length,
-          },
-        });
-      }
+      res.json({
+        success: true,
+        message: "Test notification sent",
+        details: {
+          student: `${testUser.firstName} ${testUser.lastName}`,
+          tutor: testTutor.name,
+        },
+      });
     } catch (error: any) {
-      console.error("Error en webhook de prueba:", error);
       res.status(500).json({
         success: false,
         error: error.message,
-        message: "Error en webhook de prueba",
       });
     }
   });

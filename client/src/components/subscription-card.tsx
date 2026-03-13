@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Crown, Loader2 } from "lucide-react";
+import { useCurrency } from "@/lib/currency";
+import { useLanguage } from "@/lib/i18n";
 import type { Subscription } from "@shared/schema";
 
 // Extended subscription type with plan details
@@ -22,6 +24,9 @@ interface SubscriptionCardProps {
 }
 
 export default function SubscriptionCard({ subscription, onUpgrade, onManage, isManaging = false, isUpgrading = false }: SubscriptionCardProps) {
+  const { formatPrice } = useCurrency();
+  const { language } = useLanguage();
+  const isEs = language === 'es';
   const usagePercentage = subscription.classesLimit && subscription.classesUsed
     ? (subscription.classesUsed / subscription.classesLimit) * 100 
     : 0;
@@ -48,20 +53,20 @@ export default function SubscriptionCard({ subscription, onUpgrade, onManage, is
   const getPlanDescription = () => {
     switch (subscription.planType) {
       case 'unlimited':
-        return "Unlimited classes per month";
+        return isEs ? "Clases ilimitadas por mes" : "Unlimited classes per month";
       case 'premium':
-        return "Premium features included";
+        return isEs ? "Funciones premium incluidas" : "Premium features included";
       case 'basic':
-        return "Essential learning features";
+        return isEs ? "Funciones esenciales de aprendizaje" : "Essential learning features";
       default:
-        return "Access to platform features";
+        return isEs ? "Acceso a funciones de la plataforma" : "Access to platform features";
     }
   };
 
   return (
     <Card>
       <CardHeader className="border-b border-gray-200">
-        <CardTitle>Your Plan</CardTitle>
+        <CardTitle>{isEs ? 'Tu Plan' : 'Your Plan'}</CardTitle>
       </CardHeader>
       <CardContent className="p-6">
         <div className="text-center">
@@ -75,7 +80,7 @@ export default function SubscriptionCard({ subscription, onUpgrade, onManage, is
           {subscription.classesLimit && (
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">Classes used</span>
+                <span className="text-sm text-gray-600">{isEs ? 'Clases usadas' : 'Classes used'}</span>
                 <span className="text-sm font-medium text-gray-900">
                   {subscription.classesUsed} / {subscription.classesLimit}
                 </span>
@@ -86,10 +91,10 @@ export default function SubscriptionCard({ subscription, onUpgrade, onManage, is
 
           <div className="mt-4 text-sm text-gray-600 space-y-1">
             <p>
-              Next billing: <span className="font-medium">{formatDate(subscription.nextBillingDate)}</span>
+              {isEs ? 'Próximo cobro: ' : 'Next billing: '}<span className="font-medium">{formatDate(subscription.nextBillingDate)}</span>
             </p>
             <p>
-              Amount: <span className="font-medium">${subscription.price}/month</span>
+              {isEs ? 'Monto: ' : 'Amount: '}<span className="font-medium">{formatPrice(subscription.price || 0)}/{isEs ? 'mes' : 'month'}</span>
             </p>
           </div>
 
@@ -102,10 +107,10 @@ export default function SubscriptionCard({ subscription, onUpgrade, onManage, is
               {isUpgrading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Opening Upgrade...
+                  {isEs ? 'Abriendo...' : 'Opening Upgrade...'}
                 </>
               ) : (
-                "Upgrade Plan"
+                isEs ? "Mejorar Plan" : "Upgrade Plan"
               )}
             </Button>
             <Button
@@ -117,10 +122,10 @@ export default function SubscriptionCard({ subscription, onUpgrade, onManage, is
               {isManaging ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Opening Portal...
+                  {isEs ? 'Abriendo...' : 'Opening Portal...'}
                 </>
               ) : (
-                "Manage Subscription"
+                isEs ? "Gestionar Suscripción" : "Manage Subscription"
               )}
             </Button>
           </div>

@@ -1,111 +1,54 @@
 import { storage } from "../storage";
-import { HighLevelService } from "./high-level";
+import { notificationService } from "./notification";
 
 export class ClassSchedulerService {
-  private highLevelService?: HighLevelService;
   private reminderTimer: NodeJS.Timeout | null = null;
 
-  constructor(apiKey?: string, locationId?: string) {
-    if (apiKey && locationId) {
-      this.highLevelService = new HighLevelService(apiKey, locationId);
-    }
-  }
-
-  // Iniciar el servicio de recordatorios automáticos
+  // Start automatic reminder service
   startReminderService() {
-    // Verificar recordatorios cada hora
+    // Check for reminders every hour
     this.reminderTimer = setInterval(() => {
       this.checkAndSendReminders();
-    }, 60 * 60 * 1000); // 1 hora
+    }, 60 * 60 * 1000);
 
-    console.log("🔔 Servicio de recordatorios automáticos iniciado");
+    console.log("Reminder service started");
   }
 
-  // Detener el servicio
   stopReminderService() {
     if (this.reminderTimer) {
       clearInterval(this.reminderTimer);
       this.reminderTimer = null;
-      console.log("🔔 Servicio de recordatorios detenido");
     }
   }
 
-  // Verificar y enviar recordatorios para clases que son en 24 horas
+  // Check and send reminders for classes happening in ~24 hours
   private async checkAndSendReminders() {
     try {
-      if (!this.highLevelService) {
-        console.log("High Level no configurado para recordatorios");
-        return;
-      }
-
-      console.log("🔍 Verificando clases para recordatorios...");
-
-      // Obtener todas las clases programadas para mañana (aproximadamente)
       const now = new Date();
       const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       const tomorrowStart = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
       const tomorrowEnd = new Date(tomorrowStart.getTime() + 24 * 60 * 60 * 1000);
 
-      // Buscar clases de todos los usuarios (esto podría optimizarse)
-      const users = await this.getAllUsers();
-      
-      for (const user of users) {
+      const allUsers = await storage.getAllUsers();
+
+      for (const user of allUsers) {
         const userClasses = await storage.getUserClasses(user.id);
-        
+
         for (const classItem of userClasses) {
           const classDate = new Date(classItem.scheduledAt);
-          
-          // Si la clase es mañana y está en estado 'scheduled'
-          if (classDate >= tomorrowStart && 
-              classDate < tomorrowEnd && 
-              classItem.status === 'scheduled') {
-            
-            const tutor = await storage.getTutor(classItem.tutorId);
-            if (tutor) {
-              await this.sendClassReminder(user, classItem, tutor);
-            }
+
+          if (classDate >= tomorrowStart && classDate < tomorrowEnd && classItem.status === "scheduled") {
+            notificationService.sendClassReminder({
+              studentId: user.id,
+              tutorId: classItem.tutorId,
+              scheduledAt: classDate,
+              meetingLink: classItem.meetingLink || undefined,
+            });
           }
         }
       }
     } catch (error) {
-      console.error("Error verificando recordatorios:", error);
-    }
-  }
-
-  // Enviar recordatorio individual
-  private async sendClassReminder(user: any, classItem: any, tutor: any) {
-    try {
-      if (this.highLevelService) {
-        await this.highLevelService.sendClassReminder(user, classItem, tutor);
-        console.log(`📤 Recordatorio enviado para clase de ${user.email} con ${tutor.name}`);
-      }
-    } catch (error) {
-      console.error(`Error enviando recordatorio para ${user.email}:`, error);
-    }
-  }
-
-  private async getAllUsers() {
-    return storage.getAllUsers();
-  }
-
-  // Programar recordatorio específico para una clase (alternativa más precisa)
-  scheduleClassReminder(user: any, classItem: any, tutor: any) {
-    const classDate = new Date(classItem.scheduledAt);
-    const reminderTime = new Date(classDate.getTime() - 24 * 60 * 60 * 1000); // 24 horas antes
-    const now = new Date();
-
-    if (reminderTime > now) {
-      const delay = reminderTime.getTime() - now.getTime();
-      
-      setTimeout(async () => {
-        try {
-          await this.sendClassReminder(user, classItem, tutor);
-        } catch (error) {
-          console.error("Error enviando recordatorio programado:", error);
-        }
-      }, delay);
-
-      console.log(`⏰ Recordatorio programado para ${reminderTime.toLocaleString()}`);
+      console.error("Error checking reminders:", error);
     }
   }
 }

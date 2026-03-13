@@ -45,13 +45,13 @@ export function registerUserRoutes(app: Express) {
         return res.status(403).json({ message: "Forbidden: you can only update your own data" });
       }
 
-      const { firstName, lastName, phone, password } = req.body;
+      const { firstName, lastName, phone } = req.body;
+      // Note: password changes must go through PUT /api/user/password (validates current password)
 
       const updateData: Record<string, unknown> = {};
       if (firstName !== undefined) updateData.firstName = firstName;
       if (lastName !== undefined) updateData.lastName = lastName;
       if (phone !== undefined) updateData.phone = phone;
-      if (password !== undefined) updateData.password = password;
 
       const updatedUser = await storage.updateUser(userId, updateData);
 
@@ -132,6 +132,15 @@ export function registerUserRoutes(app: Express) {
     try {
       const subscriptionId = parseInt(req.params.id);
       const { planId, status, nextBillingDate } = req.body;
+
+      // Ownership check: verify subscription belongs to requesting user (or admin)
+      const subscription = await storage.getUserSubscription(req.session.userId!);
+      if (!subscription || subscription.id !== subscriptionId) {
+        const requestingUser = await storage.getUser(req.session.userId!);
+        if (requestingUser?.userType !== "admin") {
+          return res.status(403).json({ message: "Forbidden: you can only manage your own subscription" });
+        }
+      }
 
       const updatedSubscription = await storage.updateSubscription(subscriptionId, {
         planId,
