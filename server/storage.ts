@@ -1923,12 +1923,10 @@ export class MemStorage implements IStorage {
 }
 
 // Use DatabaseStorage when DATABASE_URL is available, MemStorage otherwise
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
+import { DatabaseStorage } from "./storage-database";
 
 function createStorage(): IStorage {
   if (process.env.DATABASE_URL) {
-    const { DatabaseStorage } = require("./storage-database");
     return new DatabaseStorage();
   }
   return new MemStorage();
