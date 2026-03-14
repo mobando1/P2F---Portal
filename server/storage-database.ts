@@ -120,6 +120,11 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByVerificationToken(token: string): Promise<User | undefined> {
+    const [user] = await this.db.select().from(users).where(eq(users.verificationToken, token));
+    return user || undefined;
+  }
+
   async linkOAuthId(userId: number, provider: 'google' | 'microsoft', providerId: string): Promise<void> {
     const field = provider === 'google' ? { googleId: providerId } : { microsoftId: providerId };
     await this.db.update(users).set(field).where(eq(users.id, userId));

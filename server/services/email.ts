@@ -158,6 +158,25 @@ export const emailService = {
 
   // === Drip Campaign Emails ===
 
+  async sendVerificationEmail(params: { to: string; name: string; token: string; lang: "es" | "en" }): Promise<boolean> {
+    const { to, name, token, lang } = params;
+    const isEs = lang === "es";
+    const BASE_URL = process.env.NODE_ENV === "production"
+      ? process.env.APP_URL || "https://portal.passport2fluency.com"
+      : "http://localhost:5000";
+    const link = `${BASE_URL}/api/auth/verify-email?token=${token}`;
+    const subject = isEs ? "Verifica tu correo electrónico" : "Verify your email address";
+    const body = `
+      <p style="color: #374151; font-size: 16px;">${isEs ? "Hola" : "Hi"} <strong>${name}</strong>,</p>
+      <p style="color: #374151;">${isEs
+        ? "Por favor verifica tu correo electrónico haciendo clic en el botón de abajo."
+        : "Please verify your email address by clicking the button below."}</p>
+      <p style="margin: 16px 0;"><a href="${link}" style="background: #F59E1C; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">${isEs ? "Verificar correo" : "Verify email"}</a></p>
+      <p style="color: #6B7280; font-size: 14px;">${isEs ? "Este enlace expira en 24 horas." : "This link expires in 24 hours."}</p>
+    `;
+    return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Verifica tu correo" : "Verify your email", body, lang) });
+  },
+
   async sendWelcomeEmail(params: { to: string; name: string; lang: "es" | "en" }): Promise<boolean> {
     const { to, name, lang } = params;
     const isEs = lang === "es";

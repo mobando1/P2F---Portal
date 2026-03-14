@@ -54,6 +54,14 @@ async function findOrCreateOAuthUser(
   });
 
   await storage.linkOAuthId(newUser.id, provider, providerId);
+
+  // OAuth emails are pre-verified by the provider — mark as verified
+  await storage.updateUser(newUser.id, { emailVerified: true } as any);
+
+  // Send welcome email (fire-and-forget)
+  const { dripCampaignService } = await import("../services/drip-campaign");
+  dripCampaignService.onUserRegistered(newUser.id).catch(() => {});
+
   return newUser;
 }
 

@@ -1,8 +1,10 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
+import crypto from "crypto";
 import { storage, sanitizeUser } from "../storage";
 import { loginSchema, insertUserSchema } from "@shared/schema";
 import { dripCampaignService } from "../services/drip-campaign";
+import { emailService } from "../services/email";
 
 // Extend express-session types
 declare module "express-session" {
@@ -125,6 +127,17 @@ export function registerAuthRoutes(app: Express) {
       // Set server-side session
       req.session.userId = user.id;
 
+      // Generate email verification token and send verification email
+      const verificationToken = crypto.randomUUID();
+      await storage.updateUser(user.id, { verificationToken } as any);
+      const lang = (user as any).timezone?.includes("America") ? "es" : "en";
+      emailService.sendVerificationEmail({
+        to: user.email,
+        name: user.firstName,
+        token: verificationToken,
+        lang,
+      }).catch(() => {});
+
       // Send welcome email (fire-and-forget)
       dripCampaignService.onUserRegistered(user.id);
 
@@ -132,6 +145,22 @@ export function registerAuthRoutes(app: Express) {
     } catch (error) {
       res.status(400).json({ message: "Invalid request data" });
     }
+  });
+
+  // Email verification
+  app.get("/api/auth/verify-email", async (req, res) => {
+    const { token } = req.query;
+    if (!token || typeof token !== "string") {
+      return res.redirect("/login?error=invalid_token");
+    }
+    const user = await storage.getUserByVerificationToken(token);
+    if (!user) {
+      return res.redirect("/login?error=invalid_token");
+    }
+    await storage.updateUser(user.id, { emailVerified: true, verificationToken: null } as any);
+    req.session.userId = user.id;
+    req.session.save(() => {});
+    res.redirect("/home?verified=true");
   });
 
   // Session validation

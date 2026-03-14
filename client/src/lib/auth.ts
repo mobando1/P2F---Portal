@@ -12,6 +12,9 @@ export interface AuthUser {
   trialCompleted?: boolean;
   userType?: string;
   classCredits?: number;
+  emailVerified?: boolean;
+  googleId?: string | null;
+  microsoftId?: string | null;
 }
 
 export interface LoginData {

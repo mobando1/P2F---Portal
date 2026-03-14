@@ -432,6 +432,27 @@ async function startServer() {
     console.error("Failed to start background services:", error);
   }
 
+  // DB health check + idempotent schema migrations
+  if (config.DATABASE_URL) {
+    try {
+      const { pool: pgPool } = await import("./db");
+      if (pgPool) {
+        await pgPool.query("SELECT 1");
+        log("Database connection verified");
+        await pgPool.query(`
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT;
+          UPDATE users SET email_verified = TRUE
+            WHERE email_verified IS FALSE
+              AND (google_id IS NOT NULL OR microsoft_id IS NOT NULL OR user_type = 'admin');
+        `);
+        log("Schema migrations applied");
+      }
+    } catch (err) {
+      console.error("STARTUP: Database connectivity or migration failed:", err);
+    }
+  }
+
   server.listen(config.PORT, "0.0.0.0", () => {
     log(`Server running on http://0.0.0.0:${config.PORT}`);
   });

@@ -53,6 +53,7 @@ export interface IStorage {
   authenticateUser(email: string, password: string): Promise<User | null>;
   getUserByGoogleId(googleId: string): Promise<User | undefined>;
   getUserByMicrosoftId(microsoftId: string): Promise<User | undefined>;
+  getUserByVerificationToken(token: string): Promise<User | undefined>;
   linkOAuthId(userId: number, provider: 'google' | 'microsoft', providerId: string): Promise<void>;
 
   // Subscriptions
@@ -333,9 +334,9 @@ export interface IStorage {
   updateTutorGoogleToken(tutorId: number, data: Partial<InsertTutorGoogleToken>): Promise<TutorGoogleToken | undefined>;
 }
 
-/** Strip password from user object before sending to client */
-export function sanitizeUser(user: User): Omit<User, "password"> {
-  const { password, ...safeUser } = user;
+/** Strip sensitive fields from user object before sending to client */
+export function sanitizeUser(user: User): Omit<User, "password" | "verificationToken"> {
+  const { password, verificationToken, ...safeUser } = user;
   return safeUser;
 }
 
@@ -459,6 +460,8 @@ export class MemStorage implements IStorage {
       profileImage: null,
       autoconfirmMode: "all",
       calendarConnected: false,
+      emailVerified: true,
+      verificationToken: null,
       lastActivityAt: null,
       createdAt: new Date(),
     };
@@ -490,6 +493,8 @@ export class MemStorage implements IStorage {
       profileImage: null,
       autoconfirmMode: "all",
       calendarConnected: false,
+      emailVerified: true,
+      verificationToken: null,
       lastActivityAt: new Date(),
       createdAt: new Date(),
     };
@@ -520,6 +525,8 @@ export class MemStorage implements IStorage {
       profileImage: null,
       autoconfirmMode: "all",
       calendarConnected: false,
+      emailVerified: true,
+      verificationToken: null,
       lastActivityAt: new Date(),
       createdAt: new Date(),
     };
@@ -808,6 +815,8 @@ export class MemStorage implements IStorage {
       profileImage: insertUser.profileImage || null,
       autoconfirmMode: insertUser.autoconfirmMode || "all",
       calendarConnected: insertUser.calendarConnected || false,
+      emailVerified: insertUser.emailVerified ?? false,
+      verificationToken: insertUser.verificationToken ?? null,
       lastActivityAt: new Date(),
     };
     this.users.set(id, user);
@@ -846,6 +855,11 @@ export class MemStorage implements IStorage {
   async getUserByMicrosoftId(microsoftId: string): Promise<User | undefined> {
     await this.ensureInitialized();
     return Array.from(this.users.values()).find(u => u.microsoftId === microsoftId);
+  }
+
+  async getUserByVerificationToken(token: string): Promise<User | undefined> {
+    await this.ensureInitialized();
+    return Array.from(this.users.values()).find(u => u.verificationToken === token);
   }
 
   async linkOAuthId(userId: number, provider: 'google' | 'microsoft', providerId: string): Promise<void> {

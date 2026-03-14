@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from "react";
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -171,6 +171,31 @@ function Router() {
   );
 }
 
+function EmailVerificationBanner() {
+  const user = getCurrentUser();
+  const [location] = useLocation();
+  const [dismissed, setDismissed] = useState(false);
+
+  if (!user || dismissed) return null;
+  if (user.emailVerified !== false) return null; // verified or unknown
+  if (user.googleId || user.microsoftId) return null; // OAuth = already verified
+  if (location === "/login") return null;
+
+  return (
+    <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-between text-sm">
+      <span className="text-amber-800">
+        Please verify your email address — check your inbox for a verification link.
+      </span>
+      <button
+        onClick={() => setDismissed(true)}
+        className="ml-4 text-amber-600 hover:text-amber-800 font-medium"
+      >
+        Dismiss
+      </button>
+    </div>
+  );
+}
+
 function WebSocketInit() {
   useWebSocketConnection();
   useWsQueryInvalidation();
@@ -185,6 +210,7 @@ function App() {
           <CurrencyProvider>
             <TooltipProvider>
               <WebSocketInit />
+              <EmailVerificationBanner />
               <Toaster />
               <Router />
               <HelpButton />

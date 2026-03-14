@@ -32,6 +32,8 @@ export const users = pgTable("users", {
   profileImage: text("profile_image"),
   autoconfirmMode: text("autoconfirm_mode").default("all"), // 'self_only' | 'all'
   calendarConnected: boolean("calendar_connected").default(false),
+  emailVerified: boolean("email_verified").default(false),
+  verificationToken: text("verification_token"),
   lastActivityAt: timestamp("last_activity_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
