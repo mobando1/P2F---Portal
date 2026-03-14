@@ -98,8 +98,8 @@ export function registerAuthRoutes(app: Express) {
 
       res.json({ user: sanitizeUser(user), tutorProfile });
     } catch (error: any) {
-      const msg = error?.message || String(error) || "Unknown error";
-      console.error("[login] CAUGHT ERROR:", msg, error?.stack);
+      const msg = error?.message || (typeof error === 'object' ? JSON.stringify(error) : String(error)) || "Unknown error";
+      console.error("[login] CAUGHT ERROR:", JSON.stringify(error));
       res.status(400).json({ message: msg });
     }
   });
