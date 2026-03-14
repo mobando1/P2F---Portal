@@ -1,21 +1,18 @@
 import bcrypt from "bcryptjs";
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
+import pg from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 import {
   users, tutors, classes, videos, subscriptions, userProgress, reviews,
   learningPathStations, learningPathContent, levelProgressionRules,
 } from "@shared/schema";
-
-neonConfig.webSocketConstructor = ws;
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is required to seed the database");
   process.exit(1);
 }
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle({ client: pool });
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const db = drizzle(pool);
 
 async function seed() {
   console.log("Seeding database...\n");
