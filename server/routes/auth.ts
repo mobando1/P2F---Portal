@@ -90,9 +90,8 @@ export function registerAuthRoutes(app: Express) {
       }
 
       res.json({ user: sanitizeUser(user), tutorProfile });
-    } catch (error: any) {
-      console.error("[login] error:", error?.message || error);
-      res.status(400).json({ message: error?.message || "Invalid request data" });
+    } catch (error) {
+      res.status(400).json({ message: "Invalid request data" });
     }
   });
 
