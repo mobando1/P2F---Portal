@@ -5,6 +5,7 @@ import { CalendarIntegrationService } from "../services/calendar-integration";
 import { availabilityService } from "../services/availability";
 import { notificationService } from "../services/notification";
 import { dripCampaignService } from "../services/drip-campaign";
+import { googleMeetService } from "../services/google-meet";
 import { requireAuth, requireAdmin } from "./auth";
 
 const calendarService = new CalendarIntegrationService();
@@ -67,6 +68,21 @@ export function registerClassRoutes(app: Express) {
         return res.status(409).json({ message: validation.reason });
       }
 
+      // Generate meeting link if not provided
+      if (!classData.meetingLink) {
+        const tutor = await storage.getTutor(classData.tutorId);
+        const { meetingLink, calendarEventId, tutorCalendarEventId } = await googleMeetService.createMeetingLink({
+          title: classData.title || `Class with ${tutor?.name || 'Tutor'}`,
+          scheduledAt: new Date(classData.scheduledAt),
+          duration: classData.duration || 60,
+          tutorName: tutor?.name || 'Tutor',
+          tutorId: classData.tutorId,
+        });
+        (classData as any).meetingLink = meetingLink;
+        (classData as any).calendarEventId = calendarEventId || null;
+        (classData as any).tutorCalendarEventId = tutorCalendarEventId || null;
+      }
+
       const newClass = await storage.createClass(classData);
 
       // Notify
@@ -75,6 +91,7 @@ export function registerClassRoutes(app: Express) {
         tutorId: classData.tutorId,
         classId: newClass.id,
         scheduledAt: new Date(classData.scheduledAt),
+        meetingLink: newClass.meetingLink || undefined,
       });
 
       res.status(201).json(newClass);
@@ -115,6 +132,15 @@ export function registerClassRoutes(app: Express) {
         return res.status(409).json({ message: validation.reason });
       }
 
+      // Generate meeting link
+      const { meetingLink, calendarEventId, tutorCalendarEventId } = await googleMeetService.createMeetingLink({
+        title: `Free Trial Class - ${tutor.name}`,
+        scheduledAt: new Date(scheduledAt),
+        duration: 50,
+        tutorName: tutor.name,
+        tutorId,
+      });
+
       // Create the trial class
       const trialClass = await storage.createClass({
         userId,
@@ -126,6 +152,9 @@ export function registerClassRoutes(app: Express) {
         status: "scheduled",
         isTrial: true,
         classCategory: category || `${tutor.classType}-${tutor.languageTaught}`,
+        meetingLink,
+        calendarEventId: calendarEventId || null,
+        tutorCalendarEventId: tutorCalendarEventId || null,
       });
 
       // Mark trial as used
@@ -174,6 +203,15 @@ export function registerClassRoutes(app: Express) {
 
       if (!success) {
         return res.status(404).json({ message: "Class not found or not authorized" });
+      }
+
+      // Delete Google Calendar events if they exist
+      if (classInfo?.calendarEventId || classInfo?.tutorCalendarEventId) {
+        googleMeetService.deleteCalendarEvent(
+          classInfo.calendarEventId || "",
+          classInfo.tutorCalendarEventId || undefined,
+          classInfo.tutorId
+        ).catch(() => {});
       }
 
       // Refund the class credit to user (atomic)
@@ -238,6 +276,17 @@ export function registerClassRoutes(app: Express) {
       // Update the class
       const updated = await storage.updateClass(classId, { scheduledAt: newDate });
 
+      // Update Google Calendar events if they exist
+      if (classItem.calendarEventId || classItem.tutorCalendarEventId) {
+        googleMeetService.updateCalendarEvent(
+          classItem.calendarEventId || "",
+          newDate,
+          classItem.duration || 60,
+          classItem.tutorCalendarEventId || undefined,
+          classItem.tutorId
+        ).catch(() => {});
+      }
+
       // Notify
       notificationService.onClassBooked({
         studentId: userId,
@@ -296,7 +345,13 @@ export function registerClassRoutes(app: Express) {
           continue;
         }
 
-        const meetingLink = `https://meet.jit.si/P2F-${tutor.name.replace(/\s+/g, '-')}-${Date.now()}-w${week}`;
+        const { meetingLink, calendarEventId, tutorCalendarEventId } = await googleMeetService.createMeetingLink({
+          title: `Recurring Class with ${tutor.name} (${week + 1}/${weeksCount})`,
+          scheduledAt,
+          duration: 60,
+          tutorName: tutor.name,
+          tutorId,
+        });
 
         const newClass = await storage.createClass({
           userId,
@@ -307,6 +362,8 @@ export function registerClassRoutes(app: Express) {
           duration: 60,
           status: "scheduled",
           meetingLink,
+          calendarEventId: calendarEventId || null,
+          tutorCalendarEventId: tutorCalendarEventId || null,
         });
 
         bookedClasses.push(newClass);
@@ -446,6 +503,68 @@ export function registerClassRoutes(app: Express) {
       const allClasses = await storage.getAllClasses();
       res.json(allClasses);
     } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin: Calendar data with tutor info
+  app.get("/api/admin/calendar", requireAdmin, async (req, res) => {
+    try {
+      const { start, end, tutorId } = req.query;
+      const allClasses = await storage.getAllClasses();
+      const allTutors = await storage.getAllTutors();
+      const tutorMap = new Map(allTutors.map(t => [t.id, t]));
+
+      // Color palette for tutors
+      const colors = ["#1C7BB1", "#F59E1C", "#10B981", "#EF4444", "#8B5CF6", "#EC4899", "#F97316", "#06B6D4", "#84CC16", "#6366F1"];
+
+      let filtered = allClasses;
+
+      if (start && typeof start === "string") {
+        filtered = filtered.filter(c => new Date(c.scheduledAt) >= new Date(start));
+      }
+      if (end && typeof end === "string") {
+        filtered = filtered.filter(c => new Date(c.scheduledAt) <= new Date(end));
+      }
+      if (tutorId && tutorId !== "all" && typeof tutorId === "string") {
+        filtered = filtered.filter(c => c.tutorId === parseInt(tutorId));
+      }
+
+      // Fetch student names
+      const userIds = Array.from(new Set(filtered.map(c => c.userId)));
+      const userMap = new Map<number, string>();
+      for (const uid of userIds) {
+        const u = await storage.getUser(uid);
+        if (u) userMap.set(uid, `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email);
+      }
+
+      const calendarEvents = filtered.map(c => {
+        const tutor = tutorMap.get(c.tutorId);
+        return {
+          id: c.id,
+          title: c.title,
+          scheduledAt: c.scheduledAt,
+          duration: c.duration,
+          status: c.status,
+          tutorId: c.tutorId,
+          tutorName: tutor?.name || "Unknown",
+          tutorColor: colors[c.tutorId % colors.length],
+          studentName: userMap.get(c.userId) || "Unknown",
+          meetingLink: c.meetingLink,
+          isTrial: c.isTrial,
+        };
+      });
+
+      res.json({
+        events: calendarEvents,
+        tutors: allTutors.map(t => ({
+          id: t.id,
+          name: t.name,
+          color: colors[t.id % colors.length],
+        })),
+      });
+    } catch (error) {
+      console.error("Error getting calendar data:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

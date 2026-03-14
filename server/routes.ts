@@ -18,6 +18,9 @@ import { registerSettingsRoutes } from "./routes/settings";
 import { registerCrmRoutes } from "./routes/crm";
 import { registerCampaignRoutes } from "./routes/campaigns";
 import { registerAnalyticsRoutes } from "./routes/analytics";
+import { registerLearningPathRoutes } from "./routes/learning-path";
+import { registerGoogleOAuthRoutes } from "./routes/google-oauth";
+import { registerOAuthRoutes } from "./routes/oauth";
 
 export async function registerRoutes(app: Express): Promise<void> {
   // Serve static files from attached_assets
@@ -41,6 +44,9 @@ export async function registerRoutes(app: Express): Promise<void> {
   registerCrmRoutes(app);
   registerCampaignRoutes(app);
   registerAnalyticsRoutes(app);
+  registerLearningPathRoutes(app);
+  registerGoogleOAuthRoutes(app);
+  registerOAuthRoutes(app);
 
   // Development-only routes
   if (process.env.NODE_ENV === "development") {

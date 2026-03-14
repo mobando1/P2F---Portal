@@ -177,4 +177,48 @@ export const gamificationService = {
 
     return newAchievements;
   },
+
+  /**
+   * Called for learning path milestones (first station, quiz master, level ups)
+   */
+  async onLearningPathMilestone(userId: number, milestoneType: string): Promise<Achievement | null> {
+    const LEARNING_PATH_ACHIEVEMENTS: Record<string, { title: string; desc: string; icon: string }> = {
+      first_station: { title: "Primera Estacion", desc: "Completaste tu primera estacion del camino", icon: "🗺️" },
+      quiz_master: { title: "Quiz Master", desc: "Aprobaste 5 quizzes del camino", icon: "🧠" },
+      level_a2: { title: "Nivel A2 Alcanzado", desc: "Avanzaste al nivel A2", icon: "📈" },
+      level_b1: { title: "Nivel B1 Alcanzado", desc: "Avanzaste al nivel B1", icon: "🚀" },
+      level_b2: { title: "Nivel B2 Alcanzado", desc: "Avanzaste al nivel B2", icon: "⭐" },
+      level_c1: { title: "Nivel C1 Alcanzado", desc: "Avanzaste al nivel C1", icon: "🏆" },
+      level_c2: { title: "Nivel C2 — Maestro", desc: "Alcanzaste el nivel C2", icon: "👑" },
+    };
+
+    try {
+      const milestone = LEARNING_PATH_ACHIEVEMENTS[milestoneType];
+      if (!milestone) return null;
+
+      if (await storage.hasAchievement(userId, milestoneType)) return null;
+
+      const a = await storage.createAchievement({
+        userId,
+        type: milestoneType,
+        title: milestone.title,
+        description: milestone.desc,
+        icon: milestone.icon,
+      });
+
+      await storage.createNotification({
+        userId,
+        type: "system",
+        title: `${milestone.icon} ${milestone.title}`,
+        message: milestone.desc,
+        link: "/learning-path",
+        isRead: false,
+      });
+
+      return a;
+    } catch (error) {
+      console.error("Error in gamification onLearningPathMilestone:", error);
+      return null;
+    }
+  },
 };

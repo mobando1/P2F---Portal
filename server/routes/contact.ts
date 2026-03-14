@@ -28,6 +28,18 @@ export function registerContactRoutes(app: Express) {
         status: "new",
       });
 
+      // Auto-subscribe to newsletter
+      try {
+        const [firstName, ...rest] = validated.name.split(" ");
+        await storage.upsertNewsletterSubscriber({
+          email: validated.email,
+          firstName,
+          lastName: rest.join(" ") || undefined,
+          source: "contact_form",
+          status: "active",
+        });
+      } catch (e) { /* ignore */ }
+
       res.status(201).json({
         success: true,
         message: "Contact submission received",

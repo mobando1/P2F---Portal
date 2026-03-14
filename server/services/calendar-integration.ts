@@ -1,7 +1,7 @@
 import { storage } from '../storage';
 import { availabilityService, type TimeSlot } from './availability';
 import { notificationService } from './notification';
-import crypto from 'crypto';
+import { googleMeetService } from './google-meet';
 
 export type { TimeSlot };
 
@@ -82,18 +82,28 @@ export class CalendarIntegrationService {
         return { success: false, message: validation.reason };
       }
 
-      // Generar link de videollamada (Jitsi Meet)
-      const meetingLink = this.generateMeetingLink(tutor.name);
+      // Generar link de videollamada (Google Meet con fallback a Jitsi)
+      const title = `${tutor.languageTaught === 'spanish' ? 'Spanish' : 'English'} Class - ${tutor.name}`;
+      const { meetingLink, calendarEventId, tutorCalendarEventId } = await googleMeetService.createMeetingLink({
+        title,
+        scheduledAt,
+        duration,
+        tutorName: tutor.name,
+        tutorId,
+        studentName: user.firstName || undefined,
+      });
 
       // Crear clase en storage
       const classData = {
         userId,
         tutorId,
-        title: `${tutor.languageTaught === 'spanish' ? 'Spanish' : 'English'} Class - ${tutor.name}`,
+        title,
         scheduledAt,
         duration,
         status: 'scheduled' as const,
         meetingLink,
+        calendarEventId: calendarEventId || null,
+        tutorCalendarEventId: tutorCalendarEventId || null,
       };
 
       const newClass = await storage.createClass(classData);
@@ -152,6 +162,15 @@ export class CalendarIntegrationService {
       // Actualizar estado en storage
       await storage.updateClass(classId, { status: 'cancelled' });
 
+      // Delete Google Calendar events if they exist
+      if (classItem.calendarEventId || classItem.tutorCalendarEventId) {
+        googleMeetService.deleteCalendarEvent(
+          classItem.calendarEventId || "",
+          classItem.tutorCalendarEventId || undefined,
+          classItem.tutorId
+        ).catch(() => {});
+      }
+
       // Devolver crédito
       const user = await storage.getUser(userId);
       if (user) {
@@ -174,12 +193,4 @@ export class CalendarIntegrationService {
     }
   }
 
-  /**
-   * Genera un link de Jitsi Meet para la clase
-   */
-  private generateMeetingLink(tutorName: string): string {
-    const hash = crypto.randomBytes(4).toString('hex');
-    const safeName = tutorName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-    return `https://meet.jit.si/P2F-${safeName}-${hash}`;
-  }
 }

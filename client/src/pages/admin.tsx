@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/i18n";
 import CrmDashboard from "@/components/crm/CrmDashboard";
+import AdminCalendar from "@/components/admin/AdminCalendar";
+import AdminLearningPath from "@/components/admin/AdminLearningPath";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
 import { Calendar } from "@/components/ui/calendar";
@@ -74,7 +76,7 @@ interface ClassItem {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'tutors' | 'classes' | 'analytics' | 'ai-stats' | 'support' | 'settings' | 'crm'>('tutors');
+  const [activeTab, setActiveTab] = useState<'tutors' | 'classes' | 'calendar' | 'learning-path' | 'analytics' | 'ai-stats' | 'support' | 'settings' | 'crm'>('tutors');
   const [showAddTutor, setShowAddTutor] = useState(false);
   const [editingTutor, setEditingTutor] = useState<any>(null);
   const [classFilter, setClassFilter] = useState<'all' | 'scheduled' | 'completed' | 'cancelled'>('all');
@@ -133,6 +135,8 @@ export default function AdminPage() {
     to: new Date(),
   });
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const [txCursor, setTxCursor] = useState<string | null>(null);
+  const [refundTarget, setRefundTarget] = useState<{ paymentIntentId: string; amount: number; customerEmail: string } | null>(null);
   const [studentSearch, setStudentSearch] = useState("");
   const [studentSortKey, setStudentSortKey] = useState<string>("totalSpent");
   const [studentSortDir, setStudentSortDir] = useState<"asc" | "desc">("desc");
@@ -163,6 +167,49 @@ export default function AdminPage() {
     queryKey: ['/api/admin/analytics/student', selectedStudentId],
     queryFn: () => apiRequest('GET', `/api/admin/analytics/student/${selectedStudentId}`).then(res => res.json()),
     enabled: !!selectedStudentId,
+  });
+
+  const { data: stripeMetrics } = useQuery<{
+    mrr: number; mrrTrend: Array<{ month: string; mrr: number }>; churnRate: number; churnCount: number;
+    failedPayments: number; atRiskSubscribers: Array<{ userId: number; name: string; email: string; lastFailedAt: string }>;
+  }>({
+    queryKey: ['/api/admin/analytics/stripe-metrics'],
+    queryFn: () => apiRequest('GET', '/api/admin/analytics/stripe-metrics').then(res => res.json()),
+    enabled: activeTab === 'analytics' && analyticsView === 'revenue',
+  });
+
+  const { data: transactions, refetch: refetchTransactions } = useQuery<{
+    data: Array<{ id: string; amount: number; currency: string; status: string; refunded: boolean; amountRefunded: number; customerEmail: string; description: string; created: string; paymentMethodType: string; cardBrand: string | null; cardLast4: string | null; receiptUrl: string | null; paymentIntentId: string | null }>;
+    hasMore: boolean; nextCursor: string | null;
+  }>({
+    queryKey: ['/api/admin/analytics/transactions', txCursor],
+    queryFn: () => apiRequest('GET', `/api/admin/analytics/transactions?limit=25${txCursor ? `&starting_after=${txCursor}` : ''}`).then(res => res.json()),
+    enabled: activeTab === 'analytics' && analyticsView === 'revenue',
+  });
+
+  const { data: studentStripe } = useQuery<{
+    ltv: number; stripeCustomerId: string | null;
+    paymentMethods: Array<{ id: string; brand: string; last4: string; expMonth: number; expYear: number }>;
+    transactions: Array<{ id: string; amount: number; status: string; refunded: boolean; created: string; description: string; paymentIntentId: string | null }>;
+  }>({
+    queryKey: ['/api/admin/analytics/student', selectedStudentId, 'stripe'],
+    queryFn: () => apiRequest('GET', `/api/admin/analytics/student/${selectedStudentId}/stripe`).then(res => res.json()),
+    enabled: !!selectedStudentId,
+  });
+
+  const refundMutation = useMutation({
+    mutationFn: (data: { paymentIntentId: string; amount?: number }) =>
+      apiRequest('POST', '/api/admin/analytics/refund', data).then(res => res.json()),
+    onSuccess: () => {
+      toast({ title: isEs ? 'Reembolso procesado' : 'Refund processed', description: isEs ? 'El reembolso se ha completado exitosamente' : 'The refund has been completed successfully' });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/analytics/transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/analytics/stripe-metrics'] });
+      if (selectedStudentId) queryClient.invalidateQueries({ queryKey: ['/api/admin/analytics/student', selectedStudentId, 'stripe'] });
+      setRefundTarget(null);
+    },
+    onError: (error: any) => {
+      toast({ title: isEs ? 'Error' : 'Error', description: error.message || 'Refund failed', variant: 'destructive' });
+    },
   });
 
   const sortedStudents = useMemo(() => {
@@ -364,6 +411,28 @@ export default function AdminPage() {
               >
                 <CalendarDays className="inline w-4 h-4 mr-2" />
                 {isEs ? 'Clases' : 'Classes'}
+              </button>
+              <button
+                onClick={() => setActiveTab('calendar')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'calendar'
+                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <CalendarIcon className="inline w-4 h-4 mr-2" />
+                {isEs ? 'Calendario' : 'Calendar'}
+              </button>
+              <button
+                onClick={() => setActiveTab('learning-path')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'learning-path'
+                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <BookOpen className="inline w-4 h-4 mr-2" />
+                {isEs ? 'Culebrita' : 'Learning Path'}
               </button>
               <button
                 onClick={() => setActiveTab('analytics')}
@@ -1075,6 +1144,10 @@ export default function AdminPage() {
           </div>
         )}
 
+        {activeTab === 'calendar' && <AdminCalendar />}
+
+        {activeTab === 'learning-path' && <AdminLearningPath />}
+
         {activeTab === 'analytics' && (
           <div className="space-y-6">
             {/* Date Range Picker + Sub-nav */}
@@ -1320,6 +1393,61 @@ export default function AdminPage() {
                 {/* ============ REVENUE ============ */}
                 {analyticsView === 'revenue' && (
                   <>
+                    {/* Stripe Metrics: MRR, Churn, Failed */}
+                    {stripeMetrics && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card className="border-0 shadow-md">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-xs text-gray-500 font-medium">MRR</p>
+                              <DollarSign className="h-4 w-4 text-green-500" />
+                            </div>
+                            <p className="text-3xl font-bold text-green-600">${stripeMetrics.mrr.toLocaleString()}</p>
+                            {stripeMetrics.mrrTrend.length > 1 && (
+                              <ResponsiveContainer width="100%" height={50}>
+                                <AreaChart data={stripeMetrics.mrrTrend}>
+                                  <Area type="monotone" dataKey="mrr" stroke="#22c55e" fill="#22c55e" fillOpacity={0.15} />
+                                </AreaChart>
+                              </ResponsiveContainer>
+                            )}
+                          </CardContent>
+                        </Card>
+                        <Card className="border-0 shadow-md">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-xs text-gray-500 font-medium">{isEs ? 'Tasa de Churn' : 'Churn Rate'}</p>
+                              <TrendingUp className="h-4 w-4 text-orange-500" />
+                            </div>
+                            <p className={`text-3xl font-bold ${stripeMetrics.churnRate > 5 ? 'text-red-600' : stripeMetrics.churnRate > 2 ? 'text-orange-500' : 'text-green-600'}`}>
+                              {stripeMetrics.churnRate}%
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {stripeMetrics.churnCount} {isEs ? 'cancelaciones este mes' : 'cancellations this month'}
+                            </p>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-0 shadow-md">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-xs text-gray-500 font-medium">{isEs ? 'Pagos Fallidos' : 'Failed Payments'}</p>
+                              <AlertTriangle className="h-4 w-4 text-red-500" />
+                            </div>
+                            <p className={`text-3xl font-bold ${stripeMetrics.failedPayments > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {stripeMetrics.failedPayments}
+                            </p>
+                            {stripeMetrics.atRiskSubscribers.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                <p className="text-xs text-gray-500 font-medium">{isEs ? 'En riesgo:' : 'At risk:'}</p>
+                                {stripeMetrics.atRiskSubscribers.slice(0, 3).map((sub) => (
+                                  <p key={sub.userId} className="text-xs text-red-500 truncate">{sub.name} - {sub.email}</p>
+                                ))}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+
                     {/* Revenue summary cards */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {[
@@ -1400,6 +1528,100 @@ export default function AdminPage() {
                           </div>
                         </CardContent>
                       </Card>
+                    )}
+
+                    {/* Transaction History from Stripe */}
+                    {transactions && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <CreditCard className="h-4 w-4" />
+                            {isEs ? 'Historial de Transacciones (Stripe)' : 'Transaction History (Stripe)'}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left py-2 text-gray-500 font-medium">{isEs ? 'Fecha' : 'Date'}</th>
+                                  <th className="text-left py-2 text-gray-500 font-medium">{isEs ? 'Cliente' : 'Customer'}</th>
+                                  <th className="text-right py-2 text-gray-500 font-medium">{isEs ? 'Monto' : 'Amount'}</th>
+                                  <th className="text-center py-2 text-gray-500 font-medium">{isEs ? 'Estado' : 'Status'}</th>
+                                  <th className="text-center py-2 text-gray-500 font-medium">{isEs ? 'Método' : 'Method'}</th>
+                                  <th className="text-center py-2 text-gray-500 font-medium">{isEs ? 'Acciones' : 'Actions'}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {transactions.data.map((tx) => (
+                                  <tr key={tx.id} className="border-b border-gray-50 hover:bg-gray-50">
+                                    <td className="py-2 text-xs text-gray-600">{new Date(tx.created).toLocaleDateString()}</td>
+                                    <td className="py-2 text-xs truncate max-w-[150px]">{tx.customerEmail || '-'}</td>
+                                    <td className="py-2 text-right font-semibold">
+                                      ${tx.amount.toFixed(2)}
+                                      {tx.refunded && <span className="text-red-500 text-xs ml-1">(-${tx.amountRefunded.toFixed(2)})</span>}
+                                    </td>
+                                    <td className="py-2 text-center">
+                                      <Badge variant={tx.status === 'succeeded' ? 'default' : tx.status === 'failed' ? 'destructive' : 'secondary'}
+                                        className={`text-[10px] ${tx.refunded ? 'bg-red-100 text-red-700' : tx.status === 'succeeded' ? 'bg-green-100 text-green-700' : ''}`}>
+                                        {tx.refunded ? (isEs ? 'Reembolsado' : 'Refunded') : tx.status}
+                                      </Badge>
+                                    </td>
+                                    <td className="py-2 text-center text-xs text-gray-500">
+                                      {tx.cardBrand && tx.cardLast4 ? `${tx.cardBrand} •${tx.cardLast4}` : tx.paymentMethodType}
+                                    </td>
+                                    <td className="py-2 text-center">
+                                      {tx.status === 'succeeded' && !tx.refunded && tx.paymentIntentId && (
+                                        <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                          onClick={() => setRefundTarget({ paymentIntentId: tx.paymentIntentId!, amount: tx.amount, customerEmail: tx.customerEmail })}>
+                                          {isEs ? 'Reembolsar' : 'Refund'}
+                                        </Button>
+                                      )}
+                                      {tx.receiptUrl && (
+                                        <a href={tx.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline ml-1">
+                                          {isEs ? 'Recibo' : 'Receipt'}
+                                        </a>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          {transactions.hasMore && (
+                            <div className="text-center mt-4">
+                              <Button variant="outline" size="sm" onClick={() => setTxCursor(transactions.nextCursor)}>
+                                {isEs ? 'Cargar más' : 'Load more'}
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Refund Confirmation Dialog */}
+                    {refundTarget && (
+                      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => setRefundTarget(null)}>
+                        <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
+                          <h3 className="text-lg font-bold mb-2">{isEs ? 'Confirmar Reembolso' : 'Confirm Refund'}</h3>
+                          <p className="text-sm text-gray-600 mb-4">
+                            {isEs
+                              ? `¿Estás seguro de reembolsar $${refundTarget.amount.toFixed(2)} a ${refundTarget.customerEmail}?`
+                              : `Are you sure you want to refund $${refundTarget.amount.toFixed(2)} to ${refundTarget.customerEmail}?`
+                            }
+                          </p>
+                          <p className="text-xs text-red-500 mb-4">
+                            {isEs ? 'Esta acción no se puede deshacer. Los créditos del estudiante serán ajustados.' : 'This action cannot be undone. Student credits will be adjusted.'}
+                          </p>
+                          <div className="flex gap-3 justify-end">
+                            <Button variant="outline" onClick={() => setRefundTarget(null)}>{isEs ? 'Cancelar' : 'Cancel'}</Button>
+                            <Button variant="destructive" disabled={refundMutation.isPending}
+                              onClick={() => refundMutation.mutate({ paymentIntentId: refundTarget.paymentIntentId })}>
+                              {refundMutation.isPending ? (isEs ? 'Procesando...' : 'Processing...') : (isEs ? 'Confirmar Reembolso' : 'Confirm Refund')}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </>
                 )}
@@ -1612,6 +1834,49 @@ export default function AdminPage() {
                         </div>
                       )}
                     </div>
+
+                    {/* Stripe Data */}
+                    {studentStripe && (
+                      <div>
+                        <p className="text-sm font-medium mb-2 flex items-center gap-1">
+                          <CreditCard className="h-3.5 w-3.5" /> Stripe
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                          <div className="text-center p-2 bg-green-50 rounded">
+                            <p className="text-lg font-bold text-green-600">${studentStripe.ltv.toLocaleString()}</p>
+                            <p className="text-[10px] text-gray-500">LTV</p>
+                          </div>
+                          <div className="text-center p-2 bg-blue-50 rounded">
+                            <p className="text-lg font-bold text-blue-600">{studentStripe.paymentMethods.length}</p>
+                            <p className="text-[10px] text-gray-500">{isEs ? 'Métodos de pago' : 'Payment Methods'}</p>
+                          </div>
+                        </div>
+                        {studentStripe.paymentMethods.length > 0 && (
+                          <div className="space-y-1 mb-3">
+                            {studentStripe.paymentMethods.map((pm) => (
+                              <div key={pm.id} className="flex justify-between text-xs p-1.5 bg-gray-50 rounded">
+                                <span className="font-medium capitalize">{pm.brand} •{pm.last4}</span>
+                                <span className="text-gray-400">{pm.expMonth}/{pm.expYear}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {studentStripe.transactions.length > 0 && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-gray-500 font-medium">{isEs ? 'Transacciones recientes' : 'Recent transactions'}</p>
+                            {studentStripe.transactions.slice(0, 5).map((tx) => (
+                              <div key={tx.id} className="flex justify-between text-xs border-b border-gray-100 py-1">
+                                <span className="text-gray-500">{new Date(tx.created).toLocaleDateString()}</span>
+                                <Badge variant={tx.refunded ? 'destructive' : tx.status === 'succeeded' ? 'default' : 'secondary'} className="text-[9px] h-4">
+                                  {tx.refunded ? (isEs ? 'Reemb.' : 'Refund') : tx.status}
+                                </Badge>
+                                <span className={`font-semibold ${tx.refunded ? 'text-red-500 line-through' : 'text-green-600'}`}>${tx.amount.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Recent classes */}
                     {studentDetail.classes.recent.length > 0 && (

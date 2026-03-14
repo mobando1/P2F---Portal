@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bookmark, Check } from "lucide-react";
+import { Bookmark, Check, BookA } from "lucide-react";
 
 interface GrammarCorrection {
   original: string;
@@ -7,15 +7,34 @@ interface GrammarCorrection {
   explanation: string;
 }
 
+interface VocabItem {
+  word: string;
+  translation: string;
+}
+
 interface GrammarHighlightProps {
   content: string;
   corrections: GrammarCorrection[];
   onSaveCorrection?: (correction: GrammarCorrection) => void;
+  onSaveVocab?: (vocab: VocabItem) => void;
 }
 
-export function GrammarHighlight({ content, corrections, onSaveCorrection }: GrammarHighlightProps) {
+function extractVocabMarkers(text: string): VocabItem[] {
+  const items: VocabItem[] = [];
+  const regex = /\[vocab:\s*"([^"]+)"\s*=\s*"([^"]+)"\]/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    items.push({ word: match[1], translation: match[2] });
+  }
+  return items;
+}
+
+export function GrammarHighlight({ content, corrections, onSaveCorrection, onSaveVocab }: GrammarHighlightProps) {
   const [activeCorrection, setActiveCorrection] = useState<number | null>(null);
   const [savedIndices, setSavedIndices] = useState<Set<number>>(new Set());
+  const [savedVocab, setSavedVocab] = useState<Set<string>>(new Set());
+
+  const vocabItems = extractVocabMarkers(content);
 
   if (!corrections || corrections.length === 0) {
     return <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>;
@@ -28,12 +47,19 @@ export function GrammarHighlight({ content, corrections, onSaveCorrection }: Gra
   // Remove ERROR/CORRECT/RULE patterns from display
   cleanContent = cleanContent.replace(/ERROR:\s*"[^"]+"\s*→\s*CORRECT:\s*"[^"]+"\s*—\s*RULE:\s*.+?(?:\n|$)/g, "");
   // Remove [vocab: "word" = "translation"] patterns from display
-  cleanContent = cleanContent.replace(/\[vocab:\s*"[^"]+"\s*=\s*"[^"]+"\]/g, "");
+  cleanContent = cleanContent.replace(/\s*\[vocab:\s*"[^"]+"\s*=\s*"[^"]+"\]\s*/g, " ").replace(/\s{2,}/g, " ");
 
   const handleSave = (correction: GrammarCorrection, idx: number) => {
     if (onSaveCorrection) {
       onSaveCorrection(correction);
       setSavedIndices(prev => new Set(prev).add(idx));
+    }
+  };
+
+  const handleSaveVocab = (item: VocabItem) => {
+    if (onSaveVocab) {
+      onSaveVocab(item);
+      setSavedVocab(prev => new Set(prev).add(item.word));
     }
   };
 
@@ -83,6 +109,39 @@ export function GrammarHighlight({ content, corrections, onSaveCorrection }: Gra
                   {correction.explanation}
                 </p>
               )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Vocabulary section */}
+      {vocabItems.length > 0 && onSaveVocab && (
+        <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+          <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide flex items-center gap-1">
+            <BookA className="w-3 h-3" />
+            Vocabulario
+          </p>
+          {vocabItems.map((item, idx) => (
+            <div key={idx} className="flex items-center gap-2 text-xs group">
+              <span className="font-medium text-gray-700 bg-amber-50 px-1.5 py-0.5 rounded">{item.word}</span>
+              <span className="text-gray-400">=</span>
+              <span className="text-gray-500">{item.translation}</span>
+              <button
+                onClick={() => handleSaveVocab(item)}
+                disabled={savedVocab.has(item.word)}
+                className={`p-1 rounded transition-colors ${
+                  savedVocab.has(item.word)
+                    ? "text-green-500"
+                    : "text-gray-300 hover:text-amber-500 hover:bg-amber-50 opacity-0 group-hover:opacity-100"
+                }`}
+                title={savedVocab.has(item.word) ? "Guardado" : "Guardar palabra"}
+              >
+                {savedVocab.has(item.word) ? (
+                  <Check className="w-3 h-3" />
+                ) : (
+                  <BookA className="w-3 h-3" />
+                )}
+              </button>
             </div>
           ))}
         </div>

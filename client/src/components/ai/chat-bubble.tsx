@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { User, Volume2, VolumeX } from "lucide-react";
+import { User, Volume2, VolumeX, BookA, Check } from "lucide-react";
 import { GrammarHighlight } from "./grammar-highlight";
 import { LingoMascot } from "./mascot";
 
@@ -7,6 +8,11 @@ interface GrammarCorrection {
   original: string;
   corrected: string;
   explanation: string;
+}
+
+interface VocabItem {
+  word: string;
+  translation: string;
 }
 
 interface ChatBubbleProps {
@@ -17,10 +23,37 @@ interface ChatBubbleProps {
   isSpeaking?: boolean;
   isLatest?: boolean;
   onSaveCorrection?: (correction: GrammarCorrection) => void;
+  onSaveVocab?: (vocab: VocabItem) => void;
 }
 
-export function ChatBubble({ role, content, corrections, onSpeak, isSpeaking, isLatest, onSaveCorrection }: ChatBubbleProps) {
+function extractVocabMarkers(text: string): VocabItem[] {
+  const items: VocabItem[] = [];
+  const regex = /\[vocab:\s*"([^"]+)"\s*=\s*"([^"]+)"\]/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    items.push({ word: match[1], translation: match[2] });
+  }
+  return items;
+}
+
+function cleanVocabMarkers(text: string): string {
+  return text
+    .replace(/\s*\[vocab:\s*"[^"]+"\s*=\s*"[^"]+"\]\s*/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+export function ChatBubble({ role, content, corrections, onSpeak, isSpeaking, isLatest, onSaveCorrection, onSaveVocab }: ChatBubbleProps) {
   const isUser = role === "user";
+  const vocabItems = !isUser ? extractVocabMarkers(content) : [];
+  const [savedVocab, setSavedVocab] = useState<Set<string>>(new Set());
+
+  const handleSaveVocab = (item: VocabItem) => {
+    if (onSaveVocab) {
+      onSaveVocab(item);
+      setSavedVocab(prev => new Set(prev).add(item.word));
+    }
+  };
 
   return (
     <motion.div
@@ -49,11 +82,44 @@ export function ChatBubble({ role, content, corrections, onSpeak, isSpeaking, is
         }`}
       >
         {!isUser && corrections && corrections.length > 0 ? (
-          <GrammarHighlight content={content} corrections={corrections} onSaveCorrection={onSaveCorrection} />
+          <GrammarHighlight content={content} corrections={corrections} onSaveCorrection={onSaveCorrection} onSaveVocab={onSaveVocab} />
         ) : (
           <p className="text-sm leading-relaxed whitespace-pre-wrap">
-            {isUser ? content : content.replace(/\[vocab:\s*"[^"]+"\s*=\s*"[^"]+"\]/g, "").trim()}
+            {isUser ? content : cleanVocabMarkers(content)}
           </p>
+        )}
+
+        {/* Vocabulary section for AI messages */}
+        {!isUser && vocabItems.length > 0 && onSaveVocab && !corrections?.length && (
+          <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide flex items-center gap-1">
+              <BookA className="w-3 h-3" />
+              Vocabulario
+            </p>
+            {vocabItems.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-xs group">
+                <span className="font-medium text-gray-700 bg-amber-50 px-1.5 py-0.5 rounded">{item.word}</span>
+                <span className="text-gray-400">=</span>
+                <span className="text-gray-500">{item.translation}</span>
+                <button
+                  onClick={() => handleSaveVocab(item)}
+                  disabled={savedVocab.has(item.word)}
+                  className={`p-1 rounded transition-colors ${
+                    savedVocab.has(item.word)
+                      ? "text-green-500"
+                      : "text-gray-300 hover:text-amber-500 hover:bg-amber-50 opacity-0 group-hover:opacity-100"
+                  }`}
+                  title={savedVocab.has(item.word) ? "Guardado" : "Guardar palabra"}
+                >
+                  {savedVocab.has(item.word) ? (
+                    <Check className="w-3 h-3" />
+                  ) : (
+                    <BookA className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
         )}
 
         {/* Speak button for AI messages */}

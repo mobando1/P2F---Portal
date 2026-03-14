@@ -208,18 +208,30 @@ export default function AIPracticePage() {
       });
       return res.json();
     },
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({
-        queryKey: [`/api/ai/conversations/${activeConversationId}/messages`],
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/ai/conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/ai/usage"] });
-      // Auto-play AI response in voice mode
-      if (mode === "voice" && data.message?.content) {
-        tts.speak(data.message.content);
-      }
+    onMutate: async (message: string) => {
+      const queryKey = [`/api/ai/conversations/${activeConversationId}/messages`];
+      await queryClient.cancelQueries({ queryKey });
+      const previousMessages = queryClient.getQueryData<any[]>(queryKey);
+      queryClient.setQueryData<any[]>(queryKey, (old = []) => [
+        ...old,
+        {
+          id: Date.now(),
+          conversationId: activeConversationId!,
+          role: "user" as const,
+          content: message,
+          corrections: null,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+      return { previousMessages };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _message, context) => {
+      if (context?.previousMessages) {
+        queryClient.setQueryData(
+          [`/api/ai/conversations/${activeConversationId}/messages`],
+          context.previousMessages
+        );
+      }
       toast({
         title: isEs ? "Error al enviar" : "Send failed",
         description: isEs
@@ -228,6 +240,19 @@ export default function AIPracticePage() {
         variant: "destructive",
       });
       console.error("Send message error:", error);
+    },
+    onSuccess: (data: any) => {
+      // Auto-play AI response in voice mode
+      if (mode === "voice" && data.message?.content) {
+        tts.speak(data.message.content);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: [`/api/ai/conversations/${activeConversationId}/messages`],
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/ai/conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ai/usage"] });
     },
   });
 
@@ -526,6 +551,13 @@ export default function AIPracticePage() {
                       corrected: correction.corrected,
                       explanation: correction.explanation,
                       messageId: msg.id,
+                      language: activeConversation?.language || "spanish",
+                    });
+                  } : undefined}
+                  onSaveVocab={msg.role === "assistant" ? (vocab) => {
+                    saveVocabularyMutation.mutate({
+                      word: vocab.word,
+                      translation: vocab.translation,
                       language: activeConversation?.language || "spanish",
                     });
                   } : undefined}

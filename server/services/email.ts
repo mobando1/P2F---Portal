@@ -30,6 +30,26 @@ async function sendEmail(params: EmailParams): Promise<boolean> {
   }
 }
 
+async function sendEmailWithId(params: EmailParams): Promise<string | null> {
+  if (!resend) {
+    console.log(`[Email Mock] To: ${params.to} | Subject: ${params.subject}`);
+    return `mock_${Date.now()}`;
+  }
+
+  try {
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+    });
+    return (result as any).id || null;
+  } catch (error) {
+    console.error("Error sending email:", error);
+    return null;
+  }
+}
+
 function brandHeader(title: string): string {
   return `
     <div style="background: linear-gradient(135deg, #1C7BB1, #0A4A6E); padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -250,7 +270,7 @@ export const emailService = {
     to: string;
     subject: string;
     html: string;
-  }): Promise<boolean> {
+  }): Promise<{ sent: boolean; messageId: string | null }> {
     // Campaign emails come pre-formatted with their own HTML,
     // just wrap them with the brand header/footer
     const wrappedHtml = `
@@ -262,6 +282,7 @@ export const emailService = {
         ${brandFooter("es")}
       </div>
     `;
-    return sendEmail({ to: params.to, subject: params.subject, html: wrappedHtml });
+    const messageId = await sendEmailWithId({ to: params.to, subject: params.subject, html: wrappedHtml });
+    return { sent: messageId !== null, messageId };
   },
 };

@@ -253,6 +253,7 @@ export function registerStripeRoutes(app: Express) {
             platform: "passport2fluency",
           },
         },
+        allow_promotion_codes: true,
         success_url: `${req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/packages`,
       });
@@ -310,6 +311,7 @@ export function registerStripeRoutes(app: Express) {
           type: "package",
           platform: "passport2fluency",
         },
+        allow_promotion_codes: true,
         success_url: `${req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/packages`,
       });

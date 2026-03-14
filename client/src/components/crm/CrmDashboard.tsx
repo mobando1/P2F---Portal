@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/i18n";
-import { LayoutGrid, List, CheckSquare, BarChart3, Send, Users, Tag } from "lucide-react";
+import { LayoutGrid, List, CheckSquare, BarChart3, Send, Users, Tag, Mail } from "lucide-react";
 import CrmPipeline from "./CrmPipeline";
 import CrmStudentList from "./CrmStudentList";
 import CrmTasksGlobal from "./CrmTasksGlobal";
 import CrmMetrics from "./CrmMetrics";
 import CrmCampaigns from "./CrmCampaigns";
 import OfferManager from "./OfferManager";
+import SubscriberList from "./SubscriberList";
 import StudentDetail from "./StudentDetail";
 
 export default function CrmDashboard() {
@@ -27,7 +28,7 @@ export default function CrmDashboard() {
   return (
     <div className="space-y-4">
       <Tabs defaultValue="pipeline" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="pipeline" className="flex items-center gap-1">
             <LayoutGrid className="h-4 w-4" />
             <span className="hidden lg:inline">Pipeline</span>
@@ -55,6 +56,10 @@ export default function CrmDashboard() {
           <TabsTrigger value="segments" className="flex items-center gap-1">
             <Users className="h-4 w-4" />
             <span className="hidden lg:inline">{isEs ? "Segmentos" : "Segments"}</span>
+          </TabsTrigger>
+          <TabsTrigger value="subscribers" className="flex items-center gap-1">
+            <Mail className="h-4 w-4" />
+            <span className="hidden lg:inline">{isEs ? "Suscriptores" : "Subscribers"}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -84,6 +89,10 @@ export default function CrmDashboard() {
 
         <TabsContent value="segments" className="mt-4">
           <SegmentsTab />
+        </TabsContent>
+
+        <TabsContent value="subscribers" className="mt-4">
+          <SubscriberList />
         </TabsContent>
       </Tabs>
 

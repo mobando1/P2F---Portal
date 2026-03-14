@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { storage } from "../storage";
 import { requireAuth } from "./auth";
+import { wsService } from "../services/websocket";
 
 const MAX_MESSAGE_LENGTH = 5000;
 
@@ -96,6 +97,17 @@ export function registerMessageRoutes(app: Express) {
         message: message.trim(),
       });
 
+      // Notify the other participant via WebSocket
+      const convs = await storage.getConversations(userId);
+      const conv = convs.find(c => c.id === convId);
+      if (conv) {
+        const recipientId = conv.participantA === userId ? conv.participantB : conv.participantA;
+        wsService.sendToUser(recipientId, {
+          type: "message:new",
+          data: { conversationId: convId, message: msg },
+        });
+      }
+
       res.status(201).json(msg);
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
@@ -120,6 +132,12 @@ export function registerMessageRoutes(app: Express) {
         conversationId: conv.id,
         senderId: userId,
         message: message.trim(),
+      });
+
+      // Notify recipient via WebSocket
+      wsService.sendToUser(recipientId, {
+        type: "message:new",
+        data: { conversationId: conv.id, message: msg },
       });
 
       res.status(201).json({ conversation: conv, message: msg });

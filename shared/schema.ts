@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, time, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, time, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -6,9 +6,11 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
+  googleId: text("google_id").unique(),
+  microsoftId: text("microsoft_id").unique(),
   phone: text("phone"), // Capturado en free trial
   level: text("level").notNull().default("A1"),
   avatar: text("avatar"),
@@ -67,6 +69,7 @@ export const subscriptions = pgTable("subscriptions", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   status: text("status").notNull().default("active"), // 'active', 'cancelled', 'expired'
   nextBillingDate: timestamp("next_billing_date"),
+  cancelledAt: timestamp("cancelled_at"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_subscriptions_user_id").on(table.userId),
@@ -81,6 +84,8 @@ export const classPurchases = pgTable("class_purchases", {
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   status: text("status").notNull().default("completed"), // 'pending', 'completed', 'refunded'
+  refundedAt: timestamp("refunded_at"),
+  refundId: text("refund_id"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_class_purchases_user_id").on(table.userId),
@@ -169,6 +174,8 @@ export const classes = pgTable("classes", {
   isTrial: boolean("is_trial").default(false),
   classCategory: text("class_category"), // 'adults-spanish', 'kids-spanish', etc.
   meetingLink: text("meeting_link"),
+  calendarEventId: text("calendar_event_id"),
+  tutorCalendarEventId: text("tutor_calendar_event_id"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_classes_user_id").on(table.userId),
@@ -481,6 +488,7 @@ export const campaignRecipients = pgTable("campaign_recipients", {
   openedAt: timestamp("opened_at"),
   clickedAt: timestamp("clicked_at"),
   renderedSubject: text("rendered_subject"),
+  resendMessageId: text("resend_message_id"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_campaign_recipients_campaign").on(table.campaignId),
@@ -501,6 +509,8 @@ export const offers = pgTable("offers", {
   validUntil: timestamp("valid_until").notNull(),
   isActive: boolean("is_active").default(true),
   createdBy: integer("created_by").references(() => users.id),
+  stripeCouponId: text("stripe_coupon_id"),
+  stripePromotionCodeId: text("stripe_promotion_code_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -522,10 +532,149 @@ export const communicationLog = pgTable("communication_log", {
   index("idx_comm_log_campaign").on(table.campaignId),
 ]);
 
+// Stripe events cache for analytics
+export const stripeEvents = pgTable("stripe_events", {
+  id: serial("id").primaryKey(),
+  eventType: text("event_type").notNull(), // 'subscription_cancelled' | 'charge_refunded' | 'payment_failed'
+  stripeEventId: text("stripe_event_id").notNull().unique(),
+  stripeCustomerId: text("stripe_customer_id"),
+  userId: integer("user_id").references(() => users.id),
+  amount: integer("amount"), // en centavos
+  currency: text("currency").default("usd"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Newsletter subscribers
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  source: text("source").notNull().default("website"), // 'website' | 'contact_form' | 'checkout' | 'manual'
+  status: text("status").notNull().default("active"), // 'active' | 'unsubscribed' | 'bounced'
+  userId: integer("user_id").references(() => users.id),
+  subscribedAt: timestamp("subscribed_at").defaultNow(),
+  unsubscribedAt: timestamp("unsubscribed_at"),
+});
+
+// ===== Learning Path "Culebrita" =====
+
+// Estaciones del camino de aprendizaje
+export const learningPathStations = pgTable("learning_path_stations", {
+  id: serial("id").primaryKey(),
+  level: text("level").notNull(), // A1, A2, B1, B2, C1, C2
+  stationOrder: integer("station_order").notNull(), // Order within the level
+  title: text("title").notNull(),
+  titleEs: text("title_es").notNull(),
+  description: text("description"),
+  descriptionEs: text("description_es"),
+  stationType: text("station_type").notNull().default("lesson"), // lesson, quiz, activity, milestone
+  requiredToAdvance: boolean("required_to_advance").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_lp_stations_level").on(table.level),
+  index("idx_lp_stations_order").on(table.level, table.stationOrder),
+]);
+
+// Contenido dentro de cada estación
+export const learningPathContent = pgTable("learning_path_content", {
+  id: serial("id").primaryKey(),
+  stationId: integer("station_id").references(() => learningPathStations.id).notNull(),
+  contentType: text("content_type").notNull(), // document, quiz, video, exercise
+  title: text("title").notNull(),
+  titleEs: text("title_es").notNull(),
+  description: text("description"),
+  descriptionEs: text("description_es"),
+  contentData: jsonb("content_data"), // quiz questions, document content, exercise config
+  durationMinutes: integer("duration_minutes").default(15),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_lp_content_station_id").on(table.stationId),
+]);
+
+// Progreso del estudiante por estación
+export const studentPathProgress = pgTable("student_path_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  stationId: integer("station_id").references(() => learningPathStations.id).notNull(),
+  status: text("status").notNull().default("locked"), // locked, available, in_progress, completed
+  score: integer("score"), // For quiz stations
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_spp_user_id").on(table.userId),
+  index("idx_spp_station_id").on(table.stationId),
+  uniqueIndex("idx_spp_user_station").on(table.userId, table.stationId),
+]);
+
+// Intentos de quiz
+export const studentQuizAttempts = pgTable("student_quiz_attempts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  contentId: integer("content_id").references(() => learningPathContent.id).notNull(),
+  answers: jsonb("answers"), // Student's submitted answers
+  score: integer("score").notNull(),
+  maxScore: integer("max_score").notNull(),
+  passed: boolean("passed").notNull().default(false),
+  attemptNumber: integer("attempt_number").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_sqa_user_id").on(table.userId),
+  index("idx_sqa_content_id").on(table.contentId),
+]);
+
+// Asignaciones de tutor a estudiante
+export const tutorAssignments = pgTable("tutor_assignments", {
+  id: serial("id").primaryKey(),
+  tutorId: integer("tutor_id").references(() => tutors.id).notNull(),
+  studentId: integer("student_id").references(() => users.id).notNull(),
+  contentId: integer("content_id").references(() => learningPathContent.id).notNull(),
+  stationId: integer("station_id").references(() => learningPathStations.id),
+  dueDate: timestamp("due_date"),
+  notes: text("notes"),
+  status: text("status").notNull().default("assigned"), // assigned, in_progress, completed, overdue
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_ta_tutor_id").on(table.tutorId),
+  index("idx_ta_student_id").on(table.studentId),
+  index("idx_ta_status").on(table.status),
+]);
+
+// Reglas de progresión de nivel
+export const levelProgressionRules = pgTable("level_progression_rules", {
+  id: serial("id").primaryKey(),
+  fromLevel: text("from_level").notNull(), // A1, A2, B1, B2, C1
+  toLevel: text("to_level").notNull(), // A2, B1, B2, C1, C2
+  requiredClassesCompleted: integer("required_classes_completed").notNull().default(4),
+  requiredQuizAvgScore: integer("required_quiz_avg_score").notNull().default(70), // 0-100
+  requiredStationsCompleted: integer("required_stations_completed").notNull().default(6),
+  autoPromote: boolean("auto_promote").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_lpr_from_level").on(table.fromLevel),
+]);
+
+export const tutorGoogleTokens = pgTable("tutor_google_tokens", {
+  id: serial("id").primaryKey(),
+  tutorId: integer("tutor_id").references(() => tutors.id).notNull().unique(),
+  googleEmail: text("google_email").notNull(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  tokenExpiry: timestamp("token_expiry").notNull(),
+  googleCalendarId: text("google_calendar_id").notNull().default("primary"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  googleId: true,
+  microsoftId: true,
 });
 
 export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
@@ -704,9 +853,52 @@ export const insertOfferSchema = createInsertSchema(offers).omit({
   id: true,
   createdAt: true,
   usedCount: true,
+  stripeCouponId: true,
+  stripePromotionCodeId: true,
+});
+
+export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSubscribers).omit({
+  id: true,
+  subscribedAt: true,
 });
 
 export const insertCommunicationLogSchema = createInsertSchema(communicationLog).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertStripeEventSchema = createInsertSchema(stripeEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Learning Path insert schemas
+export const insertLearningPathStationSchema = createInsertSchema(learningPathStations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLearningPathContentSchema = createInsertSchema(learningPathContent).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertStudentPathProgressSchema = createInsertSchema(studentPathProgress).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertStudentQuizAttemptSchema = createInsertSchema(studentQuizAttempts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTutorAssignmentSchema = createInsertSchema(tutorAssignments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLevelProgressionRuleSchema = createInsertSchema(levelProgressionRules).omit({
   id: true,
   createdAt: true,
 });
@@ -823,7 +1015,41 @@ export type InsertCampaignRecipient = z.infer<typeof insertCampaignRecipientSche
 export type Offer = typeof offers.$inferSelect;
 export type InsertOffer = z.infer<typeof insertOfferSchema>;
 
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
+
 export type CommunicationLogEntry = typeof communicationLog.$inferSelect;
 export type InsertCommunicationLog = z.infer<typeof insertCommunicationLogSchema>;
+
+export type StripeEvent = typeof stripeEvents.$inferSelect;
+export type InsertStripeEvent = z.infer<typeof insertStripeEventSchema>;
+
+// Learning Path types
+export type LearningPathStation = typeof learningPathStations.$inferSelect;
+export type InsertLearningPathStation = z.infer<typeof insertLearningPathStationSchema>;
+
+export type LearningPathContent = typeof learningPathContent.$inferSelect;
+export type InsertLearningPathContent = z.infer<typeof insertLearningPathContentSchema>;
+
+export type StudentPathProgress = typeof studentPathProgress.$inferSelect;
+export type InsertStudentPathProgress = z.infer<typeof insertStudentPathProgressSchema>;
+
+export type StudentQuizAttempt = typeof studentQuizAttempts.$inferSelect;
+export type InsertStudentQuizAttempt = z.infer<typeof insertStudentQuizAttemptSchema>;
+
+export type TutorAssignment = typeof tutorAssignments.$inferSelect;
+export type InsertTutorAssignment = z.infer<typeof insertTutorAssignmentSchema>;
+
+export type LevelProgressionRule = typeof levelProgressionRules.$inferSelect;
+export type InsertLevelProgressionRule = z.infer<typeof insertLevelProgressionRuleSchema>;
+
+export const insertTutorGoogleTokenSchema = createInsertSchema(tutorGoogleTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type TutorGoogleToken = typeof tutorGoogleTokens.$inferSelect;
+export type InsertTutorGoogleToken = z.infer<typeof insertTutorGoogleTokenSchema>;
 
 export type LoginData = z.infer<typeof loginSchema>;

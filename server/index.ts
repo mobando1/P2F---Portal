@@ -9,6 +9,9 @@ import { storage } from "./storage";
 import crypto from "crypto";
 import { config } from "./config";
 import { PLAN_DETAILS, PACKAGE_DETAILS, AMOUNT_TO_PACKAGE } from "./constants/plans";
+import { stripeCache } from "./services/stripe-cache";
+import { wsService } from "./services/websocket";
+import rateLimit from "express-rate-limit";
 
 // Initialize Stripe - allow running without keys in development
 const stripeKey = config.STRIPE_SECRET_KEY || config.TESTING_STRIPE_SECRET_KEY;
@@ -39,7 +42,7 @@ async function startServer() {
     log("Using in-memory session store");
   }
 
-  app.use(session({
+  const sessionMiddleware = session({
     store: sessionStore,
     secret: sessionSecret,
     resave: false,
@@ -50,7 +53,23 @@ async function startServer() {
       maxAge: 24 * 60 * 60 * 1000,
       sameSite: "lax",
     },
-  }));
+  });
+
+  app.use(sessionMiddleware);
+
+  // Passport initialization (OAuth strategies — no passport.session(), we use express-session)
+  const passport = await import("passport");
+  app.use(passport.default.initialize());
+
+  // Global API rate limiting (100 requests per minute per IP)
+  const apiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: config.NODE_ENV === "production" ? 100 : 1000,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Too many requests, please try again later." },
+  });
+  app.use("/api/", apiLimiter);
 
   // CRITICAL: Mount Stripe webhook BEFORE any body parsing middleware
   if (stripe) {
@@ -130,6 +149,22 @@ async function startServer() {
                 return res.status(200).json({ received: true, processed: false, reason: 'user_not_found' });
               }
 
+              // Track promotion code usage if a discount was applied
+              try {
+                const discounts = (checkoutSession as any).total_details?.breakdown?.discounts;
+                if (discounts && discounts.length > 0) {
+                  for (const d of discounts) {
+                    const promoCodeId = d.discount?.promotion_code;
+                    if (promoCodeId) {
+                      const offer = await storage.getOfferByStripePromotionCodeId(promoCodeId);
+                      if (offer) await storage.incrementOfferUsage(offer.id);
+                    }
+                  }
+                }
+              } catch (e) {
+                console.warn('Could not track promo code usage:', e);
+              }
+
               if (checkoutSession.mode === 'subscription' && planId) {
                 const planDetails = PLAN_DETAILS;
 
@@ -149,6 +184,18 @@ async function startServer() {
                       status: 'active',
                       nextBillingDate: new Date((sub as any).current_period_end * 1000),
                     });
+
+                    // Auto-subscribe to newsletter
+                    try {
+                      await storage.upsertNewsletterSubscriber({
+                        email: user.email,
+                        firstName: user.firstName || undefined,
+                        lastName: user.lastName || undefined,
+                        source: 'checkout',
+                        status: 'active',
+                        userId: user.id,
+                      });
+                    } catch (e) { /* ignore */ }
 
                     console.log(`Subscription created for user ${userId}, plan ${plan.name}`);
                     processedEvents.add(event.id);
@@ -231,6 +278,102 @@ async function startServer() {
           }
         }
 
+        // Handle subscription cancellation
+        if (event.type === 'customer.subscription.deleted') {
+          const sub = event.data.object;
+          try {
+            const userSubscription = await storage.getSubscriptionByStripeId(sub.id);
+            if (userSubscription) {
+              await storage.updateSubscription(userSubscription.id, {
+                status: 'cancelled',
+                cancelledAt: new Date(),
+              });
+              await storage.createStripeEvent({
+                eventType: 'subscription_cancelled',
+                stripeEventId: event.id,
+                stripeCustomerId: (sub as any).customer || null,
+                userId: userSubscription.userId,
+                amount: (sub as any).plan?.amount || 0,
+                currency: (sub as any).plan?.currency || 'usd',
+                metadata: { subscriptionId: sub.id },
+              });
+              stripeCache.invalidatePrefix('mrr');
+              stripeCache.invalidatePrefix('stripe-metrics');
+              console.log(`Subscription cancelled for user ${userSubscription.userId}`);
+            }
+          } catch (error) {
+            console.error('Error processing subscription cancellation:', error);
+            return res.status(500).json({ error: 'Processing failed - will retry' });
+          }
+        }
+
+        // Handle charge refund
+        if (event.type === 'charge.refunded') {
+          const charge = event.data.object;
+          try {
+            const paymentIntentId = (charge as any).payment_intent;
+            if (paymentIntentId) {
+              const purchase = await storage.getClassPurchaseByPaymentIntent(paymentIntentId);
+              if (purchase) {
+                await storage.updateClassPurchase(purchase.id, {
+                  status: 'refunded',
+                  refundedAt: new Date(),
+                  refundId: (charge as any).refunds?.data?.[0]?.id || null,
+                });
+                const user = await storage.getUser(purchase.userId);
+                if (user) {
+                  const newCredits = Math.max(0, (user.classCredits || 0) - purchase.classesAdded);
+                  await storage.updateUser(user.id, { classCredits: newCredits });
+                }
+              }
+            }
+            await storage.createStripeEvent({
+              eventType: 'charge_refunded',
+              stripeEventId: event.id,
+              stripeCustomerId: (charge as any).customer || null,
+              userId: null,
+              amount: (charge as any).amount_refunded || (charge as any).amount || 0,
+              currency: (charge as any).currency || 'usd',
+              metadata: { chargeId: charge.id, paymentIntentId: (charge as any).payment_intent },
+            });
+            stripeCache.invalidatePrefix('transactions');
+            stripeCache.invalidatePrefix('student-stripe');
+            console.log(`Charge refunded: ${charge.id}`);
+          } catch (error) {
+            console.error('Error processing charge refund:', error);
+            return res.status(500).json({ error: 'Processing failed - will retry' });
+          }
+        }
+
+        // Handle failed payment
+        if (event.type === 'invoice.payment_failed') {
+          const invoice = event.data.object;
+          try {
+            const subId = (invoice as any).subscription;
+            let eventUserId: number | null = null;
+            if (subId) {
+              const userSubscription = await storage.getSubscriptionByStripeId(subId);
+              if (userSubscription) {
+                eventUserId = userSubscription.userId;
+              }
+            }
+            await storage.createStripeEvent({
+              eventType: 'payment_failed',
+              stripeEventId: event.id,
+              stripeCustomerId: (invoice as any).customer || null,
+              userId: eventUserId,
+              amount: (invoice as any).amount_due || 0,
+              currency: (invoice as any).currency || 'usd',
+              metadata: { invoiceId: invoice.id, subscriptionId: subId },
+            });
+            stripeCache.invalidatePrefix('stripe-metrics');
+            console.log(`Payment failed for invoice ${invoice.id}`);
+          } catch (error) {
+            console.error('Error processing failed payment:', error);
+            return res.status(500).json({ error: 'Processing failed - will retry' });
+          }
+        }
+
         processedEvents.add(event.id);
         res.status(200).json({ received: true });
       } catch (error: any) {
@@ -257,6 +400,9 @@ async function startServer() {
   await registerRoutes(app);
 
   const server = createServer(app);
+
+  // Initialize WebSocket with session-based auth
+  wsService.initialize(server, sessionMiddleware);
 
   // Setup Vite dev server or serve static files
   if (config.NODE_ENV === "development") {

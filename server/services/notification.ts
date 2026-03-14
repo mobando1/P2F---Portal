@@ -1,5 +1,6 @@
 import { storage } from "../storage";
 import { emailService } from "./email";
+import { wsService } from "./websocket";
 
 function formatDate(date: Date, lang: "es" | "en"): string {
   return date.toLocaleDateString(lang === "es" ? "es-ES" : "en-US", {
@@ -15,6 +16,22 @@ function formatTime(date: Date, lang: "es" | "en"): string {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+async function createAndPush(data: {
+  userId: number;
+  type: string;
+  title: string;
+  message: string;
+  link: string;
+  isRead: boolean;
+}) {
+  const notification = await storage.createNotification(data);
+  wsService.sendToUser(data.userId, {
+    type: "notification:new",
+    data: notification,
+  });
+  return notification;
 }
 
 export const notificationService = {
@@ -39,7 +56,7 @@ export const notificationService = {
       const time = formatTime(scheduledAt, lang);
 
       // In-app notification for student
-      await storage.createNotification({
+      await createAndPush({
         userId: studentId,
         type: "booking",
         title: lang === "es" ? "Clase Confirmada" : "Class Confirmed",
@@ -52,7 +69,7 @@ export const notificationService = {
 
       // In-app notification for tutor (via userId)
       if (tutor.userId) {
-        await storage.createNotification({
+        await createAndPush({
           userId: tutor.userId,
           type: "booking",
           title: lang === "es" ? "Nueva Clase Agendada" : "New Class Booked",
@@ -115,7 +132,7 @@ export const notificationService = {
       const date = formatDate(scheduledAt, lang);
 
       // In-app notification for student
-      await storage.createNotification({
+      await createAndPush({
         userId: studentId,
         type: "cancellation",
         title: lang === "es" ? "Clase Cancelada" : "Class Cancelled",
@@ -128,7 +145,7 @@ export const notificationService = {
 
       // In-app notification for tutor
       if (tutor.userId) {
-        await storage.createNotification({
+        await createAndPush({
           userId: tutor.userId,
           type: "cancellation",
           title: lang === "es" ? "Clase Cancelada" : "Class Cancelled",
@@ -185,7 +202,7 @@ export const notificationService = {
 
       const lang: "es" | "en" = "es";
 
-      await storage.createNotification({
+      await createAndPush({
         userId: studentId,
         type: "system",
         title: lang === "es" ? "Clase Completada" : "Class Completed",
@@ -220,7 +237,7 @@ export const notificationService = {
       const time = formatTime(scheduledAt, lang);
 
       // In-app
-      await storage.createNotification({
+      await createAndPush({
         userId: studentId,
         type: "reminder",
         title: lang === "es" ? "Recordatorio de Clase" : "Class Reminder",

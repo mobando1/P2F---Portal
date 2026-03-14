@@ -11,3 +11,4 @@ coverage
 replit.nix
 attached_assets
 .local
+*.zip

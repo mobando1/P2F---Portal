@@ -60,6 +60,7 @@ export default function Header() {
     { href: "/home", label: language === 'es' ? 'Inicio' : 'Home' },
     { href: "/tutors", label: language === 'es' ? 'Profesores' : 'Tutors' },
     { href: "/dashboard", label: language === 'es' ? 'Mi Panel' : 'My Dashboard' },
+    { href: "/learning-path", label: language === 'es' ? 'Mi Camino' : 'My Path' },
     ...(isAdmin ? [{ href: "/admin", label: 'Admin' }] : []),
   ];
 

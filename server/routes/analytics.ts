@@ -1,9 +1,14 @@
 import type { Express } from "express";
+import Stripe from "stripe";
 import { requireAdmin } from "./auth";
 import { storage } from "../storage";
 import { db } from "../db";
-import { users, classes, classPurchases, subscriptions, tutors, userProgress, reviews, aiConversations, aiMessages } from "@shared/schema";
+import { users, classes, classPurchases, subscriptions, tutors, userProgress, reviews, aiConversations, aiMessages, stripeEvents } from "@shared/schema";
 import { eq, and, not, gte, lte, lt, sql, inArray, desc } from "drizzle-orm";
+import { stripeCache, CACHE_TTL } from "../services/stripe-cache";
+
+const stripeKey = process.env.TESTING_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
+const stripe: Stripe | null = stripeKey ? new Stripe(stripeKey) : null;
 
 export function registerAnalyticsRoutes(app: Express) {
 
@@ -515,6 +520,313 @@ export function registerAnalyticsRoutes(app: Express) {
       });
     } catch (error) {
       console.error("Error fetching student detail:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // =============================================
+  // Stripe Metrics (MRR, Churn, Failed Payments)
+  // =============================================
+  app.get("/api/admin/analytics/stripe-metrics", requireAdmin, async (_req, res) => {
+    try {
+      if (!stripe) return res.status(503).json({ message: "Stripe not configured" });
+
+      const cached = stripeCache.get("stripe-metrics");
+      if (cached) return res.json(cached);
+
+      // MRR from active subscriptions
+      let mrr = 0;
+      const mrrTrend: Array<{ month: string; mrr: number }> = [];
+      try {
+        const activeSubs = await stripe.subscriptions.list({ status: "active", limit: 100 });
+        for (const sub of activeSubs.data) {
+          mrr += (sub.items.data[0]?.price?.unit_amount || 0);
+        }
+      } catch (e) {
+        console.error("Error fetching Stripe subscriptions:", e);
+      }
+
+      // Churn from local stripeEvents
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      let churnCount = 0;
+      let failedPayments = 0;
+      const atRiskSubscribers: Array<{ userId: number; name: string; email: string; lastFailedAt: string }> = [];
+
+      if (db) {
+        const cancelledRows = await db.select({ count: sql<number>`count(*)::int` })
+          .from(stripeEvents)
+          .where(and(
+            eq(stripeEvents.eventType, "subscription_cancelled"),
+            gte(stripeEvents.createdAt, monthStart),
+          ));
+        churnCount = cancelledRows[0]?.count || 0;
+
+        const failedRows = await db.select({ count: sql<number>`count(*)::int` })
+          .from(stripeEvents)
+          .where(and(
+            eq(stripeEvents.eventType, "payment_failed"),
+            gte(stripeEvents.createdAt, monthStart),
+          ));
+        failedPayments = failedRows[0]?.count || 0;
+
+        // At-risk subscribers (recent failed payments)
+        const failedEvents = await db.select({
+          userId: stripeEvents.userId,
+          createdAt: stripeEvents.createdAt,
+        }).from(stripeEvents)
+          .where(and(
+            eq(stripeEvents.eventType, "payment_failed"),
+            gte(stripeEvents.createdAt, new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)),
+          ))
+          .orderBy(desc(stripeEvents.createdAt))
+          .limit(10);
+
+        for (const event of failedEvents) {
+          if (event.userId) {
+            const user = await storage.getUser(event.userId);
+            if (user) {
+              atRiskSubscribers.push({
+                userId: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+                lastFailedAt: event.createdAt?.toISOString() || "",
+              });
+            }
+          }
+        }
+
+        // MRR trend (last 6 months from classPurchases + subscriptions)
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+        const revenueByMonth = await db.select({
+          month: sql<string>`to_char(${classPurchases.createdAt}, 'YYYY-MM')`,
+          amount: sql<number>`COALESCE(SUM(${classPurchases.amount}::numeric), 0)`,
+        }).from(classPurchases)
+          .where(and(
+            eq(classPurchases.status, "completed"),
+            gte(classPurchases.createdAt, sixMonthsAgo),
+          ))
+          .groupBy(sql`to_char(${classPurchases.createdAt}, 'YYYY-MM')`)
+          .orderBy(sql`to_char(${classPurchases.createdAt}, 'YYYY-MM')`);
+
+        revenueByMonth.forEach(r => {
+          mrrTrend.push({ month: r.month, mrr: +Number(r.amount).toFixed(2) });
+        });
+      }
+
+      // Active subs at month start for churn rate calc
+      let activeAtStart = 0;
+      if (db) {
+        const activeStartRows = await db.select({ count: sql<number>`count(*)::int` })
+          .from(subscriptions)
+          .where(and(
+            eq(subscriptions.status, "active"),
+          ));
+        activeAtStart = (activeStartRows[0]?.count || 0) + churnCount;
+      }
+
+      const churnRate = activeAtStart > 0 ? +((churnCount / activeAtStart) * 100).toFixed(1) : 0;
+
+      const result = {
+        mrr: mrr / 100, // convert from cents
+        mrrTrend,
+        churnRate,
+        churnCount,
+        failedPayments,
+        atRiskSubscribers,
+      };
+
+      stripeCache.set("stripe-metrics", result, CACHE_TTL.MRR);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching stripe metrics:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // =============================================
+  // Transaction History from Stripe
+  // =============================================
+  app.get("/api/admin/analytics/transactions", requireAdmin, async (req, res) => {
+    try {
+      if (!stripe) return res.status(503).json({ message: "Stripe not configured" });
+
+      const limit = parseInt(req.query.limit as string) || 25;
+      const startingAfter = req.query.starting_after as string | undefined;
+
+      const cacheKey = `transactions:${limit}:${startingAfter || "start"}`;
+      const cached = stripeCache.get(cacheKey);
+      if (cached) return res.json(cached);
+
+      const params: Stripe.ChargeListParams = { limit };
+      if (startingAfter) params.starting_after = startingAfter;
+
+      const charges = await stripe.charges.list(params);
+
+      const data = charges.data.map(charge => ({
+        id: charge.id,
+        amount: charge.amount / 100,
+        currency: charge.currency,
+        status: charge.status,
+        refunded: charge.refunded,
+        amountRefunded: charge.amount_refunded / 100,
+        customerEmail: charge.billing_details?.email || charge.receipt_email || "",
+        description: charge.description || "",
+        created: new Date(charge.created * 1000).toISOString(),
+        paymentMethodType: charge.payment_method_details?.type || "card",
+        cardBrand: charge.payment_method_details?.card?.brand || null,
+        cardLast4: charge.payment_method_details?.card?.last4 || null,
+        receiptUrl: charge.receipt_url || null,
+        paymentIntentId: charge.payment_intent as string | null,
+      }));
+
+      const result = {
+        data,
+        hasMore: charges.has_more,
+        nextCursor: charges.has_more ? charges.data[charges.data.length - 1]?.id : null,
+      };
+
+      stripeCache.set(cacheKey, result, CACHE_TTL.TRANSACTIONS);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // =============================================
+  // Process Refund from Admin
+  // =============================================
+  app.post("/api/admin/analytics/refund", requireAdmin, async (req, res) => {
+    try {
+      if (!stripe) return res.status(503).json({ message: "Stripe not configured" });
+
+      const { paymentIntentId, amount } = req.body;
+      if (!paymentIntentId) return res.status(400).json({ message: "paymentIntentId required" });
+
+      const refundParams: Stripe.RefundCreateParams = { payment_intent: paymentIntentId };
+      if (amount) refundParams.amount = Math.round(amount * 100); // convert to cents
+
+      const refund = await stripe.refunds.create(refundParams);
+
+      // Update local DB if we have the purchase
+      if (db) {
+        const purchase = await storage.getClassPurchaseByPaymentIntent(paymentIntentId);
+        if (purchase) {
+          await storage.updateClassPurchase(purchase.id, {
+            status: "refunded",
+            refundedAt: new Date(),
+            refundId: refund.id,
+          });
+          // Deduct credits
+          const user = await storage.getUser(purchase.userId);
+          if (user) {
+            const newCredits = Math.max(0, (user.classCredits || 0) - purchase.classesAdded);
+            await storage.updateUser(user.id, { classCredits: newCredits });
+          }
+        }
+      }
+
+      stripeCache.invalidatePrefix("transactions");
+      stripeCache.invalidatePrefix("stripe-metrics");
+      stripeCache.invalidatePrefix("student-stripe");
+
+      res.json({
+        success: true,
+        refund: {
+          id: refund.id,
+          amount: refund.amount / 100,
+          status: refund.status,
+          currency: refund.currency,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error processing refund:", error);
+      res.status(500).json({ message: error.message || "Refund failed" });
+    }
+  });
+
+  // =============================================
+  // Per-student Stripe data (LTV, payment methods, transactions)
+  // =============================================
+  app.get("/api/admin/analytics/student/:studentId/stripe", requireAdmin, async (req, res) => {
+    try {
+      if (!stripe) return res.status(503).json({ message: "Stripe not configured" });
+
+      const studentId = parseInt(req.params.studentId);
+      const user = await storage.getUser(studentId);
+      if (!user) return res.status(404).json({ message: "Student not found" });
+
+      const cacheKey = `student-stripe:${studentId}`;
+      const cached = stripeCache.get(cacheKey);
+      if (cached) return res.json(cached);
+
+      // Find Stripe customer by email
+      let stripeCustomerId: string | null = null;
+      try {
+        const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+        if (customers.data.length > 0) {
+          stripeCustomerId = customers.data[0].id;
+        }
+      } catch (e) {
+        console.error("Error finding Stripe customer:", e);
+      }
+
+      let ltv = 0;
+      let paymentMethods: Array<{ id: string; brand: string; last4: string; expMonth: number; expYear: number }> = [];
+      let transactions: Array<{ id: string; amount: number; status: string; refunded: boolean; created: string; description: string; paymentIntentId: string | null }> = [];
+
+      if (stripeCustomerId) {
+        // LTV: sum all successful charges
+        try {
+          const charges = await stripe.charges.list({ customer: stripeCustomerId, limit: 100 });
+          for (const charge of charges.data) {
+            if (charge.status === "succeeded" && !charge.refunded) {
+              ltv += charge.amount;
+            }
+          }
+          transactions = charges.data.map(c => ({
+            id: c.id,
+            amount: c.amount / 100,
+            status: c.status,
+            refunded: c.refunded,
+            created: new Date(c.created * 1000).toISOString(),
+            description: c.description || "",
+            paymentIntentId: c.payment_intent as string | null,
+          }));
+        } catch (e) {
+          console.error("Error fetching customer charges:", e);
+        }
+
+        // Payment methods
+        try {
+          const methods = await stripe.paymentMethods.list({
+            customer: stripeCustomerId,
+            type: "card",
+          });
+          paymentMethods = methods.data.map(m => ({
+            id: m.id,
+            brand: m.card?.brand || "unknown",
+            last4: m.card?.last4 || "****",
+            expMonth: m.card?.exp_month || 0,
+            expYear: m.card?.exp_year || 0,
+          }));
+        } catch (e) {
+          console.error("Error fetching payment methods:", e);
+        }
+      }
+
+      const result = {
+        ltv: ltv / 100,
+        stripeCustomerId,
+        paymentMethods,
+        transactions,
+      };
+
+      stripeCache.set(cacheKey, result, CACHE_TTL.STUDENT_STRIPE);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching student stripe data:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

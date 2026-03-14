@@ -73,11 +73,13 @@ export async function sendCampaign(
       const renderedBody = renderTemplate(template.body, mergeData);
 
       // c. Send email
-      const success = await (emailService as any).sendCampaignEmail({
+      const emailResult = await (emailService as any).sendCampaignEmail({
         to: user.email,
         subject: renderedSubject,
         html: renderedBody,
       });
+      const success = typeof emailResult === "object" ? emailResult.sent : emailResult;
+      const messageId = typeof emailResult === "object" ? emailResult.messageId : null;
 
       const recipientStatus = success ? "sent" : "bounced";
 
@@ -88,6 +90,7 @@ export async function sendCampaign(
         status: recipientStatus,
         sentAt: new Date(),
         renderedSubject,
+        resendMessageId: messageId ?? undefined,
       });
 
       // e. Create communication log entry
@@ -98,7 +101,7 @@ export async function sendCampaign(
         subject: renderedSubject,
         body: renderedBody,
         campaignId,
-        status: success ? "sent" : "failed",
+        status: (success as boolean) ? "sent" : "failed",
       });
 
       if (success) {

@@ -25,7 +25,26 @@ import {
   DollarSign,
   TrendingUp,
   UserCircle,
+  Link2,
+  Link2Off,
+  ArrowUpRight,
+  BarChart3,
 } from "lucide-react";
+import LevelBadge from "@/components/LevelBadge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 
 interface TutorDashboardData {
   tutor: {
@@ -56,10 +75,17 @@ interface StudentInfo {
   id: number;
   name: string;
   email: string;
+  level: string;
   profileImage: string | null;
   totalClasses: number;
   completedClasses: number;
   lastClassDate: string | null;
+}
+
+interface StudentProgress {
+  student: { id: number; name: string; email: string; level: string };
+  stats: { classesCompleted: number; learningHours: string; completedStations: number; totalStations: number; quizAvg: number; quizAttempts: number };
+  advancementProgress: { toLevel: string; classes: { current: number; required: number }; stations: { current: number; required: number }; quizAvg: { current: number; required: number }; isReady: boolean } | null;
 }
 
 interface EarningsData {
@@ -83,6 +109,7 @@ export default function TutorDashboard() {
   const user = getCurrentUser();
   const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState<"dashboard" | "students" | "earnings">("dashboard");
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
 
   if (!isAuthenticated() || !user) {
     setLocation("/login");
@@ -110,6 +137,34 @@ export default function TutorDashboard() {
     enabled: activeTab === "earnings",
   });
 
+  const { data: studentProgress } = useQuery<StudentProgress>({
+    queryKey: ["/api/tutor/students", selectedStudentId, "progress"],
+    queryFn: () => apiRequest("GET", `/api/tutor/students/${selectedStudentId}/progress`).then(r => r.json()),
+    enabled: !!selectedStudentId,
+  });
+
+  const changeLevelMutation = useMutation({
+    mutationFn: async ({ studentId, level }: { studentId: number; level: string }) => {
+      const response = await apiRequest("PUT", `/api/tutor/students/${studentId}/level`, { level });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tutor/students"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tutor/students", selectedStudentId, "progress"] });
+      toast({
+        title: language === "es" ? "Nivel actualizado" : "Level updated",
+        description: language === "es" ? "El nivel del estudiante ha sido cambiado." : "The student's level has been changed.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: language === "es" ? "No se pudo cambiar el nivel." : "Could not change the level.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const completeClassMutation = useMutation({
     mutationFn: async (classId: number) => {
       const response = await apiRequest("PUT", `/api/tutor/classes/${classId}/complete`);
@@ -131,6 +186,28 @@ export default function TutorDashboard() {
       });
     },
   });
+
+  // Google Calendar connection
+  const { data: googleStatus } = useQuery<{ connected: boolean; googleEmail: string | null }>({
+    queryKey: ["/api/auth/google/status"],
+    queryFn: () => apiRequest("GET", "/api/auth/google/status").then(r => r.json()),
+  });
+
+  const disconnectGoogleMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/auth/google/disconnect").then(r => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/google/status"] });
+      toast({ title: language === "es" ? "Google Calendar desconectado" : "Google Calendar disconnected" });
+    },
+  });
+
+  // Handle calendar connection callback
+  const urlParams = new URLSearchParams(window.location.search);
+  const calendarParam = urlParams.get("calendar");
+  if (calendarParam === "connected") {
+    toast({ title: language === "es" ? "Google Calendar conectado" : "Google Calendar connected" });
+    window.history.replaceState({}, "", "/tutor-dashboard");
+  }
 
   if (isLoading) {
     return (
@@ -277,6 +354,55 @@ export default function TutorDashboard() {
             </Card>
           </motion.div>
         </motion.div>
+
+        {/* Google Calendar Connection */}
+        <Card className="mb-6 border-0 shadow-lg">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${googleStatus?.connected ? "bg-green-100" : "bg-gray-100"}`}>
+                  <Calendar className={`h-5 w-5 ${googleStatus?.connected ? "text-green-600" : "text-gray-400"}`} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[#0A4A6E]">Google Calendar</h3>
+                  {googleStatus?.connected ? (
+                    <p className="text-sm text-green-600 flex items-center gap-1">
+                      <Link2 className="w-3 h-3" />
+                      {language === "es" ? "Conectado como" : "Connected as"} {googleStatus.googleEmail}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      {language === "es"
+                        ? "Sincroniza tus clases con tu Google Calendar"
+                        : "Sync your classes with your Google Calendar"}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {googleStatus?.connected ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => disconnectGoogleMutation.mutate()}
+                  disabled={disconnectGoogleMutation.isPending}
+                  className="text-red-500 border-red-200 hover:bg-red-50"
+                >
+                  <Link2Off className="w-4 h-4 mr-1" />
+                  {language === "es" ? "Desconectar" : "Disconnect"}
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => { window.location.href = "/api/auth/google/connect"; }}
+                  className="bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+                >
+                  <Link2 className="w-4 h-4 mr-1" />
+                  {language === "es" ? "Conectar" : "Connect"}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -452,6 +578,7 @@ export default function TutorDashboard() {
 
         {/* Students Tab */}
         {activeTab === "students" && (
+          <>
           <Card className="border-0 shadow-lg">
             <CardContent className="p-6">
               <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">
@@ -469,7 +596,11 @@ export default function TutorDashboard() {
               ) : (
                 <div className="space-y-3">
                   {students.map(student => (
-                    <div key={student.id} className="flex items-center gap-4 p-4 rounded-lg border border-[#1C7BB1]/10 hover:bg-[#EAF4FA]/30 transition-colors">
+                    <div
+                      key={student.id}
+                      className="flex items-center gap-4 p-4 rounded-lg border border-[#1C7BB1]/10 hover:bg-[#EAF4FA]/30 transition-colors cursor-pointer"
+                      onClick={() => setSelectedStudentId(student.id)}
+                    >
                       <div className="w-10 h-10 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {student.profileImage ? (
                           <img src={student.profileImage} alt="" className="w-full h-full object-cover" />
@@ -478,7 +609,10 @@ export default function TutorDashboard() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-[#0A4A6E] truncate">{student.name}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-[#0A4A6E] truncate">{student.name}</h4>
+                          <LevelBadge level={student.level} size="sm" />
+                        </div>
                         <p className="text-xs text-[#0A4A6E]/50">{student.email}</p>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-[#0A4A6E]/70">
@@ -501,6 +635,7 @@ export default function TutorDashboard() {
                             <p className="text-[10px]">{language === "es" ? "Última" : "Last"}</p>
                           </div>
                         )}
+                        <ArrowUpRight className="h-4 w-4 text-[#1C7BB1]/40" />
                       </div>
                     </div>
                   ))}
@@ -508,6 +643,124 @@ export default function TutorDashboard() {
               )}
             </CardContent>
           </Card>
+
+          {/* Student Detail Dialog */}
+          <Dialog open={selectedStudentId !== null} onOpenChange={() => setSelectedStudentId(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-[#1C7BB1]" />
+                  {language === "es" ? "Progreso del Estudiante" : "Student Progress"}
+                </DialogTitle>
+              </DialogHeader>
+
+              {studentProgress ? (
+                <div className="space-y-5 mt-2">
+                  {/* Student Info */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center">
+                      <UserCircle className="h-6 w-6 text-[#1C7BB1]" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-[#0A4A6E]">{studentProgress.student.name}</h3>
+                      <p className="text-xs text-muted-foreground">{studentProgress.student.email}</p>
+                    </div>
+                  </div>
+
+                  {/* Level Selector */}
+                  <div className="flex items-center justify-between p-3 bg-[#EAF4FA] rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium text-[#0A4A6E]">
+                        {language === "es" ? "Nivel actual" : "Current level"}
+                      </p>
+                    </div>
+                    <Select
+                      value={studentProgress.student.level}
+                      onValueChange={(val) => {
+                        if (selectedStudentId) {
+                          changeLevelMutation.mutate({ studentId: selectedStudentId, level: val });
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-24 h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A1">A1</SelectItem>
+                        <SelectItem value="A2">A2</SelectItem>
+                        <SelectItem value="B1">B1</SelectItem>
+                        <SelectItem value="B2">B2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center p-2 bg-gray-50 rounded-lg">
+                      <p className="text-lg font-bold text-[#0A4A6E]">{studentProgress.stats.classesCompleted}</p>
+                      <p className="text-[10px] text-muted-foreground">{language === "es" ? "Clases" : "Classes"}</p>
+                    </div>
+                    <div className="text-center p-2 bg-gray-50 rounded-lg">
+                      <p className="text-lg font-bold text-[#0A4A6E]">{studentProgress.stats.completedStations}/{studentProgress.stats.totalStations}</p>
+                      <p className="text-[10px] text-muted-foreground">{language === "es" ? "Estaciones" : "Stations"}</p>
+                    </div>
+                    <div className="text-center p-2 bg-gray-50 rounded-lg">
+                      <p className="text-lg font-bold text-[#0A4A6E]">{studentProgress.stats.quizAvg}%</p>
+                      <p className="text-[10px] text-muted-foreground">{language === "es" ? "Prom. Quiz" : "Quiz Avg"}</p>
+                    </div>
+                  </div>
+
+                  {/* Advancement Progress */}
+                  {studentProgress.advancementProgress && (
+                    <div className="border rounded-lg p-3 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-[#0A4A6E]">
+                          {language === "es" ? "Progreso hacia" : "Progress to"} {studentProgress.advancementProgress.toLevel}
+                        </p>
+                        {studentProgress.advancementProgress.isReady && (
+                          <Badge className="bg-green-100 text-green-700 text-xs">
+                            {language === "es" ? "Listo" : "Ready"}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Classes */}
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-muted-foreground">{language === "es" ? "Clases" : "Classes"}</span>
+                          <span className="font-medium">{studentProgress.advancementProgress.classes.current}/{studentProgress.advancementProgress.classes.required}</span>
+                        </div>
+                        <Progress value={Math.min(100, (studentProgress.advancementProgress.classes.current / studentProgress.advancementProgress.classes.required) * 100)} className="h-2" />
+                      </div>
+
+                      {/* Stations */}
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-muted-foreground">{language === "es" ? "Estaciones" : "Stations"}</span>
+                          <span className="font-medium">{studentProgress.advancementProgress.stations.current}/{studentProgress.advancementProgress.stations.required}</span>
+                        </div>
+                        <Progress value={Math.min(100, (studentProgress.advancementProgress.stations.current / studentProgress.advancementProgress.stations.required) * 100)} className="h-2" />
+                      </div>
+
+                      {/* Quiz Average */}
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-muted-foreground">{language === "es" ? "Prom. Quiz" : "Quiz Avg"}</span>
+                          <span className="font-medium">{studentProgress.advancementProgress.quizAvg.current}% / {studentProgress.advancementProgress.quizAvg.required}%</span>
+                        </div>
+                        <Progress value={Math.min(100, (studentProgress.advancementProgress.quizAvg.current / studentProgress.advancementProgress.quizAvg.required) * 100)} className="h-2" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C7BB1]" />
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+          </>
         )}
 
         {/* Earnings Tab */}

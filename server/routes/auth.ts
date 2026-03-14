@@ -8,6 +8,7 @@ import { dripCampaignService } from "../services/drip-campaign";
 declare module "express-session" {
   interface SessionData {
     userId: number;
+    googleOAuthState?: string;
   }
 }
 

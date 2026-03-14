@@ -10,6 +10,8 @@ import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
 import SubscriptionCard from "@/components/subscription-card";
+import { ClassCard } from "@/components/ClassCard";
+import RescheduleDialog from "@/components/RescheduleDialog";
 import { DashboardSkeleton } from "@/components/loading-skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
@@ -21,7 +23,6 @@ import {
   BookOpen,
   Headphones,
   Users,
-  X,
   Sparkles,
   MessageCircle,
   TrendingUp,
@@ -192,6 +193,8 @@ export default function Dashboard() {
   const handleCancelClass = (classId: number) => {
     cancelClassMutation.mutate(classId);
   };
+
+  const [rescheduleClass, setRescheduleClass] = useState<any>(null);
 
   if (isDashboardLoading) {
     return (
@@ -457,47 +460,15 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     upcomingClasses.map((classItem: any) => (
-                      <div key={classItem.id} className="flex items-center space-x-4 p-4 border border-[#1C7BB1]/20 rounded-lg hover:bg-[#EAF4FA]/30 transition-colors">
-                        <div className="w-12 h-12 bg-[#1C7BB1]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <GraduationCap className="text-[#1C7BB1] h-5 w-5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-[#0A4A6E] truncate">{classItem.title}</h4>
-                          <p className="text-sm text-[#0A4A6E]/70">{language === 'es' ? 'Con' : 'With'} {classItem.tutorName}</p>
-                          <p className="text-sm text-[#0A4A6E]/50">
-                            {new Date(classItem.scheduledAt).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', {
-                              weekday: 'short',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                        </div>
-                        {classItem.meetingLink && (
-                          <a
-                            href={classItem.meetingLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm font-medium text-[#1C7BB1] hover:underline flex-shrink-0"
-                          >
-                            {language === 'es' ? 'Unirse' : 'Join'}
-                          </a>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCancelClass(classItem.id)}
-                          disabled={cancelClassMutation.isPending}
-                          className="text-[#0A4A6E]/40 hover:text-red-500 flex-shrink-0"
-                        >
-                          {cancelClassMutation.isPending ? (
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          ) : (
-                            <X className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
+                      <ClassCard
+                        key={classItem.id}
+                        classItem={classItem}
+                        onCancel={handleCancelClass}
+                        onReschedule={(id) => {
+                          const cls = upcomingClasses.find((c: any) => c.id === id);
+                          if (cls) setRescheduleClass(cls);
+                        }}
+                      />
                     ))
                   )}
                 </div>
@@ -674,6 +645,17 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
+        {/* Reschedule Dialog */}
+        {rescheduleClass && (
+          <RescheduleDialog
+            open={!!rescheduleClass}
+            onOpenChange={(open) => { if (!open) setRescheduleClass(null); }}
+            classId={rescheduleClass.id}
+            tutorId={rescheduleClass.tutorId}
+            tutorName={rescheduleClass.tutorName || ""}
+            currentDate={rescheduleClass.scheduledAt}
+          />
+        )}
       </main>
     </div>
   );

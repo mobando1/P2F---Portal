@@ -1,4 +1,5 @@
 import { apiRequest } from "./queryClient";
+import { disconnectWebSocket } from "./websocket";
 
 export interface AuthUser {
   id: number;
@@ -101,6 +102,7 @@ export const logout = async () => {
   } catch {
     // Continue with local logout even if server call fails
   }
+  disconnectWebSocket();
   setCurrentUser(null);
 };
 

@@ -30,6 +30,15 @@ import {
   type CommunicationLogEntry, type InsertCommunicationLog,
   type AiStudentProfile, type InsertAiStudentProfile,
   type AiSavedCorrection, type InsertAiSavedCorrection,
+  type StripeEvent, type InsertStripeEvent,
+  type LearningPathStation, type InsertLearningPathStation,
+  type LearningPathContent, type InsertLearningPathContent,
+  type StudentPathProgress, type InsertStudentPathProgress,
+  type StudentQuizAttempt, type InsertStudentQuizAttempt,
+  type TutorAssignment, type InsertTutorAssignment,
+  type LevelProgressionRule, type InsertLevelProgressionRule,
+  type NewsletterSubscriber, type InsertNewsletterSubscriber,
+  type TutorGoogleToken, type InsertTutorGoogleToken,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -42,6 +51,9 @@ export interface IStorage {
 
   // Auth
   authenticateUser(email: string, password: string): Promise<User | null>;
+  getUserByGoogleId(googleId: string): Promise<User | undefined>;
+  getUserByMicrosoftId(microsoftId: string): Promise<User | undefined>;
+  linkOAuthId(userId: number, provider: 'google' | 'microsoft', providerId: string): Promise<void>;
 
   // Subscriptions
   getUserSubscription(userId: number): Promise<Subscription | undefined>;
@@ -243,20 +255,82 @@ export interface IStorage {
   // Campaign Recipients
   getCampaignRecipients(campaignId: number): Promise<CampaignRecipient[]>;
   createCampaignRecipient(data: InsertCampaignRecipient): Promise<CampaignRecipient>;
-  updateCampaignRecipient(id: number, data: Partial<CampaignRecipient>): Promise<CampaignRecipient | undefined>;
 
   // Offers
   getOffers(): Promise<Offer[]>;
   getOffer(id: number): Promise<Offer | undefined>;
   getOfferByCode(code: string): Promise<Offer | undefined>;
+  getOfferByStripePromotionCodeId(promoCodeId: string): Promise<Offer | undefined>;
   createOffer(data: InsertOffer): Promise<Offer>;
-  updateOffer(id: number, data: Partial<InsertOffer>): Promise<Offer | undefined>;
+  updateOffer(id: number, data: Partial<Offer>): Promise<Offer | undefined>;
   deleteOffer(id: number): Promise<boolean>;
   incrementOfferUsage(id: number): Promise<void>;
 
   // Communication Log
   getCommunicationLog(userId: number): Promise<CommunicationLogEntry[]>;
   createCommunicationLog(data: InsertCommunicationLog): Promise<CommunicationLogEntry>;
+
+  // Campaign recipient tracking
+  getRecipientByResendId(resendMessageId: string): Promise<CampaignRecipient | undefined>;
+  updateCampaignRecipient(id: number, data: Partial<CampaignRecipient>): Promise<void>;
+  incrementCampaignOpened(campaignId: number): Promise<void>;
+  incrementCampaignClicked(campaignId: number): Promise<void>;
+
+  // Newsletter Subscribers
+  getNewsletterSubscribers(filters?: { status?: string; source?: string; search?: string }): Promise<{ subscribers: NewsletterSubscriber[]; total: number; metrics: any }>;
+  createNewsletterSubscriber(data: InsertNewsletterSubscriber): Promise<NewsletterSubscriber>;
+  upsertNewsletterSubscriber(data: InsertNewsletterSubscriber & { userId?: number }): Promise<NewsletterSubscriber>;
+  unsubscribeNewsletter(email: string): Promise<void>;
+  deleteNewsletterSubscriber(id: number): Promise<boolean>;
+
+  // Stripe Events
+  createStripeEvent(data: InsertStripeEvent): Promise<StripeEvent>;
+  getStripeEvents(eventType?: string, from?: Date, to?: Date): Promise<StripeEvent[]>;
+
+  // Class Purchases (extended)
+  getClassPurchaseByPaymentIntent(paymentIntentId: string): Promise<ClassPurchase | undefined>;
+  updateClassPurchase(id: number, data: Partial<ClassPurchase>): Promise<ClassPurchase | undefined>;
+
+  // Learning Path - Stations
+  getStationsByLevel(level: string): Promise<LearningPathStation[]>;
+  getStation(id: number): Promise<LearningPathStation | undefined>;
+  getAllStations(): Promise<LearningPathStation[]>;
+  createStation(data: InsertLearningPathStation): Promise<LearningPathStation>;
+  deleteStation(id: number): Promise<void>;
+
+  // Learning Path - Content
+  getContentByStation(stationId: number): Promise<LearningPathContent[]>;
+  getContent(id: number): Promise<LearningPathContent | undefined>;
+  createContent(data: InsertLearningPathContent): Promise<LearningPathContent>;
+  updateContent(id: number, data: Partial<InsertLearningPathContent>): Promise<LearningPathContent>;
+  deleteContent(id: number): Promise<void>;
+
+  // Learning Path - Student Progress
+  getStudentProgress(userId: number): Promise<StudentPathProgress[]>;
+  getStudentStationProgress(userId: number, stationId: number): Promise<StudentPathProgress | undefined>;
+  upsertStudentProgress(data: InsertStudentPathProgress): Promise<StudentPathProgress>;
+
+  // Learning Path - Quiz Attempts
+  createQuizAttempt(data: InsertStudentQuizAttempt): Promise<StudentQuizAttempt>;
+  getQuizAttempts(userId: number, contentId: number): Promise<StudentQuizAttempt[]>;
+  getQuizAttemptsByUser(userId: number): Promise<StudentQuizAttempt[]>;
+
+  // Learning Path - Tutor Assignments
+  createAssignment(data: InsertTutorAssignment): Promise<TutorAssignment>;
+  getAssignmentsForStudent(studentId: number): Promise<TutorAssignment[]>;
+  getAssignmentsByTutor(tutorId: number): Promise<TutorAssignment[]>;
+  updateAssignment(id: number, data: Partial<InsertTutorAssignment>): Promise<TutorAssignment>;
+
+  // Learning Path - Level Progression Rules
+  getLevelRules(fromLevel: string): Promise<LevelProgressionRule | undefined>;
+  getAllLevelRules(): Promise<LevelProgressionRule[]>;
+  upsertLevelRule(data: InsertLevelProgressionRule): Promise<LevelProgressionRule>;
+
+  // Google OAuth Tokens
+  getTutorGoogleToken(tutorId: number): Promise<TutorGoogleToken | undefined>;
+  upsertTutorGoogleToken(data: InsertTutorGoogleToken): Promise<TutorGoogleToken>;
+  deleteTutorGoogleToken(tutorId: number): Promise<boolean>;
+  updateTutorGoogleToken(tutorId: number, data: Partial<InsertTutorGoogleToken>): Promise<TutorGoogleToken | undefined>;
 }
 
 /** Strip password from user object before sending to client */
@@ -365,6 +439,8 @@ export class MemStorage implements IStorage {
       username: "admin_p2f",
       email: "admin@p2f.com",
       password: adminPassword,
+      googleId: null,
+      microsoftId: null,
       firstName: "Admin",
       lastName: "P2F",
       phone: null,
@@ -394,6 +470,8 @@ export class MemStorage implements IStorage {
       username: "juan_sanchez",
       email: "juan.sanchez@example.com",
       password: hashedPassword,
+      googleId: null,
+      microsoftId: null,
       firstName: "Juan",
       lastName: "Sánchez",
       phone: "+1-555-0123",
@@ -422,6 +500,8 @@ export class MemStorage implements IStorage {
       username: "maria_rodriguez",
       email: "maria.rodriguez@example.com",
       password: hashedPassword,
+      googleId: null,
+      microsoftId: null,
       firstName: "María",
       lastName: "Rodríguez",
       phone: "+1-555-0124",
@@ -454,6 +534,7 @@ export class MemStorage implements IStorage {
       stripeSubscriptionId: "sub_premium_123",
       status: "active",
       nextBillingDate: new Date("2025-01-15"),
+      cancelledAt: null,
       createdAt: new Date(),
     };
     this.subscriptions.set(1, subscription);
@@ -607,6 +688,8 @@ export class MemStorage implements IStorage {
         isTrial: false,
         classCategory: "adults-spanish",
         meetingLink: "https://meet.jit.si/P2F-Carolina-Perilla-class1",
+        calendarEventId: null,
+        tutorCalendarEventId: null,
         createdAt: new Date(),
       },
       {
@@ -621,6 +704,8 @@ export class MemStorage implements IStorage {
         isTrial: false,
         classCategory: "adults-spanish",
         meetingLink: "https://meet.jit.si/P2F-Evelyn-Salcedo-class2",
+        calendarEventId: null,
+        tutorCalendarEventId: null,
         createdAt: new Date(),
       },
       {
@@ -635,6 +720,8 @@ export class MemStorage implements IStorage {
         isTrial: false,
         classCategory: "adults-spanish",
         meetingLink: "https://meet.jit.si/P2F-Diego-Rodriguez-class3",
+        calendarEventId: null,
+        tutorCalendarEventId: null,
         createdAt: new Date(),
       }
     ];
@@ -695,11 +782,15 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     await this.ensureInitialized();
     const id = this.currentUserId++;
-    const hashedPassword = await bcrypt.hash(insertUser.password, 12);
+    const hashedPassword = insertUser.password
+      ? await bcrypt.hash(insertUser.password, 12)
+      : null;
     const user: User = {
       ...insertUser,
       id,
       password: hashedPassword,
+      googleId: null,
+      microsoftId: null,
       createdAt: new Date(),
       level: insertUser.level || "A1",
       avatar: insertUser.avatar || null,
@@ -741,10 +832,29 @@ export class MemStorage implements IStorage {
   async authenticateUser(email: string, password: string): Promise<User | null> {
     await this.ensureInitialized();
     const user = await this.getUserByEmail(email);
-    if (user && await bcrypt.compare(password, user.password)) {
+    if (user && user.password && await bcrypt.compare(password, user.password)) {
       return user;
     }
     return null;
+  }
+
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    await this.ensureInitialized();
+    return Array.from(this.users.values()).find(u => u.googleId === googleId);
+  }
+
+  async getUserByMicrosoftId(microsoftId: string): Promise<User | undefined> {
+    await this.ensureInitialized();
+    return Array.from(this.users.values()).find(u => u.microsoftId === microsoftId);
+  }
+
+  async linkOAuthId(userId: number, provider: 'google' | 'microsoft', providerId: string): Promise<void> {
+    await this.ensureInitialized();
+    const user = this.users.get(userId);
+    if (user) {
+      if (provider === 'google') user.googleId = providerId;
+      else user.microsoftId = providerId;
+    }
   }
 
   async getUserSubscription(userId: number): Promise<Subscription | undefined> {
@@ -766,7 +876,8 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       status: subscriptionData.status || "active",
       stripeSubscriptionId: subscriptionData.stripeSubscriptionId || null,
-      nextBillingDate: subscriptionData.nextBillingDate || null
+      nextBillingDate: subscriptionData.nextBillingDate || null,
+      cancelledAt: subscriptionData.cancelledAt || null,
     };
     this.subscriptions.set(id, subscription);
     return subscription;
@@ -873,6 +984,8 @@ export class MemStorage implements IStorage {
       isTrial: classData.isTrial || false,
       classCategory: classData.classCategory || null,
       meetingLink: classData.meetingLink || null,
+      calendarEventId: classData.calendarEventId || null,
+      tutorCalendarEventId: classData.tutorCalendarEventId || null,
     };
     this.classes.set(id, classItem);
     return classItem;
@@ -1719,18 +1832,94 @@ export class MemStorage implements IStorage {
 
   async getCampaignRecipients(_campaignId: number): Promise<CampaignRecipient[]> { return []; }
   async createCampaignRecipient(data: InsertCampaignRecipient): Promise<CampaignRecipient> { return { id: 1, ...data, createdAt: new Date() } as CampaignRecipient; }
-  async updateCampaignRecipient(_id: number, _data: Partial<CampaignRecipient>): Promise<CampaignRecipient | undefined> { return undefined; }
 
   async getOffers(): Promise<Offer[]> { return []; }
   async getOffer(_id: number): Promise<Offer | undefined> { return undefined; }
   async getOfferByCode(_code: string): Promise<Offer | undefined> { return undefined; }
-  async createOffer(data: InsertOffer): Promise<Offer> { return { id: 1, ...data, usedCount: 0, createdAt: new Date() } as Offer; }
-  async updateOffer(_id: number, _data: Partial<InsertOffer>): Promise<Offer | undefined> { return undefined; }
+  async getOfferByStripePromotionCodeId(_promoCodeId: string): Promise<Offer | undefined> { return undefined; }
+  async createOffer(data: InsertOffer): Promise<Offer> { return { id: 1, ...data, usedCount: 0, stripeCouponId: null, stripePromotionCodeId: null, createdAt: new Date() } as Offer; }
+  async updateOffer(_id: number, _data: Partial<Offer>): Promise<Offer | undefined> { return undefined; }
   async deleteOffer(_id: number): Promise<boolean> { return false; }
   async incrementOfferUsage(_id: number): Promise<void> {}
 
   async getCommunicationLog(_userId: number): Promise<CommunicationLogEntry[]> { return []; }
   async createCommunicationLog(data: InsertCommunicationLog): Promise<CommunicationLogEntry> { return { id: 1, ...data, createdAt: new Date() } as CommunicationLogEntry; }
+
+  async getRecipientByResendId(_resendMessageId: string): Promise<CampaignRecipient | undefined> { return undefined; }
+  async updateCampaignRecipient(_id: number, _data: Partial<CampaignRecipient>): Promise<void> {}
+  async incrementCampaignOpened(_campaignId: number): Promise<void> {}
+  async incrementCampaignClicked(_campaignId: number): Promise<void> {}
+
+  async getNewsletterSubscribers(_filters?: any): Promise<{ subscribers: NewsletterSubscriber[]; total: number; metrics: any }> { return { subscribers: [], total: 0, metrics: {} }; }
+  async createNewsletterSubscriber(data: InsertNewsletterSubscriber): Promise<NewsletterSubscriber> { return { id: 1, ...data, subscribedAt: new Date(), unsubscribedAt: null } as NewsletterSubscriber; }
+  async upsertNewsletterSubscriber(data: any): Promise<NewsletterSubscriber> { return { id: 1, ...data, subscribedAt: new Date(), unsubscribedAt: null } as NewsletterSubscriber; }
+  async unsubscribeNewsletter(_email: string): Promise<void> {}
+  async deleteNewsletterSubscriber(_id: number): Promise<boolean> { return false; }
+
+  async createStripeEvent(data: InsertStripeEvent): Promise<StripeEvent> { return { id: 1, ...data, createdAt: new Date() } as StripeEvent; }
+  async getStripeEvents(_eventType?: string, _from?: Date, _to?: Date): Promise<StripeEvent[]> { return []; }
+  async getClassPurchaseByPaymentIntent(_paymentIntentId: string): Promise<ClassPurchase | undefined> { return undefined; }
+  async updateClassPurchase(_id: number, _data: Partial<ClassPurchase>): Promise<ClassPurchase | undefined> { return undefined; }
+
+  // ===== Learning Path Stubs (MemStorage) =====
+  async getStationsByLevel(_level: string): Promise<LearningPathStation[]> { return []; }
+  async getStation(_id: number): Promise<LearningPathStation | undefined> { return undefined; }
+  async getAllStations(): Promise<LearningPathStation[]> { return []; }
+  async createStation(data: InsertLearningPathStation): Promise<LearningPathStation> { return { id: 1, ...data, requiredToAdvance: true, createdAt: new Date() } as LearningPathStation; }
+  async deleteStation(_id: number): Promise<void> { }
+
+  async getContentByStation(_stationId: number): Promise<LearningPathContent[]> { return []; }
+  async getContent(_id: number): Promise<LearningPathContent | undefined> { return undefined; }
+  async createContent(data: InsertLearningPathContent): Promise<LearningPathContent> { return { id: 1, ...data, durationMinutes: 15, sortOrder: 0, createdAt: new Date() } as LearningPathContent; }
+  async updateContent(_id: number, _data: Partial<InsertLearningPathContent>): Promise<LearningPathContent> { return {} as LearningPathContent; }
+  async deleteContent(_id: number): Promise<void> { }
+
+  async getStudentProgress(_userId: number): Promise<StudentPathProgress[]> { return []; }
+  async getStudentStationProgress(_userId: number, _stationId: number): Promise<StudentPathProgress | undefined> { return undefined; }
+  async upsertStudentProgress(data: InsertStudentPathProgress): Promise<StudentPathProgress> { return { id: 1, ...data, createdAt: new Date() } as StudentPathProgress; }
+
+  async createQuizAttempt(data: InsertStudentQuizAttempt): Promise<StudentQuizAttempt> { return { id: 1, ...data, createdAt: new Date() } as StudentQuizAttempt; }
+  async getQuizAttempts(_userId: number, _contentId: number): Promise<StudentQuizAttempt[]> { return []; }
+  async getQuizAttemptsByUser(_userId: number): Promise<StudentQuizAttempt[]> { return []; }
+
+  async createAssignment(data: InsertTutorAssignment): Promise<TutorAssignment> { return { id: 1, ...data, createdAt: new Date() } as TutorAssignment; }
+  async getAssignmentsForStudent(_studentId: number): Promise<TutorAssignment[]> { return []; }
+  async getAssignmentsByTutor(_tutorId: number): Promise<TutorAssignment[]> { return []; }
+  async updateAssignment(_id: number, _data: Partial<InsertTutorAssignment>): Promise<TutorAssignment> { return {} as TutorAssignment; }
+
+  async getLevelRules(_fromLevel: string): Promise<LevelProgressionRule | undefined> { return undefined; }
+  async getAllLevelRules(): Promise<LevelProgressionRule[]> { return []; }
+  async upsertLevelRule(data: InsertLevelProgressionRule): Promise<LevelProgressionRule> { return { id: 1, ...data, autoPromote: true, createdAt: new Date() } as LevelProgressionRule; }
+
+  // Google OAuth Tokens (MemStorage stubs)
+  private googleTokens: Map<number, TutorGoogleToken> = new Map();
+  async getTutorGoogleToken(tutorId: number): Promise<TutorGoogleToken | undefined> {
+    return Array.from(this.googleTokens.values()).find(t => t.tutorId === tutorId);
+  }
+  async upsertTutorGoogleToken(data: InsertTutorGoogleToken): Promise<TutorGoogleToken> {
+    const existing = await this.getTutorGoogleToken(data.tutorId);
+    if (existing) {
+      const updated = { ...existing, ...data, updatedAt: new Date() };
+      this.googleTokens.set(existing.id, updated);
+      return updated;
+    }
+    const id = this.googleTokens.size + 1;
+    const token: TutorGoogleToken = { id, ...data, googleCalendarId: data.googleCalendarId || "primary", createdAt: new Date(), updatedAt: new Date() };
+    this.googleTokens.set(id, token);
+    return token;
+  }
+  async deleteTutorGoogleToken(tutorId: number): Promise<boolean> {
+    const token = await this.getTutorGoogleToken(tutorId);
+    if (token) { this.googleTokens.delete(token.id); return true; }
+    return false;
+  }
+  async updateTutorGoogleToken(tutorId: number, data: Partial<InsertTutorGoogleToken>): Promise<TutorGoogleToken | undefined> {
+    const token = await this.getTutorGoogleToken(tutorId);
+    if (!token) return undefined;
+    const updated = { ...token, ...data, updatedAt: new Date() };
+    this.googleTokens.set(token.id, updated as TutorGoogleToken);
+    return updated as TutorGoogleToken;
+  }
 }
 
 // Use DatabaseStorage when DATABASE_URL is available, MemStorage otherwise

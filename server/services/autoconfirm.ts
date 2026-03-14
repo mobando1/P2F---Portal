@@ -1,5 +1,6 @@
 import { storage } from "../storage";
 import { notificationService } from "./notification";
+import { learningPathService } from "./learning-path";
 
 /**
  * Autoconfirmation service for classes.
@@ -55,6 +56,12 @@ export const autoconfirmService = {
           tutorId: cls.tutorId,
           scheduledAt: new Date(cls.scheduledAt),
         });
+
+        // Check learning path level advancement
+        try {
+          await learningPathService.checkAndAdvanceLevel(cls.userId);
+        } catch {}
+
       }
     } catch (error) {
       console.error("Autoconfirm check error:", error);

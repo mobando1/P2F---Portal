@@ -27,13 +27,27 @@ import {
   type CrmTask, type InsertCrmTask,
   type CrmTag, type InsertCrmTag,
   emailTemplates, audienceSegments, campaigns, campaignRecipients, offers, communicationLog,
+  newsletterSubscribers,
   type EmailTemplate, type InsertEmailTemplate,
   type AudienceSegment, type InsertAudienceSegment,
   type Campaign, type InsertCampaign,
   type CampaignRecipient, type InsertCampaignRecipient,
   type Offer, type InsertOffer,
   type CommunicationLogEntry, type InsertCommunicationLog,
+  type NewsletterSubscriber, type InsertNewsletterSubscriber,
   aiStudentProfiles, aiSavedCorrections, aiVocabulary,
+  stripeEvents,
+  type StripeEvent, type InsertStripeEvent,
+  learningPathStations, learningPathContent, studentPathProgress,
+  studentQuizAttempts, tutorAssignments, levelProgressionRules,
+  type LearningPathStation, type InsertLearningPathStation,
+  type LearningPathContent, type InsertLearningPathContent,
+  type StudentPathProgress, type InsertStudentPathProgress,
+  type StudentQuizAttempt, type InsertStudentQuizAttempt,
+  type TutorAssignment, type InsertTutorAssignment,
+  type LevelProgressionRule, type InsertLevelProgressionRule,
+  tutorGoogleTokens,
+  type TutorGoogleToken, type InsertTutorGoogleToken,
 } from "@shared/schema";
 import { db as maybeDb } from "./db";
 import { eq, and, or, not, gt, gte, lte, lt, desc, asc, sql, inArray } from "drizzle-orm";
@@ -61,10 +75,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const hashedPassword = await bcrypt.hash(insertUser.password, 12);
+    const hashedPassword = insertUser.password
+      ? await bcrypt.hash(insertUser.password, 12)
+      : null;
     const [user] = await this.db
       .insert(users)
-      .values({ ...insertUser, password: hashedPassword })
+      .values({ ...insertUser, password: hashedPassword } as any)
       .returning();
     return user;
   }
@@ -88,10 +104,25 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(eq(users.email, email));
 
-    if (user && await bcrypt.compare(password, user.password)) {
+    if (user && user.password && await bcrypt.compare(password, user.password)) {
       return user;
     }
     return null;
+  }
+
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    const [user] = await this.db.select().from(users).where(eq(users.googleId, googleId));
+    return user || undefined;
+  }
+
+  async getUserByMicrosoftId(microsoftId: string): Promise<User | undefined> {
+    const [user] = await this.db.select().from(users).where(eq(users.microsoftId, microsoftId));
+    return user || undefined;
+  }
+
+  async linkOAuthId(userId: number, provider: 'google' | 'microsoft', providerId: string): Promise<void> {
+    const field = provider === 'google' ? { googleId: providerId } : { microsoftId: providerId };
+    await this.db.update(users).set(field).where(eq(users.id, userId));
   }
 
   async getUserSubscription(userId: number): Promise<Subscription | undefined> {
@@ -1073,9 +1104,26 @@ export class DatabaseStorage implements IStorage {
     return recipient;
   }
 
-  async updateCampaignRecipient(id: number, data: Partial<CampaignRecipient>): Promise<CampaignRecipient | undefined> {
-    const [recipient] = await this.db.update(campaignRecipients).set(data).where(eq(campaignRecipients.id, id)).returning();
+  async updateCampaignRecipient(id: number, data: Partial<CampaignRecipient>): Promise<void> {
+    await this.db.update(campaignRecipients).set(data as any).where(eq(campaignRecipients.id, id));
+  }
+
+  async getRecipientByResendId(resendMessageId: string): Promise<CampaignRecipient | undefined> {
+    const [recipient] = await this.db.select().from(campaignRecipients)
+      .where(eq(campaignRecipients.resendMessageId, resendMessageId));
     return recipient;
+  }
+
+  async incrementCampaignOpened(campaignId: number): Promise<void> {
+    await this.db.update(campaigns)
+      .set({ totalOpened: sql`${campaigns.totalOpened} + 1` })
+      .where(eq(campaigns.id, campaignId));
+  }
+
+  async incrementCampaignClicked(campaignId: number): Promise<void> {
+    await this.db.update(campaigns)
+      .set({ totalClicked: sql`${campaigns.totalClicked} + 1` })
+      .where(eq(campaigns.id, campaignId));
   }
 
   // ===== Offers =====
@@ -1093,13 +1141,19 @@ export class DatabaseStorage implements IStorage {
     return offer;
   }
 
+  async getOfferByStripePromotionCodeId(promoCodeId: string): Promise<Offer | undefined> {
+    const [offer] = await this.db.select().from(offers)
+      .where(eq(offers.stripePromotionCodeId, promoCodeId));
+    return offer;
+  }
+
   async createOffer(data: InsertOffer): Promise<Offer> {
     const [offer] = await this.db.insert(offers).values(data).returning();
     return offer;
   }
 
-  async updateOffer(id: number, data: Partial<InsertOffer>): Promise<Offer | undefined> {
-    const [offer] = await this.db.update(offers).set(data).where(eq(offers.id, id)).returning();
+  async updateOffer(id: number, data: Partial<Offer>): Promise<Offer | undefined> {
+    const [offer] = await this.db.update(offers).set(data as any).where(eq(offers.id, id)).returning();
     return offer;
   }
 
@@ -1122,5 +1176,288 @@ export class DatabaseStorage implements IStorage {
   async createCommunicationLog(data: InsertCommunicationLog): Promise<CommunicationLogEntry> {
     const [entry] = await this.db.insert(communicationLog).values(data).returning();
     return entry;
+  }
+
+  // ===== Newsletter Subscribers =====
+  async getNewsletterSubscribers(filters?: { status?: string; source?: string; search?: string }): Promise<{ subscribers: NewsletterSubscriber[]; total: number; metrics: any }> {
+    const conditions = [];
+    if (filters?.status) conditions.push(eq(newsletterSubscribers.status, filters.status));
+    if (filters?.source) conditions.push(eq(newsletterSubscribers.source, filters.source));
+
+    const allSubs = conditions.length > 0
+      ? await this.db.select().from(newsletterSubscribers).where(and(...conditions)).orderBy(desc(newsletterSubscribers.subscribedAt))
+      : await this.db.select().from(newsletterSubscribers).orderBy(desc(newsletterSubscribers.subscribedAt));
+
+    let filtered = allSubs;
+    if (filters?.search) {
+      const s = filters.search.toLowerCase();
+      filtered = allSubs.filter(sub =>
+        sub.email.toLowerCase().includes(s) ||
+        (sub.firstName && sub.firstName.toLowerCase().includes(s)) ||
+        (sub.lastName && sub.lastName.toLowerCase().includes(s))
+      );
+    }
+
+    const metrics = {
+      total: allSubs.length,
+      active: allSubs.filter(s => s.status === 'active').length,
+      unsubscribed: allSubs.filter(s => s.status === 'unsubscribed').length,
+      bounced: allSubs.filter(s => s.status === 'bounced').length,
+      bySource: {
+        website: allSubs.filter(s => s.source === 'website').length,
+        contact_form: allSubs.filter(s => s.source === 'contact_form').length,
+        checkout: allSubs.filter(s => s.source === 'checkout').length,
+        manual: allSubs.filter(s => s.source === 'manual').length,
+      },
+    };
+
+    return { subscribers: filtered, total: filtered.length, metrics };
+  }
+
+  async createNewsletterSubscriber(data: InsertNewsletterSubscriber): Promise<NewsletterSubscriber> {
+    const [sub] = await this.db.insert(newsletterSubscribers).values(data).returning();
+    return sub;
+  }
+
+  async upsertNewsletterSubscriber(data: InsertNewsletterSubscriber & { userId?: number }): Promise<NewsletterSubscriber> {
+    const existing = await this.db.select().from(newsletterSubscribers)
+      .where(eq(newsletterSubscribers.email, data.email));
+
+    if (existing.length > 0) {
+      if (existing[0].status === 'unsubscribed') {
+        // Don't re-subscribe automatically
+        return existing[0];
+      }
+      const [updated] = await this.db.update(newsletterSubscribers)
+        .set({ firstName: data.firstName, lastName: data.lastName, userId: data.userId ?? existing[0].userId })
+        .where(eq(newsletterSubscribers.email, data.email))
+        .returning();
+      return updated;
+    }
+
+    const [sub] = await this.db.insert(newsletterSubscribers).values(data as any).returning();
+    return sub;
+  }
+
+  async unsubscribeNewsletter(email: string): Promise<void> {
+    await this.db.update(newsletterSubscribers)
+      .set({ status: 'unsubscribed', unsubscribedAt: new Date() })
+      .where(eq(newsletterSubscribers.email, email));
+  }
+
+  async deleteNewsletterSubscriber(id: number): Promise<boolean> {
+    const result = await this.db.delete(newsletterSubscribers).where(eq(newsletterSubscribers.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async createStripeEvent(data: InsertStripeEvent): Promise<StripeEvent> {
+    const [event] = await this.db.insert(stripeEvents).values(data).returning();
+    return event;
+  }
+
+  async getStripeEvents(eventType?: string, from?: Date, to?: Date): Promise<StripeEvent[]> {
+    const conditions = [];
+    if (eventType) conditions.push(eq(stripeEvents.eventType, eventType));
+    if (from) conditions.push(gte(stripeEvents.createdAt, from));
+    if (to) conditions.push(lte(stripeEvents.createdAt, to));
+
+    if (conditions.length === 0) {
+      return await this.db.select().from(stripeEvents).orderBy(desc(stripeEvents.createdAt));
+    }
+    return await this.db.select().from(stripeEvents)
+      .where(and(...conditions))
+      .orderBy(desc(stripeEvents.createdAt));
+  }
+
+  async getClassPurchaseByPaymentIntent(paymentIntentId: string): Promise<ClassPurchase | undefined> {
+    const [purchase] = await this.db.select().from(classPurchases)
+      .where(eq(classPurchases.stripePaymentIntentId, paymentIntentId));
+    return purchase;
+  }
+
+  async updateClassPurchase(id: number, data: Partial<ClassPurchase>): Promise<ClassPurchase | undefined> {
+    const [updated] = await this.db.update(classPurchases).set(data).where(eq(classPurchases.id, id)).returning();
+    return updated;
+  }
+
+  // ===== Learning Path =====
+
+  async getStationsByLevel(level: string): Promise<LearningPathStation[]> {
+    return await this.db.select().from(learningPathStations)
+      .where(eq(learningPathStations.level, level))
+      .orderBy(asc(learningPathStations.stationOrder));
+  }
+
+  async getStation(id: number): Promise<LearningPathStation | undefined> {
+    const [station] = await this.db.select().from(learningPathStations)
+      .where(eq(learningPathStations.id, id));
+    return station || undefined;
+  }
+
+  async getAllStations(): Promise<LearningPathStation[]> {
+    return await this.db.select().from(learningPathStations)
+      .orderBy(asc(learningPathStations.level), asc(learningPathStations.stationOrder));
+  }
+
+  async createStation(data: InsertLearningPathStation): Promise<LearningPathStation> {
+    const [station] = await this.db.insert(learningPathStations).values(data).returning();
+    return station;
+  }
+
+  async deleteStation(id: number): Promise<void> {
+    // Delete content first (cascade)
+    await this.db.delete(learningPathContent).where(eq(learningPathContent.stationId, id));
+    await this.db.delete(learningPathStations).where(eq(learningPathStations.id, id));
+  }
+
+  async getContentByStation(stationId: number): Promise<LearningPathContent[]> {
+    return await this.db.select().from(learningPathContent)
+      .where(eq(learningPathContent.stationId, stationId))
+      .orderBy(asc(learningPathContent.sortOrder));
+  }
+
+  async getContent(id: number): Promise<LearningPathContent | undefined> {
+    const [content] = await this.db.select().from(learningPathContent)
+      .where(eq(learningPathContent.id, id));
+    return content || undefined;
+  }
+
+  async createContent(data: InsertLearningPathContent): Promise<LearningPathContent> {
+    const [content] = await this.db.insert(learningPathContent).values(data).returning();
+    return content;
+  }
+
+  async updateContent(id: number, data: Partial<InsertLearningPathContent>): Promise<LearningPathContent> {
+    const [content] = await this.db.update(learningPathContent).set(data)
+      .where(eq(learningPathContent.id, id)).returning();
+    return content;
+  }
+
+  async deleteContent(id: number): Promise<void> {
+    await this.db.delete(learningPathContent).where(eq(learningPathContent.id, id));
+  }
+
+  async getStudentProgress(userId: number): Promise<StudentPathProgress[]> {
+    return await this.db.select().from(studentPathProgress)
+      .where(eq(studentPathProgress.userId, userId));
+  }
+
+  async getStudentStationProgress(userId: number, stationId: number): Promise<StudentPathProgress | undefined> {
+    const [progress] = await this.db.select().from(studentPathProgress)
+      .where(and(
+        eq(studentPathProgress.userId, userId),
+        eq(studentPathProgress.stationId, stationId),
+      ));
+    return progress || undefined;
+  }
+
+  async upsertStudentProgress(data: InsertStudentPathProgress): Promise<StudentPathProgress> {
+    const existing = await this.getStudentStationProgress(data.userId, data.stationId);
+    if (existing) {
+      const [updated] = await this.db.update(studentPathProgress)
+        .set(data)
+        .where(eq(studentPathProgress.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [created] = await this.db.insert(studentPathProgress).values(data).returning();
+    return created;
+  }
+
+  async createQuizAttempt(data: InsertStudentQuizAttempt): Promise<StudentQuizAttempt> {
+    const [attempt] = await this.db.insert(studentQuizAttempts).values(data).returning();
+    return attempt;
+  }
+
+  async getQuizAttempts(userId: number, contentId: number): Promise<StudentQuizAttempt[]> {
+    return await this.db.select().from(studentQuizAttempts)
+      .where(and(
+        eq(studentQuizAttempts.userId, userId),
+        eq(studentQuizAttempts.contentId, contentId),
+      ))
+      .orderBy(desc(studentQuizAttempts.createdAt));
+  }
+
+  async getQuizAttemptsByUser(userId: number): Promise<StudentQuizAttempt[]> {
+    return await this.db.select().from(studentQuizAttempts)
+      .where(eq(studentQuizAttempts.userId, userId));
+  }
+
+  async createAssignment(data: InsertTutorAssignment): Promise<TutorAssignment> {
+    const [assignment] = await this.db.insert(tutorAssignments).values(data).returning();
+    return assignment;
+  }
+
+  async getAssignmentsForStudent(studentId: number): Promise<TutorAssignment[]> {
+    return await this.db.select().from(tutorAssignments)
+      .where(eq(tutorAssignments.studentId, studentId))
+      .orderBy(desc(tutorAssignments.createdAt));
+  }
+
+  async getAssignmentsByTutor(tutorId: number): Promise<TutorAssignment[]> {
+    return await this.db.select().from(tutorAssignments)
+      .where(eq(tutorAssignments.tutorId, tutorId))
+      .orderBy(desc(tutorAssignments.createdAt));
+  }
+
+  async updateAssignment(id: number, data: Partial<InsertTutorAssignment>): Promise<TutorAssignment> {
+    const [updated] = await this.db.update(tutorAssignments).set(data)
+      .where(eq(tutorAssignments.id, id)).returning();
+    return updated;
+  }
+
+  async getLevelRules(fromLevel: string): Promise<LevelProgressionRule | undefined> {
+    const [rule] = await this.db.select().from(levelProgressionRules)
+      .where(eq(levelProgressionRules.fromLevel, fromLevel));
+    return rule || undefined;
+  }
+
+  async getAllLevelRules(): Promise<LevelProgressionRule[]> {
+    return await this.db.select().from(levelProgressionRules);
+  }
+
+  async upsertLevelRule(data: InsertLevelProgressionRule): Promise<LevelProgressionRule> {
+    const existing = await this.getLevelRules(data.fromLevel);
+    if (existing) {
+      const [updated] = await this.db.update(levelProgressionRules)
+        .set(data)
+        .where(eq(levelProgressionRules.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [created] = await this.db.insert(levelProgressionRules).values(data).returning();
+    return created;
+  }
+
+  // Google OAuth Tokens
+  async getTutorGoogleToken(tutorId: number): Promise<TutorGoogleToken | undefined> {
+    const [token] = await this.db.select().from(tutorGoogleTokens).where(eq(tutorGoogleTokens.tutorId, tutorId));
+    return token;
+  }
+
+  async upsertTutorGoogleToken(data: InsertTutorGoogleToken): Promise<TutorGoogleToken> {
+    const existing = await this.getTutorGoogleToken(data.tutorId);
+    if (existing) {
+      const [updated] = await this.db.update(tutorGoogleTokens)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(tutorGoogleTokens.tutorId, data.tutorId))
+        .returning();
+      return updated;
+    }
+    const [created] = await this.db.insert(tutorGoogleTokens).values(data).returning();
+    return created;
+  }
+
+  async deleteTutorGoogleToken(tutorId: number): Promise<boolean> {
+    const result = await this.db.delete(tutorGoogleTokens).where(eq(tutorGoogleTokens.tutorId, tutorId)).returning();
+    return result.length > 0;
+  }
+
+  async updateTutorGoogleToken(tutorId: number, data: Partial<InsertTutorGoogleToken>): Promise<TutorGoogleToken | undefined> {
+    const [updated] = await this.db.update(tutorGoogleTokens)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(tutorGoogleTokens.tutorId, tutorId))
+      .returning();
+    return updated;
   }
 }

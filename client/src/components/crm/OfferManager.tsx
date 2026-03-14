@@ -21,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Copy, Trash2, Tag } from "lucide-react";
+import { Plus, Copy, Trash2, Tag, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Offer {
   id: number;
@@ -35,12 +36,16 @@ interface Offer {
   validFrom: string;
   validUntil: string;
   status: "active" | "expired";
+  stripeCouponId?: string | null;
+  stripePromotionCodeId?: string | null;
+  stripeSyncStatus?: "synced" | "not_configured" | "failed";
 }
 
 export default function OfferManager() {
   const { language } = useLanguage();
   const isEs = language === "es";
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({
@@ -58,17 +63,38 @@ export default function OfferManager() {
     queryKey: ["/api/admin/campaigns/offers"],
   });
 
-  const createMutation = useMutation({
+  const createMutation = useMutation<Offer, Error, typeof form>({
     mutationFn: (data: typeof form) =>
       apiRequest("POST", "/api/admin/campaigns/offers", {
         ...data,
         discountValue: Number(data.discountValue),
         maxUses: data.maxUses ? Number(data.maxUses) : null,
-      }),
-    onSuccess: () => {
+      }).then(r => r.json()),
+    onSuccess: (result: Offer) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/campaigns/offers"] });
       setDialogOpen(false);
       resetForm();
+      if (result.stripeSyncStatus === "synced") {
+        toast({ title: isEs ? "Oferta creada y sincronizada con Stripe ✓" : "Offer created and synced with Stripe ✓" });
+      } else if (result.stripeSyncStatus === "failed") {
+        toast({ title: isEs ? "Oferta creada (sin sync con Stripe)" : "Offer created (Stripe sync failed)", variant: "destructive" });
+      } else {
+        toast({ title: isEs ? "Oferta creada" : "Offer created" });
+      }
+    },
+  });
+
+  const retrySyncMutation = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest("POST", `/api/admin/campaigns/offers/${id}/sync-stripe`).then(r => r.json()),
+    onSuccess: (result: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/campaigns/offers"] });
+      toast({
+        title: result.status === "synced"
+          ? (isEs ? "Sincronizado con Stripe ✓" : "Synced with Stripe ✓")
+          : (isEs ? "Error al sincronizar" : "Sync failed"),
+        variant: result.status === "synced" ? "default" : "destructive",
+      });
     },
   });
 
@@ -288,6 +314,7 @@ export default function OfferManager() {
                     <th className="text-left p-3 font-medium">
                       {isEs ? "Estado" : "Status"}
                     </th>
+                    <th className="text-left p-3 font-medium">Stripe</th>
                     <th className="p-3"></th>
                   </tr>
                 </thead>
@@ -325,6 +352,19 @@ export default function OfferManager() {
                         </Badge>
                       </td>
                       <td className="p-3">
+                        {offer.stripeCouponId ? (
+                          <span className="flex items-center gap-1 text-green-600 text-xs">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            {isEs ? "Sincronizado" : "Synced"}
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-amber-500 text-xs">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            {isEs ? "No sync" : "Not synced"}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3">
                         <div className="flex gap-1">
                           <Button
                             variant="ghost"
@@ -335,6 +375,18 @@ export default function OfferManager() {
                           >
                             <Copy className="h-3.5 w-3.5" />
                           </Button>
+                          {!offer.stripeCouponId && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-amber-500"
+                              onClick={() => retrySyncMutation.mutate(offer.id)}
+                              disabled={retrySyncMutation.isPending}
+                              title={isEs ? "Reintentar sync con Stripe" : "Retry Stripe sync"}
+                            >
+                              <RefreshCw className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"

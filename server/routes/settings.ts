@@ -82,6 +82,9 @@ export function registerSettingsRoutes(app: Express) {
       const user = await storage.getUser(userId);
       if (!user) return res.status(404).json({ message: "User not found" });
 
+      if (!user.password) {
+        return res.status(400).json({ message: "This account uses social login and has no password to change." });
+      }
       const valid = await bcrypt.compare(currentPassword, user.password);
       if (!valid) {
         return res.status(400).json({ message: "Current password is incorrect" });

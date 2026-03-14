@@ -9,6 +9,7 @@ import { CurrencyProvider } from "@/lib/currency";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { isAuthenticated, getCurrentUser, getSmartRedirect } from "@/lib/auth";
 import HelpButton from "@/components/HelpButton";
+import { useWebSocketConnection, useWsQueryInvalidation } from "@/lib/websocket";
 
 // Lazy-loaded pages for code splitting
 const HomePage = lazy(() => import("@/pages/home"));
@@ -30,6 +31,8 @@ const TutorAvailabilityPage = lazy(() => import("@/pages/tutor-availability"));
 const SupportPage = lazy(() => import("@/pages/support"));
 const GuidePage = lazy(() => import("@/pages/guide"));
 const MessagesPage = lazy(() => import("@/pages/messages"));
+const LearningPathPage = lazy(() => import("@/pages/learning-path"));
+const PlacementTestPage = lazy(() => import("@/pages/placement-test"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 function LoadingFallback() {
@@ -123,6 +126,16 @@ function Router() {
             <MessagesPage />
           </ProtectedRoute>
         </Route>
+        <Route path="/learning-path">
+          <ProtectedRoute>
+            <LearningPathPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/placement-test">
+          <ProtectedRoute>
+            <PlacementTestPage />
+          </ProtectedRoute>
+        </Route>
         <Route path="/tutor-portal">
           <ProtectedRoute>
             <TutorDashboardPage />
@@ -147,6 +160,12 @@ function Router() {
   );
 }
 
+function WebSocketInit() {
+  useWebSocketConnection();
+  useWsQueryInvalidation();
+  return null;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -154,6 +173,7 @@ function App() {
         <LanguageProvider>
           <CurrencyProvider>
             <TooltipProvider>
+              <WebSocketInit />
               <Toaster />
               <Router />
               <HelpButton />
