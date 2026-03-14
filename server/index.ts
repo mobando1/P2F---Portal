@@ -23,6 +23,9 @@ const processedEvents = new Set<string>();
 async function startServer() {
   const app = express();
 
+  // Trust Railway's reverse proxy so secure cookies work over HTTPS
+  app.set("trust proxy", 1);
+
   // Session configuration - use PG store when database is available
   const sessionSecret = config.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 
