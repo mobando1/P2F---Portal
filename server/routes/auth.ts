@@ -80,8 +80,11 @@ export function registerAuthRoutes(app: Express) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Set server-side session
+      // Set server-side session and wait for it to persist
       req.session.userId = user.id;
+      await new Promise<void>((resolve, reject) =>
+        req.session.save((err) => (err ? reject(err) : resolve()))
+      );
 
       // Include tutor profile if user is a tutor
       let tutorProfile = null;

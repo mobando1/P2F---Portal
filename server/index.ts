@@ -48,7 +48,7 @@ async function startServer() {
   const sessionMiddleware = session({
     store: sessionStore,
     secret: sessionSecret,
-    resave: false,
+    resave: true,
     saveUninitialized: false,
     cookie: {
       secure: config.NODE_ENV === "production",
