@@ -25,10 +25,14 @@ export default function Login() {
   const oauthError = urlParams.get('error');
 
   // Show toast on OAuth error
-  if (oauthError === 'oauth_failed') {
+  if (oauthError === 'oauth_failed' || oauthError === 'google_not_configured' || oauthError === 'microsoft_not_configured') {
     setTimeout(() => toast({
       title: language === 'es' ? 'Error de autenticación' : 'Authentication error',
-      description: language === 'es' ? 'No se pudo iniciar sesión con ese proveedor.' : 'Could not sign in with that provider.',
+      description: oauthError === 'google_not_configured'
+        ? (language === 'es' ? 'Google login no está configurado aún.' : 'Google login is not configured yet.')
+        : oauthError === 'microsoft_not_configured'
+        ? (language === 'es' ? 'Microsoft login no está configurado aún.' : 'Microsoft login is not configured yet.')
+        : (language === 'es' ? 'No se pudo iniciar sesión con ese proveedor.' : 'Could not sign in with that provider.'),
       variant: 'destructive',
     }), 0);
   }
@@ -177,43 +181,6 @@ export default function Login() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* OAuth Buttons */}
-              <div className="space-y-2 mt-5">
-                <a href="/api/auth/google" className="block">
-                  <Button variant="outline" type="button" className="w-full h-11 gap-3 border-gray-200 hover:border-[#1C7BB1]/40 hover:bg-[#1C7BB1]/5 transition-all">
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-                      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-                      <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-                      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-                    </svg>
-                    {language === 'es' ? 'Continuar con Google' : 'Continue with Google'}
-                  </Button>
-                </a>
-                <a href="/api/auth/microsoft" className="block">
-                  <Button variant="outline" type="button" className="w-full h-11 gap-3 border-gray-200 hover:border-[#1C7BB1]/40 hover:bg-[#1C7BB1]/5 transition-all">
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="0" y="0" width="8.5" height="8.5" fill="#F25022"/>
-                      <rect x="9.5" y="0" width="8.5" height="8.5" fill="#7FBA00"/>
-                      <rect x="0" y="9.5" width="8.5" height="8.5" fill="#00A4EF"/>
-                      <rect x="9.5" y="9.5" width="8.5" height="8.5" fill="#FFB900"/>
-                    </svg>
-                    {language === 'es' ? 'Continuar con Microsoft' : 'Continue with Microsoft'}
-                  </Button>
-                </a>
-              </div>
-
-              <div className="relative my-5">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-200" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-3 text-gray-400 font-medium">
-                    {language === 'es' ? 'o continúa con email' : 'or continue with email'}
-                  </span>
-                </div>
-              </div>
-
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-6">
                   <div className="space-y-2 group">
@@ -286,6 +253,41 @@ export default function Login() {
                     )}
                   </Button>
                   
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-gray-200" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-3 text-gray-400 font-medium">
+                        {language === 'es' ? 'o continúa con' : 'or continue with'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <a href="/api/auth/google" className="block">
+                      <Button variant="outline" type="button" className="w-full h-11 gap-3 border-gray-200 hover:border-[#1C7BB1]/40 hover:bg-[#1C7BB1]/5 transition-all">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+                          <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                        </svg>
+                        {language === 'es' ? 'Continuar con Google' : 'Continue with Google'}
+                      </Button>
+                    </a>
+                    <a href="/api/auth/microsoft" className="block">
+                      <Button variant="outline" type="button" className="w-full h-11 gap-3 border-gray-200 hover:border-[#1C7BB1]/40 hover:bg-[#1C7BB1]/5 transition-all">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="0" y="0" width="8.5" height="8.5" fill="#F25022"/>
+                          <rect x="9.5" y="0" width="8.5" height="8.5" fill="#7FBA00"/>
+                          <rect x="0" y="9.5" width="8.5" height="8.5" fill="#00A4EF"/>
+                          <rect x="9.5" y="9.5" width="8.5" height="8.5" fill="#FFB900"/>
+                        </svg>
+                        {language === 'es' ? 'Continuar con Microsoft' : 'Continue with Microsoft'}
+                      </Button>
+                    </a>
+                  </div>
+
                   {/* Solo mostrar credenciales de prueba en desarrollo */}
                   {import.meta.env.DEV && (
                     <div className="mt-6 p-4 bg-gradient-to-r from-[#EAF4FA] to-[#F8F9FA] rounded-lg border border-[#1C7BB1]/20 shadow-sm">
@@ -452,6 +454,41 @@ export default function Login() {
                       </>
                     )}
                   </Button>
+
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-gray-200" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-3 text-gray-400 font-medium">
+                        {language === 'es' ? 'o regístrate con' : 'or sign up with'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <a href="/api/auth/google" className="block">
+                      <Button variant="outline" type="button" className="w-full h-11 gap-3 border-gray-200 hover:border-[#1C7BB1]/40 hover:bg-[#1C7BB1]/5 transition-all">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+                          <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                        </svg>
+                        {language === 'es' ? 'Continuar con Google' : 'Continue with Google'}
+                      </Button>
+                    </a>
+                    <a href="/api/auth/microsoft" className="block">
+                      <Button variant="outline" type="button" className="w-full h-11 gap-3 border-gray-200 hover:border-[#1C7BB1]/40 hover:bg-[#1C7BB1]/5 transition-all">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="0" y="0" width="8.5" height="8.5" fill="#F25022"/>
+                          <rect x="9.5" y="0" width="8.5" height="8.5" fill="#7FBA00"/>
+                          <rect x="0" y="9.5" width="8.5" height="8.5" fill="#00A4EF"/>
+                          <rect x="9.5" y="9.5" width="8.5" height="8.5" fill="#FFB900"/>
+                        </svg>
+                        {language === 'es' ? 'Continuar con Microsoft' : 'Continue with Microsoft'}
+                      </Button>
+                    </a>
+                  </div>
                 </form>
               </TabsContent>
             </Tabs>
