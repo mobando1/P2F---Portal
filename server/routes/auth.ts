@@ -97,11 +97,8 @@ export function registerAuthRoutes(app: Express) {
       }
 
       res.json({ user: sanitizeUser(user), tutorProfile });
-    } catch (error: any) {
-      const serialized = JSON.stringify(error, Object.getOwnPropertyNames(error ?? {}));
-      const msg = error?.message || serialized || "Unknown error";
-      console.error("[login] CAUGHT ERROR:", serialized);
-      res.status(400).json({ message: msg || serialized });
+    } catch (error) {
+      res.status(400).json({ message: "Invalid request data" });
     }
   });
 
