@@ -175,23 +175,45 @@ function EmailVerificationBanner() {
   const user = getCurrentUser();
   const [location] = useLocation();
   const [dismissed, setDismissed] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
 
   if (!user || dismissed) return null;
   if (user.emailVerified !== false) return null; // verified or unknown
   if (user.googleId || user.microsoftId) return null; // OAuth = already verified
   if (location === "/login") return null;
 
+  const handleResend = async () => {
+    if (sending || sent) return;
+    setSending(true);
+    try {
+      await fetch("/api/auth/resend-verification", { method: "POST" });
+      setSent(true);
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-between text-sm">
       <span className="text-amber-800">
         Please verify your email address — check your inbox for a verification link.
       </span>
-      <button
-        onClick={() => setDismissed(true)}
-        className="ml-4 text-amber-600 hover:text-amber-800 font-medium"
-      >
-        Dismiss
-      </button>
+      <div className="flex items-center gap-3 ml-4">
+        <button
+          onClick={handleResend}
+          disabled={sending || sent}
+          className="text-amber-700 hover:text-amber-900 font-medium underline disabled:opacity-50"
+        >
+          {sent ? "Email sent!" : sending ? "Sending…" : "Resend email"}
+        </button>
+        <button
+          onClick={() => setDismissed(true)}
+          className="text-amber-600 hover:text-amber-800 font-medium"
+        >
+          Dismiss
+        </button>
+      </div>
     </div>
   );
 }

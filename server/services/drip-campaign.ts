@@ -18,7 +18,7 @@ export const dripCampaignService = {
       const user = await storage.getUser(userId);
       if (!user) return;
 
-      const lang: "es" | "en" = user.timezone?.includes("America") ? "es" : "en";
+      const lang: "es" | "en" = ((user as any).preferredLanguage === "es" || user.timezone?.includes("America")) ? "es" : "en";
       await emailService.sendWelcomeEmail({
         to: user.email,
         name: user.firstName,
@@ -38,7 +38,7 @@ export const dripCampaignService = {
       const user = await storage.getUser(userId);
       if (!user) return;
 
-      const lang: "es" | "en" = user.timezone?.includes("America") ? "es" : "en";
+      const lang: "es" | "en" = ((user as any).preferredLanguage === "es" || user.timezone?.includes("America")) ? "es" : "en";
       const date = scheduledAt.toLocaleDateString(lang === "es" ? "es-ES" : "en-US", {
         weekday: "long", month: "long", day: "numeric",
       });
@@ -84,16 +84,18 @@ export const dripCampaignService = {
         // Skip if user already purchased (has credits beyond the free one)
         const hasPurchased = user.userType === "customer" || (user.classCredits || 0) > 1;
 
-        // Find the trial completion date (when trialCompleted was set)
-        // Use the trial class scheduledAt as a proxy
-        const classes = await storage.getUserClasses(user.id);
-        const trialClass = classes.find(c => c.isTrial);
-        if (!trialClass) continue;
+        // Determine trial date — prefer explicit trialStartedAt, fall back to trial class
+        let trialDate: Date | null = (user as any).trialStartedAt ? new Date((user as any).trialStartedAt) : null;
+        if (!trialDate) {
+          const classes = await storage.getUserClasses(user.id);
+          const trialClass = classes.find(c => c.isTrial);
+          if (!trialClass) continue;
+          trialDate = new Date(trialClass.scheduledAt);
+        }
 
-        const trialDate = new Date(trialClass.scheduledAt);
         const hoursSinceTrial = (now.getTime() - trialDate.getTime()) / (1000 * 60 * 60);
 
-        const lang: "es" | "en" = user.timezone?.includes("America") ? "es" : "en";
+        const lang: "es" | "en" = ((user as any).preferredLanguage === "es" || user.timezone?.includes("America")) ? "es" : "en";
 
         // Step 3: Feedback request (24h after trial)
         if (hoursSinceTrial >= 24 && !sentSteps.has("feedback_request")) {

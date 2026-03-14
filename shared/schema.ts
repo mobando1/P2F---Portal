@@ -34,6 +34,8 @@ export const users = pgTable("users", {
   calendarConnected: boolean("calendar_connected").default(false),
   emailVerified: boolean("email_verified").default(false),
   verificationToken: text("verification_token"),
+  preferredLanguage: text("preferred_language").default("en"), // 'en' | 'es'
+  trialStartedAt: timestamp("trial_started_at"),
   lastActivityAt: timestamp("last_activity_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -75,6 +77,7 @@ export const subscriptions = pgTable("subscriptions", {
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_subscriptions_user_id").on(table.userId),
+  index("idx_subscriptions_user_status").on(table.userId, table.status),
 ]);
 
 // Compras de paquetes de clases

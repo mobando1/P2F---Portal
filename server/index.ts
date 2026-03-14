@@ -17,8 +17,6 @@ import rateLimit from "express-rate-limit";
 const stripeKey = config.STRIPE_SECRET_KEY || config.TESTING_STRIPE_SECRET_KEY;
 const stripe = stripeKey ? new Stripe(stripeKey) : null;
 
-// Track processed webhook events to prevent duplicates
-const processedEvents = new Set<string>();
 
 async function startServer() {
   const app = express();
@@ -53,7 +51,7 @@ async function startServer() {
   const sessionMiddleware = session({
     store: sessionStore,
     secret: sessionSecret,
-    resave: true,
+    resave: false,
     saveUninitialized: false,
     cookie: {
       secure: config.NODE_ENV === "production",
@@ -98,15 +96,10 @@ async function startServer() {
           return res.status(400).json({ error: `Webhook Error: ${err.message}` });
         }
 
-        // Check for duplicate events
-        if (processedEvents.has(event.id)) {
+        // Check for duplicate events (DB-backed dedup — survives restarts)
+        const alreadySeen = await storage.getStripeEventByStripeId(event.id);
+        if (alreadySeen) {
           return res.status(200).json({ received: true, processed: false, reason: 'duplicate' });
-        }
-
-        // TTL cleanup - keep last 500 events instead of clearing all
-        if (processedEvents.size > 500) {
-          const entries = Array.from(processedEvents);
-          entries.slice(0, entries.length - 250).forEach(id => processedEvents.delete(id));
         }
 
         // Handle checkout completion
@@ -121,7 +114,7 @@ async function startServer() {
               const customerEmail = checkoutSession.customer_details?.email || (checkoutSession as any).customer_email;
 
               if (!customerEmail) {
-                processedEvents.add(event.id);
+                await storage.createStripeEvent({ eventType: event.type, stripeEventId: event.id, stripeCustomerId: (event.data.object as any).customer || null, userId: null, amount: null, currency: 'usd', metadata: null });
                 return res.status(200).json({ received: true, processed: false, reason: 'no_email' });
               }
 
@@ -137,12 +130,12 @@ async function startServer() {
                       classCredits: (user.classCredits || 0) + packageInfo.classes
                     });
                     console.log(`Added ${packageInfo.classes} credits to user ${user.id} via direct link`);
-                    processedEvents.add(event.id);
+                    await storage.createStripeEvent({ eventType: event.type, stripeEventId: event.id, stripeCustomerId: (event.data.object as any).customer || null, userId: null, amount: null, currency: 'usd', metadata: null });
                     return res.json({ received: true, processed: true, type: 'direct_link' });
                   }
                 }
 
-                processedEvents.add(event.id);
+                await storage.createStripeEvent({ eventType: event.type, stripeEventId: event.id, stripeCustomerId: (event.data.object as any).customer || null, userId: null, amount: null, currency: 'usd', metadata: null });
                 return res.status(200).json({ received: true, processed: false, reason: 'unknown_amount_or_user' });
               } catch (error) {
                 console.error('Error processing direct link purchase:', error);
@@ -153,7 +146,7 @@ async function startServer() {
             if (userId) {
               const user = await storage.getUser(parseInt(userId));
               if (!user) {
-                processedEvents.add(event.id);
+                await storage.createStripeEvent({ eventType: event.type, stripeEventId: event.id, stripeCustomerId: (event.data.object as any).customer || null, userId: null, amount: null, currency: 'usd', metadata: null });
                 return res.status(200).json({ received: true, processed: false, reason: 'user_not_found' });
               }
 
@@ -205,8 +198,12 @@ async function startServer() {
                       });
                     } catch (e) { /* ignore */ }
 
+                    // Promote to customer
+                    if (user.userType !== 'customer' && user.userType !== 'admin' && user.userType !== 'tutor') {
+                      await storage.updateUser(parseInt(userId), { userType: 'customer' });
+                    }
                     console.log(`Subscription created for user ${userId}, plan ${plan.name}`);
-                    processedEvents.add(event.id);
+                    await storage.createStripeEvent({ eventType: event.type, stripeEventId: event.id, stripeCustomerId: (event.data.object as any).customer || null, userId: parseInt(userId), amount: checkoutSession.amount_total, currency: checkoutSession.currency || 'usd', metadata: { planId } });
                     return res.json({ received: true, processed: true });
                   } catch (error) {
                     console.error('Error processing subscription:', error);
@@ -226,8 +223,12 @@ async function startServer() {
                       classCredits: (user.classCredits || 0) + packageInfo.classes
                     });
 
+                    // Promote to customer
+                    if (user.userType !== 'customer' && user.userType !== 'admin' && user.userType !== 'tutor') {
+                      await storage.updateUser(parseInt(userId), { userType: 'customer' });
+                    }
                     console.log(`Added ${packageInfo.classes} credits to user ${userId}`);
-                    processedEvents.add(event.id);
+                    await storage.createStripeEvent({ eventType: event.type, stripeEventId: event.id, stripeCustomerId: (event.data.object as any).customer || null, userId: parseInt(userId), amount: checkoutSession.amount_total, currency: checkoutSession.currency || 'usd', metadata: { packageId } });
                     return res.json({ received: true, processed: true });
                   } catch (error) {
                     console.error('Error processing package purchase:', error);
@@ -249,13 +250,13 @@ async function startServer() {
               const userSubscription = await storage.getSubscriptionByStripeId(sub.id);
 
               if (!userSubscription) {
-                processedEvents.add(event.id);
+                await storage.createStripeEvent({ eventType: event.type, stripeEventId: event.id, stripeCustomerId: (event.data.object as any).customer || null, userId: null, amount: null, currency: 'usd', metadata: null });
                 return res.status(200).json({ received: true, processed: false, reason: 'subscription_not_found' });
               }
 
               const user = await storage.getUser(userSubscription.userId);
               if (!user) {
-                processedEvents.add(event.id);
+                await storage.createStripeEvent({ eventType: event.type, stripeEventId: event.id, stripeCustomerId: (event.data.object as any).customer || null, userId: null, amount: null, currency: 'usd', metadata: null });
                 return res.status(200).json({ received: true, processed: false, reason: 'user_not_found' });
               }
 
@@ -276,7 +277,7 @@ async function startServer() {
                 });
 
                 console.log(`Added ${plan.classesIncluded} renewal credits to user ${user.id}`);
-                processedEvents.add(event.id);
+                await storage.createStripeEvent({ eventType: event.type, stripeEventId: event.id, stripeCustomerId: (event.data.object as any).customer || null, userId: null, amount: null, currency: 'usd', metadata: null });
                 return res.status(200).json({ received: true, processed: true });
               }
             } catch (error) {
@@ -382,7 +383,6 @@ async function startServer() {
           }
         }
 
-        processedEvents.add(event.id);
         res.status(200).json({ received: true });
       } catch (error: any) {
         console.error('Webhook processing error:', error);
@@ -442,9 +442,12 @@ async function startServer() {
         await pgPool.query(`
           ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
           ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT;
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_language TEXT DEFAULT 'en';
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMP;
           UPDATE users SET email_verified = TRUE
             WHERE email_verified IS FALSE
               AND (google_id IS NOT NULL OR microsoft_id IS NOT NULL OR user_type = 'admin');
+          CREATE INDEX IF NOT EXISTS idx_subscriptions_user_status ON subscriptions(user_id, status);
         `);
         log("Schema migrations applied");
       }

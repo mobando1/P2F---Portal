@@ -25,13 +25,9 @@ export function registerClassRoutes(app: Express) {
 
       const classes = await storage.getUserClasses(userId);
 
-      // Batch-fetch unique tutors to avoid N+1
       const uniqueTutorIds = Array.from(new Set(classes.map(c => c.tutorId)));
-      const tutorMap = new Map<number, string>();
-      for (const tid of uniqueTutorIds) {
-        const tutor = await storage.getTutor(tid);
-        if (tutor) tutorMap.set(tid, tutor.name);
-      }
+      const tutors = await storage.getTutorsByIds(uniqueTutorIds);
+      const tutorMap = new Map(tutors.map(t => [t.id, t.name]));
 
       const classesWithTutors = classes.map(classItem => ({
         ...classItem,
@@ -68,22 +64,34 @@ export function registerClassRoutes(app: Express) {
         return res.status(409).json({ message: validation.reason });
       }
 
-      // Generate meeting link if not provided
-      if (!classData.meetingLink) {
-        const tutor = await storage.getTutor(classData.tutorId);
-        const { meetingLink, calendarEventId, tutorCalendarEventId } = await googleMeetService.createMeetingLink({
-          title: classData.title || `Class with ${tutor?.name || 'Tutor'}`,
-          scheduledAt: new Date(classData.scheduledAt),
-          duration: classData.duration || 60,
-          tutorName: tutor?.name || 'Tutor',
-          tutorId: classData.tutorId,
-        });
-        (classData as any).meetingLink = meetingLink;
-        (classData as any).calendarEventId = calendarEventId || null;
-        (classData as any).tutorCalendarEventId = tutorCalendarEventId || null;
-      }
+      // Generate meeting link + create class — refund credit on any failure
+      let calendarEventId: string | null = null;
+      let newClass;
+      try {
+        if (!classData.meetingLink) {
+          const tutor = await storage.getTutor(classData.tutorId);
+          const result = await googleMeetService.createMeetingLink({
+            title: classData.title || `Class with ${tutor?.name || 'Tutor'}`,
+            scheduledAt: new Date(classData.scheduledAt),
+            duration: classData.duration || 60,
+            tutorName: tutor?.name || 'Tutor',
+            tutorId: classData.tutorId,
+          });
+          (classData as any).meetingLink = result.meetingLink;
+          calendarEventId = result.calendarEventId || null;
+          (classData as any).calendarEventId = calendarEventId;
+          (classData as any).tutorCalendarEventId = result.tutorCalendarEventId || null;
+        }
 
-      const newClass = await storage.createClass(classData);
+        newClass = await storage.createClass(classData);
+      } catch (err) {
+        await storage.refundClassCredit(userId);
+        // Clean up orphaned calendar event if class creation failed
+        if (calendarEventId) {
+          googleMeetService.deleteCalendarEvent(calendarEventId).catch(() => {});
+        }
+        throw err;
+      }
 
       // Notify
       notificationService.onClassBooked({
@@ -530,13 +538,9 @@ export function registerClassRoutes(app: Express) {
         filtered = filtered.filter(c => c.tutorId === parseInt(tutorId));
       }
 
-      // Fetch student names
       const userIds = Array.from(new Set(filtered.map(c => c.userId)));
-      const userMap = new Map<number, string>();
-      for (const uid of userIds) {
-        const u = await storage.getUser(uid);
-        if (u) userMap.set(uid, `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email);
-      }
+      const students = await storage.getUsersByIds(userIds);
+      const userMap = new Map(students.map(u => [u.id, `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email]));
 
       const calendarEvents = filtered.map(c => {
         const tutor = tutorMap.get(c.tutorId);

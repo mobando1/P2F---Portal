@@ -49,6 +49,8 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
 
+  getUsersByIds(ids: number[]): Promise<User[]>;
+
   // Auth
   authenticateUser(email: string, password: string): Promise<User | null>;
   getUserByGoogleId(googleId: string): Promise<User | undefined>;
@@ -65,6 +67,7 @@ export interface IStorage {
   // Tutors
   getAllTutors(): Promise<Tutor[]>;
   getTutor(id: number): Promise<Tutor | undefined>;
+  getTutorsByIds(ids: number[]): Promise<Tutor[]>;
   getTutorByUserId(userId: number): Promise<Tutor | undefined>;
   getTutorsByCategory(classType?: string, languageTaught?: string): Promise<Tutor[]>;
   createTutor(tutor: InsertTutor): Promise<Tutor>;
@@ -287,6 +290,7 @@ export interface IStorage {
   // Stripe Events
   createStripeEvent(data: InsertStripeEvent): Promise<StripeEvent>;
   getStripeEvents(eventType?: string, from?: Date, to?: Date): Promise<StripeEvent[]>;
+  getStripeEventByStripeId(stripeEventId: string): Promise<StripeEvent | undefined>;
 
   // Class Purchases (extended)
   getClassPurchaseByPaymentIntent(paymentIntentId: string): Promise<ClassPurchase | undefined>;
@@ -462,6 +466,8 @@ export class MemStorage implements IStorage {
       calendarConnected: false,
       emailVerified: true,
       verificationToken: null,
+      preferredLanguage: "en",
+      trialStartedAt: null,
       lastActivityAt: null,
       createdAt: new Date(),
     };
@@ -495,6 +501,8 @@ export class MemStorage implements IStorage {
       calendarConnected: false,
       emailVerified: true,
       verificationToken: null,
+      preferredLanguage: "en",
+      trialStartedAt: null,
       lastActivityAt: new Date(),
       createdAt: new Date(),
     };
@@ -527,6 +535,8 @@ export class MemStorage implements IStorage {
       calendarConnected: false,
       emailVerified: true,
       verificationToken: null,
+      preferredLanguage: "en",
+      trialStartedAt: null,
       lastActivityAt: new Date(),
       createdAt: new Date(),
     };
@@ -817,6 +827,8 @@ export class MemStorage implements IStorage {
       calendarConnected: insertUser.calendarConnected || false,
       emailVerified: insertUser.emailVerified ?? false,
       verificationToken: insertUser.verificationToken ?? null,
+      preferredLanguage: (insertUser as any).preferredLanguage ?? "en",
+      trialStartedAt: (insertUser as any).trialStartedAt ?? null,
       lastActivityAt: new Date(),
     };
     this.users.set(id, user);
@@ -860,6 +872,11 @@ export class MemStorage implements IStorage {
   async getUserByVerificationToken(token: string): Promise<User | undefined> {
     await this.ensureInitialized();
     return Array.from(this.users.values()).find(u => u.verificationToken === token);
+  }
+
+  async getUsersByIds(ids: number[]): Promise<User[]> {
+    await this.ensureInitialized();
+    return ids.map(id => this.users.get(id)).filter((u): u is User => u !== undefined);
   }
 
   async linkOAuthId(userId: number, provider: 'google' | 'microsoft', providerId: string): Promise<void> {
@@ -915,6 +932,11 @@ export class MemStorage implements IStorage {
   async getTutor(id: number): Promise<Tutor | undefined> {
     await this.ensureInitialized();
     return this.tutors.get(id);
+  }
+
+  async getTutorsByIds(ids: number[]): Promise<Tutor[]> {
+    await this.ensureInitialized();
+    return ids.map(id => this.tutors.get(id)).filter((t): t is Tutor => t !== undefined);
   }
 
   async getTutorByUserId(userId: number): Promise<Tutor | undefined> {
@@ -1872,6 +1894,7 @@ export class MemStorage implements IStorage {
 
   async createStripeEvent(data: InsertStripeEvent): Promise<StripeEvent> { return { id: 1, ...data, createdAt: new Date() } as StripeEvent; }
   async getStripeEvents(_eventType?: string, _from?: Date, _to?: Date): Promise<StripeEvent[]> { return []; }
+  async getStripeEventByStripeId(_stripeEventId: string): Promise<StripeEvent | undefined> { return undefined; }
   async getClassPurchaseByPaymentIntent(_paymentIntentId: string): Promise<ClassPurchase | undefined> { return undefined; }
   async updateClassPurchase(_id: number, _data: Partial<ClassPurchase>): Promise<ClassPurchase | undefined> { return undefined; }
 

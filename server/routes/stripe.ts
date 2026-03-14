@@ -3,6 +3,9 @@ import Stripe from "stripe";
 import { storage } from "../storage";
 import { SUBSCRIPTION_PLANS, CLASS_PACKAGES } from "@shared/plans";
 import { requireAuth } from "./auth";
+import { config } from "../config";
+
+const APP_URL = config.APP_URL || "https://portal.passport2fluency.com";
 
 // Initialize Stripe only if keys are available
 const stripeKey = process.env.TESTING_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
@@ -254,8 +257,8 @@ export function registerStripeRoutes(app: Express) {
           },
         },
         allow_promotion_codes: true,
-        success_url: `${req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/packages`,
+        success_url: `${APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${APP_URL}/packages`,
       });
 
       res.json({
@@ -312,8 +315,8 @@ export function registerStripeRoutes(app: Express) {
           platform: "passport2fluency",
         },
         allow_promotion_codes: true,
-        success_url: `${req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/packages`,
+        success_url: `${APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${APP_URL}/packages`,
       });
 
       res.json({
@@ -359,8 +362,7 @@ export function registerStripeRoutes(app: Express) {
         await storage.updateUser(userId, { stripeCustomerId: customerId });
       }
 
-      const baseUrl = req.headers.origin || `${req.protocol}://${req.get("host")}`;
-      const returnUrl = `${baseUrl}/dashboard`;
+      const returnUrl = `${APP_URL}/dashboard`;
 
       console.log("Creating Customer Portal with customerId:", customerId);
       console.log("Creating Customer Portal with return_url:", returnUrl);
@@ -425,8 +427,7 @@ export function registerStripeRoutes(app: Express) {
         await storage.updateUser(userId, { stripeCustomerId: customerId });
       }
 
-      const baseUrl = req.headers.origin || `${req.protocol}://${req.get("host")}`;
-      const returnUrl = `${baseUrl}/dashboard`;
+      const returnUrl = `${APP_URL}/dashboard`;
 
       console.log("Creating Upgrade Portal with customerId:", customerId);
       console.log("Creating Upgrade Portal with return_url:", returnUrl);

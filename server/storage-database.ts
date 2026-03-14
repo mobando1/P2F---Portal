@@ -125,6 +125,11 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUsersByIds(ids: number[]): Promise<User[]> {
+    if (ids.length === 0) return [];
+    return await this.db.select().from(users).where(inArray(users.id, ids));
+  }
+
   async linkOAuthId(userId: number, provider: 'google' | 'microsoft', providerId: string): Promise<void> {
     const field = provider === 'google' ? { googleId: providerId } : { microsoftId: providerId };
     await this.db.update(users).set(field).where(eq(users.id, userId));
@@ -170,6 +175,11 @@ export class DatabaseStorage implements IStorage {
   async getTutor(id: number): Promise<Tutor | undefined> {
     const [tutor] = await this.db.select().from(tutors).where(eq(tutors.id, id));
     return tutor || undefined;
+  }
+
+  async getTutorsByIds(ids: number[]): Promise<Tutor[]> {
+    if (ids.length === 0) return [];
+    return await this.db.select().from(tutors).where(inArray(tutors.id, ids));
   }
 
   async getTutorByUserId(userId: number): Promise<Tutor | undefined> {
@@ -1272,6 +1282,11 @@ export class DatabaseStorage implements IStorage {
     return await this.db.select().from(stripeEvents)
       .where(and(...conditions))
       .orderBy(desc(stripeEvents.createdAt));
+  }
+
+  async getStripeEventByStripeId(stripeEventId: string): Promise<StripeEvent | undefined> {
+    const [event] = await this.db.select().from(stripeEvents).where(eq(stripeEvents.stripeEventId, stripeEventId));
+    return event || undefined;
   }
 
   async getClassPurchaseByPaymentIntent(paymentIntentId: string): Promise<ClassPurchase | undefined> {

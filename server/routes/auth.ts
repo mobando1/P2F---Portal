@@ -178,6 +178,28 @@ export function registerAuthRoutes(app: Express) {
     res.json({ user: sanitizeUser(user) });
   });
 
+  // Resend verification email
+  app.post("/api/auth/resend-verification", authLimiter, async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if ((user as any).emailVerified) return res.status(400).json({ message: "Email already verified" });
+
+    const verificationToken = crypto.randomUUID();
+    await storage.updateUser(user.id, { verificationToken } as any);
+    const lang = (user as any).preferredLanguage === "es" || user.timezone?.includes("America") ? "es" : "en";
+    emailService.sendVerificationEmail({
+      to: user.email,
+      name: user.firstName,
+      token: verificationToken,
+      lang,
+    }).catch(() => {});
+
+    res.json({ message: "Verification email sent" });
+  });
+
   // Logout
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy((err) => {
