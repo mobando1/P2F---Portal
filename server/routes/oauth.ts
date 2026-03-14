@@ -6,7 +6,7 @@ import { storage } from "../storage";
 
 const BASE_URL =
   process.env.NODE_ENV === "production"
-    ? process.env.APP_URL || "https://app.passport2fluency.com"
+    ? process.env.APP_URL || "https://portal.passport2fluency.com"
     : "http://localhost:5000";
 
 // ── Helper: find-or-create user from OAuth profile ──────────────────────────

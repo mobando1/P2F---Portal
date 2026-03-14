@@ -7,7 +7,7 @@ import { requireAuth } from "./auth";
 function createOAuth2Client() {
   const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
-  const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI || `${process.env.NODE_ENV === "production" ? "https://your-domain.com" : "http://localhost:5000"}/api/auth/google/callback`;
+  const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI || `${process.env.NODE_ENV === "production" ? (process.env.APP_URL || "https://your-domain.com") : "http://localhost:5000"}/api/auth/google/calendar-callback`;
 
   if (!clientId || !clientSecret) return null;
   return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
@@ -52,7 +52,7 @@ export function registerGoogleOAuthRoutes(app: Express) {
   });
 
   // OAuth callback — exchanges code for tokens, stores them
-  app.get("/api/auth/google/callback", requireAuth, async (req, res) => {
+  app.get("/api/auth/google/calendar-callback", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
       const { code, state } = req.query;
