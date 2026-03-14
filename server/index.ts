@@ -31,10 +31,15 @@ async function startServer() {
 
   let sessionStore: session.Store;
   if (config.DATABASE_URL) {
+    const pg = (await import("pg")).default;
+    const pgPool = new pg.Pool({
+      connectionString: config.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    });
     const pgSession = (await import("connect-pg-simple")).default;
     const PgStore = pgSession(session);
     sessionStore = new PgStore({
-      conString: config.DATABASE_URL,
+      pool: pgPool,
       tableName: "session",
       createTableIfMissing: true,
     });

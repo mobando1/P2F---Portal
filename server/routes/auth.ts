@@ -82,9 +82,13 @@ export function registerAuthRoutes(app: Express) {
 
       // Set server-side session and wait for it to persist
       req.session.userId = user.id;
-      await new Promise<void>((resolve, reject) =>
-        req.session.save((err) => (err ? reject(err) : resolve()))
-      );
+      try {
+        await new Promise<void>((resolve, reject) =>
+          req.session.save((err) => (err ? reject(err) : resolve()))
+        );
+      } catch (sessionErr) {
+        console.error("[login] session.save failed:", sessionErr);
+      }
 
       // Include tutor profile if user is a tutor
       let tutorProfile = null;
