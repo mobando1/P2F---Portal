@@ -399,9 +399,8 @@ export default function AdminPage() {
         </div>
 
         {/* Navegación de pestañas */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+        <div className="mb-6 -mx-4 sm:mx-0">
+          <nav className="-mb-px flex space-x-1 sm:space-x-8 overflow-x-auto pb-px px-4 sm:px-0 scrollbar-none whitespace-nowrap border-b border-gray-200">
               <button
                 onClick={() => setActiveTab('tutors')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -410,8 +409,8 @@ export default function AdminPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <Users className="inline w-4 h-4 mr-2" />
-                {isEs ? 'Profesores' : 'Tutors'}
+                <Users className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{isEs ? 'Profesores' : 'Tutors'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('classes')}
@@ -421,8 +420,8 @@ export default function AdminPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <CalendarDays className="inline w-4 h-4 mr-2" />
-                {isEs ? 'Clases' : 'Classes'}
+                <CalendarDays className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{isEs ? 'Clases' : 'Classes'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('calendar')}
@@ -432,8 +431,8 @@ export default function AdminPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <CalendarIcon className="inline w-4 h-4 mr-2" />
-                {isEs ? 'Calendario' : 'Calendar'}
+                <CalendarIcon className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{isEs ? 'Calendario' : 'Calendar'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('learning-path')}
@@ -443,8 +442,8 @@ export default function AdminPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <BookOpen className="inline w-4 h-4 mr-2" />
-                {isEs ? 'Culebrita' : 'Learning Path'}
+                <BookOpen className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{isEs ? 'Culebrita' : 'Learning Path'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('analytics')}
@@ -454,8 +453,8 @@ export default function AdminPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <BarChart3 className="inline w-4 h-4 mr-2" />
-                {isEs ? 'Analíticas' : 'Analytics'}
+                <BarChart3 className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{isEs ? 'Analíticas' : 'Analytics'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('support')}
@@ -465,8 +464,8 @@ export default function AdminPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <LifeBuoy className="inline w-4 h-4 mr-2" />
-                {isEs ? 'Soporte' : 'Support'}
+                <LifeBuoy className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{isEs ? 'Soporte' : 'Support'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('ai-stats')}
@@ -476,8 +475,8 @@ export default function AdminPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <Sparkles className="inline w-4 h-4 mr-2" />
-                {isEs ? 'IA Práctica' : 'AI Practice'}
+                <Sparkles className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{isEs ? 'IA Práctica' : 'AI Practice'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('crm')}
@@ -487,8 +486,8 @@ export default function AdminPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <Users className="inline w-4 h-4 mr-2" />
-                CRM
+                <Users className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">CRM</span>
               </button>
               <button
                 onClick={() => setActiveTab('settings')}
@@ -498,11 +497,10 @@ export default function AdminPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <Settings className="inline w-4 h-4 mr-2" />
-                {isEs ? 'Configuración' : 'Settings'}
+                <Settings className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{isEs ? 'Configuración' : 'Settings'}</span>
               </button>
             </nav>
-          </div>
         </div>
 
         {/* Contenido de pestañas */}
@@ -606,7 +604,7 @@ export default function AdminPage() {
                   <h2 className="text-xl font-bold mb-4">Añadir Nuevo Profesor</h2>
 
                   <div className="grid gap-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="name">Nombre *</Label>
                         <Input
@@ -628,7 +626,7 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="classType">Tipo de Clase *</Label>
                         <select
@@ -676,7 +674,7 @@ export default function AdminPage() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div>
                         <Label htmlFor="hourlyRate">Tarifa/Hora ($)</Label>
                         <Input
@@ -741,7 +739,7 @@ export default function AdminPage() {
                   <h2 className="text-xl font-bold mb-4">{isEs ? 'Editar Profesor' : 'Edit Tutor'}: {editingTutor.name}</h2>
 
                   <div className="grid gap-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label>{isEs ? 'Nombre' : 'Name'} *</Label>
                         <Input
@@ -759,7 +757,7 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label>{isEs ? 'Tipo de Clase' : 'Class Type'}</Label>
                         <select
@@ -801,7 +799,7 @@ export default function AdminPage() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div>
                         <Label>{isEs ? 'Tarifa/Hora ($)' : 'Hourly Rate ($)'}</Label>
                         <Input
@@ -978,9 +976,9 @@ export default function AdminPage() {
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Clase</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Profesor</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Fecha</th>
-                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Duración</th>
+                          <th className="hidden sm:table-cell text-center py-3 px-4 text-sm font-medium text-gray-500">Duración</th>
                           <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Estado</th>
-                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Tipo</th>
+                          <th className="hidden sm:table-cell text-center py-3 px-4 text-sm font-medium text-gray-500">Tipo</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1004,7 +1002,7 @@ export default function AdminPage() {
                                 minute: '2-digit',
                               })}
                             </td>
-                            <td className="text-center py-3 px-4 text-sm text-gray-600">
+                            <td className="hidden sm:table-cell text-center py-3 px-4 text-sm text-gray-600">
                               {c.duration} min
                             </td>
                             <td className="text-center py-3 px-4">
@@ -1016,7 +1014,7 @@ export default function AdminPage() {
                                  c.status === 'completed' ? 'Completada' : 'Cancelada'}
                               </Badge>
                             </td>
-                            <td className="text-center py-3 px-4">
+                            <td className="hidden sm:table-cell text-center py-3 px-4">
                               {c.isTrial && <Badge variant="outline" className="text-[#F59E1C] border-[#F59E1C]">Trial</Badge>}
                             </td>
                           </tr>
@@ -1105,7 +1103,7 @@ export default function AdminPage() {
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{isEs ? 'Estudiante' : 'Student'}</th>
                           <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">{isEs ? 'Conversaciones' : 'Conversations'}</th>
                           <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">{isEs ? 'Mensajes' : 'Messages'}</th>
-                          <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">{isEs ? 'Última Actividad' : 'Last Activity'}</th>
+                          <th className="hidden sm:table-cell text-right py-3 px-4 text-sm font-medium text-gray-500">{isEs ? 'Última Actividad' : 'Last Activity'}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1129,7 +1127,7 @@ export default function AdminPage() {
                             <td className="text-center py-3 px-4">
                               <span className="font-semibold text-[#0A4A6E]">{stat.messageCount}</span>
                             </td>
-                            <td className="text-right py-3 px-4 text-sm text-gray-500">
+                            <td className="hidden sm:table-cell text-right py-3 px-4 text-sm text-gray-500">
                               {stat.lastActive
                                 ? new Date(stat.lastActive).toLocaleDateString('es-ES', {
                                     day: 'numeric',
@@ -1248,12 +1246,12 @@ export default function AdminPage() {
                         <Card key={i} className="border-0 shadow-md">
                           <CardContent className="p-4">
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${card.bg}`}>
+                              <div className={`p-2 rounded-lg ${card.bg} flex-shrink-0`}>
                                 <card.icon className="h-5 w-5" style={{ color: card.color }} />
                               </div>
-                              <div>
-                                <p className="text-[11px] text-gray-500">{card.label}</p>
-                                <p className="text-lg font-bold text-gray-900">{card.value}</p>
+                              <div className="min-w-0">
+                                <p className="text-[11px] text-gray-500 truncate">{card.label}</p>
+                                <p className="text-lg font-bold text-gray-900 truncate">{card.value}</p>
                               </div>
                             </div>
                           </CardContent>
@@ -1651,7 +1649,7 @@ export default function AdminPage() {
                                   <th className="text-left py-2 text-gray-500 font-medium">{isEs ? 'Cliente' : 'Customer'}</th>
                                   <th className="text-right py-2 text-gray-500 font-medium">{isEs ? 'Monto' : 'Amount'}</th>
                                   <th className="text-center py-2 text-gray-500 font-medium">{isEs ? 'Estado' : 'Status'}</th>
-                                  <th className="text-center py-2 text-gray-500 font-medium">{isEs ? 'Método' : 'Method'}</th>
+                                  <th className="hidden sm:table-cell text-center py-2 text-gray-500 font-medium">{isEs ? 'Método' : 'Method'}</th>
                                   <th className="text-center py-2 text-gray-500 font-medium">{isEs ? 'Acciones' : 'Actions'}</th>
                                 </tr>
                               </thead>
@@ -1670,7 +1668,7 @@ export default function AdminPage() {
                                         {tx.refunded ? (isEs ? 'Reembolsado' : 'Refunded') : tx.status}
                                       </Badge>
                                     </td>
-                                    <td className="py-2 text-center text-xs text-gray-500">
+                                    <td className="hidden sm:table-cell py-2 text-center text-xs text-gray-500">
                                       {tx.cardBrand && tx.cardLast4 ? `${tx.cardBrand} •${tx.cardLast4}` : tx.paymentMethodType}
                                     </td>
                                     <td className="py-2 text-center">
@@ -1755,18 +1753,18 @@ export default function AdminPage() {
                             <thead>
                               <tr className="border-b bg-gray-50/50">
                                 {[
-                                  { key: 'name', label: isEs ? 'Nombre' : 'Name', align: 'left' },
-                                  { key: 'userType', label: isEs ? 'Tipo' : 'Type', align: 'center' },
-                                  { key: 'classCredits', label: isEs ? 'Créditos' : 'Credits', align: 'center' },
-                                  { key: 'completedClasses', label: isEs ? 'Clases' : 'Classes', align: 'center' },
-                                  { key: 'totalSpent', label: isEs ? 'Gastado' : 'Spent', align: 'right' },
-                                  { key: 'lastClassDate', label: isEs ? 'Última Clase' : 'Last Class', align: 'center' },
-                                  { key: 'hasSubscription', label: 'Sub.', align: 'center' },
-                                  { key: 'actions', label: '', align: 'center' },
+                                  { key: 'name', label: isEs ? 'Nombre' : 'Name', align: 'left', responsive: '' },
+                                  { key: 'userType', label: isEs ? 'Tipo' : 'Type', align: 'center', responsive: '' },
+                                  { key: 'classCredits', label: isEs ? 'Créditos' : 'Credits', align: 'center', responsive: '' },
+                                  { key: 'completedClasses', label: isEs ? 'Clases' : 'Classes', align: 'center', responsive: '' },
+                                  { key: 'totalSpent', label: isEs ? 'Gastado' : 'Spent', align: 'right', responsive: '' },
+                                  { key: 'lastClassDate', label: isEs ? 'Última Clase' : 'Last Class', align: 'center', responsive: 'hidden sm:table-cell' },
+                                  { key: 'hasSubscription', label: 'Sub.', align: 'center', responsive: 'hidden sm:table-cell' },
+                                  { key: 'actions', label: '', align: 'center', responsive: '' },
                                 ].map(col => (
                                   <th
                                     key={col.key}
-                                    className={`py-3 px-3 text-gray-500 font-medium cursor-pointer hover:text-gray-700 text-${col.align}`}
+                                    className={`${col.responsive} py-3 px-3 text-gray-500 font-medium cursor-pointer hover:text-gray-700 text-${col.align}`}
                                     onClick={() => {
                                       if (col.key === 'actions') return;
                                       if (studentSortKey === col.key) setStudentSortDir(d => d === 'desc' ? 'asc' : 'desc');
@@ -1798,10 +1796,10 @@ export default function AdminPage() {
                                   <td className="text-center py-3 px-3 font-semibold">{s.classCredits}</td>
                                   <td className="text-center py-3 px-3">{s.completedClasses}/{s.totalClasses}</td>
                                   <td className="text-right py-3 px-3 font-semibold text-green-600">${s.totalSpent.toLocaleString()}</td>
-                                  <td className="text-center py-3 px-3 text-xs text-gray-500">
+                                  <td className="hidden sm:table-cell text-center py-3 px-3 text-xs text-gray-500">
                                     {s.lastClassDate ? new Date(s.lastClassDate).toLocaleDateString() : '-'}
                                   </td>
-                                  <td className="text-center py-3 px-3">
+                                  <td className="hidden sm:table-cell text-center py-3 px-3">
                                     {s.hasSubscription ? <CheckCircle className="h-4 w-4 text-green-500 mx-auto" /> : <span className="text-gray-300">-</span>}
                                   </td>
                                   <td className="text-center py-3 px-3">

@@ -468,14 +468,14 @@ export default function TutorDashboard() {
                   <CardContent className="p-4 space-y-3">
                     {/* Header */}
                     <div className="flex items-start justify-between">
-                      <div>
+                      <div className="min-w-0">
                         <p className="font-semibold text-[#0A4A6E] text-sm">
                           {new Date(card.scheduledAt).toLocaleDateString(
                             language === "es" ? "es-ES" : "en-US",
                             { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }
                           )}
                         </p>
-                        <p className="text-xs text-[#0A4A6E]/60">{card.duration} min · {card.student.name}</p>
+                        <p className="text-xs text-[#0A4A6E]/60 truncate">{card.duration} min · {card.student.name}</p>
                       </div>
                       <div className="flex items-center gap-1">
                         <LevelBadge level={card.student.level} size="sm" />
@@ -988,7 +988,7 @@ export default function TutorDashboard() {
                   {language === "es" ? "Desglose Mensual" : "Monthly Breakdown"}
                 </h2>
                 {earnings?.monthly && earnings.monthly.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-3 overflow-x-auto min-w-0">
                     {earnings.monthly.map(m => {
                       const maxEarnings = Math.max(...earnings.monthly.map(e => e.earnings), 1);
                       const pct = (m.earnings / maxEarnings) * 100;

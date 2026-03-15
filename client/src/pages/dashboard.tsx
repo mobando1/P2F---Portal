@@ -265,7 +265,7 @@ export default function Dashboard() {
             className="mb-6"
           >
             <Card className="border-0 shadow-lg bg-gradient-to-r from-[#F59E1C] to-[#e08a0e] text-white">
-              <CardContent className="p-5 flex items-center justify-between">
+              <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
                     <Gift className="h-6 w-6" />
@@ -301,7 +301,7 @@ export default function Dashboard() {
             className="mb-6"
           >
             <Card className="border-0 shadow-lg bg-gradient-to-r from-[#1C7BB1] to-[#0A4A6E] text-white">
-              <CardContent className="p-5 flex items-center justify-between">
+              <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
                     <Sparkles className="h-6 w-6" />
@@ -338,7 +338,7 @@ export default function Dashboard() {
             className="mb-6"
           >
             <Card className="border-0 shadow-lg bg-gradient-to-r from-[#0A4A6E] to-[#1C7BB1] text-white">
-              <CardContent className="p-5 flex items-center justify-between">
+              <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
                     <ShoppingCart className="h-6 w-6" />
@@ -375,7 +375,7 @@ export default function Dashboard() {
                     <CalendarCheck className="h-5 w-5 md:h-6 md:w-6 text-[#1C7BB1]" />
                   </div>
                   <div className="ml-3 md:ml-4">
-                    <p className="text-xs md:text-sm font-medium text-[#0A4A6E]">{t.classesBooked}</p>
+                    <p className="text-[11px] sm:text-xs md:text-sm font-medium text-[#0A4A6E]">{t.classesBooked}</p>
                     <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.classesBooked}</p>
                   </div>
                 </div>
@@ -391,7 +391,7 @@ export default function Dashboard() {
                     <GraduationCap className="h-5 w-5 md:h-6 md:w-6 text-[#F59E1C]" />
                   </div>
                   <div className="ml-3 md:ml-4">
-                    <p className="text-xs md:text-sm font-medium text-[#0A4A6E]">{t.classesCompleted}</p>
+                    <p className="text-[11px] sm:text-xs md:text-sm font-medium text-[#0A4A6E]">{t.classesCompleted}</p>
                     <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.classesCompleted}</p>
                   </div>
                 </div>
@@ -407,7 +407,7 @@ export default function Dashboard() {
                     <Clock className="h-5 w-5 md:h-6 md:w-6 text-[#1C7BB1]" />
                   </div>
                   <div className="ml-3 md:ml-4">
-                    <p className="text-xs md:text-sm font-medium text-[#0A4A6E]">{t.learningHours}</p>
+                    <p className="text-[11px] sm:text-xs md:text-sm font-medium text-[#0A4A6E]">{t.learningHours}</p>
                     <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.learningHours}</p>
                   </div>
                 </div>
@@ -423,7 +423,7 @@ export default function Dashboard() {
                     <Star className="h-5 w-5 md:h-6 md:w-6 text-[#F59E1C]" />
                   </div>
                   <div className="ml-3 md:ml-4">
-                    <p className="text-xs md:text-sm font-medium text-[#0A4A6E]">{t.currentLevel}</p>
+                    <p className="text-[11px] sm:text-xs md:text-sm font-medium text-[#0A4A6E]">{t.currentLevel}</p>
                     <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.currentLevel}</p>
                   </div>
                 </div>
@@ -436,7 +436,7 @@ export default function Dashboard() {
               <CardContent className="p-4 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs md:text-sm font-medium text-white/90">
+                    <p className="text-[11px] sm:text-xs md:text-sm font-medium text-white/90">
                       {language === 'es' ? 'Clases Restantes' : 'Remaining Classes'}
                     </p>
                     <p className="text-xl md:text-2xl font-bold text-white">{stats.remainingClasses}</p>

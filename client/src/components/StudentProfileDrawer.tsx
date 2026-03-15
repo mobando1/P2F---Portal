@@ -144,7 +144,7 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
           <div className="space-y-4 mt-6">
             <Skeleton className="h-8 w-1/2" />
             <Skeleton className="h-4 w-1/3" />
-            <div className="grid grid-cols-3 gap-3 mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6">
               {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-16" />)}
             </div>
             <Skeleton className="h-40 mt-4" />
@@ -170,7 +170,7 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
             </SheetHeader>
 
             {/* Stats grid */}
-            <div className="grid grid-cols-3 gap-3 mt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
               {[
                 { icon: CheckCircle, label: language === "es" ? "Clases" : "Classes", value: data.stats.classesCompleted, color: "text-green-600 bg-green-50" },
                 { icon: BookOpen, label: language === "es" ? "Estaciones" : "Stations", value: data.stats.completedStations, color: "text-[#1C7BB1] bg-[#EAF4FA]" },
@@ -341,7 +341,7 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
 
       {/* Assign free-form task modal */}
       <Dialog open={assignModal} onOpenChange={setAssignModal}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>
               {language === "es" ? "Nueva tarea para " : "New task for "}
@@ -368,7 +368,7 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
                 placeholder={language === "es" ? "Detalles adicionales..." : "Additional details..."}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="taskDue">{language === "es" ? "Fecha límite" : "Due date"}</Label>
                 <Input id="taskDue" type="date" value={taskDue} onChange={(e) => setTaskDue(e.target.value)} />

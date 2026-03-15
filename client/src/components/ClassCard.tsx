@@ -61,7 +61,7 @@ export function ClassCard({ classItem, onCancel, onReschedule, showActions = tru
             )}
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-gray-500">
+          <div className="flex items-center flex-wrap gap-3 text-xs text-gray-500">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {dateStr}
