@@ -12,17 +12,18 @@ import AssignmentCard from "@/components/AssignmentCard";
 import LevelBadge from "@/components/LevelBadge";
 import { Coachmark } from "@/components/onboarding/Coachmark";
 
-// Radial progress SVG
-function RadialProgress({ percent, color }: { percent: number; color: string }) {
-  const r = 28;
+// Radial progress SVG — responsive size
+function RadialProgress({ percent, color, size = 72 }: { percent: number; color: string; size?: number }) {
+  const r = size * 0.39; // ~28 at 72px
   const circ = 2 * Math.PI * r;
   const offset = circ - (percent / 100) * circ;
+  const half = size / 2;
   return (
-    <svg width="72" height="72" viewBox="0 0 72 72" className="-rotate-90">
-      <circle cx="36" cy="36" r={r} fill="none" stroke="#e5e7eb" strokeWidth="6" />
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+      <circle cx={half} cy={half} r={r} fill="none" stroke="#e5e7eb" strokeWidth="5" />
       <circle
-        cx="36" cy="36" r={r} fill="none"
-        stroke={color} strokeWidth="6"
+        cx={half} cy={half} r={r} fill="none"
+        stroke={color} strokeWidth="5"
         strokeDasharray={circ} strokeDashoffset={offset}
         strokeLinecap="round"
         style={{ transition: "stroke-dashoffset 0.8s ease" }}
@@ -106,24 +107,29 @@ export default function LearningPathPage() {
 
       {/* Hero */}
       <div className="bg-gradient-to-r from-[#1C7BB1] via-[#0E5A8A] to-[#0A4A6E] text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
-            className="flex flex-col sm:flex-row items-start sm:items-center gap-6"
+            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6"
           >
-            {/* Radial progress */}
+            {/* Radial progress — smaller on mobile */}
             <div className="relative flex-shrink-0">
-              <RadialProgress percent={progressPercent} color="#F59E1C" />
+              <div className="hidden sm:block">
+                <RadialProgress percent={progressPercent} color="#F59E1C" size={72} />
+              </div>
+              <div className="block sm:hidden">
+                <RadialProgress percent={progressPercent} color="#F59E1C" size={56} />
+              </div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-bold text-white">{progressPercent}%</span>
+                <span className="text-xs sm:text-sm font-bold text-white">{progressPercent}%</span>
               </div>
             </div>
 
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold">
+              <div className="flex items-center gap-2 sm:gap-3 mb-1">
+                <h1 className="text-xl sm:text-2xl font-bold">
                   {es ? "Mi Camino" : "My Learning Path"}
                 </h1>
                 <LevelBadge level={currentLevel} size="lg" animate />
@@ -148,7 +154,7 @@ export default function LearningPathPage() {
         </div>
       </div>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
 
         {/* Stat cards */}
         <motion.div
@@ -159,12 +165,12 @@ export default function LearningPathPage() {
         >
           {statCards.map((s, i) => (
             <motion.div key={i} variants={fadeInUp}>
-              <div className="bg-white rounded-2xl shadow-sm border border-white/80 p-4 flex flex-col items-center text-center gap-2">
-                <div className="p-2.5 rounded-xl" style={{ backgroundColor: s.bg }}>
-                  <s.icon className="h-5 w-5" style={{ color: s.color }} />
+              <div className="bg-white rounded-2xl shadow-sm border border-white/80 p-3 sm:p-4 flex flex-col items-center text-center gap-1.5 sm:gap-2">
+                <div className="p-2 sm:p-2.5 rounded-xl" style={{ backgroundColor: s.bg }}>
+                  <s.icon className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: s.color }} />
                 </div>
-                <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
-                <p className="text-[11px] text-gray-500 font-medium leading-tight">{s.label}</p>
+                <p className="text-xl sm:text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
+                <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium leading-tight">{s.label}</p>
               </div>
             </motion.div>
           ))}

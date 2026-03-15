@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Lock, Check, Play, Star, Shield, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
@@ -64,11 +64,40 @@ const LEVEL_THEME: Record<string, {
   },
 };
 
-// Duolingo-style sine-wave offsets — dramatic winding like reference designs
-const WAVE_AMPLITUDE = typeof window !== "undefined" && window.innerWidth < 640 ? 60 : 120;
+/** Reactive hook — re-evaluates on window resize */
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < breakpoint : false,
+  );
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, [breakpoint]);
+  return isMobile;
+}
 
-function getStationOffset(index: number): number {
-  return Math.sin(index * (Math.PI / 3)) * WAVE_AMPLITUDE;
+/** Responsive layout constants */
+function getLayout(mobile: boolean) {
+  return {
+    amplitude: mobile ? 50 : 120,
+    nodeSize: mobile ? 60 : 72,
+    milestoneSize: mobile ? 68 : 80,
+    connectorH: mobile ? 44 : 60,
+    baseStroke: mobile ? 6 : 8,
+    doneStroke: mobile ? 8 : 10,
+    labelMax: mobile ? 90 : 110,
+    iconSizes: {
+      check: mobile ? 20 : 24,
+      lock: mobile ? 16 : 18,
+      star: mobile ? 18 : 22,
+      play: mobile ? 16 : 19,
+    },
+  };
+}
+
+function getStationOffset(index: number, amplitude: number): number {
+  return Math.sin(index * (Math.PI / 3)) * amplitude;
 }
 
 /** Small inline SVG connector between two adjacent stations */
@@ -77,13 +106,15 @@ function ConnectorSVG({
   toOffsetX,
   prevStatus,
   theme,
+  layout,
 }: {
   fromOffsetX: number;
   toOffsetX: number;
   prevStatus: string | undefined;
   theme: typeof LEVEL_THEME.A1;
+  layout: ReturnType<typeof getLayout>;
 }) {
-  const HEIGHT = 60;
+  const HEIGHT = layout.connectorH;
   const isCompleted = prevStatus === "completed";
 
   const minX = Math.min(fromOffsetX, toOffsetX);
@@ -114,7 +145,7 @@ function ConnectorSVG({
           d={d}
           fill="none"
           stroke="#e2e8f0"
-          strokeWidth={8}
+          strokeWidth={layout.baseStroke}
           strokeDasharray="12 8"
           strokeLinecap="round"
         />
@@ -124,7 +155,7 @@ function ConnectorSVG({
             d={d}
             fill="none"
             stroke={theme.primary}
-            strokeWidth={10}
+            strokeWidth={layout.doneStroke}
             strokeLinecap="round"
             initial={{ pathLength: 0 }}
             whileInView={{ pathLength: 1 }}
@@ -146,6 +177,7 @@ function StationNode({
   theme,
   onClick,
   language,
+  layout,
 }: {
   station: Station;
   index: number;
@@ -154,13 +186,14 @@ function StationNode({
   theme: typeof LEVEL_THEME.A1;
   onClick: () => void;
   language: string;
+  layout: ReturnType<typeof getLayout>;
 }) {
   const status = station.progress?.status || "locked";
   const title = language === "es" ? station.titleEs : station.title;
   const isMilestone = station.stationType === "milestone";
   const canClick = status !== "locked";
 
-  const nodeSize = isMilestone ? 80 : 72;
+  const nodeSize = isMilestone ? layout.milestoneSize : layout.nodeSize;
 
   const styles = (() => {
     switch (status) {
@@ -196,10 +229,10 @@ function StationNode({
   })();
 
   const icon = (() => {
-    if (status === "completed") return <Check size={24} color="white" strokeWidth={2.5} />;
-    if (status === "locked") return <Lock size={18} color={styles.iconColor} />;
-    if (isMilestone) return <Star size={22} color={styles.iconColor} fill={status !== "locked" ? styles.iconColor : "none"} />;
-    return <Play size={19} color={styles.iconColor} fill={styles.iconColor} />;
+    if (status === "completed") return <Check size={layout.iconSizes.check} color="white" strokeWidth={2.5} />;
+    if (status === "locked") return <Lock size={layout.iconSizes.lock} color={styles.iconColor} />;
+    if (isMilestone) return <Star size={layout.iconSizes.star} color={styles.iconColor} fill={status !== "locked" ? styles.iconColor : "none"} />;
+    return <Play size={layout.iconSizes.play} color={styles.iconColor} fill={styles.iconColor} />;
   })();
 
   return (
@@ -260,11 +293,11 @@ function StationNode({
       </div>
 
       <span
-        className="mt-2.5 text-xs font-medium text-center leading-tight line-clamp-2 px-1"
+        className="mt-2 text-[11px] sm:text-xs font-medium text-center leading-tight line-clamp-2 px-1"
         style={{
           color: status === "locked" ? "#9ca3af" : "#374151",
-          maxWidth: "110px",
-          minHeight: "32px",
+          maxWidth: `${layout.labelMax}px`,
+          minHeight: "28px",
         }}
       >
         {title}
@@ -282,6 +315,7 @@ function LevelSection({
   onStationClick,
   language,
   es,
+  layout,
 }: {
   levelGroup: LevelGroup;
   theme: typeof LEVEL_THEME.A1;
@@ -290,6 +324,7 @@ function LevelSection({
   onStationClick: (id: number) => void;
   language: string;
   es: boolean;
+  layout: ReturnType<typeof getLayout>;
 }) {
   const completed = levelGroup.stations.filter(s => s.progress?.status === "completed").length;
   const total = levelGroup.stations.length;
@@ -307,20 +342,20 @@ function LevelSection({
     >
       {/* Level header */}
       <div
-        className="px-5 py-4 flex items-center gap-4"
+        className="px-4 sm:px-5 py-3 sm:py-4 flex items-center gap-3 sm:gap-4"
         style={{ background: theme.gradient }}
       >
-        <div className="p-2.5 rounded-xl bg-white/20 flex-shrink-0 backdrop-blur-sm">
-          <Shield className="h-5 w-5 text-white" />
+        <div className="p-2 sm:p-2.5 rounded-xl bg-white/20 flex-shrink-0 backdrop-blur-sm">
+          <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-white font-bold text-lg">{levelGroup.level}</span>
-            <span className="text-white/80 text-sm font-medium">
+            <span className="text-white font-bold text-base sm:text-lg">{levelGroup.level}</span>
+            <span className="text-white/80 text-xs sm:text-sm font-medium truncate">
               — {es ? theme.labelEs : theme.label}
             </span>
             {isActive && (
-              <span className="ml-1 text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
+              <span className="ml-1 text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full backdrop-blur-sm flex-shrink-0">
                 {es ? "Actual" : "Current"}
               </span>
             )}
@@ -342,10 +377,10 @@ function LevelSection({
       </div>
 
       {/* Vertical winding path */}
-      <div className="flex flex-col items-center py-8 overflow-hidden">
+      <div className="flex flex-col items-center py-6 sm:py-8 overflow-x-hidden">
         {levelGroup.stations.map((station, i) => {
-          const currOffset = getStationOffset(i);
-          const prevOffset = i > 0 ? getStationOffset(i - 1) : 0;
+          const currOffset = getStationOffset(i, layout.amplitude);
+          const prevOffset = i > 0 ? getStationOffset(i - 1, layout.amplitude) : 0;
           const prevStatus = i > 0 ? levelGroup.stations[i - 1].progress?.status : undefined;
 
           return (
@@ -356,6 +391,7 @@ function LevelSection({
                   toOffsetX={currOffset}
                   prevStatus={prevStatus}
                   theme={theme}
+                  layout={layout}
                 />
               )}
               <StationNode
@@ -366,6 +402,7 @@ function LevelSection({
                 theme={theme}
                 onClick={() => onStationClick(station.id)}
                 language={language}
+                layout={layout}
               />
             </Fragment>
           );
@@ -378,6 +415,8 @@ function LevelSection({
 export default function SnakePath({ levels, currentLevel, onStationClick }: SnakePathProps) {
   const { language } = useLanguage();
   const es = language === "es";
+  const isMobile = useIsMobile();
+  const layout = getLayout(isMobile);
 
   let currentStationId: number | null = null;
   for (const level of levels) {
@@ -390,7 +429,7 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto flex flex-col gap-5">
+    <div className="w-full max-w-lg mx-auto flex flex-col gap-4 sm:gap-5">
       {levels.map((levelGroup, idx) => {
         const theme = LEVEL_THEME[levelGroup.level] || LEVEL_THEME.A1;
         const nextGroup = levels[idx + 1];
@@ -406,21 +445,22 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
               onStationClick={onStationClick}
               language={language}
               es={es}
+              layout={layout}
             />
             {nextTheme && (
               <div className="flex flex-col items-center py-1">
                 <div
-                  className="w-0.5 h-6 rounded-full"
+                  className="w-0.5 h-5 sm:h-6 rounded-full"
                   style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
                 />
                 <div
-                  className="w-9 h-9 rounded-full border-2 bg-white flex items-center justify-center shadow-md"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 bg-white flex items-center justify-center shadow-md"
                   style={{ borderColor: nextTheme.primary }}
                 >
-                  <ChevronDown size={16} style={{ color: nextTheme.primary }} />
+                  <ChevronDown size={14} style={{ color: nextTheme.primary }} />
                 </div>
                 <div
-                  className="w-0.5 h-6 rounded-full"
+                  className="w-0.5 h-5 sm:h-6 rounded-full"
                   style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
                 />
               </div>
