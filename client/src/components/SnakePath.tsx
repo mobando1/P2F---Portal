@@ -77,7 +77,10 @@ function getPos(index: number) {
   };
 }
 
-/** Build an SVG path string between two node positions */
+// Node radius in SVG viewBox coordinates (72px node / 2, scaled to viewBox)
+const NODE_R = 32;
+
+/** Build an SVG path that connects from the edge of one circle to the edge of the next */
 function buildCurvePath(
   from: { x: number; y: number },
   to: { x: number; y: number },
@@ -89,18 +92,36 @@ function buildCurvePath(
   const ty = to.y;
 
   if (Math.abs(fy - ty) < 2) {
-    // Same row — gentle arc upward
-    const midX = (fx + tx) / 2;
-    const midY = fy - 28;
-    return `M ${fx} ${fy} Q ${midX} ${midY} ${tx} ${ty}`;
+    // Same row — horizontal connection
+    if (fx < tx) {
+      // Moving right: exit right edge → enter left edge
+      const startX = fx + NODE_R;
+      const endX = tx - NODE_R;
+      const midX = (startX + endX) / 2;
+      // Gentle arc below the line
+      return `M ${startX} ${fy} Q ${midX} ${fy + 18} ${endX} ${ty}`;
+    } else {
+      // Moving left: exit left edge → enter right edge
+      const startX = fx - NODE_R;
+      const endX = tx + NODE_R;
+      const midX = (startX + endX) / 2;
+      return `M ${startX} ${fy} Q ${midX} ${fy + 18} ${endX} ${ty}`;
+    }
   }
 
-  // Different row — smooth S-curve
-  const cp1x = fx;
-  const cp1y = fy + (ty - fy) * 0.45;
-  const cp2x = tx;
-  const cp2y = ty - (ty - fy) * 0.45;
-  return `M ${fx} ${fy} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${tx} ${ty}`;
+  // Row change (U-turn) — exit bottom, curve around, enter top of next circle
+  const startY = fy + NODE_R;     // bottom edge of from
+  const endY = ty - NODE_R;       // top edge of to
+
+  if (fx > containerWidth / 2) {
+    // U-turn on the right side — curve outward to the right
+    const bulge = Math.min(fx + 60, containerWidth - 10);
+    return `M ${fx} ${startY} C ${bulge} ${startY + 30}, ${bulge} ${endY - 30}, ${tx} ${endY}`;
+  } else {
+    // U-turn on the left side — curve outward to the left
+    const bulge = Math.max(fx - 60, 10);
+    return `M ${fx} ${startY} C ${bulge} ${startY + 30}, ${bulge} ${endY - 30}, ${tx} ${endY}`;
+  }
 }
 
 function StationNode({
