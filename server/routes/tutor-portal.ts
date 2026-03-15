@@ -32,6 +32,11 @@ export function registerTutorPortalRoutes(app: Express) {
         return c.status === "scheduled" && d.toDateString() === now.toDateString();
       });
 
+      // Quick stats
+      const classesWithoutNotes = completed.filter(c => !c.sessionNotes).length;
+      const allAssignments = await storage.getAssignmentsByTutor(tutor.id);
+      const pendingAssignments = allAssignments.filter(a => a.status === "assigned").length;
+
       // Get student info for upcoming classes
       const upcomingWithStudents = await Promise.all(
         scheduled.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
@@ -58,9 +63,87 @@ export function registerTutorPortalRoutes(app: Express) {
           upcomingClasses: scheduled.length,
           completedClasses: completed.length,
           totalHours: completed.reduce((sum, c) => sum + (c.duration || 60), 0) / 60,
+          classesWithoutNotes,
+          pendingAssignments,
         },
         upcomingClasses: upcomingWithStudents,
       });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Prep cards for upcoming classes — enriched student context
+  app.get("/api/tutor/prep", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      const tutorClasses = await storage.getClassesByTutor(tutor.id);
+      const now = new Date();
+      const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+      const upcoming = tutorClasses
+        .filter(c => c.status === "scheduled" && new Date(c.scheduledAt) > now && new Date(c.scheduledAt) <= in48h)
+        .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+        .slice(0, 5);
+
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const prepCards = await Promise.all(upcoming.map(async (c) => {
+        const student = await storage.getUser(c.userId);
+        if (!student) return null;
+
+        // Last completed class with notes
+        const studentClasses = tutorClasses
+          .filter(sc => sc.userId === student.id && sc.status === "completed")
+          .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+        const lastClass = studentClasses[0] || null;
+
+        // Current station
+        const pathProgress = await storage.getStudentProgress(student.id);
+        const inProgress = pathProgress
+          .filter(p => p.status === "in_progress")
+          .sort((a, b) => new Date(b.startedAt ?? 0).getTime() - new Date(a.startedAt ?? 0).getTime())[0];
+        let currentStation = null;
+        if (inProgress) {
+          const stations = await storage.getStationsByLevel(student.level);
+          const st = stations.find(s => s.id === inProgress.stationId);
+          if (st) currentStation = { title: st.title, level: st.level, order: st.stationOrder };
+        }
+
+        // AI conversations this week
+        const aiConvs = await storage.getAiConversations(student.id);
+        const aiThisWeek = aiConvs.filter(c => c.updatedAt && new Date(c.updatedAt) >= oneWeekAgo).length;
+
+        // Pending assignments
+        const assignments = await storage.getAssignmentsForStudent(student.id);
+        const pendingHomework = assignments.filter(a => a.status === "assigned" && a.tutorId === tutor.id);
+
+        return {
+          classId: c.id,
+          scheduledAt: c.scheduledAt,
+          duration: c.duration,
+          meetingLink: c.meetingLink,
+          student: {
+            id: student.id,
+            name: `${student.firstName} ${student.lastName}`,
+            level: student.level,
+          },
+          currentStation,
+          lastClass: lastClass ? {
+            scheduledAt: lastClass.scheduledAt,
+            sessionNotes: lastClass.sessionNotes,
+            sharedNotes: lastClass.sharedNotes,
+            homeworkText: lastClass.homeworkText,
+          } : null,
+          aiThisWeek,
+          pendingAssignments: pendingHomework.length,
+        };
+      }));
+
+      res.json(prepCards.filter(Boolean));
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }

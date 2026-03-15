@@ -62,6 +62,8 @@ interface TutorDashboardData {
     upcomingClasses: number;
     completedClasses: number;
     totalHours: number;
+    classesWithoutNotes: number;
+    pendingAssignments: number;
   };
   upcomingClasses: Array<{
     id: number;
@@ -144,6 +146,22 @@ export default function TutorDashboard() {
     queryKey: ["/api/tutor/earnings"],
     queryFn: () => apiRequest("GET", "/api/tutor/earnings").then(r => r.json()),
     enabled: activeTab === "earnings",
+  });
+
+  const { data: prepCards } = useQuery<Array<{
+    classId: number;
+    scheduledAt: string;
+    duration: number;
+    meetingLink?: string;
+    student: { id: number; name: string; level: string };
+    currentStation: { title: string; level: string; order: number } | null;
+    lastClass: { scheduledAt: string; sessionNotes: string | null; sharedNotes: string | null; homeworkText: string | null } | null;
+    aiThisWeek: number;
+    pendingAssignments: number;
+  }>>({
+    queryKey: ["/api/tutor/prep"],
+    queryFn: () => apiRequest("GET", "/api/tutor/prep").then(r => r.json()),
+    enabled: activeTab === "dashboard",
   });
 
   const { data: studentProgress } = useQuery<StudentProgress>({
@@ -412,6 +430,128 @@ export default function TutorDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Quick-stat alerts */}
+        {data && (stats.classesWithoutNotes > 0 || stats.pendingAssignments > 0) && (
+          <div className="flex flex-wrap gap-3 mb-6">
+            {stats.classesWithoutNotes > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-700">
+                <Star className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                <span>
+                  <strong>{stats.classesWithoutNotes}</strong>{" "}
+                  {language === "es" ? "clases sin notas de sesión" : "classes missing session notes"}
+                </span>
+              </div>
+            )}
+            {stats.pendingAssignments > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-700">
+                <TrendingUp className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                <span>
+                  <strong>{stats.pendingAssignments}</strong>{" "}
+                  {language === "es" ? "tareas pendientes de revisar" : "assignments pending review"}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Prep cards — upcoming classes in next 48h */}
+        {prepCards && prepCards.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-[#0A4A6E] mb-3 flex items-center gap-2">
+              <CalendarCheck className="h-5 w-5 text-[#F59E1C]" />
+              {language === "es" ? "Preparación de clases — próximas 48h" : "Class prep — next 48h"}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {prepCards.map(card => (
+                <Card key={card.classId} className="border-l-4 border-l-[#1C7BB1] shadow-md hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4 space-y-3">
+                    {/* Header */}
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-semibold text-[#0A4A6E] text-sm">
+                          {new Date(card.scheduledAt).toLocaleDateString(
+                            language === "es" ? "es-ES" : "en-US",
+                            { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }
+                          )}
+                        </p>
+                        <p className="text-xs text-[#0A4A6E]/60">{card.duration} min · {card.student.name}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <LevelBadge level={card.student.level} size="sm" />
+                        <button
+                          className="ml-1 p-1 rounded hover:bg-[#EAF4FA]"
+                          onClick={() => setDrawerStudentId(card.student.id)}
+                        >
+                          <ArrowUpRight className="h-3.5 w-3.5 text-[#1C7BB1]" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Current station */}
+                    {card.currentStation && (
+                      <div className="p-2 bg-[#EAF4FA]/60 rounded-md">
+                        <p className="text-[10px] text-[#1C7BB1] font-semibold uppercase mb-0.5">
+                          {language === "es" ? "Estación actual" : "Current station"}
+                        </p>
+                        <p className="text-xs text-[#0A4A6E] font-medium">{card.currentStation.title}</p>
+                        <p className="text-[10px] text-[#0A4A6E]/50">{card.currentStation.level} · #{card.currentStation.order}</p>
+                      </div>
+                    )}
+
+                    {/* Last class notes */}
+                    {card.lastClass && (card.lastClass.sessionNotes || card.lastClass.homeworkText) && (
+                      <div className="space-y-1.5">
+                        {card.lastClass.sessionNotes && (
+                          <div className="p-2 bg-gray-50 rounded-md border border-dashed border-gray-200">
+                            <p className="text-[10px] text-gray-400 font-semibold uppercase mb-0.5">
+                              {language === "es" ? "Última nota privada" : "Last private note"}
+                            </p>
+                            <p className="text-xs text-gray-600 line-clamp-2">{card.lastClass.sessionNotes}</p>
+                          </div>
+                        )}
+                        {card.lastClass.homeworkText && (
+                          <div className="p-2 bg-amber-50 rounded-md border-l-2 border-[#F59E1C]">
+                            <p className="text-[10px] text-[#F59E1C] font-semibold uppercase mb-0.5">
+                              {language === "es" ? "Tarea pendiente" : "Pending homework"}
+                            </p>
+                            <p className="text-xs text-amber-800 line-clamp-2">{card.lastClass.homeworkText}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Footer stats */}
+                    <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                      <div className="flex items-center gap-3 text-[10px] text-[#0A4A6E]/60">
+                        {card.aiThisWeek > 0 && (
+                          <span className="flex items-center gap-1">
+                            <BarChart3 className="h-3 w-3 text-orange-400" />
+                            {card.aiThisWeek} IA
+                          </span>
+                        )}
+                        {card.pendingAssignments > 0 && (
+                          <span className="flex items-center gap-1 text-amber-600">
+                            <Star className="h-3 w-3" />
+                            {card.pendingAssignments} {language === "es" ? "tarea(s)" : "task(s)"}
+                          </span>
+                        )}
+                      </div>
+                      {card.meetingLink && (
+                        <a href={card.meetingLink} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm" className="h-6 text-[10px] bg-green-600 hover:bg-green-700 text-white px-2">
+                            <Video className="h-3 w-3 mr-1" />
+                            Join
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
