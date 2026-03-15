@@ -167,7 +167,7 @@ export function registerTutorPortalRoutes(app: Express) {
     }
   });
 
-  // Mark class as completed
+  // Mark class as completed (optionally with session notes)
   app.put("/api/tutor/classes/:id/complete", requireTutor, async (req, res) => {
     try {
       const userId = req.session.userId!;
@@ -181,8 +181,15 @@ export function registerTutorPortalRoutes(app: Express) {
       if (!classItem) return res.status(404).json({ message: "Class not found" });
       if (classItem.status !== "scheduled") return res.status(400).json({ message: "Class is not scheduled" });
 
+      const { sessionNotes, sharedNotes, homeworkText, topicsCovered } = req.body || {};
+
       // Atomic: only completes if still scheduled
-      const updated = await storage.completeClassIfScheduled(classId);
+      const updated = await storage.completeClassIfScheduled(classId, {
+        sessionNotes: sessionNotes || undefined,
+        sharedNotes: sharedNotes || undefined,
+        homeworkText: homeworkText || undefined,
+        topicsCovered: Array.isArray(topicsCovered) ? topicsCovered : undefined,
+      });
       if (!updated) return res.status(400).json({ message: "Class could not be completed" });
 
       // Update student progress
@@ -202,6 +209,31 @@ export function registerTutorPortalRoutes(app: Express) {
       // Check gamification milestones
       gamificationService.onClassCompleted(classItem.userId);
 
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Update session notes for a completed class
+  app.patch("/api/tutor/classes/:id/notes", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      const classId = parseInt(req.params.id);
+      const allClasses = await storage.getClassesByTutor(tutor.id);
+      const classItem = allClasses.find(c => c.id === classId);
+      if (!classItem) return res.status(404).json({ message: "Class not found" });
+
+      const { sessionNotes, sharedNotes, homeworkText, topicsCovered } = req.body || {};
+      const updated = await storage.updateClassNotes(classId, {
+        sessionNotes: sessionNotes ?? undefined,
+        sharedNotes: sharedNotes ?? undefined,
+        homeworkText: homeworkText ?? undefined,
+        topicsCovered: Array.isArray(topicsCovered) ? topicsCovered : undefined,
+      });
       res.json(updated);
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });

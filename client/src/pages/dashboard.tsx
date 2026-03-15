@@ -66,6 +66,13 @@ interface DashboardData {
   subscription: any;
   progress: any;
   upcomingClasses: any[];
+  recentCompletedClasses: Array<{
+    id: number;
+    title: string;
+    scheduledAt: string;
+    sharedNotes: string | null;
+    homeworkText: string | null;
+  }>;
   stats: {
     classesBooked: number;
     classesCompleted: number;
@@ -218,6 +225,9 @@ export default function Dashboard() {
   };
 
   const upcomingClasses = dashboardData?.upcomingClasses || [];
+  const recentCompletedClasses = (dashboardData?.recentCompletedClasses || []).filter(
+    c => c.sharedNotes || c.homeworkText
+  );
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F8F9FA' }}>
@@ -485,6 +495,42 @@ export default function Dashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Tutor notes from recent completed classes */}
+            {recentCompletedClasses.length > 0 && (
+              <Card>
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4 flex items-center gap-2">
+                    <span>📝</span>
+                    {language === "es" ? "Notas de tu tutor" : "Notes from your tutor"}
+                  </h2>
+                  <div className="space-y-4">
+                    {recentCompletedClasses.map(c => (
+                      <div key={c.id} className="border rounded-lg p-4 space-y-2 bg-[#EAF4FA]/40">
+                        <p className="text-xs text-[#0A4A6E]/50 font-medium uppercase tracking-wide">
+                          {new Date(c.scheduledAt).toLocaleDateString(
+                            language === "es" ? "es-ES" : "en-US",
+                            { weekday: "short", month: "short", day: "numeric" }
+                          )}
+                          {" — "}{c.title}
+                        </p>
+                        {c.sharedNotes && (
+                          <p className="text-sm text-[#0A4A6E]">{c.sharedNotes}</p>
+                        )}
+                        {c.homeworkText && (
+                          <div className="mt-2 p-3 bg-[#F59E1C]/10 rounded-md border-l-2 border-[#F59E1C]">
+                            <p className="text-xs font-semibold text-[#F59E1C] uppercase mb-1">
+                              {language === "es" ? "Tarea" : "Homework"}
+                            </p>
+                            <p className="text-sm text-[#0A4A6E]">{c.homeworkText}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Right Column - Sidebar */}

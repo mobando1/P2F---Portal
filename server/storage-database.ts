@@ -265,6 +265,15 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
+  async getRecentCompletedClasses(userId: number, limit = 3): Promise<Class[]> {
+    return await this.db
+      .select()
+      .from(classes)
+      .where(and(eq(classes.userId, userId), eq(classes.status, "completed")))
+      .orderBy(desc(classes.scheduledAt))
+      .limit(limit);
+  }
+
   async createClass(classData: InsertClass): Promise<Class> {
     const [classItem] = await this.db
       .insert(classes)
@@ -842,11 +851,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Atomic class completion (prevents double-complete)
-  async completeClassIfScheduled(classId: number): Promise<Class | undefined> {
+  async completeClassIfScheduled(classId: number, notes?: {
+    sessionNotes?: string;
+    sharedNotes?: string;
+    homeworkText?: string;
+    topicsCovered?: string[];
+  }): Promise<Class | undefined> {
     const [cls] = await this.db
       .update(classes)
-      .set({ status: "completed" })
+      .set({ status: "completed", ...notes })
       .where(and(eq(classes.id, classId), eq(classes.status, "scheduled")))
+      .returning();
+    return cls || undefined;
+  }
+
+  async updateClassNotes(classId: number, notes: {
+    sessionNotes?: string;
+    sharedNotes?: string;
+    homeworkText?: string;
+    topicsCovered?: string[];
+  }): Promise<Class | undefined> {
+    const [cls] = await this.db
+      .update(classes)
+      .set(notes)
+      .where(eq(classes.id, classId))
       .returning();
     return cls || undefined;
   }

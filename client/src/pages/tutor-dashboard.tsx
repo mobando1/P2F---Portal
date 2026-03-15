@@ -43,7 +43,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 
 interface TutorDashboardData {
@@ -110,6 +113,10 @@ export default function TutorDashboard() {
   const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState<"dashboard" | "students" | "earnings">("dashboard");
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const [notesModal, setNotesModal] = useState<{ classId: number; studentName: string } | null>(null);
+  const [sessionNotes, setSessionNotes] = useState("");
+  const [sharedNotes, setSharedNotes] = useState("");
+  const [homeworkText, setHomeworkText] = useState("");
 
   if (!isAuthenticated() || !user) {
     setLocation("/login");
@@ -166,8 +173,8 @@ export default function TutorDashboard() {
   });
 
   const completeClassMutation = useMutation({
-    mutationFn: async (classId: number) => {
-      const response = await apiRequest("PUT", `/api/tutor/classes/${classId}/complete`);
+    mutationFn: async ({ classId, sessionNotes: sn, sharedNotes: sh, homeworkText: hw }: { classId: number; sessionNotes?: string; sharedNotes?: string; homeworkText?: string }) => {
+      const response = await apiRequest("PUT", `/api/tutor/classes/${classId}/complete`, { sessionNotes: sn, sharedNotes: sh, homeworkText: hw });
       return response.json();
     },
     onSuccess: () => {
@@ -493,8 +500,12 @@ export default function TutorDashboard() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => completeClassMutation.mutate(classItem.id)}
-                              disabled={completeClassMutation.isPending}
+                              onClick={() => {
+                                setSessionNotes("");
+                                setSharedNotes("");
+                                setHomeworkText("");
+                                setNotesModal({ classId: classItem.id, studentName: classItem.studentName });
+                              }}
                               className="text-green-600 border-green-300 hover:bg-green-50"
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
@@ -870,6 +881,85 @@ export default function TutorDashboard() {
           </div>
         )}
       </main>
+
+      {/* Notes Modal — shown when tutor clicks "Complete" on a class */}
+      <Dialog open={!!notesModal} onOpenChange={(open) => { if (!open) setNotesModal(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "es" ? "Completar clase" : "Complete class"}
+              {notesModal && (
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  — {notesModal.studentName}
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="sharedNotes">
+                {language === "es" ? "Resumen para el alumno" : "Summary for student"}
+              </Label>
+              <Textarea
+                id="sharedNotes"
+                placeholder={language === "es" ? "Lo que trabajaron hoy, visible para el alumno..." : "What you worked on today, visible to student..."}
+                value={sharedNotes}
+                onChange={(e) => setSharedNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="homeworkText">
+                {language === "es" ? "Tarea / próximos pasos" : "Homework / next steps"}
+              </Label>
+              <Textarea
+                id="homeworkText"
+                placeholder={language === "es" ? "Tarea asignada para el alumno..." : "Homework assigned to student..."}
+                value={homeworkText}
+                onChange={(e) => setHomeworkText(e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="sessionNotes">
+                {language === "es" ? "Notas privadas (solo tú las ves)" : "Private notes (only you see these)"}
+              </Label>
+              <Textarea
+                id="sessionNotes"
+                placeholder={language === "es" ? "Observaciones personales, áreas a reforzar..." : "Personal observations, areas to reinforce..."}
+                value={sessionNotes}
+                onChange={(e) => setSessionNotes(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setNotesModal(null)}>
+              {language === "es" ? "Cancelar" : "Cancel"}
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700 text-white"
+              disabled={completeClassMutation.isPending}
+              onClick={() => {
+                if (!notesModal) return;
+                completeClassMutation.mutate(
+                  { classId: notesModal.classId, sessionNotes, sharedNotes, homeworkText },
+                  { onSuccess: () => setNotesModal(null) }
+                );
+              }}
+            >
+              <CheckCircle className="h-4 w-4 mr-1" />
+              {completeClassMutation.isPending
+                ? (language === "es" ? "Guardando..." : "Saving...")
+                : (language === "es" ? "Confirmar clase" : "Confirm class")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

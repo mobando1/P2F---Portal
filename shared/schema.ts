@@ -181,6 +181,11 @@ export const classes = pgTable("classes", {
   meetingLink: text("meeting_link"),
   calendarEventId: text("calendar_event_id"),
   tutorCalendarEventId: text("tutor_calendar_event_id"),
+  // Session notes (added for tutor-student connection)
+  sessionNotes: text("session_notes"),         // private tutor notes
+  sharedNotes: text("shared_notes"),           // visible to student
+  homeworkText: text("homework_text"),         // task/homework for student
+  topicsCovered: text("topics_covered").array(), // e.g. ["presente", "A2-3"]
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_classes_user_id").on(table.userId),

@@ -80,6 +80,7 @@ export function registerUserRoutes(app: Express) {
       const subscription = await storage.getUserSubscription(userId);
       const progress = await storage.getUserProgress(userId);
       const upcomingClasses = await storage.getUpcomingClasses(userId);
+      const recentCompletedClasses = await storage.getRecentCompletedClasses(userId, 3);
 
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -96,6 +97,7 @@ export function registerUserRoutes(app: Express) {
         subscription,
         progress,
         upcomingClasses,
+        recentCompletedClasses,
         stats: {
           classesBooked: upcomingClasses.length + (progress?.classesCompleted || 0),
           classesCompleted: progress?.classesCompleted || 0,

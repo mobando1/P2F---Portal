@@ -87,6 +87,7 @@ export interface IStorage {
   getScheduledClasses(): Promise<Class[]>;
   getUserClasses(userId: number): Promise<Class[]>;
   getUpcomingClasses(userId: number): Promise<Class[]>;
+  getRecentCompletedClasses(userId: number, limit?: number): Promise<Class[]>;
   createClass(classData: InsertClass): Promise<Class>;
   updateClass(id: number, classData: Partial<InsertClass>): Promise<Class | undefined>;
   cancelClass(id: number, userId: number): Promise<boolean>;
@@ -184,7 +185,18 @@ export interface IStorage {
   refundClassCredit(userId: number): Promise<User | undefined>;
 
   // Atomic class completion (prevents double-complete)
-  completeClassIfScheduled(classId: number): Promise<Class | undefined>;
+  completeClassIfScheduled(classId: number, notes?: {
+    sessionNotes?: string;
+    sharedNotes?: string;
+    homeworkText?: string;
+    topicsCovered?: string[];
+  }): Promise<Class | undefined>;
+  updateClassNotes(classId: number, notes: {
+    sessionNotes?: string;
+    sharedNotes?: string;
+    homeworkText?: string;
+    topicsCovered?: string[];
+  }): Promise<Class | undefined>;
 
   // Tutor-specific class query (performance)
   getClassesByTutor(tutorId: number): Promise<Class[]>;
@@ -707,6 +719,10 @@ export class MemStorage implements IStorage {
         meetingLink: "https://meet.jit.si/P2F-Carolina-Perilla-class1",
         calendarEventId: null,
         tutorCalendarEventId: null,
+        sessionNotes: null,
+        sharedNotes: null,
+        homeworkText: null,
+        topicsCovered: null,
         createdAt: new Date(),
       },
       {
@@ -723,6 +739,10 @@ export class MemStorage implements IStorage {
         meetingLink: "https://meet.jit.si/P2F-Evelyn-Salcedo-class2",
         calendarEventId: null,
         tutorCalendarEventId: null,
+        sessionNotes: null,
+        sharedNotes: null,
+        homeworkText: null,
+        topicsCovered: null,
         createdAt: new Date(),
       },
       {
@@ -739,6 +759,10 @@ export class MemStorage implements IStorage {
         meetingLink: "https://meet.jit.si/P2F-Diego-Rodriguez-class3",
         calendarEventId: null,
         tutorCalendarEventId: null,
+        sessionNotes: null,
+        sharedNotes: null,
+        homeworkText: null,
+        topicsCovered: null,
         createdAt: new Date(),
       }
     ];
@@ -1007,6 +1031,14 @@ export class MemStorage implements IStorage {
       .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   }
 
+  async getRecentCompletedClasses(userId: number, limit = 3): Promise<Class[]> {
+    await this.ensureInitialized();
+    return Array.from(this.classes.values())
+      .filter(c => c.userId === userId && c.status === "completed")
+      .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())
+      .slice(0, limit);
+  }
+
   async createClass(classData: InsertClass): Promise<Class> {
     await this.ensureInitialized();
     const id = this.currentClassId++;
@@ -1022,6 +1054,10 @@ export class MemStorage implements IStorage {
       meetingLink: classData.meetingLink || null,
       calendarEventId: classData.calendarEventId || null,
       tutorCalendarEventId: classData.tutorCalendarEventId || null,
+      sessionNotes: null,
+      sharedNotes: null,
+      homeworkText: null,
+      topicsCovered: null,
     };
     this.classes.set(id, classItem);
     return classItem;
@@ -1780,11 +1816,30 @@ export class MemStorage implements IStorage {
   }
 
   // Atomic class completion
-  async completeClassIfScheduled(classId: number): Promise<Class | undefined> {
+  async completeClassIfScheduled(classId: number, notes?: {
+    sessionNotes?: string;
+    sharedNotes?: string;
+    homeworkText?: string;
+    topicsCovered?: string[];
+  }): Promise<Class | undefined> {
     await this.ensureInitialized();
     const cls = this.classes.get(classId);
     if (!cls || cls.status !== "scheduled") return undefined;
     cls.status = "completed";
+    if (notes) Object.assign(cls, notes);
+    return cls;
+  }
+
+  async updateClassNotes(classId: number, notes: {
+    sessionNotes?: string;
+    sharedNotes?: string;
+    homeworkText?: string;
+    topicsCovered?: string[];
+  }): Promise<Class | undefined> {
+    await this.ensureInitialized();
+    const cls = this.classes.get(classId);
+    if (!cls) return undefined;
+    Object.assign(cls, notes);
     return cls;
   }
 

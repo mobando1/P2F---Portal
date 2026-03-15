@@ -43,46 +43,64 @@ const LEVEL_THEME: Record<string, {
   labelEs: string;
 }> = {
   A1: {
-    primary: "#10b981", bg: "#d1fae5", bgSection: "rgba(16,185,129,0.06)",
+    primary: "#10b981", bg: "#d1fae5", bgSection: "rgba(16,185,129,0.07)",
     line: "#6ee7b7", gradient: "linear-gradient(135deg,#10b981,#059669)",
     label: "Beginner", labelEs: "Principiante",
   },
   A2: {
-    primary: "#14b8a6", bg: "#ccfbf1", bgSection: "rgba(20,184,166,0.06)",
+    primary: "#14b8a6", bg: "#ccfbf1", bgSection: "rgba(20,184,166,0.07)",
     line: "#5eead4", gradient: "linear-gradient(135deg,#14b8a6,#0d9488)",
     label: "Elementary", labelEs: "Elemental",
   },
   B1: {
-    primary: "#1C7BB1", bg: "#EAF4FA", bgSection: "rgba(28,123,177,0.06)",
+    primary: "#1C7BB1", bg: "#EAF4FA", bgSection: "rgba(28,123,177,0.07)",
     line: "#7cc3e6", gradient: "linear-gradient(135deg,#1C7BB1,#0A4A6E)",
     label: "Intermediate", labelEs: "Intermedio",
   },
   B2: {
-    primary: "#6366f1", bg: "#e0e7ff", bgSection: "rgba(99,102,241,0.06)",
+    primary: "#6366f1", bg: "#e0e7ff", bgSection: "rgba(99,102,241,0.07)",
     line: "#a5b4fc", gradient: "linear-gradient(135deg,#6366f1,#4f46e5)",
     label: "Upper Intermediate", labelEs: "Intermedio Alto",
   },
-  C1: {
-    primary: "#F59E1C", bg: "#fef3c7", bgSection: "rgba(245,158,28,0.06)",
-    line: "#fcd34d", gradient: "linear-gradient(135deg,#F59E1C,#d97706)",
-    label: "Advanced", labelEs: "Avanzado",
-  },
-  C2: {
-    primary: "#eab308", bg: "#fef9c3", bgSection: "rgba(234,179,8,0.06)",
-    line: "#fde047", gradient: "linear-gradient(135deg,#eab308,#ca8a04)",
-    label: "Proficiency", labelEs: "Dominio",
-  },
 };
 
-function getPos(index: number, cols = 5) {
-  const row = Math.floor(index / cols);
-  const colInRow = index % cols;
+const COLS = 4;
+
+function getPos(index: number) {
+  const row = Math.floor(index / COLS);
+  const colInRow = index % COLS;
   const isReversed = row % 2 === 1;
-  const col = isReversed ? cols - 1 - colInRow : colInRow;
+  const col = isReversed ? COLS - 1 - colInRow : colInRow;
   return {
-    x: 10 + col * 20,       // 10%, 30%, 50%, 70%, 90% for 5 cols
-    y: row * 130 + 72,      // px offset from top
+    x: 14 + col * 24,   // 14%, 38%, 62%, 86%
+    y: row * 160 + 90,   // more vertical space
   };
+}
+
+/** Build an SVG path string between two node positions */
+function buildCurvePath(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  containerWidth: number,
+): string {
+  const fx = (from.x / 100) * containerWidth;
+  const fy = from.y;
+  const tx = (to.x / 100) * containerWidth;
+  const ty = to.y;
+
+  if (Math.abs(fy - ty) < 2) {
+    // Same row — gentle arc upward
+    const midX = (fx + tx) / 2;
+    const midY = fy - 28;
+    return `M ${fx} ${fy} Q ${midX} ${midY} ${tx} ${ty}`;
+  }
+
+  // Different row — smooth S-curve
+  const cp1x = fx;
+  const cp1y = fy + (ty - fy) * 0.45;
+  const cp2x = tx;
+  const cp2y = ty - (ty - fy) * 0.45;
+  return `M ${fx} ${fy} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${tx} ${ty}`;
 }
 
 function StationNode({
@@ -107,26 +125,46 @@ function StationNode({
 
   const pos = getPos(index);
 
-  const nodeSize = isMilestone ? 72 : 64;
+  const nodeSize = isMilestone ? 80 : 72;
 
   const styles = (() => {
     switch (status) {
       case "completed":
-        return { bg: theme.primary, border: theme.primary, iconColor: "white", shadow: `0 4px 16px ${theme.primary}55` };
+        return {
+          bg: theme.primary,
+          border: theme.primary,
+          iconColor: "white",
+          shadow: `0 6px 20px ${theme.primary}44, 0 2px 8px ${theme.primary}33`,
+        };
       case "available":
-        return { bg: "white", border: theme.primary, iconColor: theme.primary, shadow: `0 4px 16px ${theme.primary}33` };
+        return {
+          bg: "white",
+          border: theme.primary,
+          iconColor: theme.primary,
+          shadow: `0 4px 16px ${theme.primary}28, 0 1px 4px rgba(0,0,0,0.06)`,
+        };
       case "in_progress":
-        return { bg: theme.bg, border: theme.primary, iconColor: theme.primary, shadow: `0 4px 16px ${theme.primary}33` };
+        return {
+          bg: theme.bg,
+          border: theme.primary,
+          iconColor: theme.primary,
+          shadow: `0 4px 16px ${theme.primary}28, 0 1px 4px rgba(0,0,0,0.06)`,
+        };
       default:
-        return { bg: "#f3f4f6", border: "#d1d5db", iconColor: "#9ca3af", shadow: "none" };
+        return {
+          bg: "#f9fafb",
+          border: "#e5e7eb",
+          iconColor: "#bcbfc4",
+          shadow: "0 1px 3px rgba(0,0,0,0.04)",
+        };
     }
   })();
 
   const icon = (() => {
-    if (status === "completed") return <Check size={22} color="white" strokeWidth={2.5} />;
-    if (status === "locked") return <Lock size={16} color={styles.iconColor} />;
-    if (isMilestone) return <Star size={20} color={styles.iconColor} fill={status !== "locked" ? styles.iconColor : "none"} />;
-    return <Play size={17} color={styles.iconColor} fill={styles.iconColor} />;
+    if (status === "completed") return <Check size={24} color="white" strokeWidth={2.5} />;
+    if (status === "locked") return <Lock size={18} color={styles.iconColor} />;
+    if (isMilestone) return <Star size={22} color={styles.iconColor} fill={status !== "locked" ? styles.iconColor : "none"} />;
+    return <Play size={19} color={styles.iconColor} fill={styles.iconColor} />;
   })();
 
   return (
@@ -136,21 +174,21 @@ function StationNode({
         left: `${pos.x}%`,
         top: `${pos.y}px`,
         transform: "translate(-50%, -50%)",
-        opacity: status === "locked" ? 0.55 : 1,
+        opacity: status === "locked" ? 0.5 : 1,
         cursor: canClick ? "pointer" : "default",
-        zIndex: 1,
+        zIndex: 2,
       }}
       initial={{ scale: 0, opacity: 0 }}
-      whileInView={{ scale: 1, opacity: status === "locked" ? 0.55 : 1 }}
+      whileInView={{ scale: 1, opacity: status === "locked" ? 0.5 : 1 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ delay: index * 0.06, type: "spring", stiffness: 280, damping: 22 }}
       onClick={() => canClick && onClick()}
-      whileHover={canClick ? { scale: 1.08 } : {}}
+      whileHover={canClick ? { scale: 1.1, y: -2 } : {}}
       whileTap={canClick ? { scale: 0.93 } : {}}
     >
       {/* Node circle */}
       <div
-        className="relative flex items-center justify-center rounded-full"
+        className="relative flex items-center justify-center rounded-full transition-shadow duration-300"
         style={{
           width: nodeSize,
           height: nodeSize,
@@ -164,8 +202,8 @@ function StationNode({
         {/* Score badge for completed */}
         {status === "completed" && station.progress?.score != null && (
           <div
-            className="absolute -bottom-1.5 -right-1.5 text-[9px] font-bold px-1 py-0.5 rounded-full text-white"
-            style={{ backgroundColor: theme.primary, border: "2px solid white" }}
+            className="absolute -bottom-1.5 -right-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
+            style={{ backgroundColor: theme.primary, border: "2px solid white", boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}
           >
             {station.progress.score}%
           </div>
@@ -176,7 +214,7 @@ function StationNode({
           <motion.div
             className="absolute inset-0 rounded-full pointer-events-none"
             style={{ border: `2px solid ${theme.primary}` }}
-            animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }}
+            animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
             transition={{ duration: 2.2, repeat: Infinity }}
           />
         )}
@@ -184,21 +222,21 @@ function StationNode({
         {/* Current position indicator */}
         {isCurrentStation && (
           <motion.div
-            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#F59E1C] border-2 border-white shadow-md flex items-center justify-center"
-            animate={{ y: [0, -4, 0] }}
+            className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-[#F59E1C] border-2 border-white shadow-lg flex items-center justify-center"
+            animate={{ y: [0, -5, 0] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           >
-            <span className="text-white text-[8px] font-bold">★</span>
+            <span className="text-white text-[9px] font-bold">★</span>
           </motion.div>
         )}
       </div>
 
       {/* Label */}
       <span
-        className="mt-2 text-[11px] font-medium text-center leading-tight line-clamp-2 px-1"
+        className="mt-2.5 text-xs font-medium text-center leading-tight line-clamp-2 px-1"
         style={{
           color: status === "locked" ? "#9ca3af" : "#374151",
-          maxWidth: "90px",
+          maxWidth: "110px",
         }}
       >
         {title}
@@ -221,27 +259,39 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
     }
   }
 
+  // Reference width for SVG curve calculations
+  const REF_WIDTH = 600;
+
   return (
-    <div className="w-full flex flex-col">
+    <div className="w-full flex flex-col gap-5">
       {levels.map((levelGroup, idx) => {
         const theme = LEVEL_THEME[levelGroup.level] || LEVEL_THEME.A1;
         const nextGroup = levels[idx + 1];
         const nextTheme = nextGroup ? (LEVEL_THEME[nextGroup.level] || LEVEL_THEME.A1) : null;
-        const rows = Math.ceil(levelGroup.stations.length / 3);
-        const height = rows * 130 + 80;
+        const rows = Math.ceil(levelGroup.stations.length / COLS);
+        const height = rows * 160 + 100;
         const completed = levelGroup.stations.filter(s => s.progress?.status === "completed").length;
         const total = levelGroup.stations.length;
         const isActive = levelGroup.level === currentLevel;
 
         return (
           <Fragment key={levelGroup.level}>
-          <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white">
+          <div
+            className="rounded-2xl overflow-hidden shadow-sm"
+            style={{
+              borderLeft: `4px solid ${theme.primary}`,
+              border: `1px solid ${theme.primary}20`,
+              borderLeftWidth: "4px",
+              borderLeftColor: theme.primary,
+              background: `linear-gradient(135deg, ${theme.bgSection} 0%, white 60%)`,
+            }}
+          >
             {/* Level header */}
             <div
               className="px-5 py-4 flex items-center gap-4"
               style={{ background: theme.gradient }}
             >
-              <div className="p-2.5 rounded-xl bg-white/20 flex-shrink-0">
+              <div className="p-2.5 rounded-xl bg-white/20 flex-shrink-0 backdrop-blur-sm">
                 <Shield className="h-5 w-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
@@ -251,7 +301,7 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
                     — {es ? theme.labelEs : theme.label}
                   </span>
                   {isActive && (
-                    <span className="ml-1 text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">
+                    <span className="ml-1 text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
                       {es ? "Actual" : "Current"}
                     </span>
                   )}
@@ -275,54 +325,81 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
 
             {/* Snake grid */}
             <div
-              className="relative mx-auto"
+              className="relative mx-auto px-2"
               style={{
                 height: `${height}px`,
-                backgroundColor: theme.bgSection,
                 minWidth: "320px",
                 maxWidth: "700px",
               }}
             >
-              {/* Connection lines */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
-                {/* Track base — all connections */}
-                {levelGroup.stations.map((_, idx) => {
-                  if (idx === 0) return null;
-                  const from = getPos(idx - 1);
-                  const to = getPos(idx);
+              {/* Connection curves */}
+              <svg
+                className="absolute inset-0 w-full pointer-events-none"
+                style={{ zIndex: 0, height: `${height}px` }}
+                viewBox={`0 0 ${REF_WIDTH} ${height}`}
+                preserveAspectRatio="xMidYMid meet"
+              >
+                <defs>
+                  {/* Glow filter for completed paths */}
+                  <filter id={`glow-${levelGroup.level}`} x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                  {/* Gradient for completed paths */}
+                  <linearGradient id={`grad-${levelGroup.level}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor={theme.primary} stopOpacity="0.8" />
+                    <stop offset="50%" stopColor={theme.line} stopOpacity="1" />
+                    <stop offset="100%" stopColor={theme.primary} stopOpacity="0.8" />
+                  </linearGradient>
+                </defs>
+
+                {/* Track base — all connections (dashed gray) */}
+                {levelGroup.stations.map((_, sIdx) => {
+                  if (sIdx === 0) return null;
+                  const from = getPos(sIdx - 1);
+                  const to = getPos(sIdx);
+                  const d = buildCurvePath(from, to, REF_WIDTH);
                   return (
-                    <line
-                      key={`track-${idx}`}
-                      x1={`${from.x}%`} y1={from.y}
-                      x2={`${to.x}%`} y2={to.y}
-                      stroke="#e5e7eb" strokeWidth={6} strokeLinecap="round"
+                    <path
+                      key={`track-${sIdx}`}
+                      d={d}
+                      fill="none"
+                      stroke="#e5e7eb"
+                      strokeWidth={5}
+                      strokeLinecap="round"
+                      strokeDasharray="8 6"
                     />
                   );
                 })}
+
                 {/* Progress — completed connections on top */}
-                {levelGroup.stations.map((_, idx) => {
-                  if (idx === 0) return null;
-                  const from = getPos(idx - 1);
-                  const to = getPos(idx);
-                  const isComplete = (levelGroup.stations[idx - 1].progress?.status || "locked") === "completed";
+                {levelGroup.stations.map((_, sIdx) => {
+                  if (sIdx === 0) return null;
+                  const from = getPos(sIdx - 1);
+                  const to = getPos(sIdx);
+                  const isComplete = (levelGroup.stations[sIdx - 1].progress?.status || "locked") === "completed";
                   if (!isComplete) return null;
+                  const d = buildCurvePath(from, to, REF_WIDTH);
                   return (
-                    <line
-                      key={`prog-${idx}`}
-                      x1={`${from.x}%`} y1={from.y}
-                      x2={`${to.x}%`} y2={to.y}
-                      stroke={theme.primary} strokeWidth={6} strokeLinecap="round"
+                    <path
+                      key={`prog-${sIdx}`}
+                      d={d}
+                      fill="none"
+                      stroke={`url(#grad-${levelGroup.level})`}
+                      strokeWidth={6}
+                      strokeLinecap="round"
+                      filter={`url(#glow-${levelGroup.level})`}
                     />
                   );
                 })}
               </svg>
 
               {/* Stations */}
-              {levelGroup.stations.map((station, idx) => (
+              {levelGroup.stations.map((station, sIdx) => (
                 <StationNode
                   key={station.id}
                   station={station}
-                  index={idx}
+                  index={sIdx}
                   isCurrentStation={station.id === currentStationId}
                   theme={theme}
                   onClick={() => onStationClick(station.id)}
@@ -332,16 +409,23 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
             </div>
           </div>
 
+          {/* Level connector */}
           {nextTheme && (
             <div className="flex flex-col items-center py-1">
-              <div className="w-px h-5" style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }} />
               <div
-                className="w-7 h-7 rounded-full border-2 bg-white flex items-center justify-center shadow-sm"
+                className="w-0.5 h-6 rounded-full"
+                style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
+              />
+              <div
+                className="w-9 h-9 rounded-full border-2 bg-white flex items-center justify-center shadow-md"
                 style={{ borderColor: nextTheme.primary }}
               >
-                <ChevronDown size={14} style={{ color: nextTheme.primary }} />
+                <ChevronDown size={16} style={{ color: nextTheme.primary }} />
               </div>
-              <div className="w-px h-5" style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }} />
+              <div
+                className="w-0.5 h-6 rounded-full"
+                style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
+              />
             </div>
           )}
           </Fragment>
