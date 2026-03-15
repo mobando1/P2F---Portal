@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Lock, Check, Play, Star, Shield, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
@@ -64,62 +64,63 @@ const LEVEL_THEME: Record<string, {
   },
 };
 
+// Layout constants
 const COLS = 4;
-const ROW_H = 160;   // vertical spacing between rows in px
-const FIRST_Y = 90;  // first row y offset in px
+const ROW_H = 160;
+const FIRST_Y = 90;
+const NODE_R = 36; // half of 72px node
 
-// Node radius in each axis (viewBox x = percentage, y = pixels)
-const RX = 5.5;  // ~half of node width in % of container (~72px / ~700px * 100 / 2)
-const RY = 36;    // half of 72px node height
-
-function getPos(index: number) {
+/** Convert grid index to pixel position given a container width */
+function getPosPx(index: number, containerWidth: number) {
   const row = Math.floor(index / COLS);
   const colInRow = index % COLS;
   const isReversed = row % 2 === 1;
   const col = isReversed ? COLS - 1 - colInRow : colInRow;
+  const pct = 14 + col * 24; // 14%, 38%, 62%, 86%
   return {
-    x: 14 + col * 24,       // 14%, 38%, 62%, 86%  (percentage units)
-    y: row * ROW_H + FIRST_Y, // pixel units
+    x: (pct / 100) * containerWidth,
+    y: row * ROW_H + FIRST_Y,
+    pct, // keep percentage for CSS positioning
   };
 }
 
 /**
- * Build SVG path connecting the EDGE of one circle to the EDGE of the next.
- * Coordinate system: x = percentage (0-100), y = pixels.
+ * Build SVG path connecting edge-to-edge between two circles.
+ * All coordinates in absolute pixels — no scaling issues.
  */
-function buildCurvePath(
+function buildPath(
   from: { x: number; y: number },
   to: { x: number; y: number },
 ): string {
   const sameRow = Math.abs(from.y - to.y) < 2;
 
   if (sameRow) {
-    // Horizontal connection along the same row
     const goingRight = from.x < to.x;
-    const sx = goingRight ? from.x + RX : from.x - RX;  // exit edge
-    const ex = goingRight ? to.x - RX : to.x + RX;      // enter edge
+    // Start/end at the horizontal edge of each circle
+    const sx = goingRight ? from.x + NODE_R : from.x - NODE_R;
+    const ex = goingRight ? to.x - NODE_R : to.x + NODE_R;
     const sy = from.y;
     const ey = to.y;
-    // Gentle downward arc so the line passes clearly below the node centers
+    // Gentle downward arc
     const mx = (sx + ex) / 2;
-    const my = sy + 22;
+    const my = sy + 20;
     return `M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`;
   }
 
-  // U-turn: row change — exit bottom edge, curve out, enter top edge of next
+  // U-turn: exit bottom of from → enter top of to
   const sx = from.x;
-  const sy = from.y + RY;   // bottom edge
+  const sy = from.y + NODE_R;
   const ex = to.x;
-  const ey = to.y - RY;     // top edge
+  const ey = to.y - NODE_R;
 
-  const isRightSide = from.x > 50;
-  // Bulge outward — to the right if on right side, to the left if on left
-  const bulgeX = isRightSide
-    ? Math.min(from.x + 14, 97)   // push right but stay in bounds
-    : Math.max(from.x - 14, 3);   // push left but stay in bounds
+  // Curve outward from the side the node is on
+  const isRight = from.x > to.x || from.x > 200; // crude but works for 4-col layout
+  const offset = 70; // how far the U-turn bulges outward
+  const bulgeX = isRight
+    ? Math.max(from.x, to.x) + offset
+    : Math.min(from.x, to.x) - offset;
 
-  // Cubic bezier: two control points create a smooth U-turn
-  return `M ${sx} ${sy} C ${bulgeX} ${sy + 40}, ${bulgeX} ${ey - 40}, ${ex} ${ey}`;
+  return `M ${sx} ${sy} C ${bulgeX} ${sy + 50}, ${bulgeX} ${ey - 50}, ${ex} ${ey}`;
 }
 
 function StationNode({
@@ -142,7 +143,14 @@ function StationNode({
   const isMilestone = station.stationType === "milestone";
   const canClick = status !== "locked";
 
-  const pos = getPos(index);
+  // Use percentage for CSS positioning (always works regardless of container width)
+  const row = Math.floor(index / COLS);
+  const colInRow = index % COLS;
+  const isReversed = row % 2 === 1;
+  const col = isReversed ? COLS - 1 - colInRow : colInRow;
+  const pct = 14 + col * 24;
+  const yPx = row * ROW_H + FIRST_Y;
+
   const nodeSize = isMilestone ? 80 : 72;
 
   const styles = (() => {
@@ -189,8 +197,8 @@ function StationNode({
     <motion.div
       className="absolute flex flex-col items-center"
       style={{
-        left: `${pos.x}%`,
-        top: `${pos.y}px`,
+        left: `${pct}%`,
+        top: `${yPx}px`,
         transform: "translate(-50%, -50%)",
         opacity: status === "locked" ? 0.5 : 1,
         cursor: canClick ? "pointer" : "default",
@@ -258,6 +266,78 @@ function StationNode({
   );
 }
 
+/** Renders the SVG connector lines for one level group */
+function ConnectorLines({
+  stations,
+  containerWidth,
+  height,
+  theme,
+  levelKey,
+}: {
+  stations: Station[];
+  containerWidth: number;
+  height: number;
+  theme: typeof LEVEL_THEME.A1;
+  levelKey: string;
+}) {
+  if (containerWidth === 0) return null; // not measured yet
+
+  return (
+    <svg
+      className="absolute inset-0 pointer-events-none"
+      width={containerWidth}
+      height={height}
+      viewBox={`0 0 ${containerWidth} ${height}`}
+      style={{ zIndex: 1 }}
+    >
+      <defs>
+        <filter id={`glow-${levelKey}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+
+      {/* Base track — dashed gray */}
+      {stations.map((_, i) => {
+        if (i === 0) return null;
+        const from = getPosPx(i - 1, containerWidth);
+        const to = getPosPx(i, containerWidth);
+        return (
+          <path
+            key={`base-${i}`}
+            d={buildPath(from, to)}
+            fill="none"
+            stroke="#d1d5db"
+            strokeWidth={4}
+            strokeLinecap="round"
+            strokeDasharray="10 8"
+          />
+        );
+      })}
+
+      {/* Completed track — solid colored with glow */}
+      {stations.map((_, i) => {
+        if (i === 0) return null;
+        const prevStatus = stations[i - 1].progress?.status || "locked";
+        if (prevStatus !== "completed") return null;
+        const from = getPosPx(i - 1, containerWidth);
+        const to = getPosPx(i, containerWidth);
+        return (
+          <path
+            key={`done-${i}`}
+            d={buildPath(from, to)}
+            fill="none"
+            stroke={theme.primary}
+            strokeWidth={5}
+            strokeLinecap="round"
+            filter={`url(#glow-${levelKey})`}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function SnakePath({ levels, currentLevel, onStationClick }: SnakePathProps) {
   const { language } = useLanguage();
   const es = language === "es";
@@ -278,164 +358,159 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
         const theme = LEVEL_THEME[levelGroup.level] || LEVEL_THEME.A1;
         const nextGroup = levels[idx + 1];
         const nextTheme = nextGroup ? (LEVEL_THEME[nextGroup.level] || LEVEL_THEME.A1) : null;
-        const rows = Math.ceil(levelGroup.stations.length / COLS);
-        const height = rows * ROW_H + FIRST_Y + 30; // +30 for bottom padding
-        const completed = levelGroup.stations.filter(s => s.progress?.status === "completed").length;
-        const total = levelGroup.stations.length;
-        const isActive = levelGroup.level === currentLevel;
 
         return (
           <Fragment key={levelGroup.level}>
-          <div
-            className="rounded-2xl overflow-hidden shadow-sm"
-            style={{
-              borderLeft: `4px solid ${theme.primary}`,
-              border: `1px solid ${theme.primary}20`,
-              borderLeftWidth: "4px",
-              borderLeftColor: theme.primary,
-              background: `linear-gradient(135deg, ${theme.bgSection} 0%, white 60%)`,
-            }}
-          >
-            {/* Level header */}
-            <div
-              className="px-5 py-4 flex items-center gap-4"
-              style={{ background: theme.gradient }}
-            >
-              <div className="p-2.5 rounded-xl bg-white/20 flex-shrink-0 backdrop-blur-sm">
-                <Shield className="h-5 w-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-white font-bold text-lg">{levelGroup.level}</span>
-                  <span className="text-white/80 text-sm font-medium">
-                    — {es ? theme.labelEs : theme.label}
-                  </span>
-                  {isActive && (
-                    <span className="ml-1 text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
-                      {es ? "Actual" : "Current"}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 rounded-full bg-white/25 overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full bg-white"
-                      initial={{ width: 0 }}
-                      animate={{ width: total > 0 ? `${Math.round((completed / total) * 100)}%` : "0%" }}
-                      transition={{ duration: 0.8, delay: 0.2 }}
-                    />
-                  </div>
-                  <span className="text-white/80 text-[11px] font-medium flex-shrink-0">
-                    {completed}/{total}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Snake grid — SVG viewBox x=percentage, y=pixels → matches CSS positioning */}
-            <div
-              className="relative mx-auto"
-              style={{
-                height: `${height}px`,
-                minWidth: "320px",
-                maxWidth: "700px",
-              }}
-            >
-              <svg
-                className="absolute inset-0 pointer-events-none"
-                width="100%"
-                height={height}
-                viewBox={`0 0 100 ${height}`}
-                preserveAspectRatio="none"
-                style={{ zIndex: 0 }}
-              >
-                <defs>
-                  <filter id={`glow-${levelGroup.level}`} x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="1.5" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                  </filter>
-                </defs>
-
-                {/* Base track — dashed gray for all connections */}
-                {levelGroup.stations.map((_, sIdx) => {
-                  if (sIdx === 0) return null;
-                  const from = getPos(sIdx - 1);
-                  const to = getPos(sIdx);
-                  const d = buildCurvePath(from, to);
-                  return (
-                    <path
-                      key={`track-${sIdx}`}
-                      d={d}
-                      fill="none"
-                      stroke="#e0e2e7"
-                      strokeWidth={1.2}
-                      strokeLinecap="round"
-                      strokeDasharray="2 2"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                  );
-                })}
-
-                {/* Completed connections — solid colored on top */}
-                {levelGroup.stations.map((_, sIdx) => {
-                  if (sIdx === 0) return null;
-                  const from = getPos(sIdx - 1);
-                  const to = getPos(sIdx);
-                  const prevStatus = levelGroup.stations[sIdx - 1].progress?.status || "locked";
-                  if (prevStatus !== "completed") return null;
-                  const d = buildCurvePath(from, to);
-                  return (
-                    <path
-                      key={`prog-${sIdx}`}
-                      d={d}
-                      fill="none"
-                      stroke={theme.primary}
-                      strokeWidth={2.5}
-                      strokeLinecap="round"
-                      vectorEffect="non-scaling-stroke"
-                      filter={`url(#glow-${levelGroup.level})`}
-                    />
-                  );
-                })}
-              </svg>
-
-              {/* Station nodes (HTML, positioned with CSS %) */}
-              {levelGroup.stations.map((station, sIdx) => (
-                <StationNode
-                  key={station.id}
-                  station={station}
-                  index={sIdx}
-                  isCurrentStation={station.id === currentStationId}
-                  theme={theme}
-                  onClick={() => onStationClick(station.id)}
-                  language={language}
+            <LevelSection
+              levelGroup={levelGroup}
+              theme={theme}
+              isActive={levelGroup.level === currentLevel}
+              currentStationId={currentStationId}
+              onStationClick={onStationClick}
+              language={language}
+              es={es}
+            />
+            {nextTheme && (
+              <div className="flex flex-col items-center py-1">
+                <div
+                  className="w-0.5 h-6 rounded-full"
+                  style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
                 />
-              ))}
-            </div>
-          </div>
-
-          {/* Level connector */}
-          {nextTheme && (
-            <div className="flex flex-col items-center py-1">
-              <div
-                className="w-0.5 h-6 rounded-full"
-                style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
-              />
-              <div
-                className="w-9 h-9 rounded-full border-2 bg-white flex items-center justify-center shadow-md"
-                style={{ borderColor: nextTheme.primary }}
-              >
-                <ChevronDown size={16} style={{ color: nextTheme.primary }} />
+                <div
+                  className="w-9 h-9 rounded-full border-2 bg-white flex items-center justify-center shadow-md"
+                  style={{ borderColor: nextTheme.primary }}
+                >
+                  <ChevronDown size={16} style={{ color: nextTheme.primary }} />
+                </div>
+                <div
+                  className="w-0.5 h-6 rounded-full"
+                  style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
+                />
               </div>
-              <div
-                className="w-0.5 h-6 rounded-full"
-                style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
-              />
-            </div>
-          )}
+            )}
           </Fragment>
         );
       })}
+    </div>
+  );
+}
+
+/** Individual level section with its own ref-measured container */
+function LevelSection({
+  levelGroup,
+  theme,
+  isActive,
+  currentStationId,
+  onStationClick,
+  language,
+  es,
+}: {
+  levelGroup: LevelGroup;
+  theme: typeof LEVEL_THEME.A1;
+  isActive: boolean;
+  currentStationId: number | null;
+  onStationClick: (id: number) => void;
+  language: string;
+  es: boolean;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    function measure() {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const rows = Math.ceil(levelGroup.stations.length / COLS);
+  const height = rows * ROW_H + FIRST_Y + 30;
+  const completed = levelGroup.stations.filter(s => s.progress?.status === "completed").length;
+  const total = levelGroup.stations.length;
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden shadow-sm"
+      style={{
+        borderLeft: `4px solid ${theme.primary}`,
+        border: `1px solid ${theme.primary}20`,
+        borderLeftWidth: "4px",
+        borderLeftColor: theme.primary,
+        background: `linear-gradient(135deg, ${theme.bgSection} 0%, white 60%)`,
+      }}
+    >
+      {/* Level header */}
+      <div
+        className="px-5 py-4 flex items-center gap-4"
+        style={{ background: theme.gradient }}
+      >
+        <div className="p-2.5 rounded-xl bg-white/20 flex-shrink-0 backdrop-blur-sm">
+          <Shield className="h-5 w-5 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-white font-bold text-lg">{levelGroup.level}</span>
+            <span className="text-white/80 text-sm font-medium">
+              — {es ? theme.labelEs : theme.label}
+            </span>
+            {isActive && (
+              <span className="ml-1 text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
+                {es ? "Actual" : "Current"}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 rounded-full bg-white/25 overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-white"
+                initial={{ width: 0 }}
+                animate={{ width: total > 0 ? `${Math.round((completed / total) * 100)}%` : "0%" }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              />
+            </div>
+            <span className="text-white/80 text-[11px] font-medium flex-shrink-0">
+              {completed}/{total}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Snake grid */}
+      <div
+        ref={containerRef}
+        className="relative mx-auto"
+        style={{
+          height: `${height}px`,
+          minWidth: "320px",
+          maxWidth: "700px",
+        }}
+      >
+        {/* SVG lines — rendered in pixel coordinates matching the container */}
+        <ConnectorLines
+          stations={levelGroup.stations}
+          containerWidth={containerWidth}
+          height={height}
+          theme={theme}
+          levelKey={levelGroup.level}
+        />
+
+        {/* Station nodes — positioned with CSS percentages */}
+        {levelGroup.stations.map((station, sIdx) => (
+          <StationNode
+            key={station.id}
+            station={station}
+            index={sIdx}
+            isCurrentStation={station.id === currentStationId}
+            theme={theme}
+            onClick={() => onStationClick(station.id)}
+            language={language}
+          />
+        ))}
+      </div>
     </div>
   );
 }
