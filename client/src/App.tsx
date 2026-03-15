@@ -10,6 +10,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { isAuthenticated, getCurrentUser, getSmartRedirect, validateSession } from "@/lib/auth";
 import HelpButton from "@/components/HelpButton";
 import { useWebSocketConnection, useWsQueryInvalidation } from "@/lib/websocket";
+import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 
 // Lazy-loaded pages for code splitting
 const HomePage = lazy(() => import("@/pages/home"));
@@ -230,6 +231,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
           <CurrencyProvider>
+            <OnboardingProvider>
             <TooltipProvider>
               <WebSocketInit />
               <EmailVerificationBanner />
@@ -237,6 +239,7 @@ function App() {
               <Router />
               <HelpButton />
             </TooltipProvider>
+            </OnboardingProvider>
           </CurrencyProvider>
         </LanguageProvider>
       </QueryClientProvider>

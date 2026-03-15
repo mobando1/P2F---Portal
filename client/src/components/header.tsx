@@ -23,6 +23,7 @@ import { LogOut, User, Settings, Menu, Sparkles, GraduationCap, MessageCircle, C
 import LanguageSwitcher from "./language-switcher";
 import CurrencySwitcher from "./currency-switcher";
 import NotificationBell from "./NotificationBell";
+import { Coachmark } from "./onboarding/Coachmark";
 
 export default function Header() {
   const user = getCurrentUser();
@@ -98,15 +99,51 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
-            {primaryLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium text-sm"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {primaryLinks.map((link) => {
+              const coachmarkProps: Record<string, { id: string; title: string; titleEs: string; desc: string; descEs: string; delay: number }> = {
+                "/tutors": {
+                  id: "nav-tutors", title: "Find a Tutor", titleEs: "Buscar Tutor",
+                  desc: "Browse tutors and book your free trial class here.",
+                  descEs: "Aquí puedes ver tutores y reservar tu clase de prueba gratis.",
+                  delay: 1200,
+                },
+                "/dashboard": {
+                  id: "nav-dashboard", title: "My Dashboard", titleEs: "Mi Panel",
+                  desc: "View your upcoming classes, progress, and stats.",
+                  descEs: "Ve tus clases próximas, progreso y estadísticas.",
+                  delay: 1800,
+                },
+                "/learning-path": {
+                  id: "nav-path", title: "My Learning Path", titleEs: "Mi Camino",
+                  desc: "Complete stations to progress through the levels.",
+                  descEs: "Completa estaciones para avanzar por los niveles.",
+                  delay: 2400,
+                },
+              };
+              const cm = coachmarkProps[link.href];
+              const node = (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium text-sm"
+                >
+                  {link.label}
+                </Link>
+              );
+              if (!cm) return node;
+              return (
+                <Coachmark
+                  key={link.href}
+                  id={cm.id}
+                  title={language === "es" ? cm.titleEs : cm.title}
+                  description={language === "es" ? cm.descEs : cm.desc}
+                  position="bottom"
+                  delay={cm.delay}
+                >
+                  {node}
+                </Coachmark>
+              );
+            })}
             {/* More dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -7,6 +7,7 @@ import { getCurrentUser, isAuthenticated } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/header";
+import { Coachmark } from "@/components/onboarding/Coachmark";
 import { ChatBubble } from "@/components/ai/chat-bubble";
 import { VoiceInput } from "@/components/ai/voice-input";
 import { useTTS } from "@/hooks/use-tts";
@@ -375,6 +376,15 @@ export default function AIPracticePage() {
               >
                 <Menu className="w-5 h-5 text-gray-600" />
               </button>
+              <Coachmark
+                id="ai-chat-intro"
+                title={isEs ? "Practica con Lingo" : "Practice with Lingo"}
+                description={isEs
+                  ? "Escribe en español y Lingo te corrige y explica los errores al instante."
+                  : "Write in Spanish and Lingo corrects and explains errors instantly."}
+                position="bottom"
+                delay={700}
+              >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center shadow-md shadow-amber-200/40 ring-1 ring-amber-200/50">
                   <LingoMascot size="md" />
@@ -398,6 +408,7 @@ export default function AIPracticePage() {
                   </p>
                 </div>
               </div>
+              </Coachmark>
             </div>
             {/* Panel tabs */}
             <div className="flex items-center gap-1">

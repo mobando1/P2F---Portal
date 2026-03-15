@@ -9,6 +9,7 @@ import { getCurrentUser, isAuthenticated } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
+import { Coachmark } from "@/components/onboarding/Coachmark";
 import SubscriptionCard from "@/components/subscription-card";
 import { ClassCard } from "@/components/ClassCard";
 import RescheduleDialog from "@/components/RescheduleDialog";
@@ -238,6 +239,15 @@ export default function Dashboard() {
 
         {/* Trial Flow Banner */}
         {!user.trialCompleted && (
+          <Coachmark
+            id="dashboard-trial"
+            title={language === "es" ? "¡Clase de Prueba Gratis!" : "Free Trial Class!"}
+            description={language === "es"
+              ? "Tienes una clase gratis. Toca 'Reservar Ahora' para elegir tu tutor."
+              : "You have a free class. Tap 'Book Now' to pick your tutor."}
+            position="bottom"
+            delay={500}
+          >
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -270,6 +280,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </motion.div>
+          </Coachmark>
         )}
 
         {user.trialCompleted && (user.classCredits ?? 0) > 0 && (
@@ -490,6 +501,15 @@ export default function Dashboard() {
             )}
 
             {/* AI Practice Stats */}
+            <Coachmark
+              id="dashboard-ai"
+              title={language === "es" ? "Practica con IA" : "AI Practice"}
+              description={language === "es"
+                ? "Practica español con IA entre clases. Gratis hasta 20 mensajes/día."
+                : "Practice Spanish with AI between classes. Free up to 20 messages/day."}
+              position="left"
+              delay={2000}
+            >
             <Card className="border-0 shadow-lg overflow-hidden">
               <div className="bg-gradient-to-r from-[#F59E1C] to-[#e08a0e] p-4">
                 <div className="flex items-center gap-2 text-white mb-1">
@@ -551,6 +571,7 @@ export default function Dashboard() {
                 </Button>
               </CardContent>
             </Card>
+            </Coachmark>
 
             {/* Achievements / Gamification */}
             <Card className="border-0 shadow-lg overflow-hidden">
