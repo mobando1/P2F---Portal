@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState, useEffect } from "react";
+import { Fragment } from "react";
 import { motion } from "framer-motion";
 import { Lock, Check, Play, Star, Shield, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
@@ -64,68 +64,84 @@ const LEVEL_THEME: Record<string, {
   },
 };
 
-// Layout constants
-const COLS = 4;
-const ROW_H = 160;
-const FIRST_Y = 90;
-const NODE_R = 36; // half of 72px node
+// Duolingo-style sine-wave offsets
+const WAVE_AMPLITUDE = typeof window !== "undefined" && window.innerWidth < 640 ? 45 : 80;
 
-/** Convert grid index to pixel position given a container width */
-function getPosPx(index: number, containerWidth: number) {
-  const row = Math.floor(index / COLS);
-  const colInRow = index % COLS;
-  const isReversed = row % 2 === 1;
-  const col = isReversed ? COLS - 1 - colInRow : colInRow;
-  const pct = 14 + col * 24; // 14%, 38%, 62%, 86%
-  return {
-    x: (pct / 100) * containerWidth,
-    y: row * ROW_H + FIRST_Y,
-    pct, // keep percentage for CSS positioning
-  };
+function getStationOffset(index: number): number {
+  return Math.sin(index * (Math.PI / 3)) * WAVE_AMPLITUDE;
 }
 
-/**
- * Build SVG path connecting edge-to-edge between two circles.
- * All coordinates in absolute pixels — no scaling issues.
- */
-function buildPath(
-  from: { x: number; y: number },
-  to: { x: number; y: number },
-): string {
-  const sameRow = Math.abs(from.y - to.y) < 2;
+/** Small inline SVG connector between two adjacent stations */
+function ConnectorSVG({
+  fromOffsetX,
+  toOffsetX,
+  prevStatus,
+  theme,
+}: {
+  fromOffsetX: number;
+  toOffsetX: number;
+  prevStatus: string | undefined;
+  theme: typeof LEVEL_THEME.A1;
+}) {
+  const HEIGHT = 48;
+  const isCompleted = prevStatus === "completed";
 
-  if (sameRow) {
-    const goingRight = from.x < to.x;
-    // Start/end at the horizontal edge of each circle
-    const sx = goingRight ? from.x + NODE_R : from.x - NODE_R;
-    const ex = goingRight ? to.x - NODE_R : to.x + NODE_R;
-    const sy = from.y;
-    const ey = to.y;
-    // Gentle downward arc
-    const mx = (sx + ex) / 2;
-    const my = sy + 20;
-    return `M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`;
-  }
+  const minX = Math.min(fromOffsetX, toOffsetX);
+  const maxX = Math.max(fromOffsetX, toOffsetX);
+  const padding = 24;
+  const svgWidth = Math.max(maxX - minX + padding * 2, 60);
+  const centerOffset = (minX + maxX) / 2;
 
-  // U-turn: exit bottom of from → enter top of to
-  const sx = from.x;
-  const sy = from.y + NODE_R;
-  const ex = to.x;
-  const ey = to.y - NODE_R;
+  const localFromX = fromOffsetX - centerOffset + svgWidth / 2;
+  const localToX = toOffsetX - centerOffset + svgWidth / 2;
 
-  // Curve outward from the side the node is on
-  const isRight = from.x > to.x || from.x > 200; // crude but works for 4-col layout
-  const offset = 70; // how far the U-turn bulges outward
-  const bulgeX = isRight
-    ? Math.max(from.x, to.x) + offset
-    : Math.min(from.x, to.x) - offset;
+  const midY = HEIGHT / 2;
+  const d = `M ${localFromX} 0 C ${localFromX} ${midY}, ${localToX} ${midY}, ${localToX} ${HEIGHT}`;
 
-  return `M ${sx} ${sy} C ${bulgeX} ${sy + 50}, ${bulgeX} ${ey - 50}, ${ex} ${ey}`;
+  return (
+    <div
+      className="flex-shrink-0"
+      style={{ transform: `translateX(${centerOffset}px)` }}
+    >
+      <svg
+        width={svgWidth}
+        height={HEIGHT}
+        viewBox={`0 0 ${svgWidth} ${HEIGHT}`}
+        className="overflow-visible"
+      >
+        {/* Base dashed track */}
+        <path
+          d={d}
+          fill="none"
+          stroke="#d1d5db"
+          strokeWidth={3}
+          strokeDasharray="8 6"
+          strokeLinecap="round"
+        />
+        {/* Completed solid track with glow */}
+        {isCompleted && (
+          <motion.path
+            d={d}
+            fill="none"
+            stroke={theme.primary}
+            strokeWidth={4}
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            whileInView={{ pathLength: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            style={{ filter: `drop-shadow(0 0 4px ${theme.primary}66)` }}
+          />
+        )}
+      </svg>
+    </div>
+  );
 }
 
 function StationNode({
   station,
   index,
+  offsetX,
   isCurrentStation,
   theme,
   onClick,
@@ -133,6 +149,7 @@ function StationNode({
 }: {
   station: Station;
   index: number;
+  offsetX: number;
   isCurrentStation: boolean;
   theme: typeof LEVEL_THEME.A1;
   onClick: () => void;
@@ -142,14 +159,6 @@ function StationNode({
   const title = language === "es" ? station.titleEs : station.title;
   const isMilestone = station.stationType === "milestone";
   const canClick = status !== "locked";
-
-  // Use percentage for CSS positioning (always works regardless of container width)
-  const row = Math.floor(index / COLS);
-  const colInRow = index % COLS;
-  const isReversed = row % 2 === 1;
-  const col = isReversed ? COLS - 1 - colInRow : colInRow;
-  const pct = 14 + col * 24;
-  const yPx = row * ROW_H + FIRST_Y;
 
   const nodeSize = isMilestone ? 80 : 72;
 
@@ -195,14 +204,11 @@ function StationNode({
 
   return (
     <motion.div
-      className="absolute flex flex-col items-center"
+      className="flex flex-col items-center flex-shrink-0"
       style={{
-        left: `${pct}%`,
-        top: `${yPx}px`,
-        transform: "translate(-50%, -50%)",
+        transform: `translateX(${offsetX}px)`,
         opacity: status === "locked" ? 0.5 : 1,
         cursor: canClick ? "pointer" : "default",
-        zIndex: 2,
       }}
       initial={{ scale: 0, opacity: 0 }}
       whileInView={{ scale: 1, opacity: status === "locked" ? 0.5 : 1 }}
@@ -258,6 +264,7 @@ function StationNode({
         style={{
           color: status === "locked" ? "#9ca3af" : "#374151",
           maxWidth: "110px",
+          minHeight: "32px",
         }}
       >
         {title}
@@ -266,136 +273,7 @@ function StationNode({
   );
 }
 
-/** Renders the SVG connector lines for one level group */
-function ConnectorLines({
-  stations,
-  containerWidth,
-  height,
-  theme,
-  levelKey,
-}: {
-  stations: Station[];
-  containerWidth: number;
-  height: number;
-  theme: typeof LEVEL_THEME.A1;
-  levelKey: string;
-}) {
-  if (containerWidth === 0) return null; // not measured yet
-
-  return (
-    <svg
-      className="absolute inset-0 pointer-events-none"
-      width={containerWidth}
-      height={height}
-      viewBox={`0 0 ${containerWidth} ${height}`}
-      style={{ zIndex: 1 }}
-    >
-      <defs>
-        <filter id={`glow-${levelKey}`} x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
-      </defs>
-
-      {/* Base track — dashed gray */}
-      {stations.map((_, i) => {
-        if (i === 0) return null;
-        const from = getPosPx(i - 1, containerWidth);
-        const to = getPosPx(i, containerWidth);
-        return (
-          <path
-            key={`base-${i}`}
-            d={buildPath(from, to)}
-            fill="none"
-            stroke="#d1d5db"
-            strokeWidth={4}
-            strokeLinecap="round"
-            strokeDasharray="10 8"
-          />
-        );
-      })}
-
-      {/* Completed track — solid colored with glow */}
-      {stations.map((_, i) => {
-        if (i === 0) return null;
-        const prevStatus = stations[i - 1].progress?.status || "locked";
-        if (prevStatus !== "completed") return null;
-        const from = getPosPx(i - 1, containerWidth);
-        const to = getPosPx(i, containerWidth);
-        return (
-          <path
-            key={`done-${i}`}
-            d={buildPath(from, to)}
-            fill="none"
-            stroke={theme.primary}
-            strokeWidth={5}
-            strokeLinecap="round"
-            filter={`url(#glow-${levelKey})`}
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
-export default function SnakePath({ levels, currentLevel, onStationClick }: SnakePathProps) {
-  const { language } = useLanguage();
-  const es = language === "es";
-
-  let currentStationId: number | null = null;
-  for (const level of levels) {
-    if (level.level === currentLevel) {
-      const active = level.stations.find(
-        s => s.progress?.status === "available" || s.progress?.status === "in_progress"
-      );
-      if (active) { currentStationId = active.id; break; }
-    }
-  }
-
-  return (
-    <div className="w-full flex flex-col gap-5">
-      {levels.map((levelGroup, idx) => {
-        const theme = LEVEL_THEME[levelGroup.level] || LEVEL_THEME.A1;
-        const nextGroup = levels[idx + 1];
-        const nextTheme = nextGroup ? (LEVEL_THEME[nextGroup.level] || LEVEL_THEME.A1) : null;
-
-        return (
-          <Fragment key={levelGroup.level}>
-            <LevelSection
-              levelGroup={levelGroup}
-              theme={theme}
-              isActive={levelGroup.level === currentLevel}
-              currentStationId={currentStationId}
-              onStationClick={onStationClick}
-              language={language}
-              es={es}
-            />
-            {nextTheme && (
-              <div className="flex flex-col items-center py-1">
-                <div
-                  className="w-0.5 h-6 rounded-full"
-                  style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
-                />
-                <div
-                  className="w-9 h-9 rounded-full border-2 bg-white flex items-center justify-center shadow-md"
-                  style={{ borderColor: nextTheme.primary }}
-                >
-                  <ChevronDown size={16} style={{ color: nextTheme.primary }} />
-                </div>
-                <div
-                  className="w-0.5 h-6 rounded-full"
-                  style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
-                />
-              </div>
-            )}
-          </Fragment>
-        );
-      })}
-    </div>
-  );
-}
-
-/** Individual level section with its own ref-measured container */
+/** Individual level section */
 function LevelSection({
   levelGroup,
   theme,
@@ -413,22 +291,6 @@ function LevelSection({
   language: string;
   es: boolean;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-
-  useEffect(() => {
-    function measure() {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
-      }
-    }
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
-
-  const rows = Math.ceil(levelGroup.stations.length / COLS);
-  const height = rows * ROW_H + FIRST_Y + 30;
   const completed = levelGroup.stations.filter(s => s.progress?.status === "completed").length;
   const total = levelGroup.stations.length;
 
@@ -479,38 +341,93 @@ function LevelSection({
         </div>
       </div>
 
-      {/* Snake grid */}
-      <div
-        ref={containerRef}
-        className="relative mx-auto"
-        style={{
-          height: `${height}px`,
-          minWidth: "320px",
-          maxWidth: "700px",
-        }}
-      >
-        {/* SVG lines — rendered in pixel coordinates matching the container */}
-        <ConnectorLines
-          stations={levelGroup.stations}
-          containerWidth={containerWidth}
-          height={height}
-          theme={theme}
-          levelKey={levelGroup.level}
-        />
+      {/* Vertical winding path */}
+      <div className="flex flex-col items-center py-8 overflow-hidden">
+        {levelGroup.stations.map((station, i) => {
+          const currOffset = getStationOffset(i);
+          const prevOffset = i > 0 ? getStationOffset(i - 1) : 0;
+          const prevStatus = i > 0 ? levelGroup.stations[i - 1].progress?.status : undefined;
 
-        {/* Station nodes — positioned with CSS percentages */}
-        {levelGroup.stations.map((station, sIdx) => (
-          <StationNode
-            key={station.id}
-            station={station}
-            index={sIdx}
-            isCurrentStation={station.id === currentStationId}
-            theme={theme}
-            onClick={() => onStationClick(station.id)}
-            language={language}
-          />
-        ))}
+          return (
+            <Fragment key={station.id}>
+              {i > 0 && (
+                <ConnectorSVG
+                  fromOffsetX={prevOffset}
+                  toOffsetX={currOffset}
+                  prevStatus={prevStatus}
+                  theme={theme}
+                />
+              )}
+              <StationNode
+                station={station}
+                index={i}
+                offsetX={currOffset}
+                isCurrentStation={station.id === currentStationId}
+                theme={theme}
+                onClick={() => onStationClick(station.id)}
+                language={language}
+              />
+            </Fragment>
+          );
+        })}
       </div>
+    </div>
+  );
+}
+
+export default function SnakePath({ levels, currentLevel, onStationClick }: SnakePathProps) {
+  const { language } = useLanguage();
+  const es = language === "es";
+
+  let currentStationId: number | null = null;
+  for (const level of levels) {
+    if (level.level === currentLevel) {
+      const active = level.stations.find(
+        s => s.progress?.status === "available" || s.progress?.status === "in_progress"
+      );
+      if (active) { currentStationId = active.id; break; }
+    }
+  }
+
+  return (
+    <div className="w-full max-w-lg mx-auto flex flex-col gap-5">
+      {levels.map((levelGroup, idx) => {
+        const theme = LEVEL_THEME[levelGroup.level] || LEVEL_THEME.A1;
+        const nextGroup = levels[idx + 1];
+        const nextTheme = nextGroup ? (LEVEL_THEME[nextGroup.level] || LEVEL_THEME.A1) : null;
+
+        return (
+          <Fragment key={levelGroup.level}>
+            <LevelSection
+              levelGroup={levelGroup}
+              theme={theme}
+              isActive={levelGroup.level === currentLevel}
+              currentStationId={currentStationId}
+              onStationClick={onStationClick}
+              language={language}
+              es={es}
+            />
+            {nextTheme && (
+              <div className="flex flex-col items-center py-1">
+                <div
+                  className="w-0.5 h-6 rounded-full"
+                  style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
+                />
+                <div
+                  className="w-9 h-9 rounded-full border-2 bg-white flex items-center justify-center shadow-md"
+                  style={{ borderColor: nextTheme.primary }}
+                >
+                  <ChevronDown size={16} style={{ color: nextTheme.primary }} />
+                </div>
+                <div
+                  className="w-0.5 h-6 rounded-full"
+                  style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
+                />
+              </div>
+            )}
+          </Fragment>
+        );
+      })}
     </div>
   );
 }
