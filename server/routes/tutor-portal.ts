@@ -448,6 +448,101 @@ export function registerTutorPortalRoutes(app: Express) {
     }
   });
 
+  // Student full timeline — classes with notes, quizzes, AI activity, assignments
+  app.get("/api/tutor/students/:studentId/timeline", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      const studentId = parseInt(req.params.studentId);
+
+      // Verify this is the tutor's student
+      const tutorClasses = await storage.getClassesByTutor(tutor.id);
+      const isMyStudent = tutorClasses.some(c => c.userId === studentId);
+      if (!isMyStudent) return res.status(403).json({ message: "Not your student" });
+
+      const student = await storage.getUser(studentId);
+      if (!student) return res.status(404).json({ message: "Student not found" });
+
+      // Parallel data fetch
+      const [pathProgress, quizAttempts, aiConversations, assignments, progress] = await Promise.all([
+        storage.getStudentProgress(studentId),
+        storage.getQuizAttemptsByUser(studentId),
+        storage.getAiConversations(studentId),
+        storage.getAssignmentsForStudent(studentId),
+        storage.getUserProgress(studentId),
+      ]);
+
+      // Classes for this student by this tutor, sorted desc
+      const studentClasses = tutorClasses
+        .filter(c => c.userId === studentId)
+        .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+
+      // Current station (in-progress or most recently started)
+      const currentStation = pathProgress
+        .filter(p => p.status === "in_progress")
+        .sort((a, b) => new Date(b.startedAt ?? 0).getTime() - new Date(a.startedAt ?? 0).getTime())[0] || null;
+
+      let currentStationInfo = null;
+      if (currentStation) {
+        const stations = await storage.getStationsByLevel(student.level);
+        const st = stations.find(s => s.id === currentStation.stationId);
+        if (st) currentStationInfo = { id: st.id, title: st.title, level: st.level, order: st.stationOrder };
+      }
+
+      // Quiz stats
+      const quizAvg = quizAttempts.length > 0
+        ? Math.round(quizAttempts.reduce((sum, a) => sum + Math.round((a.score / a.maxScore) * 100), 0) / quizAttempts.length)
+        : 0;
+
+      // AI activity
+      const aiLastActivity = aiConversations[0]?.updatedAt || null;
+
+      res.json({
+        student: {
+          id: student.id,
+          name: `${student.firstName} ${student.lastName}`,
+          email: student.email,
+          level: student.level,
+          classCredits: student.classCredits || 0,
+        },
+        stats: {
+          classesCompleted: progress?.classesCompleted || 0,
+          quizAvg,
+          quizAttempts: quizAttempts.length,
+          completedStations: pathProgress.filter(p => p.status === "completed").length,
+          aiConversations: aiConversations.length,
+          aiLastActivity,
+          pendingAssignments: assignments.filter(a => a.status === "assigned").length,
+        },
+        currentStation: currentStationInfo,
+        classes: studentClasses.slice(0, 20).map(c => ({
+          id: c.id,
+          title: c.title,
+          scheduledAt: c.scheduledAt,
+          status: c.status,
+          duration: c.duration,
+          sessionNotes: c.sessionNotes,
+          sharedNotes: c.sharedNotes,
+          homeworkText: c.homeworkText,
+          topicsCovered: c.topicsCovered,
+        })),
+        assignments: assignments.slice(0, 10),
+        recentQuizzes: quizAttempts
+          .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+          .slice(0, 5)
+          .map(q => ({
+            id: q.id,
+            score: Math.round((q.score / q.maxScore) * 100),
+            createdAt: q.createdAt,
+          })),
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Get tutor's own profile
   app.get("/api/tutor/profile", requireTutor, async (req, res) => {
     try {

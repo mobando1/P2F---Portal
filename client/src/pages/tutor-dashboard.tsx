@@ -31,6 +31,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import LevelBadge from "@/components/LevelBadge";
+import StudentProfileDrawer from "@/components/StudentProfileDrawer";
 import {
   Select,
   SelectContent,
@@ -113,6 +114,7 @@ export default function TutorDashboard() {
   const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState<"dashboard" | "students" | "earnings">("dashboard");
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const [drawerStudentId, setDrawerStudentId] = useState<number | null>(null);
   const [notesModal, setNotesModal] = useState<{ classId: number; studentName: string } | null>(null);
   const [sessionNotes, setSessionNotes] = useState("");
   const [sharedNotes, setSharedNotes] = useState("");
@@ -610,7 +612,7 @@ export default function TutorDashboard() {
                     <div
                       key={student.id}
                       className="flex items-center gap-4 p-4 rounded-lg border border-[#1C7BB1]/10 hover:bg-[#EAF4FA]/30 transition-colors cursor-pointer"
-                      onClick={() => setSelectedStudentId(student.id)}
+                      onClick={() => setDrawerStudentId(student.id)}
                     >
                       <div className="w-10 h-10 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {student.profileImage ? (
@@ -646,7 +648,13 @@ export default function TutorDashboard() {
                             <p className="text-[10px]">{language === "es" ? "Última" : "Last"}</p>
                           </div>
                         )}
-                        <ArrowUpRight className="h-4 w-4 text-[#1C7BB1]/40" />
+                        <button
+                          className="p-1.5 rounded hover:bg-[#1C7BB1]/10 text-[#1C7BB1]/40 hover:text-[#1C7BB1] transition-colors"
+                          title={language === "es" ? "Cambiar nivel" : "Change level"}
+                          onClick={(e) => { e.stopPropagation(); setSelectedStudentId(student.id); }}
+                        >
+                          <GraduationCap className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -881,6 +889,12 @@ export default function TutorDashboard() {
           </div>
         )}
       </main>
+
+      {/* Student profile drawer */}
+      <StudentProfileDrawer
+        studentId={drawerStudentId}
+        onClose={() => setDrawerStudentId(null)}
+      />
 
       {/* Notes Modal — shown when tutor clicks "Complete" on a class */}
       <Dialog open={!!notesModal} onOpenChange={(open) => { if (!open) setNotesModal(null); }}>
