@@ -74,13 +74,13 @@ const LEVEL_THEME: Record<string, {
   },
 };
 
-function getPos(index: number, cols = 3) {
+function getPos(index: number, cols = 5) {
   const row = Math.floor(index / cols);
   const colInRow = index % cols;
   const isReversed = row % 2 === 1;
   const col = isReversed ? cols - 1 - colInRow : colInRow;
   return {
-    x: 14 + col * 36,       // % of container width
+    x: 10 + col * 20,       // 10%, 30%, 50%, 70%, 90% for 5 cols
     y: row * 130 + 72,      // px offset from top
   };
 }
@@ -280,7 +280,7 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
                 height: `${height}px`,
                 backgroundColor: theme.bgSection,
                 minWidth: "320px",
-                maxWidth: "520px",
+                maxWidth: "700px",
               }}
             >
               {/* Connection lines */}
