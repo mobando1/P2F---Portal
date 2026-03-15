@@ -641,10 +641,15 @@ export const tutorAssignments = pgTable("tutor_assignments", {
   id: serial("id").primaryKey(),
   tutorId: integer("tutor_id").references(() => tutors.id).notNull(),
   studentId: integer("student_id").references(() => users.id).notNull(),
-  contentId: integer("content_id").references(() => learningPathContent.id).notNull(),
+  contentId: integer("content_id").references(() => learningPathContent.id),
   stationId: integer("station_id").references(() => learningPathStations.id),
   dueDate: timestamp("due_date"),
   notes: text("notes"),
+  assignmentType: text("assignment_type").notNull().default("content"), // 'content' | 'free_form'
+  title: text("title"),
+  description: text("description"),
+  attachmentUrl: text("attachment_url"),
+  estimatedMinutes: integer("estimated_minutes"),
   status: text("status").notNull().default("assigned"), // assigned, in_progress, completed, overdue
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [

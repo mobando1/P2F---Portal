@@ -448,6 +448,56 @@ export function registerTutorPortalRoutes(app: Express) {
     }
   });
 
+  // Create assignment for a student (free-form or LP content)
+  app.post("/api/tutor/students/:studentId/assignments", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      const studentId = parseInt(req.params.studentId);
+
+      // Verify this is the tutor's student
+      const tutorClasses = await storage.getClassesByTutor(tutor.id);
+      const isMyStudent = tutorClasses.some(c => c.userId === studentId);
+      if (!isMyStudent) return res.status(403).json({ message: "Not your student" });
+
+      const { assignmentType = "free_form", title, description, attachmentUrl, estimatedMinutes, contentId, stationId, dueDate, notes } = req.body;
+
+      if (assignmentType === "free_form" && !title) {
+        return res.status(400).json({ message: "title is required for free_form assignments" });
+      }
+
+      const assignment = await storage.createAssignment({
+        tutorId: tutor.id,
+        studentId,
+        assignmentType,
+        title: title || null,
+        description: description || null,
+        attachmentUrl: attachmentUrl || null,
+        estimatedMinutes: estimatedMinutes || null,
+        contentId: contentId || null,
+        stationId: stationId || null,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        notes: notes || null,
+        status: "assigned",
+      });
+
+      // Notify student
+      await storage.createNotification({
+        userId: studentId,
+        type: "assignment",
+        title: title || "Nueva tarea",
+        message: description ? description.slice(0, 100) : "Tu tutor te ha asignado una nueva tarea.",
+        link: "/learning-path",
+      });
+
+      res.status(201).json(assignment);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Student full timeline — classes with notes, quizzes, AI activity, assignments
   app.get("/api/tutor/students/:studentId/timeline", requireTutor, async (req, res) => {
     try {

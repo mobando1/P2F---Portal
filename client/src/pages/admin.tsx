@@ -135,6 +135,7 @@ export default function AdminPage() {
     to: new Date(),
   });
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const [studentDetailTab, setStudentDetailTab] = useState<'overview' | 'historia'>('overview');
   const [txCursor, setTxCursor] = useState<string | null>(null);
   const [refundTarget, setRefundTarget] = useState<{ paymentIntentId: string; amount: number; customerEmail: string } | null>(null);
   const [studentSearch, setStudentSearch] = useState("");
@@ -167,6 +168,17 @@ export default function AdminPage() {
     queryKey: ['/api/admin/analytics/student', selectedStudentId],
     queryFn: () => apiRequest('GET', `/api/admin/analytics/student/${selectedStudentId}`).then(res => res.json()),
     enabled: !!selectedStudentId,
+  });
+
+  const { data: engagementData } = useQuery<{
+    aiUsageThisWeek: number;
+    notesFillRate: number;
+    churnRisk: Array<{ id: number; name: string; email: string; lastActivityAt: string | null; level: string }>;
+    assignmentCompletionByTutor: Array<{ tutorId: number; tutorName: string; total: number; completed: number; rate: number }>;
+  }>({
+    queryKey: ['/api/admin/analytics/engagement'],
+    queryFn: () => apiRequest('GET', '/api/admin/analytics/engagement').then(res => res.json()),
+    enabled: activeTab === 'analytics' && analyticsView === 'overview',
   });
 
   const { data: stripeMetrics } = useQuery<{
@@ -1387,6 +1399,97 @@ export default function AdminPage() {
                         </CardContent>
                       </Card>
                     </div>
+
+                    {/* Engagement Metrics */}
+                    {engagementData && (
+                      <div className="space-y-4">
+                        <h3 className="text-base font-semibold text-[#0A4A6E] flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-[#F59E1C]" />
+                          {isEs ? 'Métricas de Engagement' : 'Engagement Metrics'}
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {[
+                            { label: isEs ? 'Usaron IA esta semana' : 'Used AI this week', value: `${engagementData.aiUsageThisWeek}%`, color: 'text-purple-600', bg: 'bg-purple-50' },
+                            { label: isEs ? 'Notas de sesión llenas' : 'Session notes filled', value: `${engagementData.notesFillRate}%`, color: 'text-[#1C7BB1]', bg: 'bg-[#EAF4FA]' },
+                            { label: isEs ? 'Riesgo de abandono' : 'Churn risk', value: engagementData.churnRisk.length, color: 'text-red-500', bg: 'bg-red-50' },
+                            { label: isEs ? 'Tutores con tareas' : 'Tutors with tasks', value: engagementData.assignmentCompletionByTutor.length, color: 'text-green-600', bg: 'bg-green-50' },
+                          ].map((m, i) => (
+                            <Card key={i} className="border-0 shadow-sm">
+                              <CardContent className={`p-4 ${m.bg} rounded-lg`}>
+                                <p className={`text-2xl font-bold ${m.color}`}>{m.value}</p>
+                                <p className="text-xs text-gray-500 mt-1">{m.label}</p>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {/* Churn risk students */}
+                          {engagementData.churnRisk.length > 0 && (
+                            <Card>
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                                  {isEs ? 'Sin actividad +14 días' : 'Inactive 14+ days'}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0">
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                  {engagementData.churnRisk.map(u => (
+                                    <div key={u.id}
+                                      className="flex items-center justify-between text-sm p-2 rounded hover:bg-gray-50 cursor-pointer"
+                                      onClick={() => setSelectedStudentId(u.id)}>
+                                      <div>
+                                        <p className="font-medium text-gray-900 text-xs">{u.name}</p>
+                                        <p className="text-[10px] text-gray-400">{u.email}</p>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className="text-[10px]">{u.level}</Badge>
+                                        <span className="text-[10px] text-red-400">
+                                          {u.lastActivityAt
+                                            ? `${Math.floor((Date.now() - new Date(u.lastActivityAt).getTime()) / (1000 * 60 * 60 * 24))}d`
+                                            : '—'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+
+                          {/* Assignment completion by tutor */}
+                          {engagementData.assignmentCompletionByTutor.length > 0 && (
+                            <Card>
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                  <BookOpen className="h-4 w-4 text-[#1C7BB1]" />
+                                  {isEs ? 'Tareas por Tutor' : 'Tasks by Tutor'}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0">
+                                <div className="space-y-2">
+                                  {engagementData.assignmentCompletionByTutor.map(t => (
+                                    <div key={t.tutorId} className="flex items-center gap-3">
+                                      <p className="text-xs font-medium text-gray-700 w-24 truncate">{t.tutorName.split(' ')[0]}</p>
+                                      <div className="flex-1 bg-gray-100 rounded-full h-2">
+                                        <div
+                                          className="bg-[#1C7BB1] h-2 rounded-full transition-all"
+                                          style={{ width: `${t.rate}%` }}
+                                        />
+                                      </div>
+                                      <span className="text-[10px] text-gray-500 w-16 text-right">
+                                        {t.completed}/{t.total} ({t.rate}%)
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -1719,12 +1822,32 @@ export default function AdminPage() {
             ) : null}
 
             {/* ============ STUDENT DETAIL SHEET ============ */}
-            <Sheet open={!!selectedStudentId} onOpenChange={(open) => { if (!open) setSelectedStudentId(null); }}>
+            <Sheet open={!!selectedStudentId} onOpenChange={(open) => { if (!open) { setSelectedStudentId(null); setStudentDetailTab('overview'); } }}>
               <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle>{isEs ? 'Detalle del Estudiante' : 'Student Detail'}</SheetTitle>
                 </SheetHeader>
-                {studentDetail && (
+
+                {/* Tab switcher */}
+                <div className="flex gap-1 mt-3 mb-2 border-b pb-2">
+                  {(['overview', 'historia'] as const).map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setStudentDetailTab(tab)}
+                      className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
+                        studentDetailTab === tab
+                          ? 'bg-[#1C7BB1] text-white'
+                          : 'text-gray-500 hover:bg-gray-100'
+                      }`}
+                    >
+                      {tab === 'overview'
+                        ? (isEs ? 'Resumen' : 'Overview')
+                        : (isEs ? 'Historia' : 'History')}
+                    </button>
+                  ))}
+                </div>
+
+                {studentDetail && studentDetailTab === 'overview' && (
                   <div className="space-y-6 mt-4">
                     {/* Header */}
                     <div>
@@ -1915,6 +2038,92 @@ export default function AdminPage() {
                               {r.comment && <p className="text-gray-600 mt-1">{r.comment}</p>}
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ====== HISTORIA TAB ====== */}
+                {studentDetail && studentDetailTab === 'historia' && (
+                  <div className="space-y-4 mt-2 pb-8">
+                    <p className="text-xs text-gray-500">
+                      {isEs ? 'Actividad cronológica del estudiante' : 'Chronological student activity'}
+                    </p>
+                    <div className="relative space-y-0">
+                      {(() => {
+                        type TimelineItem = {
+                          date: string;
+                          type: 'class' | 'quiz' | 'ai';
+                          label: string;
+                          sub?: string;
+                          badge?: string;
+                          badgeColor?: string;
+                        };
+                        const items: TimelineItem[] = [];
+
+                        // Classes
+                        (studentDetail.classes.recent as any[]).forEach((c: any) => {
+                          items.push({
+                            date: c.scheduledAt,
+                            type: 'class',
+                            label: c.title || (isEs ? 'Clase' : 'Class'),
+                            sub: c.tutorName ? `${isEs ? 'Con' : 'With'} ${c.tutorName}` : undefined,
+                            badge: c.status,
+                            badgeColor: c.status === 'completed' ? 'text-green-700 bg-green-50' : c.status === 'cancelled' ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-gray-100',
+                          });
+                          if (c.sharedNotes) items.push({ date: c.scheduledAt, type: 'class', label: `📝 ${c.sharedNotes.slice(0, 80)}${c.sharedNotes.length > 80 ? '…' : ''}`, sub: isEs ? 'Nota del tutor' : 'Tutor note' });
+                          if (c.homeworkText) items.push({ date: c.scheduledAt, type: 'class', label: `📋 ${c.homeworkText.slice(0, 80)}${c.homeworkText.length > 80 ? '…' : ''}`, sub: isEs ? 'Tarea asignada' : 'Assigned homework', badgeColor: 'text-[#F59E1C] bg-[#F59E1C]/10', badge: isEs ? 'Tarea' : 'HW' });
+                        });
+
+                        // Sort chronologically desc
+                        items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+                        if (items.length === 0) return (
+                          <p className="text-sm text-gray-400 text-center py-8">
+                            {isEs ? 'Sin actividad registrada' : 'No activity recorded'}
+                          </p>
+                        );
+
+                        return items.map((item, i) => (
+                          <div key={i} className="flex gap-3 py-2.5 border-b border-gray-50 last:border-0">
+                            <div className={`mt-0.5 w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-sm ${
+                              item.type === 'class' ? 'bg-[#EAF4FA] text-[#1C7BB1]' :
+                              item.type === 'quiz' ? 'bg-purple-50 text-purple-600' :
+                              'bg-orange-50 text-orange-500'
+                            }`}>
+                              {item.type === 'class' ? '📅' : item.type === 'quiz' ? '✅' : '🤖'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-gray-800 leading-snug">{item.label}</p>
+                              {item.sub && <p className="text-[10px] text-gray-400 mt-0.5">{item.sub}</p>}
+                            </div>
+                            <div className="flex-shrink-0 text-right">
+                              <p className="text-[10px] text-gray-400">
+                                {new Date(item.date).toLocaleDateString(isEs ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric' })}
+                              </p>
+                              {item.badge && (
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${item.badgeColor}`}>
+                                  {item.badge}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+
+                    {/* AI usage summary */}
+                    {(studentDetail.aiUsage.conversations > 0) && (
+                      <div className="p-3 bg-orange-50 rounded-lg flex items-center gap-3">
+                        <span className="text-2xl">🤖</span>
+                        <div>
+                          <p className="text-xs font-semibold text-orange-700">
+                            {studentDetail.aiUsage.conversations} {isEs ? 'conversaciones IA' : 'AI conversations'}
+                          </p>
+                          <p className="text-[10px] text-orange-500">
+                            {studentDetail.aiUsage.messages} {isEs ? 'mensajes en total' : 'messages total'}
+                          </p>
                         </div>
                       </div>
                     )}

@@ -392,6 +392,10 @@ export function registerAnalyticsRoutes(app: Express) {
         classCategory: classes.classCategory,
         tutorId: classes.tutorId,
         tutorName: tutors.name,
+        sharedNotes: classes.sharedNotes,
+        homeworkText: classes.homeworkText,
+        sessionNotes: classes.sessionNotes,
+        topicsCovered: classes.topicsCovered,
       }).from(classes)
         .leftJoin(tutors, eq(classes.tutorId, tutors.id))
         .where(eq(classes.userId, studentId))
@@ -490,9 +494,13 @@ export function registerAnalyticsRoutes(app: Express) {
           total: totalClassesCount, completed: completedCount,
           cancelled: cancelledCount, upcoming: upcomingCount,
           byMonth: classesByMonthArr,
-          recent: studentClasses.slice(0, 10).map(c => ({
+          recent: studentClasses.slice(0, 15).map(c => ({
             id: c.id, title: c.title, scheduledAt: c.scheduledAt,
             status: c.status, tutorName: c.tutorName, classCategory: c.classCategory,
+            sharedNotes: (c as any).sharedNotes || null,
+            homeworkText: (c as any).homeworkText || null,
+            sessionNotes: (c as any).sessionNotes || null,
+            topicsCovered: (c as any).topicsCovered || null,
           })),
         },
         financial: {
@@ -827,6 +835,92 @@ export function registerAnalyticsRoutes(app: Express) {
       res.json(result);
     } catch (error) {
       console.error("Error fetching student stripe data:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // =============================================
+  // Engagement metrics for admin dashboard
+  // =============================================
+  app.get("/api/admin/analytics/engagement", requireAdmin, async (_req, res) => {
+    try {
+      if (!db) return res.json({ aiUsageThisWeek: 0, notesFillRate: 0, churnRisk: [], assignmentCompletionByTutor: [] });
+
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+      // % students who used AI this week
+      const { aiConversations, users: usersTable, classes: classesTable, tutors: tutorsTable, tutorAssignments: tutorAssignmentsTable } = await import("@shared/schema");
+      const { count: countFn } = await import("drizzle-orm");
+
+      const totalStudents = await db.select({ count: sql<number>`count(*)::int` })
+        .from(usersTable)
+        .where(and(not(eq(usersTable.userType, "admin")), not(eq(usersTable.userType, "tutor"))));
+
+      const aiActiveThisWeek = await db.select({ count: sql<number>`count(distinct ${aiConversations.userId})::int` })
+        .from(aiConversations)
+        .where(gte(aiConversations.updatedAt, oneWeekAgo));
+
+      const totalStudentCount = totalStudents[0]?.count || 1;
+      const aiUsageThisWeek = Math.round(((aiActiveThisWeek[0]?.count || 0) / totalStudentCount) * 100);
+
+      // % completed classes that have session notes filled
+      const completedClasses = await db.select({ count: sql<number>`count(*)::int` })
+        .from(classesTable)
+        .where(eq(classesTable.status, "completed"));
+
+      const completedWithNotes = await db.select({ count: sql<number>`count(*)::int` })
+        .from(classesTable)
+        .where(and(eq(classesTable.status, "completed"), sql`${classesTable.sessionNotes} IS NOT NULL`));
+
+      const notesFillRate = completedClasses[0]?.count > 0
+        ? Math.round(((completedWithNotes[0]?.count || 0) / completedClasses[0].count) * 100)
+        : 0;
+
+      // Students with no activity > 14 days (churn risk)
+      const churnRiskUsers = await db.select({
+        id: usersTable.id,
+        name: sql<string>`${usersTable.firstName} || ' ' || ${usersTable.lastName}`,
+        email: usersTable.email,
+        lastActivityAt: usersTable.lastActivityAt,
+        level: usersTable.level,
+      })
+        .from(usersTable)
+        .where(and(
+          not(eq(usersTable.userType, "admin")),
+          not(eq(usersTable.userType, "tutor")),
+          eq(usersTable.trialCompleted, true),
+          sql`(${usersTable.lastActivityAt} IS NULL OR ${usersTable.lastActivityAt} < ${twoWeeksAgo})`,
+        ))
+        .orderBy(usersTable.lastActivityAt)
+        .limit(20);
+
+      // Assignment completion rate per tutor
+      const allTutorsData = await storage.getAllTutors();
+      const assignmentCompletionByTutor = await Promise.all(
+        allTutorsData.map(async (t) => {
+          const tutorAssignmentsData = await storage.getAssignmentsByTutor(t.id);
+          const total = tutorAssignmentsData.length;
+          const completed = tutorAssignmentsData.filter(a => a.status === "completed").length;
+          return {
+            tutorId: t.id,
+            tutorName: t.name,
+            total,
+            completed,
+            rate: total > 0 ? Math.round((completed / total) * 100) : 0,
+          };
+        })
+      );
+
+      res.json({
+        aiUsageThisWeek,
+        notesFillRate,
+        churnRisk: churnRiskUsers,
+        assignmentCompletionByTutor: assignmentCompletionByTutor.filter(t => t.total > 0),
+      });
+    } catch (error) {
+      console.error("Engagement metrics error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

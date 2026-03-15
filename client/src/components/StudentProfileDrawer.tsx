@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/lib/i18n";
 import {
@@ -7,8 +8,20 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import {
   CheckCircle,
   Clock,
@@ -18,6 +31,7 @@ import {
   MapPin,
   Calendar,
   FileText,
+  PlusCircle,
 } from "lucide-react";
 import LevelBadge from "@/components/LevelBadge";
 
@@ -85,6 +99,37 @@ function fmt(dateStr: string | null | undefined, lang: string, opts?: Intl.DateT
 
 export default function StudentProfileDrawer({ studentId, onClose }: Props) {
   const { language } = useLanguage();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [assignModal, setAssignModal] = useState(false);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskDesc, setTaskDesc] = useState("");
+  const [taskUrl, setTaskUrl] = useState("");
+  const [taskDue, setTaskDue] = useState("");
+  const [taskMinutes, setTaskMinutes] = useState("");
+
+  const createAssignmentMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/tutor/students/${studentId}/assignments`, {
+        assignmentType: "free_form",
+        title: taskTitle,
+        description: taskDesc || undefined,
+        attachmentUrl: taskUrl || undefined,
+        estimatedMinutes: taskMinutes ? parseInt(taskMinutes) : undefined,
+        dueDate: taskDue || undefined,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tutor/students", studentId, "timeline"] });
+      toast({ title: language === "es" ? "Tarea asignada" : "Assignment created" });
+      setAssignModal(false);
+      setTaskTitle(""); setTaskDesc(""); setTaskUrl(""); setTaskDue(""); setTaskMinutes("");
+    },
+    onError: () => {
+      toast({ title: "Error", variant: "destructive" });
+    },
+  });
 
   const { data, isLoading } = useQuery<StudentTimeline>({
     queryKey: ["/api/tutor/students", studentId, "timeline"],
@@ -140,6 +185,19 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
                   <p className="text-[10px] text-muted-foreground leading-tight">{label}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Assign task button */}
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-[#1C7BB1] border-[#1C7BB1]/30 hover:bg-[#EAF4FA]"
+                onClick={() => setAssignModal(true)}
+              >
+                <PlusCircle className="h-3.5 w-3.5 mr-1" />
+                {language === "es" ? "Asignar tarea" : "Assign task"}
+              </Button>
             </div>
 
             {/* Current station */}
@@ -280,6 +338,67 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
           </>
         )}
       </SheetContent>
+
+      {/* Assign free-form task modal */}
+      <Dialog open={assignModal} onOpenChange={setAssignModal}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "es" ? "Nueva tarea para " : "New task for "}
+              {data?.student.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="taskTitle">{language === "es" ? "Título *" : "Title *"}</Label>
+              <Input
+                id="taskTitle"
+                value={taskTitle}
+                onChange={(e) => setTaskTitle(e.target.value)}
+                placeholder={language === "es" ? "Escribe un párrafo sobre tu familia..." : "Write a paragraph about your family..."}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="taskDesc">{language === "es" ? "Instrucciones" : "Instructions"}</Label>
+              <Textarea
+                id="taskDesc"
+                value={taskDesc}
+                onChange={(e) => setTaskDesc(e.target.value)}
+                rows={3}
+                placeholder={language === "es" ? "Detalles adicionales..." : "Additional details..."}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="taskDue">{language === "es" ? "Fecha límite" : "Due date"}</Label>
+                <Input id="taskDue" type="date" value={taskDue} onChange={(e) => setTaskDue(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="taskMin">{language === "es" ? "Minutos est." : "Est. minutes"}</Label>
+                <Input id="taskMin" type="number" value={taskMinutes} onChange={(e) => setTaskMinutes(e.target.value)} placeholder="30" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="taskUrl">{language === "es" ? "Enlace (opcional)" : "Link (optional)"}</Label>
+              <Input id="taskUrl" value={taskUrl} onChange={(e) => setTaskUrl(e.target.value)} placeholder="https://..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignModal(false)}>
+              {language === "es" ? "Cancelar" : "Cancel"}
+            </Button>
+            <Button
+              className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+              disabled={!taskTitle.trim() || createAssignmentMutation.isPending}
+              onClick={() => createAssignmentMutation.mutate()}
+            >
+              {createAssignmentMutation.isPending
+                ? (language === "es" ? "Guardando..." : "Saving...")
+                : (language === "es" ? "Asignar" : "Assign")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   );
 }
