@@ -65,6 +65,12 @@ const LEVEL_THEME: Record<string, {
 };
 
 const COLS = 4;
+const ROW_H = 160;   // vertical spacing between rows in px
+const FIRST_Y = 90;  // first row y offset in px
+
+// Node radius in each axis (viewBox x = percentage, y = pixels)
+const RX = 5.5;  // ~half of node width in % of container (~72px / ~700px * 100 / 2)
+const RY = 36;    // half of 72px node height
 
 function getPos(index: number) {
   const row = Math.floor(index / COLS);
@@ -72,56 +78,48 @@ function getPos(index: number) {
   const isReversed = row % 2 === 1;
   const col = isReversed ? COLS - 1 - colInRow : colInRow;
   return {
-    x: 14 + col * 24,   // 14%, 38%, 62%, 86%
-    y: row * 160 + 90,   // more vertical space
+    x: 14 + col * 24,       // 14%, 38%, 62%, 86%  (percentage units)
+    y: row * ROW_H + FIRST_Y, // pixel units
   };
 }
 
-// Node radius in SVG viewBox coordinates (72px node / 2, scaled to viewBox)
-const NODE_R = 32;
-
-/** Build an SVG path that connects from the edge of one circle to the edge of the next */
+/**
+ * Build SVG path connecting the EDGE of one circle to the EDGE of the next.
+ * Coordinate system: x = percentage (0-100), y = pixels.
+ */
 function buildCurvePath(
   from: { x: number; y: number },
   to: { x: number; y: number },
-  containerWidth: number,
 ): string {
-  const fx = (from.x / 100) * containerWidth;
-  const fy = from.y;
-  const tx = (to.x / 100) * containerWidth;
-  const ty = to.y;
+  const sameRow = Math.abs(from.y - to.y) < 2;
 
-  if (Math.abs(fy - ty) < 2) {
-    // Same row — horizontal connection
-    if (fx < tx) {
-      // Moving right: exit right edge → enter left edge
-      const startX = fx + NODE_R;
-      const endX = tx - NODE_R;
-      const midX = (startX + endX) / 2;
-      // Gentle arc below the line
-      return `M ${startX} ${fy} Q ${midX} ${fy + 18} ${endX} ${ty}`;
-    } else {
-      // Moving left: exit left edge → enter right edge
-      const startX = fx - NODE_R;
-      const endX = tx + NODE_R;
-      const midX = (startX + endX) / 2;
-      return `M ${startX} ${fy} Q ${midX} ${fy + 18} ${endX} ${ty}`;
-    }
+  if (sameRow) {
+    // Horizontal connection along the same row
+    const goingRight = from.x < to.x;
+    const sx = goingRight ? from.x + RX : from.x - RX;  // exit edge
+    const ex = goingRight ? to.x - RX : to.x + RX;      // enter edge
+    const sy = from.y;
+    const ey = to.y;
+    // Gentle downward arc so the line passes clearly below the node centers
+    const mx = (sx + ex) / 2;
+    const my = sy + 22;
+    return `M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`;
   }
 
-  // Row change (U-turn) — exit bottom, curve around, enter top of next circle
-  const startY = fy + NODE_R;     // bottom edge of from
-  const endY = ty - NODE_R;       // top edge of to
+  // U-turn: row change — exit bottom edge, curve out, enter top edge of next
+  const sx = from.x;
+  const sy = from.y + RY;   // bottom edge
+  const ex = to.x;
+  const ey = to.y - RY;     // top edge
 
-  if (fx > containerWidth / 2) {
-    // U-turn on the right side — curve outward to the right
-    const bulge = Math.min(fx + 60, containerWidth - 10);
-    return `M ${fx} ${startY} C ${bulge} ${startY + 30}, ${bulge} ${endY - 30}, ${tx} ${endY}`;
-  } else {
-    // U-turn on the left side — curve outward to the left
-    const bulge = Math.max(fx - 60, 10);
-    return `M ${fx} ${startY} C ${bulge} ${startY + 30}, ${bulge} ${endY - 30}, ${tx} ${endY}`;
-  }
+  const isRightSide = from.x > 50;
+  // Bulge outward — to the right if on right side, to the left if on left
+  const bulgeX = isRightSide
+    ? Math.min(from.x + 14, 97)   // push right but stay in bounds
+    : Math.max(from.x - 14, 3);   // push left but stay in bounds
+
+  // Cubic bezier: two control points create a smooth U-turn
+  return `M ${sx} ${sy} C ${bulgeX} ${sy + 40}, ${bulgeX} ${ey - 40}, ${ex} ${ey}`;
 }
 
 function StationNode({
@@ -145,7 +143,6 @@ function StationNode({
   const canClick = status !== "locked";
 
   const pos = getPos(index);
-
   const nodeSize = isMilestone ? 80 : 72;
 
   const styles = (() => {
@@ -207,7 +204,6 @@ function StationNode({
       whileHover={canClick ? { scale: 1.1, y: -2 } : {}}
       whileTap={canClick ? { scale: 0.93 } : {}}
     >
-      {/* Node circle */}
       <div
         className="relative flex items-center justify-center rounded-full transition-shadow duration-300"
         style={{
@@ -220,7 +216,6 @@ function StationNode({
       >
         {icon}
 
-        {/* Score badge for completed */}
         {status === "completed" && station.progress?.score != null && (
           <div
             className="absolute -bottom-1.5 -right-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
@@ -230,7 +225,6 @@ function StationNode({
           </div>
         )}
 
-        {/* Pulse ring for available */}
         {status === "available" && (
           <motion.div
             className="absolute inset-0 rounded-full pointer-events-none"
@@ -240,7 +234,6 @@ function StationNode({
           />
         )}
 
-        {/* Current position indicator */}
         {isCurrentStation && (
           <motion.div
             className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-[#F59E1C] border-2 border-white shadow-lg flex items-center justify-center"
@@ -252,7 +245,6 @@ function StationNode({
         )}
       </div>
 
-      {/* Label */}
       <span
         className="mt-2.5 text-xs font-medium text-center leading-tight line-clamp-2 px-1"
         style={{
@@ -280,9 +272,6 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
     }
   }
 
-  // Reference width for SVG curve calculations
-  const REF_WIDTH = 600;
-
   return (
     <div className="w-full flex flex-col gap-5">
       {levels.map((levelGroup, idx) => {
@@ -290,7 +279,7 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
         const nextGroup = levels[idx + 1];
         const nextTheme = nextGroup ? (LEVEL_THEME[nextGroup.level] || LEVEL_THEME.A1) : null;
         const rows = Math.ceil(levelGroup.stations.length / COLS);
-        const height = rows * 160 + 100;
+        const height = rows * ROW_H + FIRST_Y + 30; // +30 for bottom padding
         const completed = levelGroup.stations.filter(s => s.progress?.status === "completed").length;
         const total = levelGroup.stations.length;
         const isActive = levelGroup.level === currentLevel;
@@ -327,7 +316,6 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
                     </span>
                   )}
                 </div>
-                {/* Mini progress bar */}
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 rounded-full bg-white/25 overflow-hidden">
                     <motion.div
@@ -344,78 +332,74 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
               </div>
             </div>
 
-            {/* Snake grid */}
+            {/* Snake grid — SVG viewBox x=percentage, y=pixels → matches CSS positioning */}
             <div
-              className="relative mx-auto px-2"
+              className="relative mx-auto"
               style={{
                 height: `${height}px`,
                 minWidth: "320px",
                 maxWidth: "700px",
               }}
             >
-              {/* Connection curves */}
               <svg
-                className="absolute inset-0 w-full pointer-events-none"
-                style={{ zIndex: 0, height: `${height}px` }}
-                viewBox={`0 0 ${REF_WIDTH} ${height}`}
-                preserveAspectRatio="xMidYMid meet"
+                className="absolute inset-0 pointer-events-none"
+                width="100%"
+                height={height}
+                viewBox={`0 0 100 ${height}`}
+                preserveAspectRatio="none"
+                style={{ zIndex: 0 }}
               >
                 <defs>
-                  {/* Glow filter for completed paths */}
-                  <filter id={`glow-${levelGroup.level}`} x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="3" result="blur" />
+                  <filter id={`glow-${levelGroup.level}`} x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
                     <feComposite in="SourceGraphic" in2="blur" operator="over" />
                   </filter>
-                  {/* Gradient for completed paths */}
-                  <linearGradient id={`grad-${levelGroup.level}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor={theme.primary} stopOpacity="0.8" />
-                    <stop offset="50%" stopColor={theme.line} stopOpacity="1" />
-                    <stop offset="100%" stopColor={theme.primary} stopOpacity="0.8" />
-                  </linearGradient>
                 </defs>
 
-                {/* Track base — all connections (dashed gray) */}
+                {/* Base track — dashed gray for all connections */}
                 {levelGroup.stations.map((_, sIdx) => {
                   if (sIdx === 0) return null;
                   const from = getPos(sIdx - 1);
                   const to = getPos(sIdx);
-                  const d = buildCurvePath(from, to, REF_WIDTH);
+                  const d = buildCurvePath(from, to);
                   return (
                     <path
                       key={`track-${sIdx}`}
                       d={d}
                       fill="none"
-                      stroke="#e5e7eb"
-                      strokeWidth={5}
+                      stroke="#e0e2e7"
+                      strokeWidth={1.2}
                       strokeLinecap="round"
-                      strokeDasharray="8 6"
+                      strokeDasharray="2 2"
+                      vectorEffect="non-scaling-stroke"
                     />
                   );
                 })}
 
-                {/* Progress — completed connections on top */}
+                {/* Completed connections — solid colored on top */}
                 {levelGroup.stations.map((_, sIdx) => {
                   if (sIdx === 0) return null;
                   const from = getPos(sIdx - 1);
                   const to = getPos(sIdx);
-                  const isComplete = (levelGroup.stations[sIdx - 1].progress?.status || "locked") === "completed";
-                  if (!isComplete) return null;
-                  const d = buildCurvePath(from, to, REF_WIDTH);
+                  const prevStatus = levelGroup.stations[sIdx - 1].progress?.status || "locked";
+                  if (prevStatus !== "completed") return null;
+                  const d = buildCurvePath(from, to);
                   return (
                     <path
                       key={`prog-${sIdx}`}
                       d={d}
                       fill="none"
-                      stroke={`url(#grad-${levelGroup.level})`}
-                      strokeWidth={6}
+                      stroke={theme.primary}
+                      strokeWidth={2.5}
                       strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
                       filter={`url(#glow-${levelGroup.level})`}
                     />
                   );
                 })}
               </svg>
 
-              {/* Stations */}
+              {/* Station nodes (HTML, positioned with CSS %) */}
               {levelGroup.stations.map((station, sIdx) => (
                 <StationNode
                   key={station.id}
