@@ -1,5 +1,6 @@
+import { Fragment } from "react";
 import { motion } from "framer-motion";
-import { Lock, Check, Play, Star, Shield } from "lucide-react";
+import { Lock, Check, Play, Star, Shield, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 
 interface StationProgress {
@@ -221,9 +222,11 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
   }
 
   return (
-    <div className="w-full space-y-6">
-      {levels.map((levelGroup) => {
+    <div className="w-full flex flex-col">
+      {levels.map((levelGroup, idx) => {
         const theme = LEVEL_THEME[levelGroup.level] || LEVEL_THEME.A1;
+        const nextGroup = levels[idx + 1];
+        const nextTheme = nextGroup ? (LEVEL_THEME[nextGroup.level] || LEVEL_THEME.A1) : null;
         const rows = Math.ceil(levelGroup.stations.length / 3);
         const height = rows * 130 + 80;
         const completed = levelGroup.stations.filter(s => s.progress?.status === "completed").length;
@@ -231,7 +234,8 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
         const isActive = levelGroup.level === currentLevel;
 
         return (
-          <div key={levelGroup.level} className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white">
+          <Fragment key={levelGroup.level}>
+          <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white">
             {/* Level header */}
             <div
               className="px-5 py-4 flex items-center gap-4"
@@ -281,23 +285,33 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
             >
               {/* Connection lines */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
-                {levelGroup.stations.map((station, idx) => {
+                {/* Track base — all connections */}
+                {levelGroup.stations.map((_, idx) => {
                   if (idx === 0) return null;
                   const from = getPos(idx - 1);
                   const to = getPos(idx);
-                  const prevStatus = levelGroup.stations[idx - 1].progress?.status || "locked";
-                  const isComplete = prevStatus === "completed";
-
                   return (
                     <line
-                      key={`l-${idx}`}
+                      key={`track-${idx}`}
                       x1={`${from.x}%`} y1={from.y}
                       x2={`${to.x}%`} y2={to.y}
-                      stroke={isComplete ? theme.primary : theme.line}
-                      strokeWidth={isComplete ? 3 : 2}
-                      strokeDasharray={isComplete ? "none" : "7 5"}
-                      strokeLinecap="round"
-                      opacity={isComplete ? 0.9 : 0.5}
+                      stroke="#e5e7eb" strokeWidth={6} strokeLinecap="round"
+                    />
+                  );
+                })}
+                {/* Progress — completed connections on top */}
+                {levelGroup.stations.map((_, idx) => {
+                  if (idx === 0) return null;
+                  const from = getPos(idx - 1);
+                  const to = getPos(idx);
+                  const isComplete = (levelGroup.stations[idx - 1].progress?.status || "locked") === "completed";
+                  if (!isComplete) return null;
+                  return (
+                    <line
+                      key={`prog-${idx}`}
+                      x1={`${from.x}%`} y1={from.y}
+                      x2={`${to.x}%`} y2={to.y}
+                      stroke={theme.primary} strokeWidth={6} strokeLinecap="round"
                     />
                   );
                 })}
@@ -317,6 +331,20 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
               ))}
             </div>
           </div>
+
+          {nextTheme && (
+            <div className="flex flex-col items-center py-1">
+              <div className="w-px h-5" style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }} />
+              <div
+                className="w-7 h-7 rounded-full border-2 bg-white flex items-center justify-center shadow-sm"
+                style={{ borderColor: nextTheme.primary }}
+              >
+                <ChevronDown size={14} style={{ color: nextTheme.primary }} />
+              </div>
+              <div className="w-px h-5" style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }} />
+            </div>
+          )}
+          </Fragment>
         );
       })}
     </div>
