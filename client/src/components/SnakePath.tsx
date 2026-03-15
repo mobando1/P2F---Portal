@@ -64,8 +64,8 @@ const LEVEL_THEME: Record<string, {
   },
 };
 
-// Duolingo-style sine-wave offsets
-const WAVE_AMPLITUDE = typeof window !== "undefined" && window.innerWidth < 640 ? 45 : 80;
+// Duolingo-style sine-wave offsets — dramatic winding like reference designs
+const WAVE_AMPLITUDE = typeof window !== "undefined" && window.innerWidth < 640 ? 60 : 120;
 
 function getStationOffset(index: number): number {
   return Math.sin(index * (Math.PI / 3)) * WAVE_AMPLITUDE;
@@ -83,13 +83,13 @@ function ConnectorSVG({
   prevStatus: string | undefined;
   theme: typeof LEVEL_THEME.A1;
 }) {
-  const HEIGHT = 48;
+  const HEIGHT = 60;
   const isCompleted = prevStatus === "completed";
 
   const minX = Math.min(fromOffsetX, toOffsetX);
   const maxX = Math.max(fromOffsetX, toOffsetX);
-  const padding = 24;
-  const svgWidth = Math.max(maxX - minX + padding * 2, 60);
+  const padding = 30;
+  const svgWidth = Math.max(maxX - minX + padding * 2, 80);
   const centerOffset = (minX + maxX) / 2;
 
   const localFromX = fromOffsetX - centerOffset + svgWidth / 2;
@@ -109,28 +109,28 @@ function ConnectorSVG({
         viewBox={`0 0 ${svgWidth} ${HEIGHT}`}
         className="overflow-visible"
       >
-        {/* Base dashed track */}
+        {/* Base dashed track — thick road-like trail */}
         <path
           d={d}
           fill="none"
-          stroke="#d1d5db"
-          strokeWidth={3}
-          strokeDasharray="8 6"
+          stroke="#e2e8f0"
+          strokeWidth={8}
+          strokeDasharray="12 8"
           strokeLinecap="round"
         />
-        {/* Completed solid track with glow */}
+        {/* Completed solid track — thick with glow */}
         {isCompleted && (
           <motion.path
             d={d}
             fill="none"
             stroke={theme.primary}
-            strokeWidth={4}
+            strokeWidth={10}
             strokeLinecap="round"
             initial={{ pathLength: 0 }}
             whileInView={{ pathLength: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.15 }}
-            style={{ filter: `drop-shadow(0 0 4px ${theme.primary}66)` }}
+            style={{ filter: `drop-shadow(0 0 6px ${theme.primary}88)` }}
           />
         )}
       </svg>
