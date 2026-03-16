@@ -29,7 +29,7 @@ const createStationSchema = z.object({
 
 const createContentSchema = z.object({
   stationId: z.number().int(),
-  contentType: z.enum(["document", "quiz", "video", "exercise"]),
+  contentType: z.enum(["document", "quiz", "video", "exercise", "flashcard", "speaking", "ai_scenario"]),
   title: z.string(),
   titleEs: z.string(),
   description: z.string().optional(),

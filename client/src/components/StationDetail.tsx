@@ -12,9 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FileText, Brain, Video, Dumbbell, Check, Trophy, Loader2, ArrowLeft } from "lucide-react";
+import { FileText, Brain, Video, Dumbbell, Check, Trophy, Loader2, ArrowLeft, Layers, Mic, MessageCircle } from "lucide-react";
+import { useLocation } from "wouter";
 import LevelBadge from "./LevelBadge";
 import QuizPlayer from "./QuizPlayer";
+import FlashcardPlayer from "./FlashcardPlayer";
+import SpeakingPromptActivity from "./SpeakingPromptActivity";
 
 interface StationDetailProps {
   stationId: number | null;
@@ -28,13 +31,19 @@ const CONTENT_ICONS: Record<string, any> = {
   quiz: Brain,
   video: Video,
   exercise: Dumbbell,
+  flashcard: Layers,
+  speaking: Mic,
+  ai_scenario: MessageCircle,
 };
 
 export default function StationDetail({ stationId, open, onClose, onStationCompleted }: StationDetailProps) {
   const { language } = useLanguage();
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [activeQuiz, setActiveQuiz] = useState<any>(null);
   const [activeDoc, setActiveDoc] = useState<any>(null);
+  const [activeFlashcard, setActiveFlashcard] = useState<any>(null);
+  const [activeSpeaking, setActiveSpeaking] = useState<any>(null);
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/learning-path/stations", stationId],
@@ -100,6 +109,40 @@ export default function StationDetail({ stationId, open, onClose, onStationCompl
     );
   }
 
+  if (activeFlashcard) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <FlashcardPlayer
+            contentId={activeFlashcard.id}
+            title={activeFlashcard.title}
+            titleEs={activeFlashcard.titleEs}
+            cards={activeFlashcard.contentData?.cards || []}
+            onComplete={() => setActiveFlashcard(null)}
+            onClose={() => setActiveFlashcard(null)}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (activeSpeaking) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <SpeakingPromptActivity
+            contentId={activeSpeaking.id}
+            title={activeSpeaking.title}
+            titleEs={activeSpeaking.titleEs}
+            prompts={activeSpeaking.contentData?.prompts || []}
+            onComplete={() => setActiveSpeaking(null)}
+            onClose={() => setActiveSpeaking(null)}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   if (activeQuiz) {
     return (
       <Dialog open={open} onOpenChange={onClose}>
@@ -143,6 +186,9 @@ export default function StationDetail({ stationId, open, onClose, onStationCompl
               const itemTitle = language === "es" ? item.titleEs : item.title;
               const isQuiz = item.contentType === "quiz";
               const isDoc = item.contentType === "document";
+              const isFlashcard = item.contentType === "flashcard";
+              const isSpeaking = item.contentType === "speaking";
+              const isAiScenario = item.contentType === "ai_scenario";
               const quizPassed = item.bestScore !== null && item.bestScore >= 70;
 
               return (
@@ -153,20 +199,31 @@ export default function StationDetail({ stationId, open, onClose, onStationCompl
                   transition={{ delay: idx * 0.05 }}
                 >
                   <Card
-                    className={`cursor-pointer transition-shadow hover:shadow-md ${
+                    className={`transition-shadow hover:shadow-md ${
+                      isAiScenario ? "border-[#1C7BB1]/30 bg-[#EAF4FA]/40" :
                       quizPassed ? "border-green-200 bg-green-50/50" : ""
-                    }`}
+                    } ${!isAiScenario ? "cursor-pointer" : ""}`}
                     onClick={() => {
                       if (isQuiz && item.contentData?.questions) {
                         setActiveQuiz(item);
                       } else if (isDoc && item.contentData?.text) {
                         setActiveDoc(item);
+                      } else if (isFlashcard && item.contentData?.cards) {
+                        setActiveFlashcard(item);
+                      } else if (isSpeaking && item.contentData?.prompts) {
+                        setActiveSpeaking(item);
                       }
                     }}
                   >
                     <CardContent className="flex items-center gap-3 py-3 px-4">
-                      <div className={`p-2 rounded-lg ${quizPassed ? "bg-green-100" : "bg-gray-100"}`}>
-                        <Icon size={18} className={quizPassed ? "text-green-600" : "text-gray-600"} />
+                      <div className={`p-2 rounded-lg flex-shrink-0 ${
+                        isAiScenario ? "bg-[#1C7BB1]/10" :
+                        quizPassed ? "bg-green-100" : "bg-gray-100"
+                      }`}>
+                        <Icon size={18} className={
+                          isAiScenario ? "text-[#1C7BB1]" :
+                          quizPassed ? "text-green-600" : "text-gray-600"
+                        } />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{itemTitle}</p>
@@ -175,12 +232,31 @@ export default function StationDetail({ stationId, open, onClose, onStationCompl
                           {isQuiz && item.bestScore !== null && ` • ${language === "es" ? "Mejor:" : "Best:"} ${item.bestScore}%`}
                         </p>
                       </div>
-                      {quizPassed && <Check size={18} className="text-green-500" />}
+                      {quizPassed && <Check size={18} className="text-green-500 flex-shrink-0" />}
                       {isQuiz && !quizPassed && (
                         <Button size="sm" variant="outline">
                           {item.attempts?.length > 0
                             ? (language === "es" ? "Reintentar" : "Retry")
                             : (language === "es" ? "Iniciar" : "Start")}
+                        </Button>
+                      )}
+                      {(isFlashcard || isSpeaking) && (
+                        <Button size="sm" variant="outline">
+                          {language === "es" ? "Iniciar" : "Start"}
+                        </Button>
+                      )}
+                      {isAiScenario && (
+                        <Button
+                          size="sm"
+                          className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white flex-shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const scenarioId = item.contentData?.scenarioId;
+                            if (scenarioId) setLocation(`/ai-practice?scenario=${scenarioId}`);
+                          }}
+                        >
+                          <MessageCircle size={13} className="mr-1" />
+                          {language === "es" ? "Hablar" : "Talk"}
                         </Button>
                       )}
                     </CardContent>

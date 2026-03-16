@@ -809,6 +809,355 @@ async function seed() {
   }
   console.log("  Created B2 lesson documents");
 
+  // ====== PRACTICE ACTIVITIES: Flashcards, Speaking Prompts, AI Scenarios ======
+  console.log("Creating practice activities (flashcards, speaking prompts, AI scenarios)...");
+
+  // ---- A1: "Who Are You?" (a1Stations[0]) ----
+  await db.insert(learningPathContent).values([
+    {
+      stationId: a1Stations[0].id,
+      contentType: "flashcard",
+      title: "Greetings & Introductions",
+      titleEs: "Saludos y Presentaciones",
+      durationMinutes: 5,
+      sortOrder: 2,
+      contentData: {
+        cards: [
+          { front: "Hola", back: "Hello", example: "Hola, ¿cómo estás?", exampleEs: "Hola, ¿cómo estás? — Hello, how are you?" },
+          { front: "Buenos días", back: "Good morning", example: "Buenos días, señor.", exampleEs: "Buenos días, señor. — Good morning, sir." },
+          { front: "Buenas tardes", back: "Good afternoon", example: "Buenas tardes, ¿en qué puedo ayudarle?", exampleEs: "¿Cómo estás? — How are you (informal)?" },
+          { front: "Me llamo...", back: "My name is...", example: "Me llamo Carlos.", exampleEs: "Me llamo Carlos. — My name is Carlos." },
+          { front: "Mucho gusto", back: "Nice to meet you", example: "Mucho gusto, soy Ana.", exampleEs: "Mucho gusto, soy Ana. — Nice to meet you, I'm Ana." },
+          { front: "¿De dónde eres?", back: "Where are you from?", example: "¿De dónde eres tú?", exampleEs: "¿De dónde eres? — Where are you from?" },
+          { front: "Soy de...", back: "I am from...", example: "Soy de México.", exampleEs: "Soy de México. — I am from Mexico." },
+          { front: "¿Cuántos años tienes?", back: "How old are you?", example: "¿Cuántos años tienes tú?", exampleEs: "¿Cuántos años tienes? — How old are you?" },
+          { front: "Tengo ... años", back: "I am ... years old", example: "Tengo veinticinco años.", exampleEs: "Tengo veinticinco años. — I am 25 years old." },
+          { front: "Encantado / Encantada", back: "Pleased to meet you", example: "Encantada de conocerte.", exampleEs: "Encantada de conocerte. — Pleased to meet you." },
+        ],
+      },
+    },
+    {
+      stationId: a1Stations[0].id,
+      contentType: "speaking",
+      title: "Introduce Yourself",
+      titleEs: "Preséntate",
+      durationMinutes: 10,
+      sortOrder: 3,
+      contentData: {
+        prompts: [
+          {
+            text: "You're meeting someone new at a language exchange event. Introduce yourself: say your name, where you're from, and how old you are.",
+            textEs: "Conoces a alguien nuevo en un intercambio de idiomas. Preséntate: di tu nombre, de dónde eres y cuántos años tienes.",
+            tip: "Use: 'Me llamo...', 'Soy de...', 'Tengo ... años.' Try to say it all in one sentence!",
+            tipEs: "Usa: 'Me llamo...', 'Soy de...', 'Tengo ... años.' ¡Intenta decirlo en una sola secuencia!",
+            aiScenarioId: "making_friends",
+          },
+          {
+            text: "Someone asks how you are feeling today. Respond and then ask them the same question back.",
+            textEs: "Alguien te pregunta cómo estás hoy. Responde y luego hazles la misma pregunta.",
+            tip: "Responses: 'Estoy bien / mal / más o menos.' Then ask: '¿Y tú?'",
+            tipEs: "Respuestas: 'Estoy bien / mal / más o menos.' Luego pregunta: '¿Y tú?'",
+            aiScenarioId: "making_friends",
+          },
+          {
+            text: "You want to say goodbye after a conversation. Use at least two different ways to say goodbye.",
+            textEs: "Quieres despedirte después de una conversación. Usa al menos dos formas diferentes de despedirte.",
+            tip: "Options: 'Adiós', 'Hasta luego', 'Hasta mañana', 'Nos vemos', 'Chao'",
+            tipEs: "Opciones: 'Adiós', 'Hasta luego', 'Hasta mañana', 'Nos vemos', 'Chao'",
+          },
+        ],
+      },
+    },
+    {
+      stationId: a1Stations[0].id,
+      contentType: "ai_scenario",
+      title: "Practice: Making Friends",
+      titleEs: "Práctica: Haciendo Amigos",
+      durationMinutes: 15,
+      sortOrder: 4,
+      contentData: {
+        scenarioId: "making_friends",
+        description: "Practice meeting someone new and introducing yourself with Lingo.",
+        descriptionEs: "Practica conocer a alguien nuevo y presentarte con Lingo.",
+      },
+    },
+  ]);
+
+  // ---- A1: "Ser and Estar" (a1Stations[1]) ----
+  await db.insert(learningPathContent).values([
+    {
+      stationId: a1Stations[1].id,
+      contentType: "flashcard",
+      title: "Ser vs. Estar",
+      titleEs: "Ser vs. Estar",
+      durationMinutes: 7,
+      sortOrder: 2,
+      contentData: {
+        cards: [
+          { front: "Yo soy", back: "I am (permanent)", example: "Yo soy estudiante.", exampleEs: "Yo soy estudiante. — I am a student." },
+          { front: "Yo estoy", back: "I am (temporary)", example: "Yo estoy cansado.", exampleEs: "Yo estoy cansado. — I am tired." },
+          { front: "Él/Ella es", back: "He/She is (permanent)", example: "Ella es profesora.", exampleEs: "Ella es profesora. — She is a teacher." },
+          { front: "Él/Ella está", back: "He/She is (location/state)", example: "Él está en casa.", exampleEs: "Él está en casa. — He is at home." },
+          { front: "SER — Nationality", back: "Use SER for where you're from", example: "Soy colombiano.", exampleEs: "Soy colombiano. — I'm Colombian." },
+          { front: "ESTAR — Emotions", back: "Use ESTAR for feelings", example: "Estoy feliz hoy.", exampleEs: "Estoy feliz hoy. — I am happy today." },
+          { front: "SER — Profession", back: "Use SER for jobs/roles", example: "Mi padre es médico.", exampleEs: "Mi padre es médico. — My father is a doctor." },
+          { front: "ESTAR — Location", back: "Use ESTAR for where something is", example: "El banco está a la derecha.", exampleEs: "El banco está a la derecha. — The bank is on the right." },
+          { front: "Somos / Estamos", back: "We are (permanent / temporary)", example: "Somos amigos. Estamos listos.", exampleEs: "Somos amigos. — We are friends. / Estamos listos. — We are ready." },
+        ],
+      },
+    },
+    {
+      stationId: a1Stations[1].id,
+      contentType: "ai_scenario",
+      title: "Practice: Describe Yourself",
+      titleEs: "Práctica: Descríbete",
+      durationMinutes: 15,
+      sortOrder: 3,
+      contentData: {
+        scenarioId: "making_friends",
+        description: "Use SER and ESTAR to describe yourself and ask about others.",
+        descriptionEs: "Usa SER y ESTAR para describirse a ti mismo y preguntar sobre otros.",
+      },
+    },
+  ]);
+
+  // ---- A2: "Hobbies & Free Time" (a2Stations[0]) ----
+  await db.insert(learningPathContent).values([
+    {
+      stationId: a2Stations[0].id,
+      contentType: "flashcard",
+      title: "Hobbies Vocabulary",
+      titleEs: "Vocabulario de Pasatiempos",
+      durationMinutes: 6,
+      sortOrder: 2,
+      contentData: {
+        cards: [
+          { front: "Me gusta...", back: "I like...", example: "Me gusta la música.", exampleEs: "Me gusta la música. — I like music." },
+          { front: "Jugar al fútbol", back: "To play soccer", example: "Me gusta jugar al fútbol los domingos.", exampleEs: "Me gusta jugar al fútbol los domingos. — I like to play soccer on Sundays." },
+          { front: "Escuchar música", back: "To listen to music", example: "Escucho música cuando cocino.", exampleEs: "Escucho música cuando cocino. — I listen to music when I cook." },
+          { front: "Leer libros", back: "To read books", example: "Leo libros antes de dormir.", exampleEs: "Leo libros antes de dormir. — I read books before sleeping." },
+          { front: "Ver películas", back: "To watch movies", example: "Me encanta ver películas de acción.", exampleEs: "Me encanta ver películas de acción. — I love watching action movies." },
+          { front: "Salir con amigos", back: "To go out with friends", example: "Los viernes salgo con amigos.", exampleEs: "Los viernes salgo con amigos. — On Fridays I go out with friends." },
+          { front: "Cocinar", back: "To cook", example: "Mi pasatiempo favorito es cocinar.", exampleEs: "Mi pasatiempo favorito es cocinar. — My favorite hobby is cooking." },
+          { front: "Nunca / Siempre / A veces", back: "Never / Always / Sometimes", example: "A veces voy al gimnasio.", exampleEs: "A veces voy al gimnasio. — Sometimes I go to the gym." },
+          { front: "Los fines de semana", back: "On weekends", example: "Los fines de semana descanso.", exampleEs: "Los fines de semana descanso. — On weekends I rest." },
+        ],
+      },
+    },
+    {
+      stationId: a2Stations[0].id,
+      contentType: "speaking",
+      title: "Talk About Your Hobbies",
+      titleEs: "Habla de tus Pasatiempos",
+      durationMinutes: 10,
+      sortOrder: 3,
+      contentData: {
+        prompts: [
+          {
+            text: "Tell someone about 3 things you like to do in your free time, and how often you do them.",
+            textEs: "Cuéntale a alguien 3 cosas que te gusta hacer en tu tiempo libre y con qué frecuencia las haces.",
+            tip: "Use: 'Me gusta/encanta...', frequency words: siempre, a veces, los fines de semana, todos los días.",
+            tipEs: "Usa: 'Me gusta/encanta...', palabras de frecuencia: siempre, a veces, los fines de semana, todos los días.",
+          },
+          {
+            text: "Ask a friend about their hobbies, then share your opinion about one of their activities.",
+            textEs: "Pregúntale a un amigo sobre sus pasatiempos, luego comparte tu opinión sobre una de sus actividades.",
+            tip: "Ask: '¿Qué te gusta hacer?' Then react: 'Qué interesante / Yo también / Nunca lo he intentado.'",
+            tipEs: "Pregunta: '¿Qué te gusta hacer?' Luego reacciona: 'Qué interesante / Yo también / Nunca lo he intentado.'",
+          },
+        ],
+      },
+    },
+  ]);
+
+  // ---- A2: "Food & Restaurants" (a2Stations[1]) ----
+  await db.insert(learningPathContent).values([
+    {
+      stationId: a2Stations[1].id,
+      contentType: "flashcard",
+      title: "Restaurant & Food Vocabulary",
+      titleEs: "Vocabulario de Restaurantes y Comida",
+      durationMinutes: 6,
+      sortOrder: 2,
+      contentData: {
+        cards: [
+          { front: "La carta / El menú", back: "The menu", example: "¿Me puede traer la carta, por favor?", exampleEs: "¿Me puede traer la carta? — Can you bring me the menu?" },
+          { front: "Quisiera / Me gustaría", back: "I would like...", example: "Quisiera el pollo asado.", exampleEs: "Quisiera el pollo asado. — I would like the roasted chicken." },
+          { front: "La cuenta, por favor", back: "The check, please", example: "Perdón, la cuenta por favor.", exampleEs: "Perdón, la cuenta por favor. — Excuse me, the check please." },
+          { front: "¿Qué recomienda?", back: "What do you recommend?", example: "¿Qué recomienda el chef hoy?", exampleEs: "¿Qué recomienda el chef hoy? — What does the chef recommend today?" },
+          { front: "Para mí...", back: "For me... (ordering)", example: "Para mí, una ensalada y agua.", exampleEs: "Para mí, una ensalada y agua. — For me, a salad and water." },
+          { front: "Está delicioso/a", back: "It's delicious", example: "Está delicioso, ¡muchas gracias!", exampleEs: "Está delicioso, ¡muchas gracias! — It's delicious, thank you!" },
+          { front: "Sin... / Con...", back: "Without... / With...", example: "Una pizza sin cebolla, por favor.", exampleEs: "Una pizza sin cebolla, por favor. — A pizza without onion, please." },
+          { front: "El mesero / La mesera", back: "The waiter / The waitress", example: "El mesero tomó nuestro pedido.", exampleEs: "El mesero tomó nuestro pedido. — The waiter took our order." },
+        ],
+      },
+    },
+    {
+      stationId: a2Stations[1].id,
+      contentType: "ai_scenario",
+      title: "Practice: At the Restaurant",
+      titleEs: "Práctica: En el Restaurante",
+      durationMinutes: 15,
+      sortOrder: 3,
+      contentData: {
+        scenarioId: "restaurant",
+        description: "Order food, ask for recommendations, and pay the bill with Lingo.",
+        descriptionEs: "Pide comida, pide recomendaciones y paga la cuenta con Lingo.",
+      },
+    },
+  ]);
+
+  // ---- B1: "The World of Work" (b1Stations[11]) ----
+  await db.insert(learningPathContent).values([
+    {
+      stationId: b1Stations[11].id,
+      contentType: "flashcard",
+      title: "Work & Career Vocabulary",
+      titleEs: "Vocabulario de Trabajo y Carrera",
+      durationMinutes: 7,
+      sortOrder: 2,
+      contentData: {
+        cards: [
+          { front: "La entrevista de trabajo", back: "The job interview", example: "Tengo una entrevista de trabajo mañana.", exampleEs: "Tengo una entrevista de trabajo mañana. — I have a job interview tomorrow." },
+          { front: "El currículum", back: "The resume / CV", example: "Envié mi currículum por correo.", exampleEs: "Envié mi currículum por correo. — I sent my resume by email." },
+          { front: "Las habilidades", back: "The skills", example: "Tengo habilidades de liderazgo.", exampleEs: "Tengo habilidades de liderazgo. — I have leadership skills." },
+          { front: "El puesto / El cargo", back: "The position / The job title", example: "Solicito el puesto de gerente.", exampleEs: "Solicito el puesto de gerente. — I'm applying for the manager position." },
+          { front: "La empresa", back: "The company", example: "Trabajo en una empresa internacional.", exampleEs: "Trabajo en una empresa internacional. — I work at an international company." },
+          { front: "El salario", back: "The salary", example: "¿Cuál es el salario para este puesto?", exampleEs: "¿Cuál es el salario? — What is the salary?" },
+          { front: "Tengo experiencia en...", back: "I have experience in...", example: "Tengo experiencia en ventas.", exampleEs: "Tengo experiencia en ventas. — I have experience in sales." },
+          { front: "A largo/corto plazo", back: "Long/short term", example: "A largo plazo, quiero ser director.", exampleEs: "A largo plazo, quiero ser director. — Long term, I want to be a director." },
+        ],
+      },
+    },
+    {
+      stationId: b1Stations[11].id,
+      contentType: "speaking",
+      title: "Professional Introduction",
+      titleEs: "Presentación Profesional",
+      durationMinutes: 12,
+      sortOrder: 3,
+      contentData: {
+        prompts: [
+          {
+            text: "You're in a job interview. Introduce yourself professionally: your name, your current or last job, your experience, and why you want this position.",
+            textEs: "Estás en una entrevista de trabajo. Preséntate profesionalmente: tu nombre, tu trabajo actual o anterior, tu experiencia y por qué quieres este puesto.",
+            tip: "Useful phrases: 'Actualmente trabajo en...', 'Tengo X años de experiencia en...', 'Me interesa este puesto porque...'",
+            tipEs: "Frases útiles: 'Actualmente trabajo en...', 'Tengo X años de experiencia en...', 'Me interesa este puesto porque...'",
+            aiScenarioId: "job_interview",
+          },
+          {
+            text: "Describe your professional strengths and one area where you want to improve.",
+            textEs: "Describe tus fortalezas profesionales y un área en la que quieres mejorar.",
+            tip: "Strengths: 'Soy organizado/a, creativo/a, trabajo bien en equipo.' Improvement: 'Estoy trabajando en mejorar mi...'",
+            tipEs: "Fortalezas: 'Soy organizado/a, creativo/a, trabajo bien en equipo.' Mejora: 'Estoy trabajando en mejorar mi...'",
+            aiScenarioId: "job_interview",
+          },
+        ],
+      },
+    },
+    {
+      stationId: b1Stations[11].id,
+      contentType: "ai_scenario",
+      title: "Practice: Job Interview",
+      titleEs: "Práctica: Entrevista de Trabajo",
+      durationMinutes: 20,
+      sortOrder: 4,
+      contentData: {
+        scenarioId: "job_interview",
+        description: "Simulate a complete job interview in Spanish with Lingo as the interviewer.",
+        descriptionEs: "Simula una entrevista de trabajo completa en español con Lingo como entrevistador.",
+      },
+    },
+  ]);
+
+  // ---- B2: "Let's Go to the Doctor" (b2Stations[12]) ----
+  await db.insert(learningPathContent).values([
+    {
+      stationId: b2Stations[12].id,
+      contentType: "flashcard",
+      title: "Health & Medical Vocabulary",
+      titleEs: "Vocabulario de Salud y Medicina",
+      durationMinutes: 7,
+      sortOrder: 2,
+      contentData: {
+        cards: [
+          { front: "Me duele...", back: "My ... hurts", example: "Me duele la cabeza.", exampleEs: "Me duele la cabeza. — My head hurts." },
+          { front: "Tengo fiebre", back: "I have a fever", example: "Tengo fiebre y escalofríos.", exampleEs: "Tengo fiebre y escalofríos. — I have fever and chills." },
+          { front: "El médico / La doctora", back: "The doctor (m/f)", example: "La doctora me recetó antibióticos.", exampleEs: "La doctora me recetó antibióticos. — The doctor prescribed me antibiotics." },
+          { front: "La receta médica", back: "The prescription", example: "Necesito renovar mi receta médica.", exampleEs: "Necesito renovar mi receta médica. — I need to renew my prescription." },
+          { front: "El dolor de...", back: "The pain of / The ... ache", example: "Tengo dolor de estómago.", exampleEs: "Tengo dolor de estómago. — I have a stomachache." },
+          { front: "Desde hace... / Hace... que", back: "Since / For (duration)", example: "Me duele la garganta desde hace tres días.", exampleEs: "Me duele la garganta desde hace tres días. — My throat has been hurting for three days." },
+          { front: "Hacerse un análisis", back: "To get a blood test", example: "El médico me mandó hacerme un análisis de sangre.", exampleEs: "El médico me mandó hacerme un análisis. — The doctor sent me to get a blood test." },
+          { front: "La sala de urgencias", back: "The emergency room", example: "Tuvimos que ir a la sala de urgencias.", exampleEs: "Tuvimos que ir a urgencias. — We had to go to the emergency room." },
+        ],
+      },
+    },
+    {
+      stationId: b2Stations[12].id,
+      contentType: "ai_scenario",
+      title: "Practice: Doctor's Appointment",
+      titleEs: "Práctica: Cita Médica",
+      durationMinutes: 20,
+      sortOrder: 3,
+      contentData: {
+        scenarioId: "doctor",
+        description: "Describe your symptoms and understand a doctor's advice in Spanish.",
+        descriptionEs: "Describe tus síntomas y comprende los consejos del médico en español.",
+      },
+    },
+  ]);
+
+  // ---- B2: "Reading Comprehension" (b2Stations[14]) — Opinion & Debate ----
+  await db.insert(learningPathContent).values([
+    {
+      stationId: b2Stations[14].id,
+      contentType: "speaking",
+      title: "Express Your Opinion",
+      titleEs: "Expresa tu Opinión",
+      durationMinutes: 12,
+      sortOrder: 2,
+      contentData: {
+        prompts: [
+          {
+            text: "State your opinion about social media: is it more positive or negative for society? Give at least 2 reasons.",
+            textEs: "Da tu opinión sobre las redes sociales: ¿son más positivas o negativas para la sociedad? Da al menos 2 razones.",
+            tip: "Opinion starters: 'En mi opinión...', 'Desde mi punto de vista...', 'Creo que...' + reasons with 'porque', 'ya que', 'además'.",
+            tipEs: "Inicios de opinión: 'En mi opinión...', 'Desde mi punto de vista...', 'Creo que...' + razones con 'porque', 'ya que', 'además'.",
+            aiScenarioId: "debate",
+          },
+          {
+            text: "Someone disagrees with your opinion. Politely maintain your position and acknowledge their point.",
+            textEs: "Alguien no está de acuerdo con tu opinión. Mantén tu posición con educación y reconoce su punto.",
+            tip: "Disagreeing politely: 'Entiendo tu punto, sin embargo...', 'Respeto tu opinión, aunque yo pienso que...', 'Es verdad que..., pero...'",
+            tipEs: "Discrepar con educación: 'Entiendo tu punto, sin embargo...', 'Respeto tu opinión, aunque yo pienso que...'",
+            aiScenarioId: "debate",
+          },
+          {
+            text: "Summarize both sides of a topic you know well, then state your final conclusion.",
+            textEs: "Resume ambos lados de un tema que conozcas bien y luego expresa tu conclusión final.",
+            tip: "Structure: 'Por un lado... Por otro lado... En conclusión / En resumen...'",
+            tipEs: "Estructura: 'Por un lado... Por otro lado... En conclusión / En resumen...'",
+          },
+        ],
+      },
+    },
+    {
+      stationId: b2Stations[14].id,
+      contentType: "ai_scenario",
+      title: "Practice: Debate & Opinions",
+      titleEs: "Práctica: Debate y Opiniones",
+      durationMinutes: 20,
+      sortOrder: 3,
+      contentData: {
+        scenarioId: "debate",
+        description: "Practice defending and challenging opinions on complex topics with Lingo.",
+        descriptionEs: "Practica defender y cuestionar opiniones sobre temas complejos con Lingo.",
+      },
+    },
+  ]);
+
+  console.log("  Created practice activities for A1, A2, B1, B2 stations");
+
   // ====== LEVEL PROGRESSION RULES (A1→B2 only) ======
   console.log("Creating level progression rules...");
   await db.insert(levelProgressionRules).values([

@@ -104,6 +104,19 @@ export default function AIPracticePage() {
     queryKey: ["/api/ai/scenarios"],
   });
 
+  // Auto-select scenario from URL param (deeplink from learning path)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const scenarioParam = params.get("scenario");
+    if (scenarioParam && (scenarios as any[]).length > 0) {
+      const match = (scenarios as any[]).find((s: any) => s.id === scenarioParam);
+      if (match) {
+        setSelectedScenario(scenarioParam);
+        setShowScenarios(true);
+      }
+    }
+  }, [scenarios]);
+
   const { data: progressData } = useQuery<any>({
     queryKey: ["/api/ai/progress"],
     enabled: activePanel === "progress",
