@@ -136,7 +136,7 @@ export function registerAuthRoutes(app: Express) {
         name: user.firstName,
         token: verificationToken,
         lang,
-      }).catch(() => {});
+      }).catch((err) => console.error("[register] Failed to send verification email:", err));
 
       // Send welcome email (fire-and-forget)
       dripCampaignService.onUserRegistered(user.id);
@@ -190,12 +190,19 @@ export function registerAuthRoutes(app: Express) {
     const verificationToken = crypto.randomUUID();
     await storage.updateUser(user.id, { verificationToken } as any);
     const lang = (user as any).preferredLanguage === "es" || user.timezone?.includes("America") ? "es" : "en";
-    emailService.sendVerificationEmail({
+    const sent = await emailService.sendVerificationEmail({
       to: user.email,
       name: user.firstName,
       token: verificationToken,
       lang,
-    }).catch(() => {});
+    }).catch((err) => {
+      console.error("[resend-verification] Failed:", err);
+      return false;
+    });
+
+    if (!sent) {
+      return res.status(500).json({ message: "Failed to send verification email" });
+    }
 
     res.json({ message: "Verification email sent" });
   });
@@ -209,5 +216,74 @@ export function registerAuthRoutes(app: Express) {
       res.clearCookie("connect.sid");
       res.json({ message: "Logged out successfully" });
     });
+  });
+
+  // Tutor invite — validate token (public)
+  app.get("/api/auth/tutor-invite/:token", async (req, res) => {
+    try {
+      const tutor = await storage.getTutorByInviteToken(req.params.token);
+      if (!tutor) {
+        return res.status(404).json({ message: "Invite link is invalid or has expired." });
+      }
+      // Only return safe fields
+      res.json({ name: tutor.name, email: tutor.email });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Tutor invite — accept (set password, create user account, link to tutor)
+  app.post("/api/auth/tutor-invite/:token/accept", authLimiter, async (req, res) => {
+    try {
+      const { password } = req.body;
+      if (!password || password.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters." });
+      }
+
+      const tutor = await storage.getTutorByInviteToken(req.params.token);
+      if (!tutor) {
+        return res.status(404).json({ message: "Invite link is invalid or has expired." });
+      }
+
+      // Check if tutor already has a linked user account
+      if (tutor.userId) {
+        return res.status(400).json({ message: "This invite has already been used." });
+      }
+
+      // Parse name into first/last
+      const nameParts = tutor.name.trim().split(" ");
+      const firstName = nameParts[0] || tutor.name;
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      // Create user account with userType "tutor"
+      const bcrypt = await import("bcryptjs");
+      const hashedPassword = await bcrypt.hash(password, 12);
+      const newUser = await storage.createUser({
+        email: tutor.email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        username: tutor.email.split("@")[0],
+        userType: "tutor",
+        trialCompleted: false,
+        classCredits: 0,
+      });
+
+      // Link tutor profile to user and clear invite token
+      await storage.activateTutorAccount(tutor.id, newUser.id);
+
+      // Auto-login
+      req.session.userId = newUser.id;
+      await new Promise<void>((resolve, reject) =>
+        req.session.save((err) => (err ? reject(err) : resolve()))
+      );
+
+      res.json({ user: sanitizeUser(newUser), tutorProfile: { ...tutor, userId: newUser.id } });
+    } catch (error: any) {
+      if (error.message?.includes("unique") || error.code === "23505") {
+        return res.status(400).json({ message: "An account with this email already exists." });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
 }

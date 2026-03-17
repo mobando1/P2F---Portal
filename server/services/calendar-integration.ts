@@ -83,7 +83,7 @@ export class CalendarIntegrationService {
       }
 
       // Generar link de videollamada (Google Meet con fallback a Jitsi)
-      const title = `${tutor.languageTaught === 'spanish' ? 'Spanish' : 'English'} Class - ${tutor.name}`;
+      const title = `${tutor.languageTaught.includes('spanish') ? 'Spanish' : 'English'} Class - ${tutor.name}`;
       const { meetingLink, calendarEventId, tutorCalendarEventId } = await googleMeetService.createMeetingLink({
         title,
         scheduledAt,

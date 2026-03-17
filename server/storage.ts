@@ -72,6 +72,9 @@ export interface IStorage {
   getTutorsByCategory(classType?: string, languageTaught?: string): Promise<Tutor[]>;
   createTutor(tutor: InsertTutor): Promise<Tutor>;
   updateTutor(id: number, data: Partial<InsertTutor>): Promise<Tutor | undefined>;
+  setTutorInviteToken(tutorId: number, token: string, expiresAt: Date): Promise<void>;
+  getTutorByInviteToken(token: string): Promise<Tutor | undefined>;
+  activateTutorAccount(tutorId: number, userId: number): Promise<void>;
 
   // Reviews
   getReviewsByTutor(tutorId: number): Promise<Review[]>;
@@ -587,8 +590,10 @@ export class MemStorage implements IStorage {
         rating: "4.9",
         reviewCount: 156,
         hourlyRate: "$35.00",
-        classType: "adults",
-        languageTaught: "spanish",
+        classType: ["adults"],
+        languageTaught: ["spanish"],
+        inviteToken: null,
+        inviteTokenExpiresAt: null,
         country: "Colombia",
         timezone: "America/Bogota",
         languages: ["Spanish", "English", "French"],
@@ -612,8 +617,10 @@ export class MemStorage implements IStorage {
         rating: "4.9",
         reviewCount: 98,
         hourlyRate: "$30.00",
-        classType: "adults",
-        languageTaught: "spanish",
+        classType: ["adults"],
+        languageTaught: ["spanish"],
+        inviteToken: null,
+        inviteTokenExpiresAt: null,
         country: "Venezuela",
         timezone: "America/Caracas",
         languages: ["Spanish", "English"],
@@ -637,8 +644,10 @@ export class MemStorage implements IStorage {
         rating: "4.8",
         reviewCount: 167,
         hourlyRate: "$32.00",
-        classType: "adults",
-        languageTaught: "spanish",
+        classType: ["adults"],
+        languageTaught: ["spanish"],
+        inviteToken: null,
+        inviteTokenExpiresAt: null,
         country: "Colombia",
         timezone: "America/Bogota",
         languages: ["Spanish", "English"],
@@ -662,8 +671,10 @@ export class MemStorage implements IStorage {
         rating: "4.9",
         reviewCount: 142,
         hourlyRate: "$28.00",
-        classType: "kids",
-        languageTaught: "spanish",
+        classType: ["kids"],
+        languageTaught: ["spanish"],
+        inviteToken: null,
+        inviteTokenExpiresAt: null,
         country: "Colombia",
         timezone: "America/Bogota",
         languages: ["Spanish", "English"],
@@ -687,8 +698,10 @@ export class MemStorage implements IStorage {
         rating: "4.8",
         reviewCount: 87,
         hourlyRate: "$30.00",
-        classType: "adults",
-        languageTaught: "spanish",
+        classType: ["adults"],
+        languageTaught: ["spanish"],
+        inviteToken: null,
+        inviteTokenExpiresAt: null,
         country: "Colombia",
         timezone: "America/Bogota",
         languages: ["Spanish", "English"],
@@ -982,8 +995,8 @@ export class MemStorage implements IStorage {
       rating: tutorData.rating || "5.00",
       reviewCount: tutorData.reviewCount || 0,
       isActive: tutorData.isActive !== undefined ? tutorData.isActive : true,
-      classType: tutorData.classType || "adults",
-      languageTaught: tutorData.languageTaught || "spanish",
+      classType: tutorData.classType || ["adults"],
+      languageTaught: tutorData.languageTaught || ["spanish"],
       phone: tutorData.phone || null,
       userId: tutorData.userId || null,
       yearsOfExperience: tutorData.yearsOfExperience || 0,
@@ -991,10 +1004,36 @@ export class MemStorage implements IStorage {
       timezone: tutorData.timezone || null,
       hourlyRate: tutorData.hourlyRate || "25.00",
       certifications: tutorData.certifications || [],
-      languages: tutorData.languages || []
+      languages: tutorData.languages || [],
+      inviteToken: tutorData.inviteToken || null,
+      inviteTokenExpiresAt: tutorData.inviteTokenExpiresAt || null,
     };
     this.tutors.set(id, tutor);
     return tutor;
+  }
+
+  async setTutorInviteToken(tutorId: number, token: string, expiresAt: Date): Promise<void> {
+    await this.ensureInitialized();
+    const tutor = this.tutors.get(tutorId);
+    if (tutor) {
+      this.tutors.set(tutorId, { ...tutor, inviteToken: token, inviteTokenExpiresAt: expiresAt });
+    }
+  }
+
+  async getTutorByInviteToken(token: string): Promise<Tutor | undefined> {
+    await this.ensureInitialized();
+    const now = new Date();
+    return Array.from(this.tutors.values()).find(
+      t => t.inviteToken === token && t.inviteTokenExpiresAt && t.inviteTokenExpiresAt > now
+    );
+  }
+
+  async activateTutorAccount(tutorId: number, userId: number): Promise<void> {
+    await this.ensureInitialized();
+    const tutor = this.tutors.get(tutorId);
+    if (tutor) {
+      this.tutors.set(tutorId, { ...tutor, userId, inviteToken: null, inviteTokenExpiresAt: null });
+    }
   }
 
   async getAllClasses(): Promise<Class[]> {
@@ -1144,8 +1183,8 @@ export class MemStorage implements IStorage {
   async getTutorsByCategory(classType?: string, languageTaught?: string): Promise<Tutor[]> {
     await this.ensureInitialized();
     let result = Array.from(this.tutors.values()).filter(t => t.isActive);
-    if (classType) result = result.filter(t => t.classType === classType);
-    if (languageTaught) result = result.filter(t => t.languageTaught === languageTaught);
+    if (classType) result = result.filter(t => t.classType.includes(classType));
+    if (languageTaught) result = result.filter(t => t.languageTaught.includes(languageTaught));
     return result;
   }
 

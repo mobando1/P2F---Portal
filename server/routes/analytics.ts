@@ -164,7 +164,7 @@ export function registerAnalyticsRoutes(app: Express) {
       const categories = ["adults-spanish", "kids-spanish", "adults-english", "kids-english"];
       categories.forEach(cat => {
         const [classType, lang] = cat.split("-");
-        const catTutors = allTutors.filter(t => t.classType === classType && t.languageTaught === lang);
+        const catTutors = allTutors.filter(t => t.classType.includes(classType) && t.languageTaught.includes(lang));
         if (catTutors.length <= 1) {
           const label = `${classType === "kids" ? "Kids" : "Adults"} ${lang === "spanish" ? "Spanish" : "English"}`;
           capacityAlerts.push({ type: "low_tutors", message: `Solo ${catTutors.length} tutor(es) para ${label}` });

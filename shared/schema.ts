@@ -109,9 +109,10 @@ export const tutors = pgTable("tutors", {
   reviewCount: integer("review_count").default(0),
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull(),
   isActive: boolean("is_active").default(true),
-  // Categoría de clase que enseña
-  classType: text("class_type").notNull().default("adults"), // 'adults' | 'kids'
-  languageTaught: text("language_taught").notNull().default("spanish"), // 'spanish' | 'english'
+  // Categoría de clase que enseña (array: puede enseñar 'adults' y/o 'kids')
+  classType: text("class_type").array().notNull().default(["adults"]),
+  // Idioma(s) que enseña (array: puede enseñar 'spanish' y/o 'english')
+  languageTaught: text("language_taught").array().notNull().default(["spanish"]),
   // Información adicional para profesores
   phone: text("phone"),
   country: text("country"),
@@ -121,6 +122,9 @@ export const tutors = pgTable("tutors", {
   yearsOfExperience: integer("years_of_experience"),
   // Vinculación con cuenta de usuario para login de tutores
   userId: integer("user_id").references(() => users.id),
+  // Token de invitación para activar cuenta (one-time use)
+  inviteToken: text("invite_token"),
+  inviteTokenExpiresAt: timestamp("invite_token_expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_tutors_user_id").on(table.userId),

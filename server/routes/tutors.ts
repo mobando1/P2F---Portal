@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import crypto from "crypto";
 import { storage } from "../storage";
 import { TutorManagementService } from "../services/tutor-management";
 import { requireAuth, requireAdmin } from "./auth";
@@ -66,6 +67,29 @@ export function registerTutorRoutes(app: Express) {
       res.json(tutor);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Generate invite link for a tutor (admin only)
+  app.post("/api/tutors/:id/invite", requireAdmin, async (req, res) => {
+    try {
+      const tutorId = parseInt(req.params.id);
+      if (isNaN(tutorId)) return res.status(400).json({ message: "Invalid tutor ID" });
+
+      const tutor = await storage.getTutor(tutorId);
+      if (!tutor) return res.status(404).json({ message: "Tutor not found" });
+
+      if (tutor.userId) {
+        return res.status(400).json({ message: "This tutor already has an active account." });
+      }
+
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      await storage.setTutorInviteToken(tutorId, token, expiresAt);
+
+      res.json({ inviteUrl: `/join?token=${token}` });
+    } catch (error: any) {
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 

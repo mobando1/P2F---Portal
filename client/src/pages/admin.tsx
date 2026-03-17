@@ -57,8 +57,8 @@ interface TutorData {
   yearsOfExperience?: number;
   hourlyRate: number;
   profileImage?: string;
-  classType: string;
-  languageTaught: string;
+  classType: string[];
+  languageTaught: string[];
 }
 
 interface ClassItem {
@@ -86,9 +86,11 @@ export default function AdminPage() {
     specialization: '',
     bio: '',
     hourlyRate: 25,
-    classType: 'adults',
-    languageTaught: 'spanish',
+    classType: ['adults'],
+    languageTaught: ['spanish'],
   });
+  const [createdTutorId, setCreatedTutorId] = useState<number | null>(null);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
   const { toast } = useToast();
   const { language } = useLanguage();
@@ -251,21 +253,18 @@ export default function AdminPage() {
   const createTutorMutation = useMutation({
     mutationFn: (tutorData: TutorData) =>
       apiRequest('POST', '/api/tutors', tutorData).then(res => res.json()),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/tutors'] });
-      setShowAddTutor(false);
+      setCreatedTutorId(data?.id || null);
+      setInviteUrl(null);
       setNewTutor({
         name: '',
         email: '',
         specialization: '',
         bio: '',
         hourlyRate: 25,
-        classType: 'adults',
-        languageTaught: 'spanish',
-      });
-      toast({
-        title: "Profesor creado",
-        description: "El nuevo profesor ha sido añadido exitosamente",
+        classType: ['adults'],
+        languageTaught: ['spanish'],
       });
     },
     onError: (error: any) => {
@@ -554,12 +553,16 @@ export default function AdminPage() {
                             <Badge variant={tutor.isActive ? "default" : "secondary"}>
                               {tutor.isActive ? "Activo" : "Inactivo"}
                             </Badge>
-                            <Badge variant="outline">
-                              {tutor.classType === 'kids' ? 'Niños' : 'Adultos'}
-                            </Badge>
-                            <Badge variant="outline">
-                              {tutor.languageTaught === 'english' ? 'Inglés' : 'Español'}
-                            </Badge>
+                            {(Array.isArray(tutor.classType) ? tutor.classType : [tutor.classType]).map((ct: string) => (
+                              <Badge key={ct} variant="outline">
+                                {ct === 'kids' ? 'Niños' : 'Adultos'}
+                              </Badge>
+                            ))}
+                            {(Array.isArray(tutor.languageTaught) ? tutor.languageTaught : [tutor.languageTaught]).map((lt: string) => (
+                              <Badge key={lt} variant="outline">
+                                {lt === 'english' ? 'Inglés' : 'Español'}
+                              </Badge>
+                            ))}
                             {tutor.country && (
                               <Badge variant="outline">
                                 <Globe className="w-3 h-3 mr-1" />
@@ -583,6 +586,26 @@ export default function AdminPage() {
                             <Pencil className="w-3 h-3 mr-1" />
                             {isEs ? 'Editar' : 'Edit'}
                           </Button>
+                          {!tutor.userId && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-green-700 border-green-300 hover:bg-green-50 text-xs"
+                              onClick={async () => {
+                                try {
+                                  const res = await apiRequest('POST', `/api/tutors/${tutor.id}/invite`);
+                                  const data = await res.json();
+                                  const fullUrl = window.location.origin + data.inviteUrl;
+                                  await navigator.clipboard.writeText(fullUrl);
+                                  toast({ title: "🔗 Link copiado al portapapeles" });
+                                } catch {
+                                  toast({ title: "Error generando link", variant: "destructive" });
+                                }
+                              }}
+                            >
+                              🔗 Invitar
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -628,28 +651,46 @@ export default function AdminPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="classType">Tipo de Clase *</Label>
-                        <select
-                          id="classType"
-                          value={newTutor.classType}
-                          onChange={(e) => setNewTutor({...newTutor, classType: e.target.value})}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                          <option value="adults">Adultos</option>
-                          <option value="kids">Niños</option>
-                        </select>
+                        <Label>Tipo de Clase *</Label>
+                        <div className="flex gap-4 mt-2">
+                          {[{value: 'adults', label: 'Adultos'}, {value: 'kids', label: 'Niños'}].map(({value, label}) => (
+                            <label key={value} className="flex items-center gap-2 cursor-pointer text-sm">
+                              <input
+                                type="checkbox"
+                                checked={newTutor.classType.includes(value)}
+                                onChange={(e) => {
+                                  const arr = e.target.checked
+                                    ? [...newTutor.classType, value]
+                                    : newTutor.classType.filter(t => t !== value);
+                                  setNewTutor({...newTutor, classType: arr});
+                                }}
+                                className="rounded"
+                              />
+                              {label}
+                            </label>
+                          ))}
+                        </div>
                       </div>
                       <div>
-                        <Label htmlFor="languageTaught">Idioma que Enseña *</Label>
-                        <select
-                          id="languageTaught"
-                          value={newTutor.languageTaught}
-                          onChange={(e) => setNewTutor({...newTutor, languageTaught: e.target.value})}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                          <option value="spanish">Español</option>
-                          <option value="english">Inglés</option>
-                        </select>
+                        <Label>Idioma que Enseña *</Label>
+                        <div className="flex gap-4 mt-2">
+                          {[{value: 'spanish', label: 'Español'}, {value: 'english', label: 'Inglés'}].map(({value, label}) => (
+                            <label key={value} className="flex items-center gap-2 cursor-pointer text-sm">
+                              <input
+                                type="checkbox"
+                                checked={newTutor.languageTaught.includes(value)}
+                                onChange={(e) => {
+                                  const arr = e.target.checked
+                                    ? [...newTutor.languageTaught, value]
+                                    : newTutor.languageTaught.filter(l => l !== value);
+                                  setNewTutor({...newTutor, languageTaught: arr});
+                                }}
+                                className="rounded"
+                              />
+                              {label}
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
@@ -716,16 +757,66 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  {/* Success state: show invite link option */}
+                  {createdTutorId && (
+                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-green-700 font-medium text-sm mb-2">✓ Profesor creado exitosamente</p>
+                      {inviteUrl ? (
+                        <div className="space-y-2">
+                          <p className="text-xs text-gray-600">Copia este link y envíaselo al profesor:</p>
+                          <div className="flex gap-2">
+                            <code className="flex-1 text-xs bg-white border rounded px-2 py-1 truncate text-gray-700">
+                              {window.location.origin}{inviteUrl}
+                            </code>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                navigator.clipboard.writeText(window.location.origin + inviteUrl);
+                                toast({ title: "¡Link copiado!" });
+                              }}
+                            >
+                              Copiar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-green-400 text-green-700 hover:bg-green-100"
+                          onClick={async () => {
+                            try {
+                              const res = await apiRequest('POST', `/api/tutors/${createdTutorId}/invite`);
+                              const data = await res.json();
+                              setInviteUrl(data.inviteUrl);
+                            } catch {
+                              toast({ title: "Error generando link", variant: "destructive" });
+                            }
+                          }}
+                        >
+                          🔗 Generar link de invitación
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex gap-4 mt-6">
-                    <Button
-                      onClick={handleCreateTutor}
-                      disabled={createTutorMutation.isPending}
-                      className="bg-[#1C7BB1] hover:bg-[#0A4A6E]"
-                    >
-                      {createTutorMutation.isPending ? "Creando..." : "Crear Profesor"}
-                    </Button>
-                    <Button variant="outline" onClick={() => setShowAddTutor(false)}>
-                      Cancelar
+                    {!createdTutorId && (
+                      <Button
+                        onClick={handleCreateTutor}
+                        disabled={createTutorMutation.isPending}
+                        className="bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+                      >
+                        {createTutorMutation.isPending ? "Creando..." : "Crear Profesor"}
+                      </Button>
+                    )}
+                    <Button variant="outline" onClick={() => {
+                      setShowAddTutor(false);
+                      setCreatedTutorId(null);
+                      setInviteUrl(null);
+                    }}>
+                      {createdTutorId ? "Cerrar" : "Cancelar"}
                     </Button>
                   </div>
                 </div>

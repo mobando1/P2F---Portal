@@ -197,8 +197,8 @@ export class DatabaseStorage implements IStorage {
 
   async getTutorsByCategory(classType?: string, languageTaught?: string): Promise<Tutor[]> {
     const conditions = [eq(tutors.isActive, true)];
-    if (classType) conditions.push(eq(tutors.classType, classType));
-    if (languageTaught) conditions.push(eq(tutors.languageTaught, languageTaught));
+    if (classType) conditions.push(sql`${tutors.classType} @> ARRAY[${classType}]::text[]`);
+    if (languageTaught) conditions.push(sql`${tutors.languageTaught} @> ARRAY[${languageTaught}]::text[]`);
     return await this.db.select().from(tutors).where(and(...conditions));
   }
 
@@ -209,6 +209,24 @@ export class DatabaseStorage implements IStorage {
       .where(eq(tutors.id, id))
       .returning();
     return tutor || undefined;
+  }
+
+  async setTutorInviteToken(tutorId: number, token: string, expiresAt: Date): Promise<void> {
+    await this.db.update(tutors)
+      .set({ inviteToken: token, inviteTokenExpiresAt: expiresAt })
+      .where(eq(tutors.id, tutorId));
+  }
+
+  async getTutorByInviteToken(token: string): Promise<Tutor | undefined> {
+    const [tutor] = await this.db.select().from(tutors)
+      .where(and(eq(tutors.inviteToken, token), gt(tutors.inviteTokenExpiresAt, new Date())));
+    return tutor || undefined;
+  }
+
+  async activateTutorAccount(tutorId: number, userId: number): Promise<void> {
+    await this.db.update(tutors)
+      .set({ userId, inviteToken: null, inviteTokenExpiresAt: null })
+      .where(eq(tutors.id, tutorId));
   }
 
   async getReviewsByTutor(tutorId: number): Promise<Review[]> {

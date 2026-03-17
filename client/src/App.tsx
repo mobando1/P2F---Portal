@@ -34,6 +34,7 @@ const GuidePage = lazy(() => import("@/pages/guide"));
 const MessagesPage = lazy(() => import("@/pages/messages"));
 const LearningPathPage = lazy(() => import("@/pages/learning-path"));
 const PlacementTestPage = lazy(() => import("@/pages/placement-test"));
+const TutorInvitePage = lazy(() => import("@/pages/tutor-invite"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 function LoadingFallback() {
@@ -163,6 +164,9 @@ function Router() {
             <TutorDashboardPage />
           </ProtectedRoute>
         </Route>
+        <Route path="/join">
+          <TutorInvitePage />
+        </Route>
         <Route path="/">
           <Redirect to={getSmartRedirect(getCurrentUser())} />
         </Route>
@@ -184,12 +188,21 @@ function EmailVerificationBanner() {
   if (user.googleId || user.microsoftId) return null; // OAuth = already verified
   if (location === "/login") return null;
 
+  const [sendError, setSendError] = useState(false);
+
   const handleResend = async () => {
     if (sending || sent) return;
     setSending(true);
+    setSendError(false);
     try {
-      await fetch("/api/auth/resend-verification", { method: "POST" });
-      setSent(true);
+      const res = await fetch("/api/auth/resend-verification", { method: "POST", credentials: "include" });
+      if (res.ok) {
+        setSent(true);
+      } else {
+        setSendError(true);
+      }
+    } catch {
+      setSendError(true);
     } finally {
       setSending(false);
     }
@@ -206,7 +219,7 @@ function EmailVerificationBanner() {
           disabled={sending || sent}
           className="text-amber-700 hover:text-amber-900 font-medium underline disabled:opacity-50"
         >
-          {sent ? "Email sent!" : sending ? "Sending…" : "Resend email"}
+          {sent ? "Email sent!" : sendError ? "Error — try again" : sending ? "Sending…" : "Resend email"}
         </button>
         <button
           onClick={() => setDismissed(true)}

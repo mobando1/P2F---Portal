@@ -13,8 +13,8 @@ interface TutorProfileData {
   yearsOfExperience?: number;
   hourlyRate: number;
   profileImage?: string;
-  classType?: string;
-  languageTaught?: string;
+  classType?: string | string[];
+  languageTaught?: string | string[];
   isActive?: boolean;
 }
 
@@ -34,8 +34,8 @@ export class TutorManagementService {
       timezone: tutorData.timezone || null,
       certifications: tutorData.certifications || null,
       yearsOfExperience: tutorData.yearsOfExperience || null,
-      classType: tutorData.classType || "adults",
-      languageTaught: tutorData.languageTaught || "spanish",
+      classType: Array.isArray(tutorData.classType) ? tutorData.classType : [tutorData.classType || "adults"],
+      languageTaught: Array.isArray(tutorData.languageTaught) ? tutorData.languageTaught : [tutorData.languageTaught || "spanish"],
       rating: "5.00",
       reviewCount: 0,
       isActive: true,
@@ -63,8 +63,8 @@ export class TutorManagementService {
     if (updateData.timezone !== undefined) updateFields.timezone = updateData.timezone;
     if (updateData.certifications !== undefined) updateFields.certifications = updateData.certifications;
     if (updateData.yearsOfExperience !== undefined) updateFields.yearsOfExperience = updateData.yearsOfExperience;
-    if (updateData.classType !== undefined) updateFields.classType = updateData.classType;
-    if (updateData.languageTaught !== undefined) updateFields.languageTaught = updateData.languageTaught;
+    if (updateData.classType !== undefined) updateFields.classType = Array.isArray(updateData.classType) ? updateData.classType : [updateData.classType];
+    if (updateData.languageTaught !== undefined) updateFields.languageTaught = Array.isArray(updateData.languageTaught) ? updateData.languageTaught : [updateData.languageTaught];
     if (updateData.isActive !== undefined) updateFields.isActive = updateData.isActive;
 
     if (Object.keys(updateFields).length === 0) return existingTutor;
