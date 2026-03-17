@@ -121,18 +121,47 @@ export default function Dashboard() {
     queryKey: ["/api/ai/usage"],
   });
 
-  // Handle query errors
-  if (isDashboardError) {
+  // Handle query errors — attempt session recovery before redirecting
+  useEffect(() => {
+    if (!isDashboardError) return;
     console.error('Dashboard query failed:', dashboardError);
-    toast({
-      title: "Error de sesión",
-      description: "Recargando tu sesión...",
-      variant: "destructive",
-    });
-    queryClient.clear();
-    localStorage.removeItem('passport2fluency_user');
-    setLocation("/login");
-    return null;
+
+    // Try to recover the session before giving up
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            // Session is actually valid — retry the query
+            localStorage.setItem('passport2fluency_user', JSON.stringify(data.user));
+            queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+            return;
+          }
+        }
+      } catch {}
+
+      // Session truly invalid — redirect to login
+      toast({
+        title: language === 'es' ? "Sesión expirada" : "Session expired",
+        description: language === 'es' ? "Por favor inicia sesión de nuevo" : "Please log in again",
+        variant: "destructive",
+      });
+      queryClient.clear();
+      localStorage.removeItem('passport2fluency_user');
+      setLocation("/login");
+    })();
+  }, [isDashboardError]);
+
+  if (isDashboardError) {
+    return (
+      <div className="min-h-screen bg-[#F0F4F8]">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </div>
+    );
   }
 
   // Mutations

@@ -2,6 +2,10 @@ import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
+if (!resend) {
+  console.warn("[email] WARNING: RESEND_API_KEY not configured — all emails will be logged to console only, not actually sent");
+}
+
 const FROM_EMAIL = "Passport2Fluency <noreply@passport2fluency.com>";
 
 interface EmailParams {

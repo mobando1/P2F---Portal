@@ -42,6 +42,7 @@ export default function PackagesPage() {
   const [activeTab, setActiveTab] = useState<"subscriptions" | "packages">("subscriptions");
   const { formatPrice } = useCurrency();
 
+  const es = language === 'es';
   const subscriptionPlans: SubscriptionPlan[] = [
     {
       id: 1,
@@ -51,12 +52,12 @@ export default function PackagesPage() {
       price: 119.96,
       discountPercent: 0,
       features: [
-        language === 'es' ? 'Progreso constante' : 'Steady progress',
-        language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
-        language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
-        language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
-        language === 'es' ? 'Soporte del profesor' : 'Teacher support',
-        language === 'es' ? 'Sin contrato' : 'No contract'
+        es ? '1 clase por semana' : '1 class per week',
+        es ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
+        es ? 'Programación flexible' : 'Flexible scheduling',
+        es ? 'Acceso al camino de aprendizaje' : 'Learning path access',
+        es ? 'Cancela en cualquier momento' : 'Cancel anytime',
+        es ? 'Sin contrato' : 'No contract',
       ],
     },
     {
@@ -67,13 +68,12 @@ export default function PackagesPage() {
       price: 219.99,
       discountPercent: 18,
       features: [
-        language === 'es' ? 'Progreso más rápido' : 'Faster progress',
-        language === 'es' ? 'Mejora conversacional semanal' : 'Weekly conversational improvement',
-        language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
-        language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
-        language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
-        language === 'es' ? 'Soporte del profesor' : 'Teacher support',
-        language === 'es' ? 'Sin contrato' : 'No contract'
+        es ? '2 clases por semana' : '2 classes per week',
+        es ? 'Todo lo del plan Starter +' : 'Everything in Starter +',
+        es ? '★ Práctica conversacional semanal' : '★ Weekly conversation practice',
+        es ? '★ Tareas y actividades asignadas' : '★ Homework & assigned activities',
+        es ? '★ Reporte mensual de progreso' : '★ Monthly progress report',
+        es ? 'Soporte prioritario del profesor' : 'Priority teacher support',
       ],
       popular: true,
     },
@@ -85,12 +85,12 @@ export default function PackagesPage() {
       price: 299.99,
       discountPercent: 25,
       features: [
-        language === 'es' ? 'Para estudiantes serios que quieren resultados rápidos' : 'For serious learners who want results fast',
-        language === 'es' ? 'Sesiones privadas 1-a-1 (60 min)' : 'Private 1-on-1 sessions (60 min)',
-        language === 'es' ? 'Programación flexible' : 'Flexible scheduling',
-        language === 'es' ? 'Cancela en cualquier momento' : 'Cancel anytime',
-        language === 'es' ? 'Soporte del profesor' : 'Teacher support',
-        language === 'es' ? 'Sin contrato' : 'No contract'
+        es ? '3 clases por semana' : '3 classes per week',
+        es ? 'Todo lo del plan Momentum +' : 'Everything in Momentum +',
+        es ? '★ Acceso al Partner de Práctica IA' : '★ AI Practice Partner access',
+        es ? '★ Plan de estudio personalizado' : '★ Personalized study plan',
+        es ? '★ Reserva prioritaria de horarios' : '★ Priority scheduling',
+        es ? '★ Tutor dedicado asignado' : '★ Dedicated assigned tutor',
       ],
     },
   ];
