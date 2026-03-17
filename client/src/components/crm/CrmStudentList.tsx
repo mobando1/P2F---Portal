@@ -93,6 +93,7 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<CrmStudent | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState("");
 
   const queryParams = new URLSearchParams({ limit: "50" });
   if (search) queryParams.set("search", search);
@@ -344,17 +345,32 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      {/* Delete Confirmation Dialog — requires typing the student name */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteConfirmName(""); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
               {isEs ? "Eliminar estudiante" : "Delete student"}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {isEs
-                ? `¿Estás seguro de eliminar a ${deleteTarget?.firstName} ${deleteTarget?.lastName} (${deleteTarget?.email})? Esta acción no se puede deshacer.`
-                : `Are you sure you want to delete ${deleteTarget?.firstName} ${deleteTarget?.lastName} (${deleteTarget?.email})? This action cannot be undone.`}
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  {isEs
+                    ? `Estás a punto de eliminar a ${deleteTarget?.firstName} ${deleteTarget?.lastName} (${deleteTarget?.email}). Esta acción no se puede deshacer.`
+                    : `You are about to delete ${deleteTarget?.firstName} ${deleteTarget?.lastName} (${deleteTarget?.email}). This action cannot be undone.`}
+                </p>
+                <p className="font-medium text-foreground">
+                  {isEs
+                    ? `Escribe "${deleteTarget?.firstName} ${deleteTarget?.lastName}" para confirmar:`
+                    : `Type "${deleteTarget?.firstName} ${deleteTarget?.lastName}" to confirm:`}
+                </p>
+                <Input
+                  value={deleteConfirmName}
+                  onChange={(e) => setDeleteConfirmName(e.target.value)}
+                  placeholder={`${deleteTarget?.firstName} ${deleteTarget?.lastName}`}
+                  autoFocus
+                />
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -362,7 +378,10 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-              disabled={deleteMutation.isPending}
+              disabled={
+                deleteMutation.isPending ||
+                deleteConfirmName.trim().toLowerCase() !== `${deleteTarget?.firstName} ${deleteTarget?.lastName}`.toLowerCase()
+              }
             >
               {deleteMutation.isPending
                 ? (isEs ? "Eliminando..." : "Deleting...")

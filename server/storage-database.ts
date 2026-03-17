@@ -947,12 +947,22 @@ export class DatabaseStorage implements IStorage {
 
   // Delete User (cascading — delete all related data)
   async deleteUser(id: number) {
+    // Campaign & communication
     await this.db.delete(emailCampaignEvents).where(eq(emailCampaignEvents.userId, id));
+    await this.db.delete(campaignRecipients).where(eq(campaignRecipients.userId, id));
+    await this.db.delete(communicationLog).where(eq(communicationLog.userId, id));
+    // Notifications & preferences
     await this.db.delete(notifications).where(eq(notifications.userId, id));
+    await this.db.delete(userNotificationPreferences).where(eq(userNotificationPreferences.userId, id));
+    // Progress & achievements
     await this.db.delete(achievements).where(eq(achievements.userId, id));
     await this.db.delete(userProgress).where(eq(userProgress.userId, id));
+    await this.db.delete(studentPathProgress).where(eq(studentPathProgress.userId, id));
+    await this.db.delete(studentQuizAttempts).where(eq(studentQuizAttempts.userId, id));
+    // Tutor assignments (studentId references users)
+    await this.db.delete(tutorAssignments).where(eq(tutorAssignments.studentId, id));
+    // Reviews & classes
     await this.db.delete(reviews).where(eq(reviews.userId, id));
-    await this.db.delete(userNotificationPreferences).where(eq(userNotificationPreferences.userId, id));
     await this.db.delete(classPurchases).where(eq(classPurchases.userId, id));
     await this.db.delete(subscriptions).where(eq(subscriptions.userId, id));
     await this.db.delete(classes).where(eq(classes.userId, id));
@@ -971,7 +981,10 @@ export class DatabaseStorage implements IStorage {
       await this.db.delete(supportMessages).where(inArray(supportMessages.ticketId, ticketIds));
       await this.db.delete(supportTickets).where(eq(supportTickets.userId, id));
     }
-    // AI
+    // AI data
+    await this.db.delete(aiSavedCorrections).where(eq(aiSavedCorrections.userId, id));
+    await this.db.delete(aiVocabulary).where(eq(aiVocabulary.userId, id));
+    await this.db.delete(aiStudentProfiles).where(eq(aiStudentProfiles.userId, id));
     const userAiConvs = await this.db.select().from(aiConversations).where(eq(aiConversations.userId, id));
     if (userAiConvs.length > 0) {
       const aiConvIds = userAiConvs.map(c => c.id);
@@ -982,6 +995,12 @@ export class DatabaseStorage implements IStorage {
     await this.db.delete(crmNotes).where(eq(crmNotes.userId, id));
     await this.db.delete(crmTasks).where(eq(crmTasks.userId, id));
     await this.db.delete(crmUserTags).where(eq(crmUserTags.userId, id));
+    // Newsletter — unlink user instead of deleting subscriber record
+    await this.db.update(newsletterSubscribers).set({ userId: null }).where(eq(newsletterSubscribers.userId, id));
+    // Stripe events — unlink
+    await this.db.update(stripeEvents).set({ userId: null }).where(eq(stripeEvents.userId, id));
+    // Tutors — unlink userId if this user was linked to a tutor profile
+    await this.db.update(tutors).set({ userId: null }).where(eq(tutors.userId, id));
     // Finally delete user
     await this.db.delete(users).where(eq(users.id, id));
     return true;
