@@ -296,7 +296,7 @@ export function registerClassRoutes(app: Express) {
       }
 
       // Notify
-      notificationService.onClassBooked({
+      notificationService.onClassRescheduled({
         studentId: userId,
         tutorId: classItem.tutorId,
         classId,

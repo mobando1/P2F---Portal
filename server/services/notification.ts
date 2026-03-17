@@ -115,6 +115,81 @@ export const notificationService = {
   },
 
   /**
+   * Called when a class is rescheduled — notifies student + tutor
+   */
+  async onClassRescheduled(params: {
+    studentId: number;
+    tutorId: number;
+    classId: number;
+    scheduledAt: Date;
+    meetingLink?: string;
+  }): Promise<void> {
+    try {
+      const { studentId, tutorId, scheduledAt, meetingLink } = params;
+      const student = await storage.getUser(studentId);
+      const tutor = await storage.getTutor(tutorId);
+      if (!student || !tutor) return;
+
+      const lang: "es" | "en" = (student.timezone?.includes("America") ? "es" : "en") as "es" | "en";
+      const date = formatDate(scheduledAt, lang);
+      const time = formatTime(scheduledAt, lang);
+
+      await createAndPush({
+        userId: studentId,
+        type: "booking",
+        title: lang === "es" ? "Clase Reagendada" : "Class Rescheduled",
+        message: lang === "es"
+          ? `Tu clase con ${tutor.name} ha sido reagendada para el ${date} a las ${time}.`
+          : `Your class with ${tutor.name} has been rescheduled for ${date} at ${time}.`,
+        link: "/dashboard",
+        isRead: false,
+      });
+
+      if (tutor.userId) {
+        await createAndPush({
+          userId: tutor.userId,
+          type: "booking",
+          title: lang === "es" ? "Clase Reagendada" : "Class Rescheduled",
+          message: lang === "es"
+            ? `La clase con ${student.firstName} ${student.lastName} fue reagendada al ${date} a las ${time}.`
+            : `The class with ${student.firstName} ${student.lastName} was rescheduled to ${date} at ${time}.`,
+          link: "/tutor-portal",
+          isRead: false,
+        });
+      }
+
+      const prefs = await storage.getNotificationPreferences(studentId);
+      if (!prefs || prefs.emailBooking !== false) {
+        emailService.sendRescheduleConfirmation({
+          to: student.email,
+          studentName: `${student.firstName} ${student.lastName}`,
+          tutorName: tutor.name,
+          date,
+          time,
+          meetingLink,
+          lang,
+        });
+      }
+
+      if (tutor.userId) {
+        const tutorUser = await storage.getUser(tutor.userId);
+        if (tutorUser) {
+          emailService.sendTutorNewBooking({
+            to: tutorUser.email,
+            tutorName: tutor.name,
+            studentName: `${student.firstName} ${student.lastName}`,
+            date,
+            time,
+            lang,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error in onClassRescheduled notification:", error);
+    }
+  },
+
+  /**
    * Called when a class is cancelled — notifies student + tutor
    */
   async onClassCancelled(params: {

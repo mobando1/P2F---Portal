@@ -111,6 +111,33 @@ export const emailService = {
     return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Clase Confirmada" : "Class Confirmed", body, lang) });
   },
 
+  async sendRescheduleConfirmation(params: {
+    to: string;
+    studentName: string;
+    tutorName: string;
+    date: string;
+    time: string;
+    meetingLink?: string;
+    lang: "es" | "en";
+  }): Promise<boolean> {
+    const { to, studentName, tutorName, date, time, meetingLink, lang } = params;
+    const isEs = lang === "es";
+
+    const subject = isEs ? `Clase reagendada con ${tutorName}` : `Class rescheduled with ${tutorName}`;
+    const body = `
+      <p style="color: #374151; font-size: 16px;">${isEs ? "Hola" : "Hi"} <strong>${studentName}</strong>,</p>
+      <p style="color: #374151;">${isEs ? "Tu clase ha sido reagendada exitosamente:" : "Your class has been rescheduled successfully:"}</p>
+      <div style="background: #EAF4FA; border-left: 4px solid #1C7BB1; padding: 16px; margin: 16px 0; border-radius: 0 8px 8px 0;">
+        <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Profesor:" : "Tutor:"}</strong> ${tutorName}</p>
+        <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Nueva fecha:" : "New date:"}</strong> ${date}</p>
+        <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Nueva hora:" : "New time:"}</strong> ${time}</p>
+      </div>
+      ${meetingLink ? `<p style="margin: 16px 0;"><a href="${meetingLink}" style="background: #1C7BB1; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">${isEs ? "Unirse a la clase" : "Join class"}</a></p>` : ""}
+    `;
+
+    return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Clase Reagendada" : "Class Rescheduled", body, lang) });
+  },
+
   async sendCancellationNotification(params: {
     to: string;
     name: string;
