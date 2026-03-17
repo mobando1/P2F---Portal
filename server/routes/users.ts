@@ -77,14 +77,31 @@ export function registerUserRoutes(app: Express) {
       }
 
       const user = await storage.getUser(userId);
-      const subscription = await storage.getUserSubscription(userId);
-      const progress = await storage.getUserProgress(userId);
-      const upcomingClasses = await storage.getUpcomingClasses(userId);
-      const recentCompletedClasses = await storage.getRecentCompletedClasses(userId, 3);
-
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+
+      // Resilient data fetching — missing data shouldn't crash the dashboard
+      let subscription = null;
+      let progress = null;
+      let upcomingClasses: any[] = [];
+      let recentCompletedClasses: any[] = [];
+
+      try { subscription = await storage.getUserSubscription(userId); } catch (e) { console.error("Dashboard: subscription fetch failed:", e); }
+      try {
+        progress = await storage.getUserProgress(userId);
+        // Auto-create progress if missing (e.g., after re-registration)
+        if (!progress) {
+          progress = await storage.updateUserProgress(userId, {
+            classesCompleted: 0,
+            learningHours: "0.00",
+            currentStreak: 0,
+            totalVideosWatched: 0,
+          });
+        }
+      } catch (e) { console.error("Dashboard: progress fetch failed:", e); }
+      try { upcomingClasses = await storage.getUpcomingClasses(userId); } catch (e) { console.error("Dashboard: upcoming classes fetch failed:", e); }
+      try { recentCompletedClasses = await storage.getRecentCompletedClasses(userId, 3); } catch (e) { console.error("Dashboard: recent classes fetch failed:", e); }
 
       res.json({
         user: {

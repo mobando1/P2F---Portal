@@ -93,6 +93,10 @@ export const register = async (data: RegisterData): Promise<AuthUser> => {
 
   if (result.user) {
     setCurrentUser(result.user);
+
+    const { queryClient } = await import("@/lib/queryClient");
+    queryClient.clear();
+
     return result.user;
   }
 

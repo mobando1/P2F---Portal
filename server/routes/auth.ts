@@ -142,7 +142,11 @@ export function registerAuthRoutes(app: Express) {
       dripCampaignService.onUserRegistered(user.id);
 
       res.status(201).json({ user: sanitizeUser(user) });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("[register] Registration error:", error);
+      if (error?.code === "23505" || error?.message?.includes("unique") || error?.message?.includes("duplicate")) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
       res.status(400).json({ message: "Invalid request data" });
     }
   });
