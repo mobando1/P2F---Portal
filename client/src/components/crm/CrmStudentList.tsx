@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useLanguage } from "@/lib/i18n";
+import { useToast } from "@/hooks/use-toast";
 import {
   Loader2,
   Search,
@@ -20,6 +32,7 @@ import {
   UserPlus,
   UserCheck,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 
 interface CrmStudent {
@@ -74,9 +87,12 @@ const TYPE_LABELS: Record<string, { en: string; es: string }> = {
 export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps) {
   const { language } = useLanguage();
   const isEs = language === "es";
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [deleteTarget, setDeleteTarget] = useState<CrmStudent | null>(null);
 
   const queryParams = new URLSearchParams({ limit: "50" });
   if (search) queryParams.set("search", search);
@@ -84,6 +100,28 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
 
   const { data, isLoading, error } = useQuery<CrmResponse>({
     queryKey: [`/api/admin/crm?${queryParams.toString()}`],
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      await apiRequest("DELETE", `/api/admin/crm/${userId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === "string" && key.startsWith("/api/admin/crm");
+        },
+      });
+      toast({ title: isEs ? "Estudiante eliminado" : "Student deleted" });
+      setDeleteTarget(null);
+    },
+    onError: () => {
+      toast({
+        title: isEs ? "Error al eliminar" : "Failed to delete",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleExport = () => {
@@ -216,6 +254,7 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
                 <th className="text-left py-3 px-4 font-medium">
                   {isEs ? "Ultima Actividad" : "Last Activity"}
                 </th>
+                <th className="py-3 px-4"></th>
               </tr>
             </thead>
             <tbody>
@@ -284,6 +323,19 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
                           )
                         : "-"}
                     </td>
+                    <td className="py-3 px-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTarget(student);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </td>
                   </tr>
                 );
               })}
@@ -291,6 +343,34 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
           </table>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isEs ? "Eliminar estudiante" : "Delete student"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {isEs
+                ? `¿Estás seguro de eliminar a ${deleteTarget?.firstName} ${deleteTarget?.lastName} (${deleteTarget?.email})? Esta acción no se puede deshacer.`
+                : `Are you sure you want to delete ${deleteTarget?.firstName} ${deleteTarget?.lastName} (${deleteTarget?.email})? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{isEs ? "Cancelar" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending
+                ? (isEs ? "Eliminando..." : "Deleting...")
+                : (isEs ? "Eliminar" : "Delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

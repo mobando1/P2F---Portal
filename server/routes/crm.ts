@@ -168,13 +168,23 @@ export function registerCrmRoutes(app: Express) {
         limit: limit ? parseInt(limit as string) : 50,
       });
 
-      // Enrich with class data and tags
+      // Enrich with class data and tags (resilient — one failure doesn't break the list)
       const enriched = await Promise.all(
         result.students.map(async (student) => {
-          const classes = await storage.getUserClasses(student.id);
+          let classes: any[] = [];
+          let tags: any[] = [];
+          try {
+            classes = await storage.getUserClasses(student.id);
+          } catch (e) {
+            console.error(`CRM: failed to get classes for user ${student.id}:`, e);
+          }
+          try {
+            tags = await storage.getUserCrmTags(student.id);
+          } catch (e) {
+            console.error(`CRM: failed to get tags for user ${student.id}:`, e);
+          }
           const completedClasses = classes.filter(c => c.status === "completed").length;
           const trialClass = classes.find(c => c.isTrial);
-          const tags = await storage.getUserCrmTags(student.id);
 
           return {
             ...sanitizeUser(student),
@@ -189,16 +199,21 @@ export function registerCrmRoutes(app: Express) {
         })
       );
 
-      // Summary counts from funnel
-      const funnel = await storage.getCrmFunnel();
-      const summary = {
-        total: result.total,
-        trial: funnel.find(f => f.stage === "trial")?.count || 0,
-        lead: funnel.find(f => f.stage === "lead")?.count || 0,
-        customer: funnel.find(f => f.stage === "customer")?.count || 0,
-        negotiation: funnel.find(f => f.stage === "negotiation")?.count || 0,
-        inactive: funnel.find(f => f.stage === "inactive")?.count || 0,
-      };
+      // Summary counts from funnel (resilient)
+      let summary = { total: result.total, trial: 0, lead: 0, customer: 0, negotiation: 0, inactive: 0 };
+      try {
+        const funnel = await storage.getCrmFunnel();
+        summary = {
+          total: result.total,
+          trial: funnel.find(f => f.stage === "trial")?.count || 0,
+          lead: funnel.find(f => f.stage === "lead")?.count || 0,
+          customer: funnel.find(f => f.stage === "customer")?.count || 0,
+          negotiation: funnel.find(f => f.stage === "negotiation")?.count || 0,
+          inactive: funnel.find(f => f.stage === "inactive")?.count || 0,
+        };
+      } catch (e) {
+        console.error("CRM: failed to get funnel summary:", e);
+      }
 
       res.json({
         students: enriched,
@@ -223,6 +238,36 @@ export function registerCrmRoutes(app: Express) {
       if (!user) return res.status(404).json({ message: "User not found" });
       res.json(sanitizeUser(user));
     } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ── Delete Student ──
+  app.delete("/api/admin/crm/:userId", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (user.userType === "admin") return res.status(403).json({ message: "Cannot delete admin users" });
+
+      // Delete CRM-specific data first
+      try {
+        const notes = await storage.getCrmNotes(userId);
+        for (const note of notes) await storage.deleteCrmNote(note.id);
+      } catch {}
+      try {
+        const tasks = await storage.getCrmTasks({ userId });
+        for (const task of tasks) await storage.deleteCrmTask(task.id);
+      } catch {}
+      try {
+        const tags = await storage.getUserCrmTags(userId);
+        for (const tag of tags) await storage.removeUserCrmTag(userId, tag.id);
+      } catch {}
+
+      await storage.deleteUser(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("CRM delete user error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

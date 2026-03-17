@@ -1,11 +1,23 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Trash2 } from "lucide-react";
 
 interface CrmStudent {
   id: number;
@@ -62,9 +74,30 @@ export default function CrmPipeline({ onSelectStudent }: CrmPipelineProps) {
   const { language } = useLanguage();
   const isEs = language === "es";
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [deleteTarget, setDeleteTarget] = useState<CrmStudent | null>(null);
 
   const { data, isLoading, error } = useQuery<CrmResponse>({
     queryKey: ["/api/admin/crm?limit=500"],
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      await apiRequest("DELETE", `/api/admin/crm/${userId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === "string" && key.startsWith("/api/admin/crm");
+        },
+      });
+      toast({ title: isEs ? "Estudiante eliminado" : "Student deleted" });
+      setDeleteTarget(null);
+    },
+    onError: () => {
+      toast({ title: isEs ? "Error al eliminar" : "Failed to delete", variant: "destructive" });
+    },
   });
 
   const stageMutation = useMutation({
@@ -119,6 +152,7 @@ export default function CrmPipeline({ onSelectStudent }: CrmPipelineProps) {
   }
 
   return (
+    <>
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="flex gap-4 overflow-x-auto pb-4 min-h-[600px]">
         {COLUMNS.map((col) => {
@@ -179,7 +213,18 @@ export default function CrmPipeline({ onSelectStudent }: CrmPipelineProps) {
                                   )}
                                 </div>
 
-                                <p className="text-xs text-gray-500 truncate">{student.email}</p>
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs text-gray-500 truncate flex-1">{student.email}</p>
+                                  <button
+                                    className="ml-1 p-0.5 rounded text-gray-400 hover:text-red-500 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeleteTarget(student);
+                                    }}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
 
                                 {student.lastActivityAt && (
                                   <p className="text-[10px] text-gray-400">
@@ -219,5 +264,32 @@ export default function CrmPipeline({ onSelectStudent }: CrmPipelineProps) {
         })}
       </div>
     </DragDropContext>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isEs ? "Eliminar estudiante" : "Delete student"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isEs
+                ? `¿Estás seguro de eliminar a ${deleteTarget?.firstName} ${deleteTarget?.lastName} (${deleteTarget?.email})? Esta acción no se puede deshacer.`
+                : `Are you sure you want to delete ${deleteTarget?.firstName} ${deleteTarget?.lastName} (${deleteTarget?.email})? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{isEs ? "Cancelar" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending
+                ? (isEs ? "Eliminando..." : "Deleting...")
+                : (isEs ? "Eliminar" : "Delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
