@@ -12,7 +12,7 @@ Plataforma SaaS de aprendizaje de idiomas (español/inglés) donde estudiantes r
 - **AI:** Anthropic Claude API (AI practice partner "Lingo")
 - **Video llamadas:** Google Meet (con fallback a Jitsi)
 - **Emails:** Resend
-- **Deploy:** Replit
+- **Deploy:** Railway
 
 ## Usuarios y Roles
 - **student:** reserva clases, practica con IA, sigue learning path, compra paquetes
