@@ -65,8 +65,9 @@ export interface IStorage {
   updateSubscription(id: number, subscription: Partial<InsertSubscription>): Promise<Subscription | undefined>;
 
   // Tutors
-  getAllTutors(): Promise<Tutor[]>;
+  getAllTutors(includeInactive?: boolean): Promise<Tutor[]>;
   getTutor(id: number): Promise<Tutor | undefined>;
+  getTutorByEmail(email: string): Promise<Tutor | undefined>;
   getTutorsByIds(ids: number[]): Promise<Tutor[]>;
   getTutorByUserId(userId: number): Promise<Tutor | undefined>;
   getTutorsByCategory(classType?: string, languageTaught?: string): Promise<Tutor[]>;
@@ -961,14 +962,20 @@ export class MemStorage implements IStorage {
     return updatedSubscription;
   }
 
-  async getAllTutors(): Promise<Tutor[]> {
+  async getAllTutors(includeInactive = false): Promise<Tutor[]> {
     await this.ensureInitialized();
+    if (includeInactive) return Array.from(this.tutors.values());
     return Array.from(this.tutors.values()).filter(tutor => tutor.isActive);
   }
 
   async getTutor(id: number): Promise<Tutor | undefined> {
     await this.ensureInitialized();
     return this.tutors.get(id);
+  }
+
+  async getTutorByEmail(email: string): Promise<Tutor | undefined> {
+    await this.ensureInitialized();
+    return Array.from(this.tutors.values()).find(t => t.email === email);
   }
 
   async getTutorsByIds(ids: number[]): Promise<Tutor[]> {

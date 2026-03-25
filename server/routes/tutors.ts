@@ -10,8 +10,18 @@ export function registerTutorRoutes(app: Express) {
   // Get tutors (with optional category filters)
   app.get("/api/tutors", async (req, res) => {
     try {
-      const { search, minRating } = req.query;
-      let result = await storage.getAllTutors();
+      const { search, minRating, classType, language } = req.query;
+      // Admins see all tutors (including inactive)
+      let isAdmin = false;
+      if (req.session?.userId) {
+        const reqUser = await storage.getUser(req.session.userId);
+        if (reqUser?.userType === "admin") isAdmin = true;
+      }
+      const ct = (typeof classType === "string" && classType !== "all") ? classType : undefined;
+      const lang = (typeof language === "string" && language !== "all") ? language : undefined;
+      let result = (ct || lang)
+        ? await storage.getTutorsByCategory(ct, lang)
+        : await storage.getAllTutors(isAdmin);
       if (search && typeof search === "string") {
         const term = search.toLowerCase();
         result = result.filter(t =>
@@ -111,6 +121,25 @@ export function registerTutorRoutes(app: Express) {
       const tutorId = parseInt(req.params.id);
       const stats = await tutorManagement.getTutorStats(tutorId);
       res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Seed/restore real tutors (admin only)
+  app.post("/api/tutors/seed", requireAdmin, async (req, res) => {
+    try {
+      const { realTutors, defaultAvailability } = await import("../seed-tutors");
+      const result = await tutorManagement.bulkImportTutors(realTutors);
+      // Set availability for each tutor
+      for (const tutor of result.success) {
+        try {
+          await tutorManagement.setTutorAvailability(tutor.id, defaultAvailability);
+        } catch (e) {
+          // Availability setup is non-critical
+        }
+      }
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

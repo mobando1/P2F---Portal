@@ -168,12 +168,20 @@ export class DatabaseStorage implements IStorage {
     return subscription || undefined;
   }
 
-  async getAllTutors(): Promise<Tutor[]> {
+  async getAllTutors(includeInactive = false): Promise<Tutor[]> {
+    if (includeInactive) {
+      return await this.db.select().from(tutors);
+    }
     return await this.db.select().from(tutors).where(eq(tutors.isActive, true));
   }
 
   async getTutor(id: number): Promise<Tutor | undefined> {
     const [tutor] = await this.db.select().from(tutors).where(eq(tutors.id, id));
+    return tutor || undefined;
+  }
+
+  async getTutorByEmail(email: string): Promise<Tutor | undefined> {
+    const [tutor] = await this.db.select().from(tutors).where(eq(tutors.email, email));
     return tutor || undefined;
   }
 

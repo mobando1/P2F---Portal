@@ -88,16 +88,12 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const user = getCurrentUser();
   const { t, language } = useLanguage();
+  const [rescheduleClass, setRescheduleClass] = useState<any>(null);
 
-  // Redirect if not authenticated
-  if (!isAuthenticated() || !user) {
-    setLocation("/login");
-    return null;
-  }
-
-  // Queries
+  // ALL hooks must be called before any conditional returns (React Rules of Hooks)
   const { data: dashboardData, isLoading: isDashboardLoading, isError: isDashboardError, error: dashboardError } = useQuery<DashboardData>({
-    queryKey: ["/api/dashboard", user.id],
+    queryKey: ["/api/dashboard", user?.id],
+    enabled: !!user,
   });
 
   const { data: achievements } = useQuery<Array<{
@@ -108,8 +104,9 @@ export default function Dashboard() {
     icon: string;
     unlockedAt: string;
   }>>({
-    queryKey: ["/api/achievements", user.id],
-    queryFn: () => apiRequest("GET", `/api/achievements/${user.id}`).then(res => res.json()),
+    queryKey: ["/api/achievements", user?.id],
+    queryFn: () => apiRequest("GET", `/api/achievements/${user!.id}`).then(res => res.json()),
+    enabled: !!user,
   });
 
   const { data: aiUsage } = useQuery<{
@@ -119,62 +116,19 @@ export default function Dashboard() {
     limit: number | null;
   }>({
     queryKey: ["/api/ai/usage"],
+    enabled: !!user,
   });
 
-  // Handle query errors — attempt session recovery before redirecting
-  useEffect(() => {
-    if (!isDashboardError) return;
-    console.error('Dashboard query failed:', dashboardError);
-
-    // Try to recover the session before giving up
-    (async () => {
-      try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.user) {
-            // Session is actually valid — retry the query
-            localStorage.setItem('passport2fluency_user', JSON.stringify(data.user));
-            queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
-            return;
-          }
-        }
-      } catch {}
-
-      // Session truly invalid — redirect to login
-      toast({
-        title: language === 'es' ? "Sesión expirada" : "Session expired",
-        description: language === 'es' ? "Por favor inicia sesión de nuevo" : "Please log in again",
-        variant: "destructive",
-      });
-      queryClient.clear();
-      localStorage.removeItem('passport2fluency_user');
-      setLocation("/login");
-    })();
-  }, [isDashboardError]);
-
-  if (isDashboardError) {
-    return (
-      <div className="min-h-screen bg-[#F0F4F8]">
-        <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-      </div>
-    );
-  }
-
-  // Mutations
   const cancelClassMutation = useMutation({
     mutationFn: async (classId: number) => {
       const response = await apiRequest("PUT", `/api/classes/${classId}/cancel`, {
-        userId: user.id,
+        userId: user!.id,
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard", user.id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/classes", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/classes", user?.id] });
       toast({
         title: language === 'es' ? "Clase cancelada" : "Class cancelled",
         description: language === 'es' ? "Tu clase ha sido cancelada." : "Your class has been cancelled successfully.",
@@ -192,7 +146,7 @@ export default function Dashboard() {
   const customerPortalMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/create-customer-portal-session", {
-        userId: user.id,
+        userId: user!.id,
       });
       return response.json();
     },
@@ -211,7 +165,7 @@ export default function Dashboard() {
   const upgradePortalMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/create-upgrade-portal-session", {
-        userId: user.id,
+        userId: user!.id,
       });
       return response.json();
     },
@@ -227,11 +181,55 @@ export default function Dashboard() {
     },
   });
 
+  // Handle query errors — attempt session recovery before redirecting
+  useEffect(() => {
+    if (!isDashboardError) return;
+    console.error('Dashboard query failed:', dashboardError);
+
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            localStorage.setItem('passport2fluency_user', JSON.stringify(data.user));
+            queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+            return;
+          }
+        }
+      } catch {}
+
+      toast({
+        title: language === 'es' ? "Sesión expirada" : "Session expired",
+        description: language === 'es' ? "Por favor inicia sesión de nuevo" : "Please log in again",
+        variant: "destructive",
+      });
+      queryClient.clear();
+      localStorage.removeItem('passport2fluency_user');
+      setLocation("/login");
+    })();
+  }, [isDashboardError]);
+
   const handleCancelClass = (classId: number) => {
     cancelClassMutation.mutate(classId);
   };
 
-  const [rescheduleClass, setRescheduleClass] = useState<any>(null);
+  // Redirect if not authenticated (AFTER all hooks)
+  if (!isAuthenticated() || !user) {
+    setLocation("/login");
+    return null;
+  }
+
+  if (isDashboardError) {
+    return (
+      <div className="min-h-screen bg-[#F0F4F8]">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </div>
+    );
+  }
 
   if (isDashboardLoading) {
     return (

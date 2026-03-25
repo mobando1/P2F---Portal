@@ -296,63 +296,20 @@ export default function AdminPage() {
     }
   });
 
-  // Cargar profesores de ejemplo
+  // Restaurar los 6 profesores reales desde seed-tutors.ts
   const seedTutorsMutation = useMutation({
-    mutationFn: () =>
-      apiRequest('POST', '/api/tutors/bulk-import', {
-          tutors: [
-            {
-              name: "María Elena González",
-              email: "maria.gonzalez@passport2fluency.com",
-              specialization: "Conversación Avanzada",
-              bio: "Profesora nativa de español con 8 años de experiencia.",
-              phone: "+34 612 345 678",
-              country: "España",
-              timezone: "Europe/Madrid",
-              certifications: ["DELE Examiner", "ELE Master"],
-              yearsOfExperience: 8,
-              hourlyRate: 25,
-              profileImage: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&crop=face"
-            },
-            {
-              name: "Carlos Mendoza",
-              email: "carlos.mendoza@passport2fluency.com",
-              specialization: "Español de Negocios",
-              bio: "Experto en español de negocios con experiencia corporativa.",
-              phone: "+52 55 1234 5678",
-              country: "México",
-              timezone: "America/Mexico_City",
-              certifications: ["Business Spanish Certificate"],
-              yearsOfExperience: 12,
-              hourlyRate: 30,
-              profileImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face"
-            },
-            {
-              name: "Ana Sofía Ruiz",
-              email: "ana.ruiz@passport2fluency.com",
-              specialization: "Principiantes y Niños",
-              bio: "Especialista en enseñanza a principiantes y niños.",
-              phone: "+57 1 234 5678",
-              country: "Colombia",
-              timezone: "America/Bogota",
-              certifications: ["Child Language Teaching"],
-              yearsOfExperience: 6,
-              hourlyRate: 20,
-              profileImage: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&crop=face"
-            }
-          ]
-      }).then(res => res.json()),
+    mutationFn: () => apiRequest('POST', '/api/tutors/seed').then(res => res.json()),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['/api/tutors'] });
       toast({
-        title: "Profesores cargados",
-        description: `${result.success?.length || 0} profesores añadidos exitosamente`,
+        title: isEs ? "Profesores restaurados" : "Tutors restored",
+        description: `${result.success?.length || 0} ${isEs ? 'profesores cargados' : 'tutors loaded'}`,
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Error cargando profesores",
+        description: error.message || (isEs ? "Error cargando profesores" : "Error loading tutors"),
         variant: "destructive"
       });
     }
@@ -520,7 +477,7 @@ export default function AdminPage() {
                 disabled={seedTutorsMutation.isPending}
               >
                 <Upload className="w-4 h-4 mr-2" />
-                Cargar Profesores de Ejemplo
+                {isEs ? 'Restaurar Profesores' : 'Restore Tutors'}
               </Button>
             </div>
 

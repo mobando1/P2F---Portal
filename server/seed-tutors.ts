@@ -13,6 +13,8 @@ const realTutors = [
     certifications: ["DELE Examiner", "ELE Master", "Teaching Spanish as Foreign Language"],
     yearsOfExperience: 8,
     hourlyRate: 25,
+    classType: ["adults"],
+    languageTaught: ["spanish"],
     profileImage: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&crop=face"
   },
   {
@@ -26,6 +28,8 @@ const realTutors = [
     certifications: ["Business Spanish Certificate", "Corporate Training Specialist"],
     yearsOfExperience: 12,
     hourlyRate: 30,
+    classType: ["adults"],
+    languageTaught: ["spanish", "english"],
     profileImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face"
   },
   {
@@ -39,6 +43,8 @@ const realTutors = [
     certifications: ["Child Language Teaching", "Elementary Spanish Education"],
     yearsOfExperience: 6,
     hourlyRate: 20,
+    classType: ["kids", "adults"],
+    languageTaught: ["spanish"],
     profileImage: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&crop=face"
   },
   {
@@ -52,6 +58,8 @@ const realTutors = [
     certifications: ["PhD Literature", "Cultural Studies Certificate", "Advanced Spanish Grammar"],
     yearsOfExperience: 15,
     hourlyRate: 35,
+    classType: ["adults"],
+    languageTaught: ["spanish"],
     profileImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face"
   },
   {
@@ -65,6 +73,8 @@ const realTutors = [
     certifications: ["Spanish Phonetics Specialist", "Accent Reduction Coach"],
     yearsOfExperience: 10,
     hourlyRate: 28,
+    classType: ["adults", "kids"],
+    languageTaught: ["spanish", "english"],
     profileImage: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&h=400&fit=crop&crop=face"
   },
   {
@@ -78,6 +88,8 @@ const realTutors = [
     certifications: ["DELE Official Examiner", "SIELE Coordinator", "Exam Preparation Specialist"],
     yearsOfExperience: 14,
     hourlyRate: 32,
+    classType: ["adults"],
+    languageTaught: ["spanish"],
     profileImage: "https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=400&fit=crop&crop=face"
   }
 ];
@@ -141,4 +153,4 @@ if (require.main === module) {
   });
 }
 
-export { seedTutors, realTutors };
+export { seedTutors, realTutors, defaultAvailability };

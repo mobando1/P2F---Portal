@@ -450,6 +450,14 @@ async function startServer() {
           CREATE INDEX IF NOT EXISTS idx_subscriptions_user_status ON subscriptions(user_id, status);
         `);
         log("Schema migrations applied");
+
+        // Auto-seed tutors if table is empty
+        const existingTutors = await storage.getAllTutors();
+        if (existingTutors.length === 0) {
+          const { seedTutors } = await import("./seed-tutors");
+          await seedTutors();
+          log("Seeded initial tutors");
+        }
       }
     } catch (err) {
       console.error("STARTUP: Database connectivity or migration failed:", err);

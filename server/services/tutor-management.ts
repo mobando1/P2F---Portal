@@ -41,6 +41,13 @@ export class TutorManagementService {
       isActive: true,
     };
 
+    // Upsert: if tutor with same email exists, update instead of failing
+    const existing = await storage.getTutorByEmail(tutorData.email);
+    if (existing) {
+      const updated = await storage.updateTutor(existing.id, { ...insertData, isActive: true });
+      return updated || existing;
+    }
+
     const tutor = await storage.createTutor(insertData);
     return tutor;
   }
