@@ -109,9 +109,26 @@ export function registerAuthRoutes(app: Express) {
     try {
       const userData = insertUserSchema.parse(req.body);
 
+      // Validate required fields are not empty strings
+      if (!userData.firstName?.trim()) {
+        return res.status(400).json({ message: "First name is required" });
+      }
+      if (!userData.lastName?.trim()) {
+        return res.status(400).json({ message: "Last name is required" });
+      }
+      if (!userData.username?.trim()) {
+        return res.status(400).json({ message: "Username is required" });
+      }
+      if (!userData.email?.trim()) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      if (!userData.password || userData.password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+
       const existingUser = await storage.getUserByEmail(userData.email);
       if (existingUser) {
-        return res.status(400).json({ message: "User already exists" });
+        return res.status(409).json({ message: "This email is already registered. Try logging in instead." });
       }
 
       const user = await storage.createUser(userData);
@@ -144,9 +161,22 @@ export function registerAuthRoutes(app: Express) {
       res.status(201).json({ user: sanitizeUser(user) });
     } catch (error: any) {
       console.error("[register] Registration error:", error);
+
+      // Duplicate key constraint (Postgres 23505)
       if (error?.code === "23505" || error?.message?.includes("unique") || error?.message?.includes("duplicate")) {
+        const detail = (error?.detail || error?.message || "").toLowerCase();
+        if (detail.includes("username")) {
+          return res.status(400).json({ message: "Username already taken" });
+        }
         return res.status(400).json({ message: "Email already registered" });
       }
+
+      // Zod validation error
+      if (error?.issues) {
+        const fields = error.issues.map((i: any) => i.path?.[0]).filter(Boolean).join(", ");
+        return res.status(400).json({ message: `Missing or invalid fields: ${fields}` });
+      }
+
       res.status(400).json({ message: "Invalid request data" });
     }
   });

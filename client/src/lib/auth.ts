@@ -88,8 +88,18 @@ export const login = async (data: LoginData): Promise<AuthUser> => {
 };
 
 export const register = async (data: RegisterData): Promise<AuthUser> => {
-  const response = await apiRequest("POST", "/api/auth/register", data);
-  const result = await response.json();
+  const res = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+    credentials: "include",
+  });
+
+  const result = await res.json();
+
+  if (!res.ok) {
+    throw new Error(result.message || "Registration failed");
+  }
 
   if (result.user) {
     setCurrentUser(result.user);

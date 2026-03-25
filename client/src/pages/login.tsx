@@ -98,10 +98,11 @@ export default function Login() {
       } else {
         setLocation(getSmartRedirect(newUser));
       }
-    } catch (error) {
+    } catch (error: any) {
+      const msg = error?.message || "";
       toast({
         title: t.registrationFailed,
-        description: t.checkCredentials,
+        description: msg && msg !== "Registration failed" ? msg : t.checkCredentials,
         variant: "destructive",
       });
     } finally {
