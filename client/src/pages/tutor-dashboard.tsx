@@ -253,7 +253,7 @@ export default function TutorDashboard() {
     );
   }
 
-  const stats = data?.stats || { todaysClasses: 0, upcomingClasses: 0, completedClasses: 0, totalHours: 0 };
+  const stats = data?.stats || { todaysClasses: 0, upcomingClasses: 0, completedClasses: 0, totalHours: 0, classesWithoutNotes: 0, pendingAssignments: 0 };
   const upcomingClasses = data?.upcomingClasses || [];
 
   const isClassSoon = (scheduledAt: string) => {

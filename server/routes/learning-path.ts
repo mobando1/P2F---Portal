@@ -245,8 +245,8 @@ export function registerLearningPathRoutes(app: Express) {
 
       // Enrich with content and tutor info
       const enriched = await Promise.all(assignments.map(async (a) => {
-        const content = await storage.getContent(a.contentId);
-        const tutor = await storage.getTutor(a.tutorId);
+        const content = a.contentId ? await storage.getContent(a.contentId) : null;
+        const tutor = a.tutorId ? await storage.getTutor(a.tutorId) : null;
         return {
           ...a,
           contentTitle: content?.title || "Unknown",
@@ -338,8 +338,8 @@ export function registerLearningPathRoutes(app: Express) {
 
       // Enrich with student and content info
       const enriched = await Promise.all(assignments.map(async (a) => {
-        const student = await storage.getUser(a.studentId);
-        const content = await storage.getContent(a.contentId);
+        const student = a.studentId ? await storage.getUser(a.studentId) : null;
+        const content = a.contentId ? await storage.getContent(a.contentId) : null;
         return {
           ...a,
           studentName: student ? `${student.firstName} ${student.lastName}` : "Unknown",
