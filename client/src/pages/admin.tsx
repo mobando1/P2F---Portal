@@ -808,25 +808,41 @@ export default function AdminPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label>{isEs ? 'Tipo de Clase' : 'Class Type'}</Label>
-                        <select
-                          value={editingTutor.classType || 'adults'}
-                          onChange={(e) => setEditingTutor({...editingTutor, classType: e.target.value})}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                          <option value="adults">{isEs ? 'Adultos' : 'Adults'}</option>
-                          <option value="kids">{isEs ? 'Niños' : 'Kids'}</option>
-                        </select>
+                        <div className="flex gap-4 mt-2">
+                          {["adults", "kids"].map((type) => (
+                            <label key={type} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={(Array.isArray(editingTutor.classType) ? editingTutor.classType : [editingTutor.classType || 'adults']).includes(type)}
+                                onChange={(e) => {
+                                  const current = Array.isArray(editingTutor.classType) ? editingTutor.classType : [editingTutor.classType || 'adults'];
+                                  const arr = e.target.checked ? [...current, type] : current.filter((t: string) => t !== type);
+                                  setEditingTutor({...editingTutor, classType: arr.length > 0 ? arr : ['adults']});
+                                }}
+                              />
+                              {type === "adults" ? (isEs ? "Adultos" : "Adults") : (isEs ? "Niños" : "Kids")}
+                            </label>
+                          ))}
+                        </div>
                       </div>
                       <div>
                         <Label>{isEs ? 'Idioma que Enseña' : 'Language Taught'}</Label>
-                        <select
-                          value={editingTutor.languageTaught || 'spanish'}
-                          onChange={(e) => setEditingTutor({...editingTutor, languageTaught: e.target.value})}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                          <option value="spanish">{isEs ? 'Español' : 'Spanish'}</option>
-                          <option value="english">{isEs ? 'Inglés' : 'English'}</option>
-                        </select>
+                        <div className="flex gap-4 mt-2">
+                          {["spanish", "english"].map((lang) => (
+                            <label key={lang} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={(Array.isArray(editingTutor.languageTaught) ? editingTutor.languageTaught : [editingTutor.languageTaught || 'spanish']).includes(lang)}
+                                onChange={(e) => {
+                                  const current = Array.isArray(editingTutor.languageTaught) ? editingTutor.languageTaught : [editingTutor.languageTaught || 'spanish'];
+                                  const arr = e.target.checked ? [...current, lang] : current.filter((l: string) => l !== lang);
+                                  setEditingTutor({...editingTutor, languageTaught: arr.length > 0 ? arr : ['spanish']});
+                                }}
+                              />
+                              {lang === "spanish" ? (isEs ? "Español" : "Spanish") : (isEs ? "Inglés" : "English")}
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
@@ -910,8 +926,8 @@ export default function AdminPage() {
                           phone: editingTutor.phone,
                           country: editingTutor.country,
                           profileImage: editingTutor.profileImage || editingTutor.avatar,
-                          classType: editingTutor.classType,
-                          languageTaught: editingTutor.languageTaught,
+                          classType: Array.isArray(editingTutor.classType) ? editingTutor.classType : [editingTutor.classType || 'adults'],
+                          languageTaught: Array.isArray(editingTutor.languageTaught) ? editingTutor.languageTaught : [editingTutor.languageTaught || 'spanish'],
                           isActive: editingTutor.isActive,
                         }
                       })}

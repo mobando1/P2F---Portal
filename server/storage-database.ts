@@ -999,9 +999,11 @@ export class DatabaseStorage implements IStorage {
       await this.db.delete(aiMessages).where(inArray(aiMessages.conversationId, aiConvIds));
       await this.db.delete(aiConversations).where(eq(aiConversations.userId, id));
     }
-    // CRM data
+    // CRM data (clean up both as user AND as admin author)
     await this.db.delete(crmNotes).where(eq(crmNotes.userId, id));
+    await this.db.delete(crmNotes).where(eq(crmNotes.adminId, id));
     await this.db.delete(crmTasks).where(eq(crmTasks.userId, id));
+    await this.db.delete(crmTasks).where(eq(crmTasks.assignedTo, id));
     await this.db.delete(crmUserTags).where(eq(crmUserTags.userId, id));
     // Newsletter — unlink user instead of deleting subscriber record
     await this.db.update(newsletterSubscribers).set({ userId: null }).where(eq(newsletterSubscribers.userId, id));

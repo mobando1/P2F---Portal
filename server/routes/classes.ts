@@ -159,7 +159,7 @@ export function registerClassRoutes(app: Express) {
         duration: 50,
         status: "scheduled",
         isTrial: true,
-        classCategory: category || `${tutor.classType}-${tutor.languageTaught}`,
+        classCategory: category || `${Array.isArray(tutor.classType) ? tutor.classType[0] : tutor.classType}-${Array.isArray(tutor.languageTaught) ? tutor.languageTaught[0] : tutor.languageTaught}`,
         meetingLink,
         calendarEventId: calendarEventId || null,
         tutorCalendarEventId: tutorCalendarEventId || null,

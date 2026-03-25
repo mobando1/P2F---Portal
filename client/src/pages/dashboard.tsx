@@ -193,7 +193,7 @@ export default function Dashboard() {
           const data = await res.json();
           if (data.user) {
             localStorage.setItem('passport2fluency_user', JSON.stringify(data.user));
-            queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/dashboard", user?.id] });
             return;
           }
         }

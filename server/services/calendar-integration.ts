@@ -108,10 +108,8 @@ export class CalendarIntegrationService {
 
       const newClass = await storage.createClass(classData);
 
-      // Reducir créditos
-      await storage.updateUser(userId, {
-        classCredits: user.classCredits - 1
-      });
+      // Reducir créditos (atomic)
+      await storage.deductClassCredit(userId);
 
       // Send notifications
       notificationService.onClassBooked({
@@ -171,13 +169,8 @@ export class CalendarIntegrationService {
         ).catch(() => {});
       }
 
-      // Devolver crédito
-      const user = await storage.getUser(userId);
-      if (user) {
-        await storage.updateUser(userId, {
-          classCredits: (user.classCredits || 0) + 1
-        });
-      }
+      // Devolver crédito (atomic)
+      await storage.refundClassCredit(userId);
 
       // Send notifications
       notificationService.onClassCancelled({

@@ -193,8 +193,10 @@ export function registerAuthRoutes(app: Express) {
     }
     await storage.updateUser(user.id, { emailVerified: true, verificationToken: null } as any);
     req.session.userId = user.id;
-    req.session.save(() => {});
-    res.redirect("/home?verified=true");
+    req.session.save((err) => {
+      if (err) console.error("[verify-email] Session save error:", err);
+      res.redirect("/home?verified=true");
+    });
   });
 
   // Session validation
