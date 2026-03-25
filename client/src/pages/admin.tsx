@@ -653,12 +653,25 @@ export default function AdminPage() {
 
                     <div>
                       <Label htmlFor="specialization">Especialización *</Label>
-                      <Input
-                        id="specialization"
-                        value={newTutor.specialization}
-                        onChange={(e) => setNewTutor({...newTutor, specialization: e.target.value})}
-                        placeholder="Ej: Conversación, Negocios, Principiantes"
-                      />
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {["Conversación", "Negocios", "Preparación de Exámenes", "Gramática", "Pronunciación", "Niños", "Principiantes", "Vocabulario", "Escritura", "Cultura"].map((spec) => {
+                          const selected = (newTutor.specialization || "").split(", ").filter(Boolean);
+                          const isSelected = selected.includes(spec);
+                          return (
+                            <button
+                              key={spec}
+                              type="button"
+                              onClick={() => {
+                                const arr = isSelected ? selected.filter(s => s !== spec) : [...selected, spec];
+                                setNewTutor({...newTutor, specialization: arr.join(", ")});
+                              }}
+                              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${isSelected ? 'bg-[#1C7BB1] text-white border-[#1C7BB1]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#1C7BB1]'}`}
+                            >
+                              {spec}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <div>
@@ -704,13 +717,28 @@ export default function AdminPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="profileImage">URL de Foto de Perfil</Label>
-                      <Input
-                        id="profileImage"
-                        value={newTutor.profileImage || ''}
-                        onChange={(e) => setNewTutor({...newTutor, profileImage: e.target.value})}
-                        placeholder="https://ejemplo.com/foto.jpg"
-                      />
+                      <Label htmlFor="profileImage">Foto de Perfil</Label>
+                      <div className="flex items-center gap-4 mt-2">
+                        {newTutor.profileImage && (
+                          <img src={newTutor.profileImage} alt="Preview" className="w-16 h-16 rounded-full object-cover" />
+                        )}
+                        <label className="cursor-pointer px-4 py-2 border border-gray-300 rounded-lg text-sm hover:border-[#1C7BB1] transition-colors">
+                          {newTutor.profileImage ? "Cambiar foto" : "Subir foto"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (ev) => setNewTutor({...newTutor, profileImage: ev.target?.result as string});
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
                     </div>
                   </div>
 
@@ -848,10 +876,25 @@ export default function AdminPage() {
 
                     <div>
                       <Label>{isEs ? 'Especialización' : 'Specialization'} *</Label>
-                      <Input
-                        value={editingTutor.specialization}
-                        onChange={(e) => setEditingTutor({...editingTutor, specialization: e.target.value})}
-                      />
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {["Conversación", "Negocios", "Preparación de Exámenes", "Gramática", "Pronunciación", "Niños", "Principiantes", "Vocabulario", "Escritura", "Cultura"].map((spec) => {
+                          const selected = (editingTutor.specialization || "").split(", ").filter(Boolean);
+                          const isSelected = selected.includes(spec);
+                          return (
+                            <button
+                              key={spec}
+                              type="button"
+                              onClick={() => {
+                                const arr = isSelected ? selected.filter((s: string) => s !== spec) : [...selected, spec];
+                                setEditingTutor({...editingTutor, specialization: arr.join(", ")});
+                              }}
+                              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${isSelected ? 'bg-[#1C7BB1] text-white border-[#1C7BB1]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#1C7BB1]'}`}
+                            >
+                              {spec}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <div>
@@ -890,12 +933,28 @@ export default function AdminPage() {
                     </div>
 
                     <div>
-                      <Label>{isEs ? 'URL de Foto de Perfil' : 'Profile Image URL'}</Label>
-                      <Input
-                        value={editingTutor.avatar || ''}
-                        onChange={(e) => setEditingTutor({...editingTutor, profileImage: e.target.value, avatar: e.target.value})}
-                        placeholder="https://ejemplo.com/foto.jpg"
-                      />
+                      <Label>{isEs ? 'Foto de Perfil' : 'Profile Image'}</Label>
+                      <div className="flex items-center gap-4 mt-2">
+                        {(editingTutor.profileImage || editingTutor.avatar) && (
+                          <img src={editingTutor.profileImage || editingTutor.avatar} alt="Preview" className="w-16 h-16 rounded-full object-cover" />
+                        )}
+                        <label className="cursor-pointer px-4 py-2 border border-gray-300 rounded-lg text-sm hover:border-[#1C7BB1] transition-colors">
+                          {(editingTutor.profileImage || editingTutor.avatar) ? (isEs ? "Cambiar foto" : "Change photo") : (isEs ? "Subir foto" : "Upload photo")}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (ev) => setEditingTutor({...editingTutor, profileImage: ev.target?.result as string, avatar: ev.target?.result as string});
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-3">

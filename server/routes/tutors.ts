@@ -2,6 +2,7 @@ import type { Express } from "express";
 import crypto from "crypto";
 import { storage } from "../storage";
 import { TutorManagementService } from "../services/tutor-management";
+import { emailService } from "../services/email";
 import { requireAuth, requireAdmin } from "./auth";
 
 const tutorManagement = new TutorManagementService();
@@ -57,12 +58,34 @@ export function registerTutorRoutes(app: Express) {
     }
   });
 
-  // Create a tutor (admin only)
+  // Create a tutor (admin only) — auto-generates invite + sends email
   app.post("/api/tutors", requireAdmin, async (req, res) => {
     try {
       const tutorData = req.body;
       const tutor = await tutorManagement.createTutorProfile(tutorData);
-      res.status(201).json(tutor);
+
+      // Auto-generate invite link and send email
+      if (!tutor.userId) {
+        const token = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        await storage.setTutorInviteToken(tutor.id, token, expiresAt);
+
+        const BASE_URL = process.env.APP_URL || process.env.RAILWAY_PUBLIC_DOMAIN
+          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+          : "https://portal.passport2fluency.com";
+        const inviteUrl = `${BASE_URL}/join?token=${token}`;
+
+        emailService.sendTutorInvite({
+          to: tutor.email,
+          tutorName: tutor.name,
+          inviteUrl,
+          lang: "es",
+        }).catch(err => console.error("[tutors] Failed to send invite email:", err));
+
+        res.status(201).json({ ...tutor, inviteUrl: `/join?token=${token}` });
+      } else {
+        res.status(201).json(tutor);
+      }
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

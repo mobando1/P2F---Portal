@@ -291,6 +291,37 @@ export const emailService = {
     return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Última Oportunidad" : "Last Chance", body, lang) });
   },
 
+  async sendTutorInvite(params: {
+    to: string;
+    tutorName: string;
+    inviteUrl: string;
+    lang: "es" | "en";
+  }): Promise<boolean> {
+    const { to, tutorName, inviteUrl, lang } = params;
+    const isEs = lang === "es";
+
+    const subject = isEs
+      ? "Passport2Fluency — Activa tu cuenta de profesor"
+      : "Passport2Fluency — Activate your tutor account";
+    const body = `
+      <p style="color: #374151; font-size: 16px;">${isEs ? "Hola" : "Hi"} <strong>${tutorName}</strong>,</p>
+      <p style="color: #374151;">${isEs
+        ? "Has sido invitado a unirte al equipo de profesores de Passport2Fluency."
+        : "You've been invited to join the Passport2Fluency teaching team."}</p>
+      <p style="color: #374151;">${isEs
+        ? "Haz clic en el botón para activar tu cuenta y crear tu contraseña:"
+        : "Click the button below to activate your account and set your password:"}</p>
+      <p style="margin: 24px 0; text-align: center;">
+        <a href="${inviteUrl}" style="background: #1C7BB1; color: white; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">${isEs ? "Activar mi cuenta" : "Activate my account"}</a>
+      </p>
+      <p style="color: #6B7280; font-size: 14px;">${isEs
+        ? "Este enlace expira en 30 días. Si no solicitaste esto, ignora este correo."
+        : "This link expires in 30 days. If you didn't expect this, ignore this email."}</p>
+    `;
+
+    return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Bienvenido al Equipo" : "Welcome to the Team", body, lang) });
+  },
+
   async sendTutorNewBooking(params: {
     to: string;
     tutorName: string;

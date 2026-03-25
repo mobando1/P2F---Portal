@@ -301,9 +301,10 @@ export function registerAuthRoutes(app: Express) {
         lastName,
         username: tutor.email.split("@")[0],
         userType: "tutor",
+        emailVerified: true,
         trialCompleted: false,
         classCredits: 0,
-      });
+      } as any);
 
       // Link tutor profile to user and clear invite token
       await storage.activateTutorAccount(tutor.id, newUser.id);

@@ -33,7 +33,7 @@ export default function TutorInvitePage() {
       if (data?.user) {
         setCurrentUser(data.user);
       }
-      setLocation("/tutor-dashboard");
+      setLocation("/tutor-portal");
     },
   });
 
