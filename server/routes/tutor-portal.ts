@@ -8,7 +8,11 @@ import { requireTutor } from "./auth";
 export function registerTutorPortalRoutes(app: Express) {
   // Helper to get tutor profile from logged-in user
   async function getTutorFromUser(userId: number) {
-    const allTutors = await storage.getAllTutors();
+    // Use getTutorByUserId first (direct lookup, doesn't filter by isActive)
+    const tutor = await storage.getTutorByUserId(userId);
+    if (tutor) return tutor;
+    // Fallback: search all tutors including inactive
+    const allTutors = await storage.getAllTutors(true);
     return allTutors.find(t => t.userId === userId);
   }
 
