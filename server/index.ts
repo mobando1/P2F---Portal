@@ -451,41 +451,57 @@ async function startServer() {
         `);
         log("Schema migrations applied");
 
-        // Migrate tutors table: text → text[] for classType/languageTaught + invite columns
-        await pgPool.query(`
-          DO $$ BEGIN
-            -- Convert class_type from text to text[] if needed
-            IF EXISTS (
-              SELECT 1 FROM information_schema.columns
-              WHERE table_name = 'tutors' AND column_name = 'class_type' AND data_type = 'text'
-            ) THEN
-              ALTER TABLE tutors ALTER COLUMN class_type TYPE text[] USING ARRAY[class_type];
-              ALTER TABLE tutors ALTER COLUMN class_type SET DEFAULT ARRAY['adults']::text[];
-            END IF;
-            -- Convert language_taught from text to text[] if needed
-            IF EXISTS (
-              SELECT 1 FROM information_schema.columns
-              WHERE table_name = 'tutors' AND column_name = 'language_taught' AND data_type = 'text'
-            ) THEN
-              ALTER TABLE tutors ALTER COLUMN language_taught TYPE text[] USING ARRAY[language_taught];
-              ALTER TABLE tutors ALTER COLUMN language_taught SET DEFAULT ARRAY['spanish']::text[];
-            END IF;
-          END $$;
-          ALTER TABLE tutors ADD COLUMN IF NOT EXISTS invite_token TEXT;
-          ALTER TABLE tutors ADD COLUMN IF NOT EXISTS invite_token_expires_at TIMESTAMP;
-        `);
-        log("Tutor schema migrations applied");
-
-        // Auto-seed tutors if table is empty
+        // Migrate tutors table
         try {
-          const existingTutors = await storage.getAllTutors();
-          if (existingTutors.length === 0) {
+          // 1. Add missing columns
+          await pgPool.query(`
+            ALTER TABLE tutors ADD COLUMN IF NOT EXISTS invite_token TEXT;
+            ALTER TABLE tutors ADD COLUMN IF NOT EXISTS invite_token_expires_at TIMESTAMP;
+            ALTER TABLE tutors ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+          `);
+
+          // 2. Convert class_type text → text[] ONLY if it's not already an array
+          const classTypeCheck = await pgPool.query(`
+            SELECT data_type FROM information_schema.columns
+            WHERE table_name = 'tutors' AND column_name = 'class_type'
+          `);
+          if (classTypeCheck.rows.length > 0 && classTypeCheck.rows[0].data_type !== 'ARRAY') {
+            log("Migrating class_type from text to text[]...");
+            await pgPool.query(`ALTER TABLE tutors ALTER COLUMN class_type TYPE text[] USING ARRAY[class_type]`);
+          }
+
+          // 3. Convert language_taught text → text[] ONLY if it's not already an array
+          const langCheck = await pgPool.query(`
+            SELECT data_type FROM information_schema.columns
+            WHERE table_name = 'tutors' AND column_name = 'language_taught'
+          `);
+          if (langCheck.rows.length > 0 && langCheck.rows[0].data_type !== 'ARRAY') {
+            log("Migrating language_taught from text to text[]...");
+            await pgPool.query(`ALTER TABLE tutors ALTER COLUMN language_taught TYPE text[] USING ARRAY[language_taught]`);
+          }
+
+          // 4. Fix NULL isActive — this is critical, tutors with NULL isActive are invisible
+          await pgPool.query(`UPDATE tutors SET is_active = TRUE WHERE is_active IS NULL`);
+
+          log("Tutor migrations applied");
+        } catch (migErr) {
+          console.error("STARTUP: Tutor migration error:", migErr);
+        }
+
+        // Check tutor count via raw SQL (bypasses Drizzle ORM parsing)
+        try {
+          const countResult = await pgPool.query("SELECT COUNT(*) as cnt FROM tutors");
+          const tutorCount = parseInt(countResult.rows[0]?.cnt || "0");
+          log(`Found ${tutorCount} tutors in database`);
+
+          if (tutorCount === 0) {
+            log("No tutors found — running seed...");
             const { seedTutors } = await import("./seed-tutors");
             await seedTutors();
             log("Seeded initial tutors");
           }
         } catch (seedErr) {
-          console.error("STARTUP: Tutor seed failed (non-fatal):", seedErr);
+          console.error("STARTUP: Tutor seed failed:", seedErr);
         }
       }
     } catch (err) {
