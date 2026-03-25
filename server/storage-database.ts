@@ -204,10 +204,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTutorsByCategory(classType?: string, languageTaught?: string): Promise<Tutor[]> {
-    const conditions = [eq(tutors.isActive, true)];
-    if (classType) conditions.push(sql`${tutors.classType} @> ARRAY[${classType}]::text[]`);
-    if (languageTaught) conditions.push(sql`${tutors.languageTaught} @> ARRAY[${languageTaught}]::text[]`);
-    return await this.db.select().from(tutors).where(and(...conditions));
+    const allActive = await this.db.select().from(tutors).where(eq(tutors.isActive, true));
+    return allActive.filter(t => {
+      if (classType) {
+        const ct = Array.isArray(t.classType) ? t.classType : [t.classType];
+        if (!ct.includes(classType)) return false;
+      }
+      if (languageTaught) {
+        const lt = Array.isArray(t.languageTaught) ? t.languageTaught : [t.languageTaught];
+        if (!lt.includes(languageTaught)) return false;
+      }
+      return true;
+    });
   }
 
   async updateTutor(id: number, data: Partial<InsertTutor>): Promise<Tutor | undefined> {
