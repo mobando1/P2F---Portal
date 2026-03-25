@@ -451,12 +451,41 @@ async function startServer() {
         `);
         log("Schema migrations applied");
 
+        // Migrate tutors table: text → text[] for classType/languageTaught + invite columns
+        await pgPool.query(`
+          DO $$ BEGIN
+            -- Convert class_type from text to text[] if needed
+            IF EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_name = 'tutors' AND column_name = 'class_type' AND data_type = 'text'
+            ) THEN
+              ALTER TABLE tutors ALTER COLUMN class_type TYPE text[] USING ARRAY[class_type];
+              ALTER TABLE tutors ALTER COLUMN class_type SET DEFAULT ARRAY['adults']::text[];
+            END IF;
+            -- Convert language_taught from text to text[] if needed
+            IF EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_name = 'tutors' AND column_name = 'language_taught' AND data_type = 'text'
+            ) THEN
+              ALTER TABLE tutors ALTER COLUMN language_taught TYPE text[] USING ARRAY[language_taught];
+              ALTER TABLE tutors ALTER COLUMN language_taught SET DEFAULT ARRAY['spanish']::text[];
+            END IF;
+          END $$;
+          ALTER TABLE tutors ADD COLUMN IF NOT EXISTS invite_token TEXT;
+          ALTER TABLE tutors ADD COLUMN IF NOT EXISTS invite_token_expires_at TIMESTAMP;
+        `);
+        log("Tutor schema migrations applied");
+
         // Auto-seed tutors if table is empty
-        const existingTutors = await storage.getAllTutors();
-        if (existingTutors.length === 0) {
-          const { seedTutors } = await import("./seed-tutors");
-          await seedTutors();
-          log("Seeded initial tutors");
+        try {
+          const existingTutors = await storage.getAllTutors();
+          if (existingTutors.length === 0) {
+            const { seedTutors } = await import("./seed-tutors");
+            await seedTutors();
+            log("Seeded initial tutors");
+          }
+        } catch (seedErr) {
+          console.error("STARTUP: Tutor seed failed (non-fatal):", seedErr);
         }
       }
     } catch (err) {
