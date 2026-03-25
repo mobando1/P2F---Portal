@@ -170,9 +170,9 @@ export class DatabaseStorage implements IStorage {
 
   async getAllTutors(includeInactive = false): Promise<Tutor[]> {
     if (includeInactive) {
-      return await this.db.select().from(tutors);
+      return await this.db.select().from(tutors).orderBy(tutors.id);
     }
-    return await this.db.select().from(tutors).where(eq(tutors.isActive, true));
+    return await this.db.select().from(tutors).where(eq(tutors.isActive, true)).orderBy(tutors.id);
   }
 
   async getTutor(id: number): Promise<Tutor | undefined> {
