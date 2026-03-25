@@ -207,11 +207,11 @@ export class DatabaseStorage implements IStorage {
     const allActive = await this.db.select().from(tutors).where(eq(tutors.isActive, true));
     return allActive.filter(t => {
       if (classType) {
-        const ct = Array.isArray(t.classType) ? t.classType : [t.classType];
+        const ct = (Array.isArray(t.classType) ? t.classType.flat() : [t.classType]).map(String);
         if (!ct.includes(classType)) return false;
       }
       if (languageTaught) {
-        const lt = Array.isArray(t.languageTaught) ? t.languageTaught : [t.languageTaught];
+        const lt = (Array.isArray(t.languageTaught) ? t.languageTaught.flat() : [t.languageTaught]).map(String);
         if (!lt.includes(languageTaught)) return false;
       }
       return true;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
@@ -29,6 +29,11 @@ import {
   Link2Off,
   ArrowUpRight,
   BarChart3,
+  User,
+  Upload,
+  Save,
+  BookOpen,
+  History,
 } from "lucide-react";
 import LevelBadge from "@/components/LevelBadge";
 import StudentProfileDrawer from "@/components/StudentProfileDrawer";
@@ -48,6 +53,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 
 interface TutorDashboardData {
@@ -108,19 +114,46 @@ interface EarningsData {
   }>;
 }
 
+interface TutorProfile {
+  id: number;
+  name: string;
+  email: string;
+  bio: string | null;
+  avatar: string | null;
+  profileImage: string | null;
+  phone: string | null;
+  languages: string[] | null;
+  certifications: string[] | null;
+  yearsOfExperience: number | null;
+  rating: string | null;
+  reviewCount: number;
+  hourlyRate: string | null;
+}
+
 export default function TutorDashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = getCurrentUser();
   const { language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<"dashboard" | "students" | "earnings">("dashboard");
+  const [activeTab, setActiveTab] = useState<"today" | "schedule" | "students" | "profile">("today");
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [drawerStudentId, setDrawerStudentId] = useState<number | null>(null);
   const [notesModal, setNotesModal] = useState<{ classId: number; studentName: string } | null>(null);
   const [sessionNotes, setSessionNotes] = useState("");
   const [sharedNotes, setSharedNotes] = useState("");
   const [homeworkText, setHomeworkText] = useState("");
+  const [scheduleView, setScheduleView] = useState<"upcoming" | "history">("upcoming");
+  const [studentSearch, setStudentSearch] = useState("");
+
+  // Profile editing state
+  const [editBio, setEditBio] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editCerts, setEditCerts] = useState("");
+  const [editLangs, setEditLangs] = useState("");
+  const [editYears, setEditYears] = useState("");
+  const [editAvatar, setEditAvatar] = useState<string | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   if (!isAuthenticated() || !user) {
     setLocation("/login");
@@ -145,7 +178,17 @@ export default function TutorDashboard() {
   const { data: earnings } = useQuery<EarningsData>({
     queryKey: ["/api/tutor/earnings"],
     queryFn: () => apiRequest("GET", "/api/tutor/earnings").then(r => r.json()),
-    enabled: activeTab === "earnings",
+    enabled: activeTab === "schedule",
+  });
+
+  const { data: allClasses } = useQuery<Array<{
+    id: number; title: string; scheduledAt: string; duration: number; status: string;
+    meetingLink?: string; studentName?: string; userId: number;
+    sessionNotes?: string; sharedNotes?: string; homeworkText?: string;
+  }>>({
+    queryKey: ["/api/tutor/classes"],
+    queryFn: () => apiRequest("GET", "/api/tutor/classes").then(r => r.json()),
+    enabled: activeTab === "schedule",
   });
 
   const { data: prepCards } = useQuery<Array<{
@@ -161,8 +204,28 @@ export default function TutorDashboard() {
   }>>({
     queryKey: ["/api/tutor/prep"],
     queryFn: () => apiRequest("GET", "/api/tutor/prep").then(r => r.json()),
-    enabled: activeTab === "dashboard",
+    enabled: activeTab === "today",
   });
+
+  const { data: tutorProfileData } = useQuery({
+    queryKey: ["/api/tutor/profile"],
+    queryFn: () => apiRequest("GET", "/api/tutor/profile").then(r => r.json()),
+    enabled: activeTab === "profile",
+  });
+  const tutorProfile = tutorProfileData as TutorProfile | undefined;
+
+  // Populate profile form when data loads
+  useEffect(() => {
+    if (tutorProfile && !profileLoaded) {
+      setEditBio(tutorProfile.bio || "");
+      setEditPhone(tutorProfile.phone || "");
+      setEditCerts(tutorProfile.certifications?.join(", ") || "");
+      setEditLangs(tutorProfile.languages?.join(", ") || "");
+      setEditYears(tutorProfile.yearsOfExperience?.toString() || "");
+      setEditAvatar(tutorProfile.avatar || tutorProfile.profileImage || null);
+      setProfileLoaded(true);
+    }
+  }, [tutorProfile, profileLoaded]);
 
   const { data: studentProgress } = useQuery<StudentProgress>({
     queryKey: ["/api/tutor/students", selectedStudentId, "progress"],
@@ -184,11 +247,7 @@ export default function TutorDashboard() {
       });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: language === "es" ? "No se pudo cambiar el nivel." : "Could not change the level.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: language === "es" ? "No se pudo cambiar el nivel." : "Could not change the level.", variant: "destructive" });
     },
   });
 
@@ -206,15 +265,26 @@ export default function TutorDashboard() {
       });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: language === "es" ? "No se pudo completar la clase." : "Could not complete the class.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: language === "es" ? "No se pudo completar la clase." : "Could not complete the class.", variant: "destructive" });
     },
   });
 
-  // Google Calendar connection
+  const updateProfileMutation = useMutation({
+    mutationFn: async (profileData: Record<string, unknown>) => {
+      const response = await apiRequest("PUT", "/api/tutor/profile", profileData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tutor/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tutor/dashboard"] });
+      toast({ title: language === "es" ? "Perfil actualizado" : "Profile updated" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: language === "es" ? "No se pudo actualizar el perfil." : "Could not update profile.", variant: "destructive" });
+    },
+  });
+
+  // Google Calendar
   const { data: googleStatus } = useQuery<{ connected: boolean; googleEmail: string | null }>({
     queryKey: ["/api/auth/google/status"],
     queryFn: () => apiRequest("GET", "/api/auth/google/status").then(r => r.json()),
@@ -233,7 +303,7 @@ export default function TutorDashboard() {
   const calendarParam = urlParams.get("calendar");
   if (calendarParam === "connected") {
     toast({ title: language === "es" ? "Google Calendar conectado" : "Google Calendar connected" });
-    window.history.replaceState({}, "", "/tutor-dashboard");
+    window.history.replaceState({}, "", "/tutor-portal");
   }
 
   if (isLoading) {
@@ -253,7 +323,7 @@ export default function TutorDashboard() {
     );
   }
 
-  const stats = data?.stats || { todaysClasses: 0, upcomingClasses: 0, completedClasses: 0, totalHours: 0, classesWithoutNotes: 0, pendingAssignments: 0 };
+  const stats: TutorDashboardData['stats'] = data?.stats as TutorDashboardData['stats'] || { todaysClasses: 0, upcomingClasses: 0, completedClasses: 0, totalHours: 0, classesWithoutNotes: 0, pendingAssignments: 0 };
   const upcomingClasses = data?.upcomingClasses || [];
 
   const isClassSoon = (scheduledAt: string) => {
@@ -263,534 +333,514 @@ export default function TutorDashboard() {
     return diffMin <= 30 && diffMin >= -60;
   };
 
+  const todaysClasses = upcomingClasses.filter(c => {
+    const d = new Date(c.scheduledAt);
+    return d.toDateString() === new Date().toDateString();
+  });
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setEditAvatar(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleProfileSave = () => {
+    updateProfileMutation.mutate({
+      bio: editBio,
+      phone: editPhone,
+      certifications: editCerts.split(",").map(s => s.trim()).filter(Boolean),
+      languages: editLangs.split(",").map(s => s.trim()).filter(Boolean),
+      yearsOfExperience: editYears ? parseInt(editYears) : null,
+      avatar: editAvatar,
+    });
+  };
+
+  const filteredStudents = students?.filter(s => {
+    if (!studentSearch) return true;
+    const term = studentSearch.toLowerCase();
+    return s.name.toLowerCase().includes(term) || s.email.toLowerCase().includes(term);
+  });
+
+  const isEs = language === "es";
+  const todayStr = new Date().toLocaleDateString(isEs ? "es-ES" : "en-US", { weekday: "long", month: "long", day: "numeric" });
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F8F9FA" }}>
       <Header />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Welcome */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8"
-        >
-          <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2">
-            {language === "es" ? "Portal del Tutor" : "Tutor Portal"}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0A4A6E]">
+            {isEs ? "Hola" : "Hi"}, {data?.tutor?.name || user.firstName}
           </h1>
-          <p className="text-[#0A4A6E]/70">
-            {language === "es"
-              ? `Bienvenido, ${data?.tutor?.name || user.firstName}. Gestiona tus clases y disponibilidad.`
-              : `Welcome, ${data?.tutor?.name || user.firstName}. Manage your classes and availability.`}
-          </p>
+          <p className="text-sm text-[#0A4A6E]/60 capitalize">{todayStr}</p>
         </motion.div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 mb-8 border-b border-gray-200 pb-2">
+        <div className="flex gap-1 mb-6 bg-white rounded-xl p-1 shadow-sm border border-gray-100 overflow-x-auto">
           {[
-            { key: "dashboard" as const, labelEs: "Panel", labelEn: "Dashboard", icon: CalendarCheck },
-            { key: "students" as const, labelEs: "Mis Estudiantes", labelEn: "My Students", icon: Users },
-            { key: "earnings" as const, labelEs: "Ganancias", labelEn: "Earnings", icon: DollarSign },
+            { key: "today" as const, labelEs: "Hoy", labelEn: "Today", icon: CalendarCheck },
+            { key: "schedule" as const, labelEs: "Agenda", labelEn: "Schedule", icon: Calendar },
+            { key: "students" as const, labelEs: "Estudiantes", labelEn: "Students", icon: Users },
+            { key: "profile" as const, labelEs: "Perfil", labelEn: "Profile", icon: User },
           ].map(tab => (
             <Button
               key={tab.key}
-              variant={activeTab === tab.key ? "default" : "ghost"}
-              className={activeTab === tab.key ? "bg-[#1C7BB1] hover:bg-[#0A4A6E]" : "text-[#0A4A6E]/70"}
+              variant="ghost"
+              size="sm"
+              className={`flex-1 min-w-0 rounded-lg transition-all ${
+                activeTab === tab.key
+                  ? "bg-[#1C7BB1] text-white hover:bg-[#0A4A6E] shadow-sm"
+                  : "text-[#0A4A6E]/60 hover:text-[#0A4A6E] hover:bg-gray-50"
+              }`}
               onClick={() => setActiveTab(tab.key)}
             >
-              <tab.icon className="h-4 w-4 mr-2" />
-              {language === "es" ? tab.labelEs : tab.labelEn}
+              <tab.icon className="h-4 w-4 mr-1.5 flex-shrink-0" />
+              <span className="truncate text-xs sm:text-sm">{isEs ? tab.labelEs : tab.labelEn}</span>
             </Button>
           ))}
         </div>
 
-        {/* Dashboard Tab */}
-        {activeTab === "dashboard" && (<>
+        {/* ═══════════════ TODAY TAB ═══════════════ */}
+        {activeTab === "today" && (
+          <div className="space-y-6">
+            {/* Stats Row */}
+            <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: isEs ? "Hoy" : "Today", value: stats.todaysClasses, icon: CalendarCheck, color: "text-[#F59E1C]", bg: "bg-[#F59E1C]/10" },
+                { label: isEs ? "Programadas" : "Upcoming", value: stats.upcomingClasses, icon: Calendar, color: "text-[#1C7BB1]", bg: "bg-[#1C7BB1]/10" },
+                { label: isEs ? "Completadas" : "Completed", value: stats.completedClasses, icon: CheckCircle, color: "text-green-600", bg: "bg-green-100" },
+                { label: isEs ? "Horas" : "Hours", value: stats.totalHours.toFixed(0), icon: Clock, color: "text-[#1C7BB1]", bg: "bg-[#1C7BB1]/10" },
+              ].map((s, i) => (
+                <motion.div key={i} variants={fadeInUp}>
+                  <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="p-3 md:p-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${s.bg}`}>
+                          <s.icon className={`h-4 w-4 md:h-5 md:w-5 ${s.color}`} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] md:text-xs text-[#0A4A6E]/60">{s.label}</p>
+                          <p className="text-lg md:text-xl font-bold text-[#0A4A6E]">{s.value}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
 
-        {/* Stats Cards */}
-        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
-          <motion.div variants={fadeInUp}>
-            <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center">
-                  <div className="p-2 md:p-3 rounded-lg bg-[#F59E1C]/10">
-                    <CalendarCheck className="h-5 w-5 md:h-6 md:w-6 text-[#F59E1C]" />
+            {/* Alerts */}
+            {(stats.classesWithoutNotes > 0 || stats.pendingAssignments > 0) && (
+              <div className="flex flex-wrap gap-2">
+                {stats.classesWithoutNotes > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
+                    <Star className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                    <strong>{stats.classesWithoutNotes}</strong> {isEs ? "clases sin notas" : "classes without notes"}
                   </div>
-                  <div className="ml-3 md:ml-4">
-                    <p className="text-xs md:text-sm font-medium text-[#0A4A6E]">
-                      {language === "es" ? "Clases Hoy" : "Today's Classes"}
-                    </p>
-                    <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.todaysClasses}</p>
+                )}
+                {stats.pendingAssignments > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-700">
+                    <TrendingUp className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                    <strong>{stats.pendingAssignments}</strong> {isEs ? "tareas pendientes" : "pending tasks"}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={fadeInUp}>
-            <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center">
-                  <div className="p-2 md:p-3 rounded-lg bg-[#1C7BB1]/10">
-                    <Calendar className="h-5 w-5 md:h-6 md:w-6 text-[#1C7BB1]" />
-                  </div>
-                  <div className="ml-3 md:ml-4">
-                    <p className="text-xs md:text-sm font-medium text-[#0A4A6E]">
-                      {language === "es" ? "Programadas" : "Upcoming"}
-                    </p>
-                    <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.upcomingClasses}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={fadeInUp}>
-            <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center">
-                  <div className="p-2 md:p-3 rounded-lg bg-green-100">
-                    <GraduationCap className="h-5 w-5 md:h-6 md:w-6 text-green-600" />
-                  </div>
-                  <div className="ml-3 md:ml-4">
-                    <p className="text-xs md:text-sm font-medium text-[#0A4A6E]">
-                      {language === "es" ? "Completadas" : "Completed"}
-                    </p>
-                    <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.completedClasses}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={fadeInUp}>
-            <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center">
-                  <div className="p-2 md:p-3 rounded-lg bg-[#1C7BB1]/10">
-                    <Clock className="h-5 w-5 md:h-6 md:w-6 text-[#1C7BB1]" />
-                  </div>
-                  <div className="ml-3 md:ml-4">
-                    <p className="text-xs md:text-sm font-medium text-[#0A4A6E]">
-                      {language === "es" ? "Horas Totales" : "Total Hours"}
-                    </p>
-                    <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.totalHours.toFixed(1)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </motion.div>
-
-        {/* Google Calendar Connection */}
-        <Card className="mb-6 border-0 shadow-lg">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${googleStatus?.connected ? "bg-green-100" : "bg-gray-100"}`}>
-                  <Calendar className={`h-5 w-5 ${googleStatus?.connected ? "text-green-600" : "text-gray-400"}`} />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-[#0A4A6E]">Google Calendar</h3>
-                  {googleStatus?.connected ? (
-                    <p className="text-sm text-green-600 flex items-center gap-1">
-                      <Link2 className="w-3 h-3" />
-                      {language === "es" ? "Conectado como" : "Connected as"} {googleStatus.googleEmail}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-500">
-                      {language === "es"
-                        ? "Sincroniza tus clases con tu Google Calendar"
-                        : "Sync your classes with your Google Calendar"}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {googleStatus?.connected ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => disconnectGoogleMutation.mutate()}
-                  disabled={disconnectGoogleMutation.isPending}
-                  className="text-red-500 border-red-200 hover:bg-red-50"
-                >
-                  <Link2Off className="w-4 h-4 mr-1" />
-                  {language === "es" ? "Desconectar" : "Disconnect"}
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={() => { window.location.href = "/api/auth/google/connect"; }}
-                  className="bg-[#1C7BB1] hover:bg-[#0A4A6E]"
-                >
-                  <Link2 className="w-4 h-4 mr-1" />
-                  {language === "es" ? "Conectar" : "Connect"}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick-stat alerts */}
-        {data && (stats.classesWithoutNotes > 0 || stats.pendingAssignments > 0) && (
-          <div className="flex flex-wrap gap-3 mb-6">
-            {stats.classesWithoutNotes > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-700">
-                <Star className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                <span>
-                  <strong>{stats.classesWithoutNotes}</strong>{" "}
-                  {language === "es" ? "clases sin notas de sesión" : "classes missing session notes"}
-                </span>
+                )}
               </div>
             )}
-            {stats.pendingAssignments > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-700">
-                <TrendingUp className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                <span>
-                  <strong>{stats.pendingAssignments}</strong>{" "}
-                  {language === "es" ? "tareas pendientes de revisar" : "assignments pending review"}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Prep cards — upcoming classes in next 48h */}
-        {prepCards && prepCards.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-[#0A4A6E] mb-3 flex items-center gap-2">
-              <CalendarCheck className="h-5 w-5 text-[#F59E1C]" />
-              {language === "es" ? "Preparación de clases — próximas 48h" : "Class prep — next 48h"}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {prepCards.map(card => (
-                <Card key={card.classId} className="border-l-4 border-l-[#1C7BB1] shadow-md hover:shadow-lg transition-shadow">
-                  <CardContent className="p-4 space-y-3">
-                    {/* Header */}
-                    <div className="flex items-start justify-between">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-[#0A4A6E] text-sm">
-                          {new Date(card.scheduledAt).toLocaleDateString(
-                            language === "es" ? "es-ES" : "en-US",
-                            { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }
-                          )}
-                        </p>
-                        <p className="text-xs text-[#0A4A6E]/60 truncate">{card.duration} min · {card.student.name}</p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <LevelBadge level={card.student.level} size="sm" />
-                        <button
-                          className="ml-1 p-1 rounded hover:bg-[#EAF4FA]"
-                          onClick={() => setDrawerStudentId(card.student.id)}
-                        >
-                          <ArrowUpRight className="h-3.5 w-3.5 text-[#1C7BB1]" />
-                        </button>
-                      </div>
+            {/* Today's Classes */}
+            <div>
+              <h2 className="text-base font-semibold text-[#0A4A6E] mb-3">
+                {isEs ? "Clases de hoy" : "Today's classes"}
+                {todaysClasses.length > 0 && <Badge className="ml-2 bg-[#F59E1C] text-white">{todaysClasses.length}</Badge>}
+              </h2>
+              {todaysClasses.length === 0 ? (
+                <Card className="border-0 shadow-sm">
+                  <CardContent className="p-8 text-center">
+                    <div className="w-14 h-14 bg-[#EAF4FA] rounded-full mx-auto mb-3 flex items-center justify-center">
+                      <CalendarCheck className="w-7 h-7 text-[#1C7BB1]" />
                     </div>
-
-                    {/* Current station */}
-                    {card.currentStation && (
-                      <div className="p-2 bg-[#EAF4FA]/60 rounded-md">
-                        <p className="text-[10px] text-[#1C7BB1] font-semibold uppercase mb-0.5">
-                          {language === "es" ? "Estación actual" : "Current station"}
-                        </p>
-                        <p className="text-xs text-[#0A4A6E] font-medium">{card.currentStation.title}</p>
-                        <p className="text-[10px] text-[#0A4A6E]/50">{card.currentStation.level} · #{card.currentStation.order}</p>
-                      </div>
-                    )}
-
-                    {/* Last class notes */}
-                    {card.lastClass && (card.lastClass.sessionNotes || card.lastClass.homeworkText) && (
-                      <div className="space-y-1.5">
-                        {card.lastClass.sessionNotes && (
-                          <div className="p-2 bg-gray-50 rounded-md border border-dashed border-gray-200">
-                            <p className="text-[10px] text-gray-400 font-semibold uppercase mb-0.5">
-                              {language === "es" ? "Última nota privada" : "Last private note"}
-                            </p>
-                            <p className="text-xs text-gray-600 line-clamp-2">{card.lastClass.sessionNotes}</p>
-                          </div>
-                        )}
-                        {card.lastClass.homeworkText && (
-                          <div className="p-2 bg-amber-50 rounded-md border-l-2 border-[#F59E1C]">
-                            <p className="text-[10px] text-[#F59E1C] font-semibold uppercase mb-0.5">
-                              {language === "es" ? "Tarea pendiente" : "Pending homework"}
-                            </p>
-                            <p className="text-xs text-amber-800 line-clamp-2">{card.lastClass.homeworkText}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Footer stats */}
-                    <div className="flex items-center justify-between pt-1 border-t border-gray-100">
-                      <div className="flex items-center gap-3 text-[10px] text-[#0A4A6E]/60">
-                        {card.aiThisWeek > 0 && (
-                          <span className="flex items-center gap-1">
-                            <BarChart3 className="h-3 w-3 text-orange-400" />
-                            {card.aiThisWeek} IA
-                          </span>
-                        )}
-                        {card.pendingAssignments > 0 && (
-                          <span className="flex items-center gap-1 text-amber-600">
-                            <Star className="h-3 w-3" />
-                            {card.pendingAssignments} {language === "es" ? "tarea(s)" : "task(s)"}
-                          </span>
-                        )}
-                      </div>
-                      {card.meetingLink && (
-                        <a href={card.meetingLink} target="_blank" rel="noopener noreferrer">
-                          <Button size="sm" className="h-6 text-[10px] bg-green-600 hover:bg-green-700 text-white px-2">
-                            <Video className="h-3 w-3 mr-1" />
-                            Join
-                          </Button>
-                        </a>
-                      )}
-                    </div>
+                    <p className="text-sm text-[#0A4A6E]/60">
+                      {isEs ? "No tienes clases hoy. Disfruta tu tiempo libre." : "No classes today. Enjoy your free time."}
+                    </p>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left — Upcoming Classes */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">
-                  {language === "es" ? "Próximas Clases" : "Upcoming Classes"}
-                </h2>
-
-                {upcomingClasses.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-[#EAF4FA] rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <CalendarCheck className="w-8 h-8 text-[#1C7BB1]" />
-                    </div>
-                    <p className="text-[#0A4A6E]/60">
-                      {language === "es" ? "No tienes clases programadas" : "No upcoming classes scheduled"}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {upcomingClasses.map((classItem) => {
-                      const soon = isClassSoon(classItem.scheduledAt);
-                      return (
-                        <motion.div
-                          key={classItem.id}
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`flex items-center space-x-4 p-4 rounded-lg border transition-colors ${
-                            soon
-                              ? "border-green-300 bg-green-50/50"
-                              : "border-[#1C7BB1]/20 hover:bg-[#EAF4FA]/30"
-                          }`}
-                        >
-                          <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                            soon ? "bg-green-100" : "bg-[#1C7BB1]/10"
-                          }`}>
-                            <GraduationCap className={`h-5 w-5 ${soon ? "text-green-600" : "text-[#1C7BB1]"}`} />
+              ) : (
+                <div className="space-y-3">
+                  {todaysClasses.map(c => {
+                    const soon = isClassSoon(c.scheduledAt);
+                    return (
+                      <Card key={c.id} className={`border-0 shadow-sm ${soon ? "ring-2 ring-green-400 bg-green-50/30" : ""}`}>
+                        <CardContent className="p-4 flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${soon ? "bg-green-100" : "bg-[#EAF4FA]"}`}>
+                            <Video className={`h-5 w-5 ${soon ? "text-green-600" : "text-[#1C7BB1]"}`} />
                           </div>
-
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-medium text-[#0A4A6E] truncate">{classItem.title}</h4>
-                              {soon && (
-                                <Badge className="bg-green-100 text-green-700 text-xs">
-                                  {language === "es" ? "Ahora" : "Now"}
-                                </Badge>
-                              )}
+                              <h4 className="font-medium text-[#0A4A6E] truncate">{c.studentName}</h4>
+                              {soon && <Badge className="bg-green-100 text-green-700 text-[10px]">{isEs ? "Ahora" : "Now"}</Badge>}
                             </div>
-                            <p className="text-sm text-[#0A4A6E]/70 flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              {classItem.studentName}
-                            </p>
-                            <p className="text-sm text-[#0A4A6E]/50">
-                              {new Date(classItem.scheduledAt).toLocaleDateString(
-                                language === "es" ? "es-ES" : "en-US",
-                                { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }
-                              )}
-                              {" · "}
-                              {classItem.duration} min
+                            <p className="text-xs text-[#0A4A6E]/60">
+                              {new Date(c.scheduledAt).toLocaleTimeString(isEs ? "es-ES" : "en-US", { hour: "numeric", minute: "2-digit" })}
+                              {" · "}{c.duration} min
                             </p>
                           </div>
-
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            {classItem.meetingLink && soon && (
-                              <a
-                                href={classItem.meetingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                            {c.meetingLink && (
+                              <a href={c.meetingLink} target="_blank" rel="noopener noreferrer">
+                                <Button size="sm" className={soon ? "bg-green-600 hover:bg-green-700" : "bg-[#1C7BB1] hover:bg-[#0A4A6E]"}>
                                   <Video className="h-4 w-4 mr-1" />
-                                  {language === "es" ? "Unirse" : "Join"}
+                                  {isEs ? "Unirse" : "Join"}
                                 </Button>
-                              </a>
-                            )}
-                            {classItem.meetingLink && !soon && (
-                              <a
-                                href={classItem.meetingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[#1C7BB1] hover:underline"
-                              >
-                                <ExternalLink className="h-4 w-4" />
                               </a>
                             )}
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                setSessionNotes("");
-                                setSharedNotes("");
-                                setHomeworkText("");
-                                setNotesModal({ classId: classItem.id, studentName: classItem.studentName });
+                                setSessionNotes(""); setSharedNotes(""); setHomeworkText("");
+                                setNotesModal({ classId: c.id, studentName: c.studentName });
                               }}
                               className="text-green-600 border-green-300 hover:bg-green-50"
                             >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              {language === "es" ? "Completar" : "Complete"}
+                              <CheckCircle className="h-4 w-4" />
                             </Button>
                           </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Prep Cards — next 48h */}
+            {prepCards && prepCards.length > 0 && (
+              <div>
+                <h2 className="text-base font-semibold text-[#0A4A6E] mb-3 flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-[#F59E1C]" />
+                  {isEs ? "Preparar clases" : "Class prep"} <span className="text-xs font-normal text-[#0A4A6E]/50">({isEs ? "próximas 48h" : "next 48h"})</span>
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {prepCards.map(card => (
+                    <Card key={card.classId} className="border-l-4 border-l-[#1C7BB1] border-0 shadow-sm">
+                      <CardContent className="p-4 space-y-2">
+                        <div className="flex items-start justify-between">
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm text-[#0A4A6E]">
+                              {new Date(card.scheduledAt).toLocaleDateString(isEs ? "es-ES" : "en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                            </p>
+                            <p className="text-xs text-[#0A4A6E]/60">{card.duration} min · {card.student.name}</p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <LevelBadge level={card.student.level} size="sm" />
+                            <button className="p-1 rounded hover:bg-[#EAF4FA]" onClick={() => setDrawerStudentId(card.student.id)}>
+                              <ArrowUpRight className="h-3.5 w-3.5 text-[#1C7BB1]" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {card.currentStation && (
+                          <div className="p-2 bg-[#EAF4FA]/60 rounded-md">
+                            <p className="text-[10px] text-[#1C7BB1] font-semibold uppercase">{isEs ? "Estación actual" : "Current station"}</p>
+                            <p className="text-xs text-[#0A4A6E] font-medium">{card.currentStation.title}</p>
+                          </div>
+                        )}
+
+                        {card.lastClass && (card.lastClass.sessionNotes || card.lastClass.homeworkText) && (
+                          <div className="space-y-1.5">
+                            {card.lastClass.sessionNotes && (
+                              <div className="p-2 bg-gray-50 rounded-md border border-dashed border-gray-200">
+                                <p className="text-[10px] text-gray-400 font-semibold uppercase">{isEs ? "Última nota" : "Last note"}</p>
+                                <p className="text-xs text-gray-600 line-clamp-2">{card.lastClass.sessionNotes}</p>
+                              </div>
+                            )}
+                            {card.lastClass.homeworkText && (
+                              <div className="p-2 bg-amber-50 rounded-md border-l-2 border-[#F59E1C]">
+                                <p className="text-[10px] text-[#F59E1C] font-semibold uppercase">{isEs ? "Tarea" : "Homework"}</p>
+                                <p className="text-xs text-amber-800 line-clamp-2">{card.lastClass.homeworkText}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                          <div className="flex items-center gap-3 text-[10px] text-[#0A4A6E]/60">
+                            {card.aiThisWeek > 0 && (
+                              <span className="flex items-center gap-1">
+                                <BarChart3 className="h-3 w-3 text-orange-400" /> {card.aiThisWeek} IA
+                              </span>
+                            )}
+                            {card.pendingAssignments > 0 && (
+                              <span className="flex items-center gap-1 text-amber-600">
+                                <Star className="h-3 w-3" /> {card.pendingAssignments} {isEs ? "tarea(s)" : "task(s)"}
+                              </span>
+                            )}
+                          </div>
+                          {card.meetingLink && (
+                            <a href={card.meetingLink} target="_blank" rel="noopener noreferrer">
+                              <Button size="sm" className="h-6 text-[10px] bg-green-600 hover:bg-green-700 text-white px-2">
+                                <Video className="h-3 w-3 mr-1" /> Join
+                              </Button>
+                            </a>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══════════════ SCHEDULE TAB ═══════════════ */}
+        {activeTab === "schedule" && (
+          <div className="space-y-6">
+            {/* Toggle */}
+            <div className="flex gap-2">
+              <Button
+                variant={scheduleView === "upcoming" ? "default" : "outline"}
+                size="sm"
+                className={scheduleView === "upcoming" ? "bg-[#1C7BB1] hover:bg-[#0A4A6E]" : ""}
+                onClick={() => setScheduleView("upcoming")}
+              >
+                <Calendar className="h-4 w-4 mr-1.5" />
+                {isEs ? "Próximas" : "Upcoming"}
+              </Button>
+              <Button
+                variant={scheduleView === "history" ? "default" : "outline"}
+                size="sm"
+                className={scheduleView === "history" ? "bg-[#1C7BB1] hover:bg-[#0A4A6E]" : ""}
+                onClick={() => setScheduleView("history")}
+              >
+                <History className="h-4 w-4 mr-1.5" />
+                {isEs ? "Historial" : "History"}
+              </Button>
+            </div>
+
+            {/* Earnings Summary (compact) */}
+            {earnings && (
+              <div className="grid grid-cols-3 gap-3">
+                <Card className="border-0 shadow-sm">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-lg font-bold text-green-600">${earnings.totalEarnings?.toFixed(0) || 0}</p>
+                    <p className="text-[10px] text-[#0A4A6E]/60">{isEs ? "Total Ganado" : "Total Earned"}</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-sm">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-lg font-bold text-[#1C7BB1]">{earnings.totalHours || 0}h</p>
+                    <p className="text-[10px] text-[#0A4A6E]/60">{isEs ? "Horas" : "Hours"}</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-sm">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-lg font-bold text-[#F59E1C]">${earnings.hourlyRate || 0}/h</p>
+                    <p className="text-[10px] text-[#0A4A6E]/60">{isEs ? "Tarifa" : "Rate"}</p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Classes List */}
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-4 md:p-6">
+                <h2 className="text-base font-semibold text-[#0A4A6E] mb-4">
+                  {scheduleView === "upcoming"
+                    ? (isEs ? "Próximas Clases" : "Upcoming Classes")
+                    : (isEs ? "Historial de Clases" : "Class History")}
+                </h2>
+
+                {scheduleView === "upcoming" ? (
+                  upcomingClasses.length === 0 ? (
+                    <div className="text-center py-10">
+                      <Calendar className="w-10 h-10 text-[#1C7BB1]/30 mx-auto mb-3" />
+                      <p className="text-sm text-[#0A4A6E]/50">{isEs ? "No tienes clases programadas" : "No upcoming classes"}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {upcomingClasses.map(c => {
+                        const soon = isClassSoon(c.scheduledAt);
+                        return (
+                          <div key={c.id} className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${soon ? "border-green-300 bg-green-50/50" : "border-gray-100 hover:bg-gray-50"}`}>
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${soon ? "bg-green-100" : "bg-[#EAF4FA]"}`}>
+                              <GraduationCap className={`h-4 w-4 ${soon ? "text-green-600" : "text-[#1C7BB1]"}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-medium text-[#0A4A6E] truncate">{c.studentName}</h4>
+                                {soon && <Badge className="bg-green-100 text-green-700 text-[10px]">{isEs ? "Ahora" : "Now"}</Badge>}
+                              </div>
+                              <p className="text-xs text-[#0A4A6E]/50">
+                                {new Date(c.scheduledAt).toLocaleDateString(isEs ? "es-ES" : "en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                                {" · "}{c.duration} min
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {c.meetingLink && soon && (
+                                <a href={c.meetingLink} target="_blank" rel="noopener noreferrer">
+                                  <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8">
+                                    <Video className="h-3.5 w-3.5 mr-1" /> {isEs ? "Unirse" : "Join"}
+                                  </Button>
+                                </a>
+                              )}
+                              {c.meetingLink && !soon && (
+                                <a href={c.meetingLink} target="_blank" rel="noopener noreferrer" className="text-[#1C7BB1]">
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              )}
+                              <Button variant="outline" size="sm" className="h-8 text-green-600 border-green-200" onClick={() => {
+                                setSessionNotes(""); setSharedNotes(""); setHomeworkText("");
+                                setNotesModal({ classId: c.id, studentName: c.studentName });
+                              }}>
+                                <CheckCircle className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
+                ) : (
+                  /* History view */
+                  (() => {
+                    const completed = (allClasses || []).filter(c => c.status === "completed").sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+                    return completed.length === 0 ? (
+                      <div className="text-center py-10">
+                        <History className="w-10 h-10 text-[#1C7BB1]/30 mx-auto mb-3" />
+                        <p className="text-sm text-[#0A4A6E]/50">{isEs ? "Sin historial aún" : "No history yet"}</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {completed.map(c => (
+                          <div key={c.id} className="p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-medium text-[#0A4A6E] truncate">{c.title || c.studentName}</h4>
+                                <p className="text-xs text-[#0A4A6E]/50">
+                                  {new Date(c.scheduledAt).toLocaleDateString(isEs ? "es-ES" : "en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                                  {" · "}{c.duration} min
+                                </p>
+                              </div>
+                            </div>
+                            {(c.sharedNotes || c.homeworkText) && (
+                              <div className="mt-2 ml-13 space-y-1">
+                                {c.sharedNotes && <p className="text-xs text-[#0A4A6E]/70 line-clamp-1">📝 {c.sharedNotes}</p>}
+                                {c.homeworkText && <p className="text-xs text-amber-700 line-clamp-1">📚 {c.homeworkText}</p>}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()
                 )}
               </CardContent>
             </Card>
-          </div>
 
-          {/* Right — Sidebar */}
-          <div className="space-y-6">
-            {/* Tutor Rating */}
-            {data?.tutor && (
-              <Card className="border-0 shadow-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-[#1C7BB1] to-[#0A4A6E] p-4">
-                  <h2 className="text-lg font-bold text-white">
-                    {language === "es" ? "Tu Perfil" : "Your Profile"}
-                  </h2>
-                </div>
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4 text-[#F59E1C]" />
-                      <span className="text-sm text-[#0A4A6E]">
-                        {language === "es" ? "Calificación" : "Rating"}
-                      </span>
-                    </div>
-                    <span className="text-sm font-bold text-[#0A4A6E]">
-                      {data.tutor.rating?.toFixed(1) || "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-[#1C7BB1]" />
-                      <span className="text-sm text-[#0A4A6E]">
-                        {language === "es" ? "Reseñas" : "Reviews"}
-                      </span>
-                    </div>
-                    <span className="text-sm font-bold text-[#0A4A6E]">{data.tutor.reviewCount || 0}</span>
+            {/* Monthly Earnings Chart */}
+            {earnings?.monthly && earnings.monthly.length > 0 && (
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-4 md:p-6">
+                  <h2 className="text-base font-semibold text-[#0A4A6E] mb-3">{isEs ? "Desglose Mensual" : "Monthly Breakdown"}</h2>
+                  <div className="space-y-2">
+                    {earnings.monthly.map(m => {
+                      const maxEarnings = Math.max(...earnings.monthly.map(e => e.earnings), 1);
+                      const pct = (m.earnings / maxEarnings) * 100;
+                      const [year, month] = m.month.split("-");
+                      const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+                      return (
+                        <div key={m.month} className="flex items-center gap-3">
+                          <span className="text-xs text-[#0A4A6E]/60 w-16 flex-shrink-0">
+                            {monthDate.toLocaleDateString(isEs ? "es-ES" : "en-US", { month: "short", year: "2-digit" })}
+                          </span>
+                          <div className="flex-1">
+                            <div className="h-6 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-[#1C7BB1] to-[#0A4A6E] rounded-full transition-all" style={{ width: `${Math.max(pct, 5)}%` }} />
+                            </div>
+                          </div>
+                          <span className="text-xs font-semibold text-[#0A4A6E] w-20 text-right">${m.earnings} ({m.classes})</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
             )}
-
-            {/* Quick Actions */}
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">
-                  {language === "es" ? "Acciones" : "Actions"}
-                </h2>
-                <div className="space-y-3">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start hover:bg-[#EAF4FA]"
-                    onClick={() => setLocation("/tutor-portal/availability")}
-                  >
-                    <Calendar className="mr-3 h-4 w-4 text-[#1C7BB1]" />
-                    {language === "es" ? "Gestionar Disponibilidad" : "Manage Availability"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start hover:bg-[#EAF4FA]"
-                    onClick={() => setLocation("/tutor-portal/classes")}
-                  >
-                    <GraduationCap className="mr-3 h-4 w-4 text-[#F59E1C]" />
-                    {language === "es" ? "Historial de Clases" : "Class History"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </div>
-        </div>
+        )}
 
-        </>)}
-
-        {/* Students Tab */}
+        {/* ═══════════════ STUDENTS TAB ═══════════════ */}
         {activeTab === "students" && (
           <>
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">
-                {language === "es" ? "Mis Estudiantes" : "My Students"}
-              </h2>
-              {!students || students.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-[#EAF4FA] rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <Users className="w-8 h-8 text-[#1C7BB1]" />
-                  </div>
-                  <p className="text-[#0A4A6E]/60">
-                    {language === "es" ? "Aún no tienes estudiantes" : "No students yet"}
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-[#0A4A6E]">
+                  {isEs ? "Mis Estudiantes" : "My Students"}
+                  {students && students.length > 0 && <Badge className="ml-2 bg-[#1C7BB1]/10 text-[#1C7BB1]">{students.length}</Badge>}
+                </h2>
+                {students && students.length > 3 && (
+                  <Input
+                    placeholder={isEs ? "Buscar..." : "Search..."}
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    className="w-40 h-8 text-xs"
+                  />
+                )}
+              </div>
+              {!filteredStudents || filteredStudents.length === 0 ? (
+                <div className="text-center py-10">
+                  <Users className="w-10 h-10 text-[#1C7BB1]/30 mx-auto mb-3" />
+                  <p className="text-sm text-[#0A4A6E]/50">
+                    {isEs ? "Aún no tienes estudiantes" : "No students yet"}
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {students.map(student => (
+                <div className="space-y-2">
+                  {filteredStudents.map(student => (
                     <div
                       key={student.id}
-                      className="flex items-center gap-4 p-4 rounded-lg border border-[#1C7BB1]/10 hover:bg-[#EAF4FA]/30 transition-colors cursor-pointer"
+                      className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-[#EAF4FA]/30 transition-colors cursor-pointer"
                       onClick={() => setDrawerStudentId(student.id)}
                     >
-                      <div className="w-10 h-10 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      <div className="w-9 h-9 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {student.profileImage ? (
                           <img src={student.profileImage} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <UserCircle className="h-6 w-6 text-[#1C7BB1]" />
+                          <UserCircle className="h-5 w-5 text-[#1C7BB1]" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-[#0A4A6E] truncate">{student.name}</h4>
+                          <h4 className="text-sm font-medium text-[#0A4A6E] truncate">{student.name}</h4>
                           <LevelBadge level={student.level} size="sm" />
                         </div>
-                        <p className="text-xs text-[#0A4A6E]/50">{student.email}</p>
+                        <p className="text-[10px] text-[#0A4A6E]/40">{student.email}</p>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-[#0A4A6E]/70">
+                      <div className="flex items-center gap-3 text-xs text-[#0A4A6E]/60 flex-shrink-0">
                         <div className="text-center">
                           <p className="font-bold text-[#0A4A6E]">{student.completedClasses}</p>
-                          <p className="text-[10px]">{language === "es" ? "Completadas" : "Completed"}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-bold text-[#0A4A6E]">{student.totalClasses}</p>
-                          <p className="text-[10px]">{language === "es" ? "Total" : "Total"}</p>
+                          <p className="text-[9px]">{isEs ? "Clases" : "Classes"}</p>
                         </div>
                         {student.lastClassDate && (
                           <div className="text-center hidden sm:block">
-                            <p className="text-xs">
-                              {new Date(student.lastClassDate).toLocaleDateString(
-                                language === "es" ? "es-ES" : "en-US",
-                                { month: "short", day: "numeric" }
-                              )}
+                            <p className="text-[10px]">
+                              {new Date(student.lastClassDate).toLocaleDateString(isEs ? "es-ES" : "en-US", { month: "short", day: "numeric" })}
                             </p>
-                            <p className="text-[10px]">{language === "es" ? "Última" : "Last"}</p>
+                            <p className="text-[9px]">{isEs ? "Última" : "Last"}</p>
                           </div>
                         )}
                         <button
-                          className="p-1.5 rounded hover:bg-[#1C7BB1]/10 text-[#1C7BB1]/40 hover:text-[#1C7BB1] transition-colors"
-                          title={language === "es" ? "Cambiar nivel" : "Change level"}
+                          className="p-1 rounded hover:bg-[#1C7BB1]/10 text-[#1C7BB1]/40 hover:text-[#1C7BB1]"
+                          title={isEs ? "Cambiar nivel" : "Change level"}
                           onClick={(e) => { e.stopPropagation(); setSelectedStudentId(student.id); }}
                         >
                           <GraduationCap className="h-4 w-4" />
@@ -803,19 +853,17 @@ export default function TutorDashboard() {
             </CardContent>
           </Card>
 
-          {/* Student Detail Dialog */}
+          {/* Student Level Dialog */}
           <Dialog open={selectedStudentId !== null} onOpenChange={() => setSelectedStudentId(null)}>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-[#1C7BB1]" />
-                  {language === "es" ? "Progreso del Estudiante" : "Student Progress"}
+                  {isEs ? "Progreso del Estudiante" : "Student Progress"}
                 </DialogTitle>
               </DialogHeader>
-
               {studentProgress ? (
                 <div className="space-y-5 mt-2">
-                  {/* Student Info */}
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center">
                       <UserCircle className="h-6 w-6 text-[#1C7BB1]" />
@@ -825,25 +873,13 @@ export default function TutorDashboard() {
                       <p className="text-xs text-muted-foreground">{studentProgress.student.email}</p>
                     </div>
                   </div>
-
-                  {/* Level Selector */}
                   <div className="flex items-center justify-between p-3 bg-[#EAF4FA] rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-[#0A4A6E]">
-                        {language === "es" ? "Nivel actual" : "Current level"}
-                      </p>
-                    </div>
+                    <p className="text-sm font-medium text-[#0A4A6E]">{isEs ? "Nivel actual" : "Current level"}</p>
                     <Select
                       value={studentProgress.student.level}
-                      onValueChange={(val) => {
-                        if (selectedStudentId) {
-                          changeLevelMutation.mutate({ studentId: selectedStudentId, level: val });
-                        }
-                      }}
+                      onValueChange={(val) => { if (selectedStudentId) changeLevelMutation.mutate({ studentId: selectedStudentId, level: val }); }}
                     >
-                      <SelectTrigger className="w-24 h-8">
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="A1">A1</SelectItem>
                         <SelectItem value="A2">A2</SelectItem>
@@ -852,59 +888,41 @@ export default function TutorDashboard() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {/* Stats Grid */}
                   <div className="grid grid-cols-3 gap-3">
                     <div className="text-center p-2 bg-gray-50 rounded-lg">
                       <p className="text-lg font-bold text-[#0A4A6E]">{studentProgress.stats.classesCompleted}</p>
-                      <p className="text-[10px] text-muted-foreground">{language === "es" ? "Clases" : "Classes"}</p>
+                      <p className="text-[10px] text-muted-foreground">{isEs ? "Clases" : "Classes"}</p>
                     </div>
                     <div className="text-center p-2 bg-gray-50 rounded-lg">
                       <p className="text-lg font-bold text-[#0A4A6E]">{studentProgress.stats.completedStations}/{studentProgress.stats.totalStations}</p>
-                      <p className="text-[10px] text-muted-foreground">{language === "es" ? "Estaciones" : "Stations"}</p>
+                      <p className="text-[10px] text-muted-foreground">{isEs ? "Estaciones" : "Stations"}</p>
                     </div>
                     <div className="text-center p-2 bg-gray-50 rounded-lg">
                       <p className="text-lg font-bold text-[#0A4A6E]">{studentProgress.stats.quizAvg}%</p>
-                      <p className="text-[10px] text-muted-foreground">{language === "es" ? "Prom. Quiz" : "Quiz Avg"}</p>
+                      <p className="text-[10px] text-muted-foreground">{isEs ? "Prom. Quiz" : "Quiz Avg"}</p>
                     </div>
                   </div>
-
-                  {/* Advancement Progress */}
                   {studentProgress.advancementProgress && (
                     <div className="border rounded-lg p-3 space-y-3">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-[#0A4A6E]">
-                          {language === "es" ? "Progreso hacia" : "Progress to"} {studentProgress.advancementProgress.toLevel}
-                        </p>
-                        {studentProgress.advancementProgress.isReady && (
-                          <Badge className="bg-green-100 text-green-700 text-xs">
-                            {language === "es" ? "Listo" : "Ready"}
-                          </Badge>
-                        )}
+                        <p className="text-sm font-medium text-[#0A4A6E]">{isEs ? "Progreso hacia" : "Progress to"} {studentProgress.advancementProgress.toLevel}</p>
+                        {studentProgress.advancementProgress.isReady && <Badge className="bg-green-100 text-green-700 text-xs">{isEs ? "Listo" : "Ready"}</Badge>}
                       </div>
-
-                      {/* Classes */}
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-muted-foreground">{language === "es" ? "Clases" : "Classes"}</span>
-                          <span className="font-medium">{studentProgress.advancementProgress.classes.current}/{studentProgress.advancementProgress.classes.required}</span>
+                      {[
+                        { label: isEs ? "Clases" : "Classes", data: studentProgress.advancementProgress.classes },
+                        { label: isEs ? "Estaciones" : "Stations", data: studentProgress.advancementProgress.stations },
+                      ].map(item => (
+                        <div key={item.label}>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">{item.label}</span>
+                            <span className="font-medium">{item.data.current}/{item.data.required}</span>
+                          </div>
+                          <Progress value={Math.min(100, (item.data.current / item.data.required) * 100)} className="h-2" />
                         </div>
-                        <Progress value={Math.min(100, (studentProgress.advancementProgress.classes.current / studentProgress.advancementProgress.classes.required) * 100)} className="h-2" />
-                      </div>
-
-                      {/* Stations */}
+                      ))}
                       <div>
                         <div className="flex justify-between text-xs mb-1">
-                          <span className="text-muted-foreground">{language === "es" ? "Estaciones" : "Stations"}</span>
-                          <span className="font-medium">{studentProgress.advancementProgress.stations.current}/{studentProgress.advancementProgress.stations.required}</span>
-                        </div>
-                        <Progress value={Math.min(100, (studentProgress.advancementProgress.stations.current / studentProgress.advancementProgress.stations.required) * 100)} className="h-2" />
-                      </div>
-
-                      {/* Quiz Average */}
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-muted-foreground">{language === "es" ? "Prom. Quiz" : "Quiz Avg"}</span>
+                          <span className="text-muted-foreground">{isEs ? "Prom. Quiz" : "Quiz Avg"}</span>
                           <span className="font-medium">{studentProgress.advancementProgress.quizAvg.current}% / {studentProgress.advancementProgress.quizAvg.required}%</span>
                         </div>
                         <Progress value={Math.min(100, (studentProgress.advancementProgress.quizAvg.current / studentProgress.advancementProgress.quizAvg.required) * 100)} className="h-2" />
@@ -922,108 +940,139 @@ export default function TutorDashboard() {
           </>
         )}
 
-        {/* Earnings Tab */}
-        {activeTab === "earnings" && (
+        {/* ═══════════════ PROFILE TAB ═══════════════ */}
+        {activeTab === "profile" && (
           <div className="space-y-6">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-4">
+            {/* Profile Header */}
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <div className="bg-gradient-to-r from-[#1C7BB1] to-[#0A4A6E] p-6 text-white">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-white/40">
+                      {editAvatar ? (
+                        <img src={editAvatar} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <UserCircle className="w-12 h-12 text-white/70" />
+                      )}
+                    </div>
+                    <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-white rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-gray-100">
+                      <Upload className="w-3.5 h-3.5 text-[#1C7BB1]" />
+                      <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                    </label>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">{tutorProfile?.name || data?.tutor?.name || user.firstName}</h2>
+                    <p className="text-white/70 text-sm">{tutorProfile?.email || user.email}</p>
+                    {tutorProfile?.rating && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <Star className="w-3.5 h-3.5 text-[#F59E1C] fill-[#F59E1C]" />
+                        <span className="text-sm">{parseFloat(tutorProfile.rating).toFixed(1)}</span>
+                        <span className="text-white/50 text-xs">({tutorProfile.reviewCount} {isEs ? "reseñas" : "reviews"})</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Profile Form */}
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-4 md:p-6 space-y-4">
+                <h3 className="font-semibold text-[#0A4A6E]">{isEs ? "Información Personal" : "Personal Information"}</h3>
+
+                <div className="space-y-1.5">
+                  <Label>{isEs ? "Biografía" : "Bio"}</Label>
+                  <Textarea
+                    value={editBio}
+                    onChange={(e) => setEditBio(e.target.value)}
+                    placeholder={isEs ? "Cuéntale a tus estudiantes sobre ti..." : "Tell your students about yourself..."}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>{isEs ? "Teléfono" : "Phone"}</Label>
+                    <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="+1 555 123 4567" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{isEs ? "Años de experiencia" : "Years of experience"}</Label>
+                    <Input type="number" value={editYears} onChange={(e) => setEditYears(e.target.value)} placeholder="5" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>{isEs ? "Certificaciones (separadas por coma)" : "Certifications (comma separated)"}</Label>
+                  <Input value={editCerts} onChange={(e) => setEditCerts(e.target.value)} placeholder="DELE C1, TESOL, Cambridge CAE" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>{isEs ? "Idiomas que hablas (separados por coma)" : "Languages you speak (comma separated)"}</Label>
+                  <Input value={editLangs} onChange={(e) => setEditLangs(e.target.value)} placeholder="Spanish, English, French" />
+                </div>
+
+                <Button
+                  className="bg-[#1C7BB1] hover:bg-[#0A4A6E] w-full sm:w-auto"
+                  onClick={handleProfileSave}
+                  disabled={updateProfileMutation.isPending}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {updateProfileMutation.isPending
+                    ? (isEs ? "Guardando..." : "Saving...")
+                    : (isEs ? "Guardar cambios" : "Save changes")}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Google Calendar */}
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-100">
-                      <DollarSign className="h-5 w-5 text-green-600" />
+                    <div className={`p-2 rounded-lg ${googleStatus?.connected ? "bg-green-100" : "bg-gray-100"}`}>
+                      <Calendar className={`h-5 w-5 ${googleStatus?.connected ? "text-green-600" : "text-gray-400"}`} />
                     </div>
                     <div>
-                      <p className="text-xs text-[#0A4A6E]/60">{language === "es" ? "Total Ganado" : "Total Earned"}</p>
-                      <p className="text-xl font-bold text-[#0A4A6E]">${earnings?.totalEarnings?.toFixed(2) || "0.00"}</p>
+                      <h3 className="font-semibold text-[#0A4A6E]">Google Calendar</h3>
+                      {googleStatus?.connected ? (
+                        <p className="text-xs text-green-600 flex items-center gap-1">
+                          <Link2 className="w-3 h-3" /> {isEs ? "Conectado como" : "Connected as"} {googleStatus.googleEmail}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-500">{isEs ? "Sincroniza tus clases" : "Sync your classes"}</p>
+                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-[#1C7BB1]/10">
-                      <Clock className="h-5 w-5 text-[#1C7BB1]" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-[#0A4A6E]/60">{language === "es" ? "Horas Totales" : "Total Hours"}</p>
-                      <p className="text-xl font-bold text-[#0A4A6E]">{earnings?.totalHours || 0}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-4">
+                  {googleStatus?.connected ? (
+                    <Button variant="outline" size="sm" onClick={() => disconnectGoogleMutation.mutate()} disabled={disconnectGoogleMutation.isPending} className="text-red-500 border-red-200 hover:bg-red-50">
+                      <Link2Off className="w-4 h-4 mr-1" /> {isEs ? "Desconectar" : "Disconnect"}
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={() => { window.location.href = "/api/auth/google/connect"; }} className="bg-[#1C7BB1] hover:bg-[#0A4A6E]">
+                      <Link2 className="w-4 h-4 mr-1" /> {isEs ? "Conectar" : "Connect"}
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Availability */}
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-[#F59E1C]/10">
-                      <TrendingUp className="h-5 w-5 text-[#F59E1C]" />
+                      <Clock className="h-5 w-5 text-[#F59E1C]" />
                     </div>
                     <div>
-                      <p className="text-xs text-[#0A4A6E]/60">{language === "es" ? "Tarifa/Hora" : "Hourly Rate"}</p>
-                      <p className="text-xl font-bold text-[#0A4A6E]">${earnings?.hourlyRate || 0}</p>
+                      <h3 className="font-semibold text-[#0A4A6E]">{isEs ? "Disponibilidad" : "Availability"}</h3>
+                      <p className="text-xs text-gray-500">{isEs ? "Configura tu horario semanal" : "Set your weekly schedule"}</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-[#0A4A6E]/60">{language === "es" ? "Completadas" : "Completed"}</p>
-                      <p className="text-xl font-bold text-[#0A4A6E]">{earnings?.totalCompleted || 0}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Monthly Breakdown */}
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">
-                  {language === "es" ? "Desglose Mensual" : "Monthly Breakdown"}
-                </h2>
-                {earnings?.monthly && earnings.monthly.length > 0 ? (
-                  <div className="space-y-3 overflow-x-auto min-w-0">
-                    {earnings.monthly.map(m => {
-                      const maxEarnings = Math.max(...earnings.monthly.map(e => e.earnings), 1);
-                      const pct = (m.earnings / maxEarnings) * 100;
-                      const [year, month] = m.month.split("-");
-                      const monthDate = new Date(parseInt(year), parseInt(month) - 1);
-                      return (
-                        <div key={m.month} className="flex items-center gap-4">
-                          <span className="text-sm text-[#0A4A6E]/70 w-20 flex-shrink-0">
-                            {monthDate.toLocaleDateString(language === "es" ? "es-ES" : "en-US", { month: "short", year: "2-digit" })}
-                          </span>
-                          <div className="flex-1">
-                            <div className="h-7 bg-gray-100 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-gradient-to-r from-[#1C7BB1] to-[#0A4A6E] rounded-full flex items-center justify-end pr-2 transition-all"
-                                style={{ width: `${Math.max(pct, 8)}%` }}
-                              >
-                                {pct > 20 && (
-                                  <span className="text-[10px] text-white font-medium">${m.earnings}</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right w-24 flex-shrink-0">
-                            <span className="text-sm font-semibold text-[#0A4A6E]">${m.earnings}</span>
-                            <span className="text-xs text-[#0A4A6E]/50 ml-1">({m.classes} {language === "es" ? "cls" : "cls"})</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-[#0A4A6E]/50 text-center py-8">
-                    {language === "es" ? "Sin datos de ganancias aún" : "No earnings data yet"}
-                  </p>
-                )}
+                  <Button variant="outline" size="sm" onClick={() => setLocation("/tutor-portal/availability")}>
+                    {isEs ? "Gestionar" : "Manage"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -1031,70 +1080,33 @@ export default function TutorDashboard() {
       </main>
 
       {/* Student profile drawer */}
-      <StudentProfileDrawer
-        studentId={drawerStudentId}
-        onClose={() => setDrawerStudentId(null)}
-      />
+      <StudentProfileDrawer studentId={drawerStudentId} onClose={() => setDrawerStudentId(null)} />
 
-      {/* Notes Modal — shown when tutor clicks "Complete" on a class */}
+      {/* Notes Modal */}
       <Dialog open={!!notesModal} onOpenChange={(open) => { if (!open) setNotesModal(null); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {language === "es" ? "Completar clase" : "Complete class"}
-              {notesModal && (
-                <span className="text-sm font-normal text-muted-foreground ml-2">
-                  — {notesModal.studentName}
-                </span>
-              )}
+              {isEs ? "Completar clase" : "Complete class"}
+              {notesModal && <span className="text-sm font-normal text-muted-foreground ml-2">— {notesModal.studentName}</span>}
             </DialogTitle>
           </DialogHeader>
-
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label htmlFor="sharedNotes">
-                {language === "es" ? "Resumen para el alumno" : "Summary for student"}
-              </Label>
-              <Textarea
-                id="sharedNotes"
-                placeholder={language === "es" ? "Lo que trabajaron hoy, visible para el alumno..." : "What you worked on today, visible to student..."}
-                value={sharedNotes}
-                onChange={(e) => setSharedNotes(e.target.value)}
-                rows={3}
-              />
+              <Label htmlFor="sharedNotes">{isEs ? "Resumen para el alumno" : "Summary for student"}</Label>
+              <Textarea id="sharedNotes" placeholder={isEs ? "Lo que trabajaron hoy..." : "What you worked on today..."} value={sharedNotes} onChange={(e) => setSharedNotes(e.target.value)} rows={3} />
             </div>
-
             <div className="space-y-1.5">
-              <Label htmlFor="homeworkText">
-                {language === "es" ? "Tarea / próximos pasos" : "Homework / next steps"}
-              </Label>
-              <Textarea
-                id="homeworkText"
-                placeholder={language === "es" ? "Tarea asignada para el alumno..." : "Homework assigned to student..."}
-                value={homeworkText}
-                onChange={(e) => setHomeworkText(e.target.value)}
-                rows={2}
-              />
+              <Label htmlFor="homeworkText">{isEs ? "Tarea / próximos pasos" : "Homework / next steps"}</Label>
+              <Textarea id="homeworkText" placeholder={isEs ? "Tarea asignada..." : "Homework assigned..."} value={homeworkText} onChange={(e) => setHomeworkText(e.target.value)} rows={2} />
             </div>
-
             <div className="space-y-1.5">
-              <Label htmlFor="sessionNotes">
-                {language === "es" ? "Notas privadas (solo tú las ves)" : "Private notes (only you see these)"}
-              </Label>
-              <Textarea
-                id="sessionNotes"
-                placeholder={language === "es" ? "Observaciones personales, áreas a reforzar..." : "Personal observations, areas to reinforce..."}
-                value={sessionNotes}
-                onChange={(e) => setSessionNotes(e.target.value)}
-                rows={2}
-              />
+              <Label htmlFor="sessionNotes">{isEs ? "Notas privadas (solo tú)" : "Private notes (only you)"}</Label>
+              <Textarea id="sessionNotes" placeholder={isEs ? "Observaciones personales..." : "Personal observations..."} value={sessionNotes} onChange={(e) => setSessionNotes(e.target.value)} rows={2} />
             </div>
           </div>
-
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setNotesModal(null)}>
-              {language === "es" ? "Cancelar" : "Cancel"}
-            </Button>
+            <Button variant="outline" onClick={() => setNotesModal(null)}>{isEs ? "Cancelar" : "Cancel"}</Button>
             <Button
               className="bg-green-600 hover:bg-green-700 text-white"
               disabled={completeClassMutation.isPending}
@@ -1107,9 +1119,7 @@ export default function TutorDashboard() {
               }}
             >
               <CheckCircle className="h-4 w-4 mr-1" />
-              {completeClassMutation.isPending
-                ? (language === "es" ? "Guardando..." : "Saving...")
-                : (language === "es" ? "Confirmar clase" : "Confirm class")}
+              {completeClassMutation.isPending ? (isEs ? "Guardando..." : "Saving...") : (isEs ? "Confirmar" : "Confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

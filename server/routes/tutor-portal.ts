@@ -699,12 +699,14 @@ export function registerTutorPortalRoutes(app: Express) {
       const tutor = await getTutorFromUser(userId);
       if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
 
-      const { bio, phone, languages, certifications } = req.body;
+      const { bio, phone, languages, certifications, avatar, yearsOfExperience } = req.body;
       const updated = await storage.updateTutor(tutor.id, {
         ...(bio !== undefined && { bio }),
         ...(phone !== undefined && { phone }),
         ...(languages !== undefined && { languages }),
         ...(certifications !== undefined && { certifications }),
+        ...(avatar !== undefined && { avatar, profileImage: avatar }),
+        ...(yearsOfExperience !== undefined && { yearsOfExperience }),
       });
 
       res.json(updated);

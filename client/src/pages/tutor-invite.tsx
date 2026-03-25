@@ -33,7 +33,8 @@ export default function TutorInvitePage() {
       if (data?.user) {
         setCurrentUser(data.user);
       }
-      setLocation("/tutor-portal");
+      // Use full page reload to ensure session cookie is established before ProtectedRoute checks
+      window.location.href = "/tutor-portal";
     },
   });
 

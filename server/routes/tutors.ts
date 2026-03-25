@@ -120,6 +120,19 @@ export function registerTutorRoutes(app: Express) {
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
       await storage.setTutorInviteToken(tutorId, token, expiresAt);
 
+      const BASE_URL = process.env.APP_URL || (process.env.NODE_ENV === "production" ? "https://portal.passport2fluency.com" : "http://localhost:5000");
+      const fullInviteUrl = `${BASE_URL}/join?token=${token}`;
+
+      // Auto-send invite email
+      if (tutor.email) {
+        emailService.sendTutorInvite({
+          to: tutor.email,
+          tutorName: tutor.name,
+          inviteUrl: fullInviteUrl,
+          lang: "es",
+        }).catch(err => console.error("[tutors] Failed to send invite email:", err));
+      }
+
       res.json({ inviteUrl: `/join?token=${token}` });
     } catch (error: any) {
       res.status(500).json({ message: "Internal server error" });

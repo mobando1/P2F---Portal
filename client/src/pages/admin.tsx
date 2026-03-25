@@ -494,7 +494,7 @@ export default function AdminPage() {
                   </div>
                 ) : tutors && tutors.length > 0 ? (
                   <div className="grid gap-4">
-                    {tutors.map((tutor: any) => (
+                    {[...tutors].sort((a: any, b: any) => a.id - b.id).map((tutor: any) => (
                       <div key={tutor.id} className="border rounded-lg p-4 flex items-center space-x-4">
                         <img
                           src={tutor.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(tutor.name)}&background=1E40AF&color=fff`}
