@@ -97,7 +97,7 @@ export function registerMessageRoutes(app: Express) {
         message: message.trim(),
       });
 
-      // Notify the other participant via WebSocket
+      // Notify the other participant via WebSocket + in-app notification
       const convs = await storage.getConversations(userId);
       const conv = convs.find(c => c.id === convId);
       if (conv) {
@@ -106,6 +106,21 @@ export function registerMessageRoutes(app: Express) {
           type: "message:new",
           data: { conversationId: convId, message: msg },
         });
+
+        // Create in-app notification for the recipient
+        const sender = await storage.getUser(userId);
+        if (sender) {
+          const senderName = `${sender.firstName} ${sender.lastName}`;
+          const notification = await storage.createNotification({
+            userId: recipientId,
+            type: "system",
+            title: "Nuevo mensaje",
+            message: `${senderName}: ${message.trim().substring(0, 80)}${message.length > 80 ? "..." : ""}`,
+            link: "/messages",
+            isRead: false,
+          });
+          wsService.sendToUser(recipientId, { type: "notification:new", data: notification });
+        }
       }
 
       res.status(201).json(msg);
@@ -134,11 +149,25 @@ export function registerMessageRoutes(app: Express) {
         message: message.trim(),
       });
 
-      // Notify recipient via WebSocket
+      // Notify recipient via WebSocket + in-app notification
       wsService.sendToUser(recipientId, {
         type: "message:new",
         data: { conversationId: conv.id, message: msg },
       });
+
+      const sender = await storage.getUser(userId);
+      if (sender) {
+        const senderName = `${sender.firstName} ${sender.lastName}`;
+        const notification = await storage.createNotification({
+          userId: recipientId,
+          type: "system",
+          title: "Nuevo mensaje",
+          message: `${senderName}: ${message.trim().substring(0, 80)}${message.length > 80 ? "..." : ""}`,
+          link: "/messages",
+          isRead: false,
+        });
+        wsService.sendToUser(recipientId, { type: "notification:new", data: notification });
+      }
 
       res.status(201).json({ conversation: conv, message: msg });
     } catch (error) {

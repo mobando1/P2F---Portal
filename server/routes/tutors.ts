@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { storage } from "../storage";
 import { TutorManagementService } from "../services/tutor-management";
 import { emailService } from "../services/email";
+import { wsService } from "../services/websocket";
 import { requireAuth, requireAdmin } from "./auth";
 
 const tutorManagement = new TutorManagementService();
@@ -272,6 +273,20 @@ export function registerTutorRoutes(app: Express) {
         paidAt: status === "paid" ? new Date() : null,
         createdBy: req.session.userId!,
       });
+
+      // Notify tutor about payment
+      const tutor = await storage.getTutor(tutorId);
+      if (tutor?.userId) {
+        const notification = await storage.createNotification({
+          userId: tutor.userId,
+          type: "system",
+          title: "Pago recibido",
+          message: `Se ha registrado un pago de $${parseFloat(amount).toFixed(2)} USD por ${classesCount || 0} clases.`,
+          link: "/tutor-portal",
+          isRead: false,
+        });
+        wsService.sendToUser(tutor.userId, { type: "notification:new", data: notification });
+      }
 
       res.status(201).json(payment);
     } catch (error) {

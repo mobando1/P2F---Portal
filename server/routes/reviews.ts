@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { requireAuth } from "./auth";
 import { gamificationService } from "../services/gamification";
+import { wsService } from "../services/websocket";
 import { z } from "zod";
 
 const createReviewSchema = z.object({
@@ -88,6 +89,22 @@ export function registerReviewRoutes(app: Express) {
 
       // Check gamification for first review
       gamificationService.onReviewGiven(userId);
+
+      // Notify tutor about new review
+      const tutor = await storage.getTutor(tutorId);
+      const reviewer = await storage.getUser(userId);
+      if (tutor?.userId && reviewer) {
+        const stars = "★".repeat(parsed.data.rating) + "☆".repeat(5 - parsed.data.rating);
+        const notification = await storage.createNotification({
+          userId: tutor.userId,
+          type: "review",
+          title: "Nueva reseña",
+          message: `${reviewer.firstName} te dejó una reseña ${stars}${parsed.data.comment ? `: "${parsed.data.comment.substring(0, 60)}..."` : ""}`,
+          link: "/tutor-portal",
+          isRead: false,
+        });
+        wsService.sendToUser(tutor.userId, { type: "notification:new", data: notification });
+      }
 
       res.status(201).json(review);
     } catch (error) {
