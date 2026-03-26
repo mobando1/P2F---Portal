@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { X, ChevronRight } from "lucide-react";
 import { useOnboarding } from "./OnboardingProvider";
 
 interface CoachmarkProps {
@@ -9,7 +9,7 @@ interface CoachmarkProps {
   description: string;
   position?: "top" | "bottom" | "left" | "right";
   children: React.ReactNode;
-  delay?: number; // ms before auto-showing
+  delay?: number;
 }
 
 export function Coachmark({
@@ -18,13 +18,11 @@ export function Coachmark({
   description,
   position = "bottom",
   children,
-  delay = 600,
+  delay = 800,
 }: CoachmarkProps) {
   const { isActive, hasSeenStep, markStepSeen, registerStep, isCurrentStep } = useOnboarding();
   const [visible, setVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
-  // Register this step on mount so the provider knows the order
   useEffect(() => {
     registerStep(id);
   }, [id, registerStep]);
@@ -44,32 +42,29 @@ export function Coachmark({
     markStepSeen(id);
   };
 
-  const positionClasses: Record<string, string> = {
-    top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
-    bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
-    left: "right-full top-1/2 -translate-y-1/2 mr-2",
-    right: "left-full top-1/2 -translate-y-1/2 ml-2",
-  };
-
-  const arrowClasses: Record<string, string> = {
-    top: "bottom-[-6px] left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-b-0 border-t-[6px] border-t-[#1C7BB1]",
-    bottom: "top-[-6px] left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-t-0 border-b-[6px] border-b-[#1C7BB1]",
-    left: "right-[-6px] top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-r-0 border-l-[6px] border-l-[#1C7BB1]",
-    right: "left-[-6px] top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-l-0 border-r-[6px] border-r-[#1C7BB1]",
-  };
-
   if (!shouldShow && !visible) {
     return <>{children}</>;
   }
 
+  // Position the tooltip below the element with a small gap
+  const positionStyles: Record<string, string> = {
+    top: "bottom-full left-0 mb-3",
+    bottom: "top-full left-0 mt-3",
+    left: "right-full top-0 mr-3",
+    right: "left-full top-0 ml-3",
+  };
+
   return (
-    <div ref={ref} className="relative inline-block">
-      {/* Pulsing ring when active */}
-      {shouldShow && !alreadySeen && (
-        <span className="absolute inset-0 rounded-lg pointer-events-none z-10">
-          <span className="absolute inset-0 rounded-lg ring-2 ring-[#1C7BB1] animate-ping opacity-40" />
-          <span className="absolute inset-0 rounded-lg ring-2 ring-[#1C7BB1] opacity-60" />
-        </span>
+    <div className="relative">
+      {/* Subtle highlight border — no aggressive pulsing */}
+      {shouldShow && (
+        <div className="absolute inset-0 rounded-xl pointer-events-none z-10">
+          <div className="absolute inset-0 rounded-xl border-2 border-[#1C7BB1]/60 shadow-[0_0_12px_rgba(28,123,177,0.2)]" />
+          {/* Small dot indicator */}
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#F59E1C] rounded-full border-2 border-white shadow-sm">
+            <span className="absolute inset-0 rounded-full bg-[#F59E1C] animate-ping opacity-50" />
+          </span>
+        </div>
       )}
 
       {children}
@@ -77,33 +72,33 @@ export function Coachmark({
       <AnimatePresence>
         {visible && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.18 }}
-            className={`absolute z-50 w-64 ${positionClasses[position]}`}
+            initial={{ opacity: 0, y: position === "top" ? 8 : -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: position === "top" ? 8 : -8 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className={`absolute z-50 ${positionStyles[position]}`}
+            style={{ maxWidth: "280px", minWidth: "220px" }}
           >
-            {/* Arrow */}
-            <div className={`absolute w-0 h-0 border-[6px] ${arrowClasses[position]}`} />
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+              {/* Accent bar */}
+              <div className="h-1 bg-gradient-to-r from-[#1C7BB1] to-[#F59E1C]" />
 
-            {/* Card */}
-            <div className="bg-[#1C7BB1] text-white rounded-xl shadow-xl p-3.5">
-              <div className="flex items-start justify-between gap-2 mb-1">
-                <p className="font-semibold text-sm leading-snug">{title}</p>
+              <div className="p-3.5">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-semibold text-sm text-[#0A4A6E] leading-snug">{title}</p>
+                  <button onClick={dismiss} className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 leading-relaxed mt-1">{description}</p>
                 <button
                   onClick={dismiss}
-                  className="flex-shrink-0 opacity-70 hover:opacity-100 transition-opacity mt-0.5"
+                  className="mt-3 flex items-center gap-1 text-xs font-medium text-[#1C7BB1] hover:text-[#0A4A6E] transition-colors"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  Entendido
+                  <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
-              <p className="text-xs text-blue-100 leading-relaxed">{description}</p>
-              <button
-                onClick={dismiss}
-                className="mt-2.5 text-xs font-medium bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition-colors"
-              >
-                Entendido ✓
-              </button>
             </div>
           </motion.div>
         )}
