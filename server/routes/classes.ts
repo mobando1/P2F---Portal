@@ -435,6 +435,57 @@ export function registerClassRoutes(app: Express) {
     }
   });
 
+  // Get tutor weekly availability grid (public — for student booking)
+  app.get("/api/calendar/tutor/:tutorId/week", async (req, res) => {
+    try {
+      const tutorId = parseInt(req.params.tutorId);
+      const startDateStr = req.query.startDate as string;
+
+      // Calculate Monday of the week
+      const weekStart = startDateStr ? new Date(startDateStr + "T12:00:00") : (() => {
+        const now = new Date();
+        const day = now.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        const mon = new Date(now);
+        mon.setDate(now.getDate() + diff);
+        return mon;
+      })();
+
+      const days = [];
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+
+      for (let d = 0; d < 7; d++) {
+        const date = new Date(weekStart);
+        date.setDate(weekStart.getDate() + d);
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+        const isPast = date < tomorrow;
+
+        let slots: Array<{ start: string; end: string; available: boolean }> = [];
+        if (!isPast) {
+          try {
+            slots = await calendarService.getTutorAvailability(tutorId, dateStr);
+          } catch {
+            slots = [];
+          }
+        }
+
+        days.push({
+          date: dateStr,
+          dayOfWeek: date.getDay(),
+          isPast,
+          slots: slots.filter(s => s.available),
+        });
+      }
+
+      res.json({ weekStart: weekStart.toISOString().split("T")[0], days });
+    } catch (error) {
+      console.error("Error getting tutor weekly availability:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Get all tutors availability for a date
   app.get("/api/calendar/availability", async (req, res) => {
     try {

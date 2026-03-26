@@ -1,5 +1,5 @@
 import { useRoute, Link, useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/i18n";
@@ -71,10 +71,127 @@ const DAY_NAMES_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTH_NAMES_ES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 const MONTH_NAMES_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+// Weekly Grid View — shows all available slots for a week at once (Preply-style)
+function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange }: {
+  tutorId: number;
+  weekStart: string;
+  isEs: boolean;
+  onSlotSelect: (date: string, slot: string) => void;
+  onWeekChange: (dir: number) => void;
+}) {
+  const { data, isLoading } = useQuery<{
+    weekStart: string;
+    days: Array<{ date: string; dayOfWeek: number; isPast: boolean; slots: Array<{ start: string; end: string; available: boolean }> }>;
+  }>({
+    queryKey: [`/api/calendar/tutor/${tutorId}/week`, weekStart],
+    queryFn: () => apiRequest("GET", `/api/calendar/tutor/${tutorId}/week?startDate=${weekStart}`).then(r => r.json()),
+  });
+
+  // Get all unique time slots across the week
+  const allTimes = useMemo(() => {
+    if (!data) return [];
+    const timeSet = new Set<string>();
+    data.days.forEach(d => d.slots.forEach(s => timeSet.add(s.start)));
+    return Array.from(timeSet).sort();
+  }, [data]);
+
+  const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Mon-Sun
+  const dayLabels = isEs ? DAY_NAMES_ES : DAY_NAMES_EN;
+
+  if (isLoading) {
+    return <div className="flex justify-center py-8"><Loader2 className="animate-spin h-6 w-6 text-[#1C7BB1]" /></div>;
+  }
+
+  if (!data || allTimes.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Clock className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+        <p className="text-sm text-gray-500">{isEs ? "No hay horarios disponibles esta semana" : "No available times this week"}</p>
+        <button onClick={() => onWeekChange(1)} className="mt-2 text-xs text-[#1C7BB1] hover:underline">
+          {isEs ? "Ver siguiente semana →" : "See next week →"}
+        </button>
+      </div>
+    );
+  }
+
+  // Build week range label
+  const startDate = new Date(data.weekStart + "T12:00:00");
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + 6);
+  const weekLabel = `${startDate.toLocaleDateString(isEs ? "es-ES" : "en-US", { month: "short", day: "numeric" })} — ${endDate.toLocaleDateString(isEs ? "es-ES" : "en-US", { month: "short", day: "numeric" })}`;
+
+  return (
+    <div>
+      {/* Navigation */}
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={() => onWeekChange(-1)} className="p-1 rounded hover:bg-gray-100">
+          <ChevronLeft className="h-4 w-4 text-[#0A4A6E]" />
+        </button>
+        <span className="text-sm font-medium text-[#0A4A6E]">{weekLabel}</span>
+        <button onClick={() => onWeekChange(1)} className="p-1 rounded hover:bg-gray-100">
+          <ChevronRight className="h-4 w-4 text-[#0A4A6E]" />
+        </button>
+      </div>
+
+      {/* Grid */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse min-w-[500px]">
+          <thead>
+            <tr>
+              <th className="w-14 p-1" />
+              {DAY_ORDER.map((dow, idx) => {
+                const dayData = data.days.find(d => d.dayOfWeek === dow);
+                const dateNum = dayData ? new Date(dayData.date + "T12:00:00").getDate() : "";
+                return (
+                  <th key={dow} className="p-1 text-center">
+                    <p className="text-xs font-semibold text-[#0A4A6E]">{dayLabels[idx]}</p>
+                    <p className="text-[10px] text-gray-400">{dateNum}</p>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {allTimes.map(time => (
+              <tr key={time}>
+                <td className="p-0.5 text-right pr-2">
+                  <span className="text-[10px] text-gray-400">{time}</span>
+                </td>
+                {DAY_ORDER.map(dow => {
+                  const dayData = data.days.find(d => d.dayOfWeek === dow);
+                  const slot = dayData?.slots.find(s => s.start === time);
+                  const hasSlot = slot && slot.available;
+
+                  return (
+                    <td key={dow} className="p-0.5">
+                      {hasSlot ? (
+                        <button
+                          onClick={() => onSlotSelect(dayData!.date, time)}
+                          className="w-full h-7 rounded-md border border-[#1C7BB1]/30 bg-white text-[#1C7BB1] text-[11px] font-medium hover:bg-[#1C7BB1] hover:text-white transition-all"
+                        >
+                          {time}
+                        </button>
+                      ) : (
+                        <div className="w-full h-7 flex items-center justify-center">
+                          <span className="text-gray-300 text-[10px]">—</span>
+                        </div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutorId: number; tutorName: string; tutorAvatar: string | null; isEs: boolean }) {
   const user = getCurrentUser();
   const { toast } = useToast();
-  const [view, setView] = useState<"week" | "month">("week");
+  const [view, setView] = useState<"week" | "month" | "grid">("week");
   const [weekStart, setWeekStart] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -284,6 +401,15 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
         >
           <CalendarDays className="w-3.5 h-3.5" />
           {isEs ? "Mes" : "Month"}
+        </button>
+        <button
+          onClick={() => { setView("grid"); setSelectedSlot(null); }}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+            view === "grid" ? "bg-white shadow-sm text-[#0A4A6E]" : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5" />
+          {isEs ? "Horarios" : "Schedule"}
         </button>
       </div>
 
@@ -499,6 +625,29 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
             </div>
           )}
         </div>
+      )}
+
+      {/* GRID VIEW — Weekly schedule (Preply-style) */}
+      {view === "grid" && (
+        <WeeklyGridView
+          tutorId={Number(tutorId) || 0}
+          weekStart={toDateStr(weekStart)}
+          isEs={isEs}
+          onSlotSelect={(date: string, slot: string) => {
+            setSelectedDate(date);
+            setSelectedSlot(slot);
+          }}
+          onWeekChange={(dir: number) => {
+            const current = new Date(weekStart);
+            current.setDate(current.getDate() + dir * 7);
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minMonday = getMonday(tomorrow);
+            if (current >= minMonday) {
+              setWeekStart(current);
+            }
+          }}
+        />
       )}
 
       {/* BOOKING PANEL */}
