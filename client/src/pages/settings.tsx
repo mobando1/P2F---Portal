@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import PasswordInput from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -380,8 +381,7 @@ export default function SettingsPage() {
 
                 <div className="space-y-2">
                   <Label className="text-[#0A4A6E]">{isEs ? "Confirmar Contrasena" : "Confirm Password"}</Label>
-                  <Input
-                    type="password"
+                  <PasswordInput
                     value={passwordData.confirmPassword}
                     onChange={e => setPasswordData(p => ({ ...p, confirmPassword: e.target.value }))}
                     required

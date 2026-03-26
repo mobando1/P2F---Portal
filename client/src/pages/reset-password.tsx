@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PasswordInput from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/lib/i18n";
@@ -135,9 +136,8 @@ export default function ResetPasswordPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="password">{isEs ? "Nueva contraseña" : "New password"}</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={isEs ? "Mínimo 6 caracteres" : "Min 6 characters"}
@@ -147,9 +147,8 @@ export default function ResetPasswordPage() {
           </div>
           <div>
             <Label htmlFor="confirmPassword">{isEs ? "Confirmar contraseña" : "Confirm password"}</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder={isEs ? "Repite tu contraseña" : "Repeat your password"}

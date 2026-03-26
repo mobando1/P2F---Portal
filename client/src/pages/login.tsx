@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PasswordInput from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -209,9 +210,8 @@ export default function Login() {
                       {t.password}
                     </Label>
                     <div className="relative">
-                      <Input
+                      <PasswordInput
                         id="password"
-                        type="password"
                         placeholder="Tu contraseña"
                         value={loginData.password}
                         onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
@@ -410,9 +410,8 @@ export default function Login() {
                       {t.password}
                     </Label>
                     <div className="relative">
-                      <Input
+                      <PasswordInput
                         id="registerPassword"
-                        type="password"
                         placeholder="Mínimo 8 caracteres"
                         value={registerData.password}
                         onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}

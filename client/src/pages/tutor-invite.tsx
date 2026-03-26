@@ -6,6 +6,7 @@ import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { setCurrentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PasswordInput from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle, AlertCircle, Lock } from "lucide-react";
 
@@ -131,9 +132,8 @@ export default function TutorInvitePage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="password">Contraseña</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mínimo 8 caracteres"
@@ -143,9 +143,8 @@ export default function TutorInvitePage() {
           </div>
           <div>
             <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Repite tu contraseña"
