@@ -450,6 +450,24 @@ async function startServer() {
             WHERE email_verified IS FALSE
               AND (google_id IS NOT NULL OR microsoft_id IS NOT NULL OR user_type = 'admin');
           CREATE INDEX IF NOT EXISTS idx_subscriptions_user_status ON subscriptions(user_id, status);
+          CREATE TABLE IF NOT EXISTS tutor_payments (
+            id SERIAL PRIMARY KEY,
+            tutor_id INTEGER NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            currency TEXT NOT NULL DEFAULT 'USD',
+            period_start TIMESTAMP NOT NULL,
+            period_end TIMESTAMP NOT NULL,
+            classes_count INTEGER NOT NULL DEFAULT 0,
+            hours_worked DECIMAL(10,2) NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            payment_method TEXT,
+            payment_reference TEXT,
+            receipt_url TEXT,
+            notes TEXT,
+            paid_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            created_by INTEGER
+          );
         `);
         log("Schema migrations applied");
 

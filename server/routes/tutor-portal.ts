@@ -781,4 +781,18 @@ Do not make up platform features that don't exist.`;
       res.status(500).json({ message: "AI service error" });
     }
   });
+
+  // Tutor payments — history for the logged-in tutor
+  app.get("/api/tutor/payments", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      const payments = await storage.getTutorPayments(tutor.id);
+      res.json(payments);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 }

@@ -39,6 +39,7 @@ import {
   type LevelProgressionRule, type InsertLevelProgressionRule,
   type NewsletterSubscriber, type InsertNewsletterSubscriber,
   type TutorGoogleToken, type InsertTutorGoogleToken,
+  type TutorPayment, type InsertTutorPayment,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -342,6 +343,12 @@ export interface IStorage {
   getAssignmentsForStudent(studentId: number): Promise<TutorAssignment[]>;
   getAssignmentsByTutor(tutorId: number): Promise<TutorAssignment[]>;
   updateAssignment(id: number, data: Partial<InsertTutorAssignment>): Promise<TutorAssignment>;
+
+  // Tutor Payments
+  createTutorPayment(data: InsertTutorPayment): Promise<TutorPayment>;
+  getTutorPayments(tutorId: number): Promise<TutorPayment[]>;
+  getAllTutorPayments(): Promise<TutorPayment[]>;
+  updateTutorPayment(id: number, data: Partial<InsertTutorPayment>): Promise<TutorPayment | undefined>;
 
   // Learning Path - Level Progression Rules
   getLevelRules(fromLevel: string): Promise<LevelProgressionRule | undefined>;
@@ -2040,6 +2047,11 @@ export class MemStorage implements IStorage {
   async getAssignmentsForStudent(_studentId: number): Promise<TutorAssignment[]> { return []; }
   async getAssignmentsByTutor(_tutorId: number): Promise<TutorAssignment[]> { return []; }
   async updateAssignment(_id: number, _data: Partial<InsertTutorAssignment>): Promise<TutorAssignment> { return {} as TutorAssignment; }
+
+  async createTutorPayment(_data: InsertTutorPayment): Promise<TutorPayment> { return {} as TutorPayment; }
+  async getTutorPayments(_tutorId: number): Promise<TutorPayment[]> { return []; }
+  async getAllTutorPayments(): Promise<TutorPayment[]> { return []; }
+  async updateTutorPayment(_id: number, _data: Partial<InsertTutorPayment>): Promise<TutorPayment | undefined> { return undefined; }
 
   async getLevelRules(_fromLevel: string): Promise<LevelProgressionRule | undefined> { return undefined; }
   async getAllLevelRules(): Promise<LevelProgressionRule[]> { return []; }

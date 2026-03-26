@@ -574,6 +574,29 @@ export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   unsubscribedAt: timestamp("unsubscribed_at"),
 });
 
+// Tutor payment records
+export const tutorPayments = pgTable("tutor_payments", {
+  id: serial("id").primaryKey(),
+  tutorId: integer("tutor_id").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("USD"),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  classesCount: integer("classes_count").notNull().default(0),
+  hoursWorked: decimal("hours_worked", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default("pending"), // pending, paid, cancelled
+  paymentMethod: text("payment_method"), // wise, bank_transfer, paypal
+  paymentReference: text("payment_reference"),
+  receiptUrl: text("receipt_url"), // comprobante base64
+  notes: text("notes"),
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: integer("created_by"),
+});
+
+export type TutorPayment = typeof tutorPayments.$inferSelect;
+export type InsertTutorPayment = typeof tutorPayments.$inferInsert;
+
 // ===== Learning Path "Culebrita" =====
 
 // Estaciones del camino de aprendizaje

@@ -48,6 +48,8 @@ import {
   type LevelProgressionRule, type InsertLevelProgressionRule,
   tutorGoogleTokens,
   type TutorGoogleToken, type InsertTutorGoogleToken,
+  tutorPayments,
+  type TutorPayment, type InsertTutorPayment,
 } from "@shared/schema";
 import { db as maybeDb } from "./db";
 import { eq, and, or, not, gt, gte, lte, lt, desc, asc, sql, inArray } from "drizzle-orm";
@@ -1568,5 +1570,26 @@ export class DatabaseStorage implements IStorage {
       .where(eq(tutorGoogleTokens.tutorId, tutorId))
       .returning();
     return updated;
+  }
+
+  // Tutor Payments
+  async createTutorPayment(data: InsertTutorPayment): Promise<TutorPayment> {
+    const [payment] = await this.db.insert(tutorPayments).values(data).returning();
+    return payment;
+  }
+
+  async getTutorPayments(tutorId: number): Promise<TutorPayment[]> {
+    return await this.db.select().from(tutorPayments)
+      .where(eq(tutorPayments.tutorId, tutorId))
+      .orderBy(desc(tutorPayments.createdAt));
+  }
+
+  async getAllTutorPayments(): Promise<TutorPayment[]> {
+    return await this.db.select().from(tutorPayments).orderBy(desc(tutorPayments.createdAt));
+  }
+
+  async updateTutorPayment(id: number, data: Partial<InsertTutorPayment>): Promise<TutorPayment | undefined> {
+    const [payment] = await this.db.update(tutorPayments).set(data).where(eq(tutorPayments.id, id)).returning();
+    return payment || undefined;
   }
 }
