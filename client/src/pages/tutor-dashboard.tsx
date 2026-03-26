@@ -156,30 +156,25 @@ export default function TutorDashboard() {
   const [editAvatar, setEditAvatar] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
 
-  if (!isAuthenticated() || !user) {
-    setLocation("/login");
-    return null;
-  }
+  const isAuthed = isAuthenticated() && !!user;
+  const isTutorOrAdmin = isAuthed && (user?.userType === "tutor" || user?.userType === "admin");
 
-  if (user.userType !== "tutor" && user.userType !== "admin") {
-    setLocation("/home");
-    return null;
-  }
-
+  // ALL hooks must be called before any conditional returns (React rules of hooks)
   const { data, isLoading } = useQuery<TutorDashboardData>({
     queryKey: ["/api/tutor/dashboard"],
+    enabled: isTutorOrAdmin,
   });
 
   const { data: students } = useQuery<StudentInfo[]>({
     queryKey: ["/api/tutor/students"],
     queryFn: () => apiRequest("GET", "/api/tutor/students").then(r => r.json()),
-    enabled: activeTab === "students",
+    enabled: isTutorOrAdmin && activeTab === "students",
   });
 
   const { data: earnings } = useQuery<EarningsData>({
     queryKey: ["/api/tutor/earnings"],
     queryFn: () => apiRequest("GET", "/api/tutor/earnings").then(r => r.json()),
-    enabled: activeTab === "schedule",
+    enabled: isTutorOrAdmin && activeTab === "schedule",
   });
 
   const { data: allClasses } = useQuery<Array<{
@@ -189,7 +184,7 @@ export default function TutorDashboard() {
   }>>({
     queryKey: ["/api/tutor/classes"],
     queryFn: () => apiRequest("GET", "/api/tutor/classes").then(r => r.json()),
-    enabled: activeTab === "schedule",
+    enabled: isTutorOrAdmin && activeTab === "schedule",
   });
 
   const { data: prepCards } = useQuery<Array<{
@@ -205,13 +200,13 @@ export default function TutorDashboard() {
   }>>({
     queryKey: ["/api/tutor/prep"],
     queryFn: () => apiRequest("GET", "/api/tutor/prep").then(r => r.json()),
-    enabled: activeTab === "today",
+    enabled: isTutorOrAdmin && activeTab === "today",
   });
 
   const { data: tutorProfileData } = useQuery({
     queryKey: ["/api/tutor/profile"],
     queryFn: () => apiRequest("GET", "/api/tutor/profile").then(r => r.json()),
-    enabled: activeTab === "profile",
+    enabled: isTutorOrAdmin && activeTab === "profile",
   });
   const tutorProfile = tutorProfileData as TutorProfile | undefined;
 
@@ -231,8 +226,19 @@ export default function TutorDashboard() {
   const { data: studentProgress } = useQuery<StudentProgress>({
     queryKey: ["/api/tutor/students", selectedStudentId, "progress"],
     queryFn: () => apiRequest("GET", `/api/tutor/students/${selectedStudentId}/progress`).then(r => r.json()),
-    enabled: !!selectedStudentId,
+    enabled: isTutorOrAdmin && !!selectedStudentId,
   });
+
+  // Conditional redirects AFTER all hooks
+  if (!isAuthed) {
+    setLocation("/login");
+    return null;
+  }
+
+  if (!isTutorOrAdmin) {
+    setLocation("/home");
+    return null;
+  }
 
   const changeLevelMutation = useMutation({
     mutationFn: async ({ studentId, level }: { studentId: number; level: string }) => {
