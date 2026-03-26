@@ -96,13 +96,13 @@ export default function HomePage() {
   const isEs = language === "es";
 
   const [stepsRef, stepsInView] = useInView({ triggerOnce: true, threshold: 0.2 });
+  const [ctaRef, ctaInView] = useInView({ triggerOnce: true, threshold: 0.3 });
 
   // Tutors should not see the student home page
   if (user?.userType === "tutor") {
     setLocation("/tutor-portal");
     return null;
   }
-  const [ctaRef, ctaInView] = useInView({ triggerOnce: true, threshold: 0.3 });
 
   return (
     <div className="min-h-screen bg-[#EAF4FA]">

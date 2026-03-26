@@ -224,7 +224,7 @@ export default function HelpButton() {
   const { language } = useLanguage();
   const es = language === "es";
 
-  if (!isAuthenticated()) return null;
+  const isAuthed = isAuthenticated();
 
   // Find the best matching page help (strip query strings, try prefix match)
   const basePath = location.split("?")[0];
@@ -241,6 +241,8 @@ export default function HelpButton() {
         (es ? f.aEs : f.a).toLowerCase().includes(term)
     );
   }, [search, es]);
+
+  if (!isAuthed) return null;
 
   const handleOpen = () => {
     setOpen(true);
