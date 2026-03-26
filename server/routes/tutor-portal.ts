@@ -10,12 +10,7 @@ import { requireTutor } from "./auth";
 export function registerTutorPortalRoutes(app: Express) {
   // Helper to get tutor profile from logged-in user
   async function getTutorFromUser(userId: number) {
-    // Use getTutorByUserId first (direct lookup, doesn't filter by isActive)
-    const tutor = await storage.getTutorByUserId(userId);
-    if (tutor) return tutor;
-    // Fallback: search all tutors including inactive
-    const allTutors = await storage.getAllTutors(true);
-    return allTutors.find(t => t.userId === userId);
+    return await storage.getTutorByUserId(userId);
   }
 
   // Dashboard stats
@@ -28,9 +23,13 @@ export function registerTutorPortalRoutes(app: Express) {
         return res.status(404).json({ message: "Tutor profile not found" });
       }
 
-      const tutorClasses = await storage.getClassesByTutor(tutor.id);
-      const now = new Date();
+      // Parallel fetch: classes + assignments at the same time
+      const [tutorClasses, allAssignments] = await Promise.all([
+        storage.getClassesByTutor(tutor.id),
+        storage.getAssignmentsByTutor(tutor.id),
+      ]);
 
+      const now = new Date();
       const scheduled = tutorClasses.filter(c => c.status === "scheduled" && new Date(c.scheduledAt) > now);
       const completed = tutorClasses.filter(c => c.status === "completed");
       const today = tutorClasses.filter(c => {
@@ -38,24 +37,26 @@ export function registerTutorPortalRoutes(app: Express) {
         return c.status === "scheduled" && d.toDateString() === now.toDateString();
       });
 
-      // Quick stats
       const classesWithoutNotes = completed.filter(c => !c.sessionNotes).length;
-      const allAssignments = await storage.getAssignmentsByTutor(tutor.id);
       const pendingAssignments = allAssignments.filter(a => a.status === "assigned").length;
 
-      // Get student info for upcoming classes
-      const upcomingWithStudents = await Promise.all(
-        scheduled.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
-          .slice(0, 10)
-          .map(async (c) => {
-            const student = await storage.getUser(c.userId);
-            return {
-              ...c,
-              studentName: student ? `${student.firstName} ${student.lastName}` : "Unknown",
-              studentEmail: student?.email || "",
-            };
-          })
-      );
+      // Batch fetch students for upcoming classes (single query instead of N queries)
+      const upcomingSorted = scheduled
+        .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+        .slice(0, 10);
+
+      const studentIds = Array.from(new Set(upcomingSorted.map(c => c.userId)));
+      const students = studentIds.length > 0 ? await storage.getUsersByIds(studentIds) : [];
+      const studentMap = new Map(students.map(s => [s.id, s]));
+
+      const upcomingWithStudents = upcomingSorted.map(c => {
+        const student = studentMap.get(c.userId);
+        return {
+          ...c,
+          studentName: student ? `${student.firstName} ${student.lastName}` : "Unknown",
+          studentEmail: student?.email || "",
+        };
+      });
 
       res.json({
         tutor: {
@@ -97,34 +98,40 @@ export function registerTutorPortalRoutes(app: Express) {
 
       const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+      // Batch fetch all students for upcoming classes (1 query instead of N)
+      const studentIds = Array.from(new Set(upcoming.map(c => c.userId)));
+      const students = studentIds.length > 0 ? await storage.getUsersByIds(studentIds) : [];
+      const studentMap = new Map(students.map(s => [s.id, s]));
+
+      // Process each prep card with parallel sub-queries per student
       const prepCards = await Promise.all(upcoming.map(async (c) => {
-        const student = await storage.getUser(c.userId);
+        const student = studentMap.get(c.userId);
         if (!student) return null;
 
-        // Last completed class with notes
-        const studentClasses = tutorClasses
+        // Last completed class with notes (from already-fetched tutorClasses)
+        const lastClass = tutorClasses
           .filter(sc => sc.userId === student.id && sc.status === "completed")
-          .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
-        const lastClass = studentClasses[0] || null;
+          .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())[0] || null;
+
+        // Parallel: student progress, AI conversations, assignments
+        const [pathProgress, aiConvs, assignments] = await Promise.all([
+          storage.getStudentProgress(student.id),
+          storage.getAiConversations(student.id),
+          storage.getAssignmentsForStudent(student.id),
+        ]);
 
         // Current station
-        const pathProgress = await storage.getStudentProgress(student.id);
+        let currentStation = null;
         const inProgress = pathProgress
           .filter(p => p.status === "in_progress")
           .sort((a, b) => new Date(b.startedAt ?? 0).getTime() - new Date(a.startedAt ?? 0).getTime())[0];
-        let currentStation = null;
         if (inProgress) {
           const stations = await storage.getStationsByLevel(student.level);
           const st = stations.find(s => s.id === inProgress.stationId);
           if (st) currentStation = { title: st.title, level: st.level, order: st.stationOrder };
         }
 
-        // AI conversations this week
-        const aiConvs = await storage.getAiConversations(student.id);
         const aiThisWeek = aiConvs.filter(c => c.updatedAt && new Date(c.updatedAt) >= oneWeekAgo).length;
-
-        // Pending assignments
-        const assignments = await storage.getAssignmentsForStudent(student.id);
         const pendingHomework = assignments.filter(a => a.status === "assigned" && a.tutorId === tutor.id);
 
         return {
@@ -165,16 +172,18 @@ export function registerTutorPortalRoutes(app: Express) {
       const tutorClasses = (await storage.getClassesByTutor(tutor.id))
         .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
 
-      // Enrich with student names
-      const enriched = await Promise.all(
-        tutorClasses.map(async (c) => {
-          const student = await storage.getUser(c.userId);
-          return {
-            ...c,
-            studentName: student ? `${student.firstName} ${student.lastName}` : "Unknown",
-          };
-        })
-      );
+      // Batch fetch students (1 query instead of N)
+      const classStudentIds = Array.from(new Set(tutorClasses.map(c => c.userId)));
+      const classStudents = classStudentIds.length > 0 ? await storage.getUsersByIds(classStudentIds) : [];
+      const classStudentMap = new Map(classStudents.map(s => [s.id, s]));
+
+      const enriched = tutorClasses.map(c => {
+        const student = classStudentMap.get(c.userId);
+        return {
+          ...c,
+          studentName: student ? `${student.firstName} ${student.lastName}` : "Unknown",
+        };
+      });
 
       res.json(enriched);
     } catch (error) {
