@@ -107,6 +107,7 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
   const [taskUrl, setTaskUrl] = useState("");
   const [taskDue, setTaskDue] = useState("");
   const [taskMinutes, setTaskMinutes] = useState("");
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string>("");
 
   const createAssignmentMutation = useMutation({
     mutationFn: async () => {
@@ -124,11 +125,17 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
       queryClient.invalidateQueries({ queryKey: ["/api/tutor/students", studentId, "timeline"] });
       toast({ title: language === "es" ? "Tarea asignada" : "Assignment created" });
       setAssignModal(false);
-      setTaskTitle(""); setTaskDesc(""); setTaskUrl(""); setTaskDue(""); setTaskMinutes("");
+      setTaskTitle(""); setTaskDesc(""); setTaskUrl(""); setTaskDue(""); setTaskMinutes(""); setSelectedMaterialId("");
     },
     onError: () => {
       toast({ title: "Error", variant: "destructive" });
     },
+  });
+
+  const { data: materials } = useQuery<Array<{ id: number; title: string; fileUrl: string | null; externalUrl: string | null }>>({
+    queryKey: ["/api/tutor/materials"],
+    queryFn: () => apiRequest("GET", "/api/tutor/materials").then(r => r.json()),
+    enabled: assignModal,
   });
 
   const { data, isLoading } = useQuery<StudentTimeline>({
@@ -379,8 +386,26 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="taskUrl">{language === "es" ? "Enlace (opcional)" : "Link (optional)"}</Label>
-              <Input id="taskUrl" value={taskUrl} onChange={(e) => setTaskUrl(e.target.value)} placeholder="https://..." />
+              <Label>{language === "es" ? "Material (opcional)" : "Material (optional)"}</Label>
+              {materials && materials.length > 0 && (
+                <select
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                  value={selectedMaterialId}
+                  onChange={(e) => {
+                    setSelectedMaterialId(e.target.value);
+                    if (e.target.value) {
+                      const mat = materials.find(m => m.id === parseInt(e.target.value));
+                      if (mat) setTaskUrl(mat.externalUrl || mat.fileUrl || "");
+                    }
+                  }}
+                >
+                  <option value="">{language === "es" ? "— Seleccionar de mis materiales —" : "— Select from my materials —"}</option>
+                  {materials.map(m => (
+                    <option key={m.id} value={m.id}>{m.title}</option>
+                  ))}
+                </select>
+              )}
+              <Input id="taskUrl" value={taskUrl} onChange={(e) => { setTaskUrl(e.target.value); setSelectedMaterialId(""); }} placeholder={language === "es" ? "O pegar link manualmente..." : "Or paste link manually..."} />
             </div>
           </div>
           <DialogFooter>

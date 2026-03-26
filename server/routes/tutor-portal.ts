@@ -782,6 +782,57 @@ Do not make up platform features that don't exist.`;
     }
   });
 
+  // Tutor materials library
+  app.get("/api/tutor/materials", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+      const materials = await storage.getTutorMaterials(tutor.id);
+      res.json(materials);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/tutor/materials", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      const { title, description, fileUrl, externalUrl, fileType, level, category } = req.body;
+      if (!title?.trim()) return res.status(400).json({ message: "Title is required" });
+      if (!fileUrl && !externalUrl) return res.status(400).json({ message: "File or external URL is required" });
+
+      const material = await storage.createTutorMaterial({
+        tutorId: tutor.id,
+        title: title.trim(),
+        description: description || null,
+        fileUrl: fileUrl || null,
+        externalUrl: externalUrl || null,
+        fileType: fileType || (externalUrl ? "link" : "document"),
+        level: level || null,
+        category: category || "general",
+      });
+
+      res.status(201).json(material);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/tutor/materials/:id", requireTutor, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+      await storage.deleteTutorMaterial(id);
+      res.json({ message: "Deleted" });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Tutor payments — history for the logged-in tutor
   app.get("/api/tutor/payments", requireTutor, async (req, res) => {
     try {

@@ -50,6 +50,8 @@ import {
   type TutorGoogleToken, type InsertTutorGoogleToken,
   tutorPayments,
   type TutorPayment, type InsertTutorPayment,
+  tutorMaterials,
+  type TutorMaterial, type InsertTutorMaterial,
 } from "@shared/schema";
 import { db as maybeDb } from "./db";
 import { eq, and, or, not, gt, gte, lte, lt, desc, asc, sql, inArray } from "drizzle-orm";
@@ -1570,6 +1572,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(tutorGoogleTokens.tutorId, tutorId))
       .returning();
     return updated;
+  }
+
+  // Tutor Materials
+  async createTutorMaterial(data: InsertTutorMaterial): Promise<TutorMaterial> {
+    const [material] = await this.db.insert(tutorMaterials).values(data).returning();
+    return material;
+  }
+
+  async getTutorMaterials(tutorId: number): Promise<TutorMaterial[]> {
+    return await this.db.select().from(tutorMaterials)
+      .where(eq(tutorMaterials.tutorId, tutorId))
+      .orderBy(desc(tutorMaterials.createdAt));
+  }
+
+  async deleteTutorMaterial(id: number): Promise<void> {
+    await this.db.delete(tutorMaterials).where(eq(tutorMaterials.id, id));
   }
 
   // Tutor Payments

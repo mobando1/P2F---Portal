@@ -468,6 +468,18 @@ async function startServer() {
             created_at TIMESTAMP DEFAULT NOW(),
             created_by INTEGER
           );
+          CREATE TABLE IF NOT EXISTS tutor_materials (
+            id SERIAL PRIMARY KEY,
+            tutor_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            file_url TEXT,
+            external_url TEXT,
+            file_type TEXT NOT NULL DEFAULT 'link',
+            level TEXT,
+            category TEXT DEFAULT 'general',
+            created_at TIMESTAMP DEFAULT NOW()
+          );
         `);
         log("Schema migrations applied");
 

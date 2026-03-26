@@ -597,6 +597,23 @@ export const tutorPayments = pgTable("tutor_payments", {
 export type TutorPayment = typeof tutorPayments.$inferSelect;
 export type InsertTutorPayment = typeof tutorPayments.$inferInsert;
 
+// Tutor materials library
+export const tutorMaterials = pgTable("tutor_materials", {
+  id: serial("id").primaryKey(),
+  tutorId: integer("tutor_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  fileUrl: text("file_url"),
+  externalUrl: text("external_url"),
+  fileType: text("file_type").notNull().default("link"), // pdf, image, link, document
+  level: text("level"), // A1, A2, B1, B2, null=all
+  category: text("category").default("general"), // grammar, vocabulary, reading, speaking, general
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type TutorMaterial = typeof tutorMaterials.$inferSelect;
+export type InsertTutorMaterial = typeof tutorMaterials.$inferInsert;
+
 // ===== Learning Path "Culebrita" =====
 
 // Estaciones del camino de aprendizaje

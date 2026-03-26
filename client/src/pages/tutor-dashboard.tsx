@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import LevelBadge from "@/components/LevelBadge";
 import StudentProfileDrawer from "@/components/StudentProfileDrawer";
+import TutorMaterialsSection from "@/components/TutorMaterialsSection";
 import {
   Select,
   SelectContent,
@@ -1141,6 +1142,9 @@ export default function TutorDashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Materials Library */}
+            <TutorMaterialsSection />
           </div>
         )}
       </main>
