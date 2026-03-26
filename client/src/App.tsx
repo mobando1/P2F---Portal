@@ -35,6 +35,7 @@ const MessagesPage = lazy(() => import("@/pages/messages"));
 const LearningPathPage = lazy(() => import("@/pages/learning-path"));
 const PlacementTestPage = lazy(() => import("@/pages/placement-test"));
 const TutorInvitePage = lazy(() => import("@/pages/tutor-invite"));
+const TutorAIAssistantPage = lazy(() => import("@/pages/tutor-ai-assistant"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 function LoadingFallback() {
@@ -162,6 +163,11 @@ function Router() {
         <Route path="/tutor-portal/classes">
           <ProtectedRoute>
             <TutorDashboardPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/tutor-portal/assistant">
+          <ProtectedRoute>
+            <TutorAIAssistantPage />
           </ProtectedRoute>
         </Route>
         <Route path="/join">

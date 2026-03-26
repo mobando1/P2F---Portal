@@ -34,6 +34,7 @@ import {
   Save,
   BookOpen,
   History,
+  MessageCircle,
 } from "lucide-react";
 import LevelBadge from "@/components/LevelBadge";
 import StudentProfileDrawer from "@/components/StudentProfileDrawer";
@@ -838,6 +839,13 @@ export default function TutorDashboard() {
                             <p className="text-[9px]">{isEs ? "Última" : "Last"}</p>
                           </div>
                         )}
+                        <button
+                          className="p-1 rounded hover:bg-green-100 text-green-400 hover:text-green-600"
+                          title={isEs ? "Enviar mensaje" : "Send message"}
+                          onClick={(e) => { e.stopPropagation(); setLocation(`/messages?startWith=${student.id}`); }}
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </button>
                         <button
                           className="p-1 rounded hover:bg-[#1C7BB1]/10 text-[#1C7BB1]/40 hover:text-[#1C7BB1]"
                           title={isEs ? "Cambiar nivel" : "Change level"}

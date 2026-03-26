@@ -1,4 +1,6 @@
 import type { Express } from "express";
+import Anthropic from "@anthropic-ai/sdk";
+import { config } from "../config";
 import { storage } from "../storage";
 import { notificationService } from "../services/notification";
 import { gamificationService } from "../services/gamification";
@@ -712,6 +714,62 @@ export function registerTutorPortalRoutes(app: Express) {
       res.json(updated);
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Tutor AI Assistant
+  app.post("/api/tutor/ai-assistant", requireTutor, async (req, res) => {
+    try {
+      if (!config.ANTHROPIC_API_KEY) {
+        return res.status(503).json({ message: "AI service not configured" });
+      }
+
+      const { messages: chatMessages, lang } = req.body;
+      if (!chatMessages || !Array.isArray(chatMessages)) {
+        return res.status(400).json({ message: "messages array is required" });
+      }
+
+      const isEs = lang === "es";
+      const systemPrompt = isEs
+        ? `Eres un asistente de enseñanza para profesores de Passport2Fluency. Ayudas con:
+- Preparación de clases para niveles A1, A2, B1, B2 (CEFR)
+- Metodologías de enseñanza de español e inglés como segunda lengua
+- Ideas de actividades, ejercicios y dinámicas para clases virtuales
+- Cómo dar retroalimentación efectiva a estudiantes
+- Tips para mantener estudiantes motivados
+- Uso de la plataforma Passport2Fluency (disponibilidad, notas de sesión, tareas, learning path)
+- Interpretación del progreso de estudiantes en el learning path
+
+Sé práctico, conciso y orientado a la acción. Responde siempre en español.
+No inventes funcionalidades de la plataforma que no existen.`
+        : `You are a teaching assistant for Passport2Fluency tutors. You help with:
+- Class preparation for CEFR levels A1, A2, B1, B2
+- Teaching methodologies for Spanish and English as a second language
+- Activity ideas, exercises, and dynamics for virtual classes
+- How to give effective feedback to students
+- Tips for keeping students motivated
+- Platform usage (availability, session notes, assignments, learning path)
+- Interpreting student progress on the learning path
+
+Be practical, concise, and action-oriented. Always respond in English.
+Do not make up platform features that don't exist.`;
+
+      const anthropic = new Anthropic({ apiKey: config.ANTHROPIC_API_KEY });
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: chatMessages.slice(-20).map((m: { role: string; content: string }) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+      });
+
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      res.json({ reply: text });
+    } catch (error: any) {
+      console.error("[tutor-ai-assistant] Error:", error);
+      res.status(500).json({ message: "AI service error" });
     }
   });
 }

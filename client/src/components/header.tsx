@@ -62,7 +62,8 @@ export default function Header() {
 
   const primaryLinks = isTutorOnly ? [
     { href: "/tutor-portal", label: language === 'es' ? 'Mi Panel' : 'My Dashboard' },
-    { href: "/tutor-portal/availability", label: language === 'es' ? 'Disponibilidad' : 'Availability' },
+    { href: "/messages", label: language === 'es' ? 'Mensajes' : 'Messages' },
+    { href: "/support", label: language === 'es' ? 'Soporte' : 'Support' },
   ] : [
     { href: "/home", label: language === 'es' ? 'Inicio' : 'Home' },
     { href: "/tutors", label: language === 'es' ? 'Profesores' : 'Tutors' },
@@ -72,7 +73,9 @@ export default function Header() {
   ];
 
   const secondaryLinks = isTutorOnly ? [
-    { href: "/contact", label: t.contact },
+    { href: "/guide", label: language === 'es' ? 'Ayuda' : 'Help' },
+    { href: "/tutor-portal/assistant", label: language === 'es' ? 'Asistente IA' : 'AI Assistant' },
+    { href: "/settings", label: language === 'es' ? 'Configuración' : 'Settings' },
   ] : [
     { href: "/ai-practice", label: language === 'es' ? 'Practice Partner' : 'Practice Partner' },
     { href: "/packages", label: language === 'es' ? 'Planes' : 'Plans' },

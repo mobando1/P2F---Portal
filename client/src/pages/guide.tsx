@@ -24,6 +24,9 @@ import {
   GraduationCap,
   ChevronDown,
   ChevronUp,
+  CheckCircle,
+  TrendingUp,
+  MessageCircle,
 } from "lucide-react";
 
 interface GuideSection {
@@ -319,6 +322,123 @@ const TUTOR_SECTIONS: GuideSection[] = [
     ],
     tipEs: "Responde a las resenas de tus estudiantes para mostrar que valoras su opinion.",
     tipEn: "Respond to your students' reviews to show you value their feedback.",
+  },
+  {
+    icon: Video,
+    titleEs: "Como Dar una Buena Clase Virtual",
+    titleEn: "How to Give a Great Virtual Class",
+    steps: [
+      {
+        es: "Prepara tu clase con antelacion. Revisa las notas de la sesion anterior y la tarea que dejaste al estudiante.",
+        en: "Prepare your class in advance. Review the previous session notes and the homework you assigned.",
+      },
+      {
+        es: "Empieza cada clase con 2-3 minutos de calentamiento: pregunta como estuvo su semana en el idioma objetivo.",
+        en: "Start each class with 2-3 minutes of warm-up: ask how their week was in the target language.",
+      },
+      {
+        es: "Sigue la regla 80/20: el estudiante debe hablar el 80% del tiempo. Tu rol es guiar, no dar conferencia.",
+        en: "Follow the 80/20 rule: the student should speak 80% of the time. Your role is to guide, not lecture.",
+      },
+      {
+        es: "Corrige errores graves en el momento, pero acumula los menores para discutirlos al final sin interrumpir el flujo.",
+        en: "Correct major errors in the moment, but save minor ones to discuss at the end without interrupting flow.",
+      },
+      {
+        es: "Termina con un resumen de 2 minutos: que aprendimos hoy, que practicar, y que veremos la proxima vez.",
+        en: "End with a 2-minute summary: what we learned today, what to practice, and what we'll cover next time.",
+      },
+    ],
+    tipEs: "Usa las notas de sesion para registrar lo que funciono y lo que necesita refuerzo. Tu futuro yo te lo agradecera.",
+    tipEn: "Use session notes to record what worked and what needs reinforcement. Your future self will thank you.",
+  },
+  {
+    icon: CheckCircle,
+    titleEs: "Notas de Sesion Efectivas",
+    titleEn: "Effective Session Notes",
+    steps: [
+      {
+        es: "Al completar una clase, llena los 3 campos: resumen para el alumno, tarea, y notas privadas.",
+        en: "When completing a class, fill all 3 fields: student summary, homework, and private notes.",
+      },
+      {
+        es: "El resumen para el alumno debe ser positivo y especifico: 'Hoy practicamos el preterito. Excelente uso de verbos irregulares.'",
+        en: "The student summary should be positive and specific: 'Today we practiced preterite. Excellent use of irregular verbs.'",
+      },
+      {
+        es: "La tarea debe ser concreta y alcanzable: 'Escribir 5 oraciones usando el preterito con verbos irregulares (tener, ir, ser).'",
+        en: "Homework should be concrete and achievable: 'Write 5 sentences using preterite with irregular verbs (tener, ir, ser).'",
+      },
+      {
+        es: "Las notas privadas son solo para ti: anota areas de dificultad, temas a reforzar, o el estilo de aprendizaje del estudiante.",
+        en: "Private notes are just for you: note areas of difficulty, topics to reinforce, or the student's learning style.",
+      },
+    ],
+  },
+  {
+    icon: BookOpen,
+    titleEs: "Asignar Tareas a Estudiantes",
+    titleEn: "Assigning Tasks to Students",
+    steps: [
+      {
+        es: "Desde el perfil de un estudiante, puedes crear tareas personalizadas con titulo, instrucciones y fecha limite.",
+        en: "From a student's profile, you can create custom tasks with title, instructions, and due date.",
+      },
+      {
+        es: "Las tareas aparecen en el dashboard del estudiante y reciben una notificacion. Puedes ver el estado desde tu portal.",
+        en: "Tasks appear on the student's dashboard and they receive a notification. You can see the status from your portal.",
+      },
+      {
+        es: "Vincula tareas con el Learning Path: si un estudiante tiene dificultad en una estacion, asignale practica de ese tema.",
+        en: "Link tasks with the Learning Path: if a student struggles with a station, assign practice on that topic.",
+      },
+    ],
+    tipEs: "Las tareas cortas y frecuentes son mas efectivas que tareas largas y esporadicas. 10 minutos diarios > 1 hora semanal.",
+    tipEn: "Short, frequent tasks are more effective than long, sporadic ones. 10 minutes daily > 1 hour weekly.",
+  },
+  {
+    icon: TrendingUp,
+    titleEs: "Interpretar el Progreso del Learning Path",
+    titleEn: "Interpreting Learning Path Progress",
+    steps: [
+      {
+        es: "Cada estudiante tiene un Learning Path con estaciones organizadas por nivel (A1, A2, B1, B2).",
+        en: "Each student has a Learning Path with stations organized by level (A1, A2, B1, B2).",
+      },
+      {
+        es: "En el perfil del estudiante puedes ver: estaciones completadas, promedio de quizzes, y si esta listo para avanzar de nivel.",
+        en: "In the student profile you can see: stations completed, quiz average, and if they're ready to advance.",
+      },
+      {
+        es: "Un promedio de quiz bajo (<70%) indica que necesitan mas practica antes de avanzar. Refuerza esos temas en clase.",
+        en: "A low quiz average (<70%) indicates they need more practice before advancing. Reinforce those topics in class.",
+      },
+      {
+        es: "El indicador 'Listo' verde aparece cuando cumplen todos los requisitos para subir de nivel. Tu puedes promoverlos manualmente.",
+        en: "The green 'Ready' indicator appears when they meet all requirements to level up. You can manually promote them.",
+      },
+    ],
+  },
+  {
+    icon: MessageCircle,
+    titleEs: "Asistente IA para Profesores",
+    titleEn: "AI Assistant for Tutors",
+    steps: [
+      {
+        es: "Tienes acceso a un asistente de IA especializado en ensenanza de idiomas. Accede desde el menu 'Asistente IA'.",
+        en: "You have access to an AI assistant specialized in language teaching. Access it from the 'AI Assistant' menu.",
+      },
+      {
+        es: "Preguntale sobre: preparacion de clases, actividades por nivel, como manejar estudiantes dificiles, o ideas de ejercicios.",
+        en: "Ask about: class preparation, activities by level, how to handle difficult students, or exercise ideas.",
+      },
+      {
+        es: "El asistente conoce la estructura de P2F (niveles, learning path, quizzes) y puede darte sugerencias contextuales.",
+        en: "The assistant knows P2F's structure (levels, learning path, quizzes) and can give you contextual suggestions.",
+      },
+    ],
+    tipEs: "Usa el asistente antes de cada clase para obtener ideas frescas de actividades adaptadas al nivel de tu estudiante.",
+    tipEn: "Use the assistant before each class to get fresh activity ideas adapted to your student's level.",
   },
 ];
 

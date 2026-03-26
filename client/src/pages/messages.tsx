@@ -91,6 +91,22 @@ export default function MessagesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Auto-start conversation from URL param (?startWith=userId)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const startWith = params.get("startWith");
+    if (startWith && conversations && conversations.length >= 0) {
+      const targetUserId = parseInt(startWith);
+      // Check if conversation already exists
+      const existing = conversations.find(c => c.participant.id === targetUserId);
+      if (existing) {
+        setSelectedConvId(existing.id);
+      }
+      // Clear the URL param
+      window.history.replaceState({}, "", "/messages");
+    }
+  }, [conversations]);
+
   const selectedConv = conversations?.find(c => c.id === selectedConvId);
 
   function formatRelativeTime(dateStr: string) {
