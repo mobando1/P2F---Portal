@@ -38,14 +38,17 @@ export default function TutorCalendarView({ classes, onCompleteClass }: Props) {
   const dayNames = isEs ? DAY_NAMES_ES : DAY_NAMES_EN;
   const monthNames = isEs ? MONTH_NAMES_ES : MONTH_NAMES_EN;
 
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<string | null>(new Date().toISOString().split("T")[0]);
+  // Use local dates to avoid timezone issues
+  const toLocalDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-  // Group classes by date
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(toLocalDateStr(new Date()));
+
+  // Group classes by LOCAL date
   const classesByDate = useMemo(() => {
     const map = new Map<string, CalendarClass[]>();
     classes.forEach(c => {
-      const date = new Date(c.scheduledAt).toISOString().split("T")[0];
+      const date = toLocalDateStr(new Date(c.scheduledAt));
       if (!map.has(date)) map.set(date, []);
       map.get(date)!.push(c);
     });
@@ -57,7 +60,7 @@ export default function TutorCalendarView({ classes, onCompleteClass }: Props) {
   const month = currentMonth.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const today = new Date().toISOString().split("T")[0];
+  const today = toLocalDateStr(new Date());
 
   const prevMonth = () => setCurrentMonth(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentMonth(new Date(year, month + 1, 1));

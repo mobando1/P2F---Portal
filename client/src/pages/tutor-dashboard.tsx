@@ -243,17 +243,6 @@ export default function TutorDashboard() {
     enabled: isTutorOrAdmin && !!selectedStudentId,
   });
 
-  // Conditional redirects AFTER all hooks
-  if (!isAuthed) {
-    setLocation("/login");
-    return null;
-  }
-
-  if (!isTutorOrAdmin) {
-    setLocation("/home");
-    return null;
-  }
-
   const changeLevelMutation = useMutation({
     mutationFn: async ({ studentId, level }: { studentId: number; level: string }) => {
       const response = await apiRequest("PUT", `/api/tutor/students/${studentId}/level`, { level });
@@ -318,6 +307,10 @@ export default function TutorDashboard() {
       toast({ title: language === "es" ? "Google Calendar desconectado" : "Google Calendar disconnected" });
     },
   });
+
+  // Auth redirects — AFTER all hooks
+  if (!isAuthed) { setLocation("/login"); return null; }
+  if (!isTutorOrAdmin) { setLocation("/home"); return null; }
 
   // Handle calendar connection callback
   const urlParams = new URLSearchParams(window.location.search);

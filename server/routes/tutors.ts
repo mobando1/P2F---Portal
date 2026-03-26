@@ -228,6 +228,8 @@ export function registerTutorRoutes(app: Express) {
         const rate = parseFloat(tutor.hourlyRate?.toString() || "25");
         const amount = Math.round(hours * rate * 100) / 100;
 
+        // Sort by date to get correct period boundaries
+        const sorted = unpaidClasses.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
         return {
           tutorId: tutor.id,
           tutorName: tutor.name,
@@ -236,8 +238,8 @@ export function registerTutorRoutes(app: Express) {
           unpaidClasses: unpaidClasses.length,
           unpaidHours: Math.round(hours * 10) / 10,
           amountOwed: amount,
-          periodStart: lastPaidAt || (unpaidClasses.length > 0 ? unpaidClasses[unpaidClasses.length - 1].scheduledAt : null),
-          periodEnd: unpaidClasses.length > 0 ? unpaidClasses[0].scheduledAt : null,
+          periodStart: sorted.length > 0 ? sorted[0].scheduledAt : null,
+          periodEnd: sorted.length > 0 ? sorted[sorted.length - 1].scheduledAt : null,
         };
       }));
 

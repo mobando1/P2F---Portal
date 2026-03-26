@@ -49,6 +49,9 @@ export default function TutorReviewsSection() {
       setResponseText("");
       toast({ title: isEs ? "Respuesta enviada" : "Response sent" });
     },
+    onError: () => {
+      toast({ title: "Error", description: isEs ? "No se pudo enviar la respuesta." : "Could not send response.", variant: "destructive" });
+    },
   });
 
   const reviews = data?.reviews || [];

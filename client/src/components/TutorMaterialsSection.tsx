@@ -129,7 +129,10 @@ export default function TutorMaterialsSection() {
     }
     setFileName(file.name);
     const reader = new FileReader();
-    reader.onload = (ev) => setFileData(ev.target?.result as string);
+    reader.onload = (ev) => {
+      const result = ev.target?.result;
+      if (typeof result === "string") setFileData(result);
+    };
     reader.readAsDataURL(file);
 
     // Auto-detect file type

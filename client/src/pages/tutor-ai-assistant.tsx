@@ -89,6 +89,7 @@ export default function TutorAIAssistant() {
   };
 
   const handleQuickPrompt = (text: string) => {
+    setInput("");
     sendMutation.mutate(text);
   };
 
