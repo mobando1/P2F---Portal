@@ -599,9 +599,32 @@ export default function TutorProfilePage() {
     enabled: !!tutorId,
   });
 
-  const { data: reviews = [] } = useQuery<Review[]>({
+  const { data: reviews = [], refetch: refetchReviews } = useQuery<Review[]>({
     queryKey: [`/api/tutors/${tutorId}/reviews`],
     enabled: !!tutorId,
+  });
+
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+
+  const hasReviewed = currentUser && reviews.some((r: any) => r.userId === currentUser.id);
+  const canReview = currentUser && currentUser.userType !== "tutor" && currentUser.userType !== "admin" && !hasReviewed;
+
+  const submitReviewMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/tutors/${tutorId}/reviews`, {
+        rating: reviewRating,
+        comment: reviewComment || undefined,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      refetchReviews();
+      setShowReviewModal(false);
+      setReviewRating(5);
+      setReviewComment("");
+    },
   });
 
   const startConversationMutation = useMutation({
@@ -772,12 +795,20 @@ export default function TutorProfilePage() {
                   <h2 className="text-xl font-bold text-[#0A4A6E]">
                     {isEs ? "Resenas de Estudiantes" : "Student Reviews"} ({reviews.length})
                   </h2>
-                  {reviews.length > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <Star className="w-5 h-5 fill-[#F59E1C] text-[#F59E1C]" />
-                      <span className="text-lg font-bold text-[#0A4A6E]">{tutor.rating}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {reviews.length > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <Star className="w-5 h-5 fill-[#F59E1C] text-[#F59E1C]" />
+                        <span className="text-lg font-bold text-[#0A4A6E]">{tutor.rating}</span>
+                      </div>
+                    )}
+                    {canReview && (
+                      <Button size="sm" className="bg-[#F59E1C] hover:bg-[#e08a0e]" onClick={() => setShowReviewModal(true)}>
+                        <Star className="h-3.5 w-3.5 mr-1" />
+                        {isEs ? "Dejar Reseña" : "Leave Review"}
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 {reviews.length === 0 ? (
                   <p className="text-gray-500">
@@ -864,6 +895,68 @@ export default function TutorProfilePage() {
           </motion.div>
         </div>
       </main>
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowReviewModal(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-[#0A4A6E] mb-1">
+              {isEs ? "Dejar una reseña" : "Leave a review"}
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">{tutor.name}</p>
+
+            {/* Star rating */}
+            <div className="flex gap-1 mb-4">
+              {[1, 2, 3, 4, 5].map(star => (
+                <button
+                  key={star}
+                  onClick={() => setReviewRating(star)}
+                  className="p-0.5"
+                >
+                  <Star className={`w-8 h-8 transition-colors ${
+                    star <= reviewRating ? "fill-[#F59E1C] text-[#F59E1C]" : "text-gray-300"
+                  }`} />
+                </button>
+              ))}
+            </div>
+
+            {/* Comment */}
+            <textarea
+              className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1C7BB1]/20 focus:border-[#1C7BB1]"
+              rows={3}
+              placeholder={isEs ? "Cuéntanos sobre tu experiencia (opcional)" : "Tell us about your experience (optional)"}
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+            />
+
+            {submitReviewMutation.isError && (
+              <p className="text-sm text-red-600 mt-2">
+                {(submitReviewMutation.error as any)?.message?.includes("already")
+                  ? (isEs ? "Ya dejaste una reseña para este tutor." : "You already reviewed this tutor.")
+                  : (isEs ? "Error al enviar. Intenta de nuevo." : "Failed to submit. Try again.")}
+              </p>
+            )}
+
+            <div className="flex gap-2 mt-4">
+              <Button variant="outline" className="flex-1" onClick={() => setShowReviewModal(false)}>
+                {isEs ? "Cancelar" : "Cancel"}
+              </Button>
+              <Button
+                className="flex-1 bg-[#F59E1C] hover:bg-[#e08a0e]"
+                onClick={() => submitReviewMutation.mutate()}
+                disabled={submitReviewMutation.isPending}
+              >
+                {submitReviewMutation.isPending ? "..." : (isEs ? "Enviar" : "Submit")}
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

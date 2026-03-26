@@ -84,6 +84,7 @@ export interface IStorage {
   getReviewsByTutor(tutorId: number): Promise<Review[]>;
   createReview(review: InsertReview): Promise<Review>;
   getUserReviewForTutor(userId: number, tutorId: number): Promise<Review | undefined>;
+  updateReview(id: number, data: Partial<InsertReview>): Promise<Review | undefined>;
 
   // Trial
   hasUsedTrial(userId: number): Promise<boolean>;
@@ -1248,6 +1249,8 @@ export class MemStorage implements IStorage {
       id,
       comment: review.comment || null,
       classId: review.classId || null,
+      tutorResponse: null,
+      respondedAt: null,
       createdAt: new Date(),
     };
     this.reviewsMap.set(id, newReview);
@@ -1258,6 +1261,10 @@ export class MemStorage implements IStorage {
     await this.ensureInitialized();
     return Array.from(this.reviewsMap.values())
       .find(r => r.userId === userId && r.tutorId === tutorId);
+  }
+
+  async updateReview(id: number, _data: Partial<InsertReview>): Promise<Review | undefined> {
+    return this.reviewsMap.get(id);
   }
 
   async hasUsedTrial(userId: number): Promise<boolean> {

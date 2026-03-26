@@ -782,6 +782,70 @@ Do not make up platform features that don't exist.`;
     }
   });
 
+  // Tutor reviews — see reviews left by students
+  app.get("/api/tutor/reviews", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      const reviews = await storage.getReviewsByTutor(tutor.id);
+      const userIds = Array.from(new Set(reviews.map(r => r.userId)));
+      const users = userIds.length > 0 ? await storage.getUsersByIds(userIds) : [];
+      const userMap = new Map(users.map(u => [u.id, u]));
+
+      const enriched = reviews.map(r => {
+        const reviewer = userMap.get(r.userId);
+        return {
+          ...r,
+          userName: reviewer ? `${reviewer.firstName} ${reviewer.lastName.charAt(0)}.` : "Student",
+          userAvatar: reviewer?.profileImage || reviewer?.avatar || null,
+        };
+      });
+
+      res.json({
+        reviews: enriched,
+        summary: {
+          totalReviews: reviews.length,
+          averageRating: tutor.rating ? parseFloat(tutor.rating.toString()) : 0,
+          distribution: [5, 4, 3, 2, 1].map(star => ({
+            stars: star,
+            count: reviews.filter(r => r.rating === star).length,
+          })),
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Tutor respond to a review
+  app.put("/api/tutor/reviews/:id/respond", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      const reviewId = parseInt(req.params.id);
+      const { response } = req.body;
+      if (!response?.trim()) return res.status(400).json({ message: "Response is required" });
+
+      // Verify this review belongs to this tutor
+      const reviews = await storage.getReviewsByTutor(tutor.id);
+      const review = reviews.find(r => r.id === reviewId);
+      if (!review) return res.status(404).json({ message: "Review not found" });
+
+      const updated = await storage.updateReview(reviewId, {
+        tutorResponse: response.trim(),
+        respondedAt: new Date(),
+      });
+
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Tutor materials library
   app.get("/api/tutor/materials", requireTutor, async (req, res) => {
     try {

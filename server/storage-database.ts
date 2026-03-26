@@ -273,6 +273,11 @@ export class DatabaseStorage implements IStorage {
     return review || undefined;
   }
 
+  async updateReview(id: number, data: Partial<InsertReview>): Promise<Review | undefined> {
+    const [review] = await this.db.update(reviews).set(data).where(eq(reviews.id, id)).returning();
+    return review || undefined;
+  }
+
   async hasUsedTrial(userId: number): Promise<boolean> {
     const [user] = await this.db.select().from(users).where(eq(users.id, userId));
     return user?.trialCompleted === true;

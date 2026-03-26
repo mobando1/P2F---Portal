@@ -233,6 +233,8 @@ export const reviews = pgTable("reviews", {
   rating: integer("rating").notNull(), // 1-5
   comment: text("comment"),
   classId: integer("class_id").references(() => classes.id),
+  tutorResponse: text("tutor_response"),
+  respondedAt: timestamp("responded_at"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_reviews_tutor_id").on(table.tutorId),
