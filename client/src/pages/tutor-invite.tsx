@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { setCurrentUser } from "@/lib/auth";
+import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PasswordInput from "@/components/PasswordInput";
@@ -12,6 +13,8 @@ import { Loader2, CheckCircle, AlertCircle, Lock } from "lucide-react";
 
 export default function TutorInvitePage() {
   const [, setLocation] = useLocation();
+  const { language } = useLanguage();
+  const isEs = language === "es";
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [clientError, setClientError] = useState("");
@@ -43,11 +46,11 @@ export default function TutorInvitePage() {
     e.preventDefault();
     setClientError("");
     if (password.length < 8) {
-      setClientError("La contraseña debe tener al menos 8 caracteres.");
+      setClientError(isEs ? "La contraseña debe tener al menos 8 caracteres." : "Password must be at least 8 characters.");
       return;
     }
     if (password !== confirmPassword) {
-      setClientError("Las contraseñas no coinciden.");
+      setClientError(isEs ? "Las contraseñas no coinciden." : "Passwords don't match.");
       return;
     }
     acceptMutation.mutate();
@@ -58,8 +61,8 @@ export default function TutorInvitePage() {
       <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-4 text-red-400" size={48} />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Link inválido</h2>
-          <p className="text-gray-500">Este link de invitación no es válido.</p>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">{isEs ? "Link inválido" : "Invalid link"}</h2>
+          <p className="text-gray-500">{isEs ? "Este link de invitación no es válido." : "This invite link is not valid."}</p>
         </div>
       </div>
     );
@@ -78,9 +81,9 @@ export default function TutorInvitePage() {
       <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
           <AlertCircle className="mx-auto mb-4 text-red-400" size={48} />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Link inválido o expirado</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">{isEs ? "Link inválido o expirado" : "Invalid or expired link"}</h2>
           <p className="text-gray-500 text-sm">
-            Este link de invitación no es válido o ya expiró. Contacta al administrador para obtener un nuevo link.
+            {isEs ? "Este link de invitación no es válido o ya expiró. Contacta al administrador para obtener un nuevo link." : "This invite link is invalid or expired. Contact the administrator for a new link."}
           </p>
         </div>
       </div>
@@ -96,8 +99,8 @@ export default function TutorInvitePage() {
           className="text-center"
         >
           <CheckCircle className="mx-auto mb-4 text-green-500" size={56} />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">¡Cuenta activada!</h2>
-          <p className="text-gray-500">Redirigiendo a tu panel...</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">{isEs ? "¡Cuenta activada!" : "Account activated!"}</h2>
+          <p className="text-gray-500">{isEs ? "Redirigiendo a tu panel..." : "Redirecting to your dashboard..."}</p>
         </motion.div>
       </div>
     );
@@ -115,39 +118,39 @@ export default function TutorInvitePage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#EAF4FA] mb-4">
             <Lock size={28} className="text-[#1C7BB1]" />
           </div>
-          <h1 className="text-2xl font-bold text-[#0A4A6E]">Activa tu cuenta</h1>
+          <h1 className="text-2xl font-bold text-[#0A4A6E]">{isEs ? "Activa tu cuenta" : "Activate your account"}</h1>
           <p className="text-gray-500 text-sm mt-1">Passport2Fluency</p>
         </div>
 
         {/* Greeting */}
         <div className="bg-[#EAF4FA] rounded-xl p-4 mb-6">
-          <p className="text-[#0A4A6E] font-medium">Hola, {inviteData.name} 👋</p>
+          <p className="text-[#0A4A6E] font-medium">{isEs ? "Hola" : "Hi"}, {inviteData.name} 👋</p>
           <p className="text-sm text-[#1C7BB1] mt-0.5">{inviteData.email}</p>
         </div>
 
         <p className="text-sm text-gray-600 mb-6">
-          El equipo de Passport2Fluency te ha invitado como profesor. Crea tu contraseña para activar tu cuenta.
+          {isEs ? "El equipo de Passport2Fluency te ha invitado como profesor. Crea tu contraseña para activar tu cuenta." : "The Passport2Fluency team has invited you as a tutor. Create your password to activate your account."}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password">{isEs ? "Contraseña" : "Password"}</Label>
             <PasswordInput
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 8 caracteres"
+              placeholder={isEs ? "Mínimo 8 caracteres" : "Min 8 characters"}
               className="mt-1"
               required
             />
           </div>
           <div>
-            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+            <Label htmlFor="confirmPassword">{isEs ? "Confirmar contraseña" : "Confirm password"}</Label>
             <PasswordInput
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Repite tu contraseña"
+              placeholder={isEs ? "Repite tu contraseña" : "Repeat your password"}
               className="mt-1"
               required
             />
@@ -158,7 +161,7 @@ export default function TutorInvitePage() {
           )}
           {acceptMutation.isError && (
             <p className="text-sm text-red-600">
-              {(acceptMutation.error as any)?.message || "Error al activar la cuenta. Intenta de nuevo."}
+              {(acceptMutation.error as any)?.message || (isEs ? "Error al activar la cuenta. Intenta de nuevo." : "Failed to activate account. Please try again.")}
             </p>
           )}
 
@@ -168,9 +171,9 @@ export default function TutorInvitePage() {
             disabled={acceptMutation.isPending}
           >
             {acceptMutation.isPending ? (
-              <><Loader2 className="animate-spin mr-2 h-4 w-4" /> Activando...</>
+              <><Loader2 className="animate-spin mr-2 h-4 w-4" /> {isEs ? "Activando..." : "Activating..."}</>
             ) : (
-              "Activar cuenta →"
+              isEs ? "Activar cuenta →" : "Activate account →"
             )}
           </Button>
         </form>

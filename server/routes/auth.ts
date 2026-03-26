@@ -90,6 +90,7 @@ export function registerAuthRoutes(app: Express) {
         );
       } catch (sessionErr) {
         console.error("[login] session.save failed:", sessionErr);
+        return res.status(500).json({ message: "Session error. Please try again." });
       }
 
       // Include tutor profile if user is a tutor
@@ -122,8 +123,8 @@ export function registerAuthRoutes(app: Express) {
       if (!userData.email?.trim()) {
         return res.status(400).json({ message: "Email is required" });
       }
-      if (!userData.password || userData.password.length < 6) {
-        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      if (!userData.password || userData.password.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters" });
       }
 
       const existingUser = await storage.getUserByEmail(userData.email);
@@ -141,8 +142,11 @@ export function registerAuthRoutes(app: Express) {
         totalVideosWatched: 0,
       });
 
-      // Set server-side session
+      // Set server-side session and wait for it to persist
       req.session.userId = user.id;
+      await new Promise<void>((resolve, reject) =>
+        req.session.save((err) => (err ? reject(err) : resolve()))
+      );
 
       // Generate email verification token and send verification email
       const verificationToken = crypto.randomUUID();
@@ -297,15 +301,12 @@ export function registerAuthRoutes(app: Express) {
   app.post("/api/auth/reset-password", authLimiter, async (req, res) => {
     try {
       const { token, password } = req.body;
-      if (!token || !password || password.length < 6) {
-        return res.status(400).json({ message: "Valid token and password (min 6 characters) are required." });
+      if (!token || !password || password.length < 8) {
+        return res.status(400).json({ message: "Valid token and password (min 8 characters) are required." });
       }
 
-      // Find user by reset token
-      const allUsers = await storage.getAllUsers();
-      const user = allUsers.find((u: any) =>
-        u.resetToken === token && u.resetTokenExpiresAt && new Date(u.resetTokenExpiresAt) > new Date()
-      );
+      // Find user by reset token (efficient DB query)
+      const user = await storage.getUserByResetToken(token);
 
       if (!user) {
         return res.status(400).json({ message: "Reset link is invalid or has expired." });

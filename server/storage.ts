@@ -56,6 +56,7 @@ export interface IStorage {
   getUserByGoogleId(googleId: string): Promise<User | undefined>;
   getUserByMicrosoftId(microsoftId: string): Promise<User | undefined>;
   getUserByVerificationToken(token: string): Promise<User | undefined>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
   linkOAuthId(userId: number, provider: 'google' | 'microsoft', providerId: string): Promise<void>;
 
   // Subscriptions
@@ -918,6 +919,13 @@ export class MemStorage implements IStorage {
   async getUserByVerificationToken(token: string): Promise<User | undefined> {
     await this.ensureInitialized();
     return Array.from(this.users.values()).find(u => u.verificationToken === token);
+  }
+
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    await this.ensureInitialized();
+    return Array.from(this.users.values()).find(u =>
+      u.resetToken === token && u.resetTokenExpiresAt && new Date(u.resetTokenExpiresAt) > new Date()
+    );
   }
 
   async getUsersByIds(ids: number[]): Promise<User[]> {

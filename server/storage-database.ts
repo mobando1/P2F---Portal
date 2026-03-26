@@ -125,6 +125,12 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    const [user] = await this.db.select().from(users)
+      .where(and(eq(users.resetToken, token), gt(users.resetTokenExpiresAt, new Date())));
+    return user || undefined;
+  }
+
   async getUsersByIds(ids: number[]): Promise<User[]> {
     if (ids.length === 0) return [];
     return await this.db.select().from(users).where(inArray(users.id, ids));

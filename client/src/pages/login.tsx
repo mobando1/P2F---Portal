@@ -70,10 +70,12 @@ export default function Login() {
       } else {
         setLocation(getSmartRedirect(loggedUser));
       }
-    } catch (error) {
+    } catch (error: any) {
+      const msg = error?.message || "";
+      // Show server error message if available (e.g. "Invalid credentials")
       toast({
         title: t.loginFailed,
-        description: t.checkCredentials,
+        description: msg.includes("401") ? t.checkCredentials : (msg || t.checkCredentials),
         variant: "destructive",
       });
     } finally {
@@ -103,7 +105,7 @@ export default function Login() {
       const msg = error?.message || "";
       toast({
         title: t.registrationFailed,
-        description: msg && msg !== "Registration failed" ? msg : t.checkCredentials,
+        description: msg || t.checkCredentials,
         variant: "destructive",
       });
     } finally {

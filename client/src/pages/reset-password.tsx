@@ -43,8 +43,8 @@ export default function ResetPasswordPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setClientError("");
-    if (password.length < 6) {
-      setClientError(isEs ? "La contraseña debe tener al menos 6 caracteres." : "Password must be at least 6 characters.");
+    if (password.length < 8) {
+      setClientError(isEs ? "La contraseña debe tener al menos 8 caracteres." : "Password must be at least 8 characters.");
       return;
     }
     if (password !== confirmPassword) {
