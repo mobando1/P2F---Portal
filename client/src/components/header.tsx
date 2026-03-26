@@ -19,7 +19,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
-import { LogOut, User, Settings, Menu, Sparkles, GraduationCap, MessageCircle, ChevronDown } from "lucide-react";
+import { LogOut, User, Settings, Menu, Sparkles, GraduationCap, MessageCircle, ChevronDown, CreditCard, LifeBuoy, HelpCircle } from "lucide-react";
 import LanguageSwitcher from "./language-switcher";
 import CurrencySwitcher from "./currency-switcher";
 import NotificationBell from "./NotificationBell";
@@ -60,28 +60,19 @@ export default function Header() {
   // Tutors get their own dedicated menu — not the student menu
   const isTutorOnly = user?.userType === "tutor";
 
+  // Clean, minimal navigation — secondary items go in avatar dropdown
   const primaryLinks = isTutorOnly ? [
     { href: "/tutor-portal", label: language === 'es' ? 'Mi Panel' : 'My Dashboard' },
     { href: "/messages", label: language === 'es' ? 'Mensajes' : 'Messages' },
-    { href: "/support", label: language === 'es' ? 'Soporte' : 'Support' },
   ] : [
     { href: "/home", label: language === 'es' ? 'Inicio' : 'Home' },
     { href: "/tutors", label: language === 'es' ? 'Profesores' : 'Tutors' },
-    { href: "/dashboard", label: language === 'es' ? 'Mi Panel' : 'My Dashboard' },
-    { href: "/learning-path", label: language === 'es' ? 'Mi Camino' : 'My Path' },
+    { href: "/dashboard", label: language === 'es' ? 'Mis Clases' : 'My Classes' },
+    { href: "/messages", label: language === 'es' ? 'Mensajes' : 'Messages' },
     ...(isAdmin ? [{ href: "/admin", label: 'Admin' }] : []),
   ];
 
-  const secondaryLinks = isTutorOnly ? [
-    { href: "/guide", label: language === 'es' ? 'Ayuda' : 'Help' },
-    { href: "/tutor-portal/assistant", label: language === 'es' ? 'Asistente IA' : 'AI Assistant' },
-    { href: "/settings", label: language === 'es' ? 'Configuración' : 'Settings' },
-  ] : [
-    { href: "/ai-practice", label: language === 'es' ? 'Practice Partner' : 'Practice Partner' },
-    { href: "/packages", label: language === 'es' ? 'Planes' : 'Plans' },
-    ...(isTutor ? [{ href: "/tutor-portal", label: language === 'es' ? 'Portal Tutor' : 'Tutor Portal' }] : []),
-    { href: "/contact", label: t.contact },
-  ];
+  const secondaryLinks: typeof primaryLinks = []; // Empty — all secondary items in avatar dropdown now
 
   const navLinks = [...primaryLinks, ...secondaryLinks];
 
@@ -220,13 +211,58 @@ export default function Header() {
                     <Link href="/profile">
                       <DropdownMenuItem className="cursor-pointer">
                         <User className="mr-2 h-4 w-4" />
-                        {language === 'es' ? 'Perfil' : 'Profile'}
+                        {language === 'es' ? 'Mi Perfil' : 'My Profile'}
+                      </DropdownMenuItem>
+                    </Link>
+                    {!isTutorOnly && (
+                      <>
+                        <Link href="/learning-path">
+                          <DropdownMenuItem className="cursor-pointer">
+                            <GraduationCap className="mr-2 h-4 w-4 text-[#1C7BB1]" />
+                            {language === 'es' ? 'Mi Camino' : 'My Path'}
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link href="/ai-practice">
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Sparkles className="mr-2 h-4 w-4 text-[#F59E1C]" />
+                            Practice Partner
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link href="/packages">
+                          <DropdownMenuItem className="cursor-pointer">
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            {language === 'es' ? 'Planes' : 'Plans'}
+                          </DropdownMenuItem>
+                        </Link>
+                      </>
+                    )}
+                    {isTutorOnly && (
+                      <>
+                        <Link href="/tutor-portal/assistant">
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Sparkles className="mr-2 h-4 w-4 text-[#F59E1C]" />
+                            {language === 'es' ? 'Asistente IA' : 'AI Assistant'}
+                          </DropdownMenuItem>
+                        </Link>
+                      </>
+                    )}
+                    <DropdownMenuSeparator />
+                    <Link href="/support">
+                      <DropdownMenuItem className="cursor-pointer">
+                        <LifeBuoy className="mr-2 h-4 w-4" />
+                        {language === 'es' ? 'Soporte' : 'Support'}
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/guide">
+                      <DropdownMenuItem className="cursor-pointer">
+                        <HelpCircle className="mr-2 h-4 w-4" />
+                        {language === 'es' ? 'Ayuda' : 'Help'}
                       </DropdownMenuItem>
                     </Link>
                     <Link href="/settings">
                       <DropdownMenuItem className="cursor-pointer">
                         <Settings className="mr-2 h-4 w-4" />
-                        {language === 'es' ? 'Configuracion' : 'Settings'}
+                        {language === 'es' ? 'Configuración' : 'Settings'}
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuSeparator />
