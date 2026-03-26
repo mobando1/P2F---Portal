@@ -57,7 +57,13 @@ export default function Header() {
   const isAdmin = user?.userType === "admin";
   const unreadMessages = unreadData?.count || 0;
 
-  const primaryLinks = [
+  // Tutors get their own dedicated menu — not the student menu
+  const isTutorOnly = user?.userType === "tutor";
+
+  const primaryLinks = isTutorOnly ? [
+    { href: "/tutor-portal", label: language === 'es' ? 'Mi Panel' : 'My Dashboard' },
+    { href: "/tutor-portal/availability", label: language === 'es' ? 'Disponibilidad' : 'Availability' },
+  ] : [
     { href: "/home", label: language === 'es' ? 'Inicio' : 'Home' },
     { href: "/tutors", label: language === 'es' ? 'Profesores' : 'Tutors' },
     { href: "/dashboard", label: language === 'es' ? 'Mi Panel' : 'My Dashboard' },
@@ -65,7 +71,9 @@ export default function Header() {
     ...(isAdmin ? [{ href: "/admin", label: 'Admin' }] : []),
   ];
 
-  const secondaryLinks = [
+  const secondaryLinks = isTutorOnly ? [
+    { href: "/contact", label: t.contact },
+  ] : [
     { href: "/ai-practice", label: language === 'es' ? 'Practice Partner' : 'Practice Partner' },
     { href: "/packages", label: language === 'es' ? 'Planes' : 'Plans' },
     ...(isTutor ? [{ href: "/tutor-portal", label: language === 'es' ? 'Portal Tutor' : 'Tutor Portal' }] : []),
