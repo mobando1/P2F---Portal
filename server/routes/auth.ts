@@ -304,10 +304,9 @@ export function registerAuthRoutes(app: Express) {
         return res.status(400).json({ message: "Reset link is invalid or has expired." });
       }
 
-      const bcrypt = await import("bcryptjs");
-      const hashedPassword = await bcrypt.hash(password, 12);
+      // Pass plain password — updateUser will hash it
       await storage.updateUser(user.id, {
-        password: hashedPassword,
+        password,
         resetToken: null,
         resetTokenExpiresAt: null,
       } as any);
