@@ -20,15 +20,21 @@ export function Coachmark({
   children,
   delay = 600,
 }: CoachmarkProps) {
-  const { isActive, hasSeenStep, markStepSeen } = useOnboarding();
+  const { isActive, hasSeenStep, markStepSeen, registerStep, isCurrentStep } = useOnboarding();
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  // Register this step on mount so the provider knows the order
+  useEffect(() => {
+    registerStep(id);
+  }, [id, registerStep]);
+
   const alreadySeen = hasSeenStep(id);
-  const shouldShow = isActive && !alreadySeen;
+  const isCurrent = isCurrentStep(id);
+  const shouldShow = isActive && !alreadySeen && isCurrent;
 
   useEffect(() => {
-    if (!shouldShow) return;
+    if (!shouldShow) { setVisible(false); return; }
     const timer = setTimeout(() => setVisible(true), delay);
     return () => clearTimeout(timer);
   }, [shouldShow, delay]);

@@ -14,6 +14,8 @@ interface OnboardingContextType {
   markStepSeen: (id: string) => void;
   dismissAll: () => void;
   hasSeenStep: (id: string) => boolean;
+  registerStep: (id: string) => void;
+  isCurrentStep: (id: string) => boolean;
 }
 
 const OnboardingContext = createContext<OnboardingContextType>({
@@ -22,6 +24,8 @@ const OnboardingContext = createContext<OnboardingContextType>({
   markStepSeen: () => {},
   dismissAll: () => {},
   hasSeenStep: () => true,
+  registerStep: () => {},
+  isCurrentStep: () => false,
 });
 
 export function useOnboarding() {
@@ -44,16 +48,31 @@ function saveState(state: OnboardingState) {
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<OnboardingState>(() => loadState());
+  const [registeredSteps, setRegisteredSteps] = useState<string[]>([]);
 
   const user = getCurrentUser();
 
-  // Onboarding is active for new students/leads/tutors who haven't dismissed
   const isNewStudent =
     !!user &&
     user.userType !== "admin" &&
     !state.dismissed;
 
   const isActive = isNewStudent;
+
+  // Register a step so we know the order
+  const registerStep = useCallback((id: string) => {
+    setRegisteredSteps(prev => prev.includes(id) ? prev : [...prev, id]);
+  }, []);
+
+  // Only show one coachmark at a time — the first unseen registered step
+  const currentStepId = isActive
+    ? registeredSteps.find(id => !state.seen.includes(id)) || null
+    : null;
+
+  const isCurrentStep = useCallback(
+    (id: string) => id === currentStepId,
+    [currentStepId]
+  );
 
   const markStepSeen = useCallback((id: string) => {
     setState((prev) => {
@@ -78,7 +97,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   );
 
   return (
-    <OnboardingContext.Provider value={{ isActive, seenSteps: state.seen, markStepSeen, dismissAll, hasSeenStep }}>
+    <OnboardingContext.Provider value={{ isActive, seenSteps: state.seen, markStepSeen, dismissAll, hasSeenStep, registerStep, isCurrentStep }}>
       {children}
     </OnboardingContext.Provider>
   );
