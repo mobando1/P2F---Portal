@@ -36,6 +36,8 @@ const LearningPathPage = lazy(() => import("@/pages/learning-path"));
 const PlacementTestPage = lazy(() => import("@/pages/placement-test"));
 const TutorInvitePage = lazy(() => import("@/pages/tutor-invite"));
 const TutorAIAssistantPage = lazy(() => import("@/pages/tutor-ai-assistant"));
+const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
+const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 function LoadingFallback() {
@@ -69,6 +71,8 @@ function Router() {
     <Suspense fallback={<LoadingFallback />}>
       <Switch>
         <Route path="/login" component={Login} />
+        <Route path="/forgot-password" component={ForgotPasswordPage} />
+        <Route path="/reset-password" component={ResetPasswordPage} />
         <Route path="/home">
           <ProtectedRoute>
             <HomePage />

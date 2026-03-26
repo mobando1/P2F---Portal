@@ -231,7 +231,7 @@ export default function Login() {
                       />
                       <label htmlFor="remember" className="text-[#0A4A6E]">{t.rememberMe}</label>
                     </div>
-                    <a href="#" className="text-[#1C7BB1] hover:text-[#0A4A6E] transition-colors duration-300">
+                    <a href="/forgot-password" className="text-[#1C7BB1] hover:text-[#0A4A6E] transition-colors duration-300">
                       {t.forgotPassword}
                     </a>
                   </div>

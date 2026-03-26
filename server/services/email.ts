@@ -208,6 +208,27 @@ export const emailService = {
     return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Verifica tu correo" : "Verify your email", body, lang) });
   },
 
+  async sendPasswordResetEmail(params: { to: string; name: string; token: string; lang: "es" | "en" }): Promise<boolean> {
+    const { to, name, token, lang } = params;
+    const isEs = lang === "es";
+    const BASE_URL = process.env.NODE_ENV === "production"
+      ? process.env.APP_URL || "https://portal.passport2fluency.com"
+      : "http://localhost:5000";
+    const link = `${BASE_URL}/reset-password?token=${token}`;
+    const subject = isEs ? "Restablecer tu contraseña" : "Reset your password";
+    const body = `
+      <p style="color: #374151; font-size: 16px;">${isEs ? "Hola" : "Hi"} <strong>${name}</strong>,</p>
+      <p style="color: #374151;">${isEs
+        ? "Recibimos una solicitud para restablecer tu contraseña. Haz clic en el botón de abajo para crear una nueva."
+        : "We received a request to reset your password. Click the button below to create a new one."}</p>
+      <p style="margin: 24px 0; text-align: center;"><a href="${link}" style="background: #1C7BB1; color: white; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">${isEs ? "Restablecer contraseña" : "Reset password"}</a></p>
+      <p style="color: #6B7280; font-size: 14px;">${isEs
+        ? "Este enlace expira en 1 hora. Si no solicitaste esto, ignora este correo."
+        : "This link expires in 1 hour. If you didn't request this, ignore this email."}</p>
+    `;
+    return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Restablecer Contraseña" : "Reset Password", body, lang) });
+  },
+
   async sendWelcomeEmail(params: { to: string; name: string; lang: "es" | "en" }): Promise<boolean> {
     const { to, name, lang } = params;
     const isEs = lang === "es";

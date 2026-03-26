@@ -254,6 +254,89 @@ export function registerAuthRoutes(app: Express) {
     });
   });
 
+  // Forgot password — send reset email
+  app.post("/api/auth/forgot-password", authLimiter, async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email?.trim()) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await storage.getUserByEmail(email.trim().toLowerCase());
+      // Always return success to avoid email enumeration
+      if (!user) {
+        return res.json({ message: "If an account exists with that email, a reset link has been sent." });
+      }
+
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      await storage.updateUser(user.id, { resetToken: token, resetTokenExpiresAt: expiresAt } as any);
+
+      const lang: "es" | "en" = ((user as any).preferredLanguage === "es" || user.timezone?.includes("America")) ? "es" : "en";
+      emailService.sendPasswordResetEmail({
+        to: user.email,
+        name: user.firstName,
+        token,
+        lang,
+      }).catch(err => console.error("[forgot-password] Failed to send reset email:", err));
+
+      res.json({ message: "If an account exists with that email, a reset link has been sent." });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Reset password — validate token and set new password
+  app.post("/api/auth/reset-password", authLimiter, async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      if (!token || !password || password.length < 6) {
+        return res.status(400).json({ message: "Valid token and password (min 6 characters) are required." });
+      }
+
+      // Find user by reset token
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find((u: any) =>
+        u.resetToken === token && u.resetTokenExpiresAt && new Date(u.resetTokenExpiresAt) > new Date()
+      );
+
+      if (!user) {
+        return res.status(400).json({ message: "Reset link is invalid or has expired." });
+      }
+
+      const bcrypt = await import("bcryptjs");
+      const hashedPassword = await bcrypt.hash(password, 12);
+      await storage.updateUser(user.id, {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiresAt: null,
+      } as any);
+
+      res.json({ message: "Password has been reset successfully. You can now log in." });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Validate reset token (for the UI to check before showing the form)
+  app.get("/api/auth/reset-password/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find((u: any) =>
+        u.resetToken === token && u.resetTokenExpiresAt && new Date(u.resetTokenExpiresAt) > new Date()
+      );
+
+      if (!user) {
+        return res.status(404).json({ message: "Reset link is invalid or has expired." });
+      }
+
+      res.json({ valid: true, email: user.email });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Tutor invite — validate token (public)
   app.get("/api/auth/tutor-invite/:token", async (req, res) => {
     try {

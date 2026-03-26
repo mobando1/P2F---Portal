@@ -34,6 +34,8 @@ export const users = pgTable("users", {
   calendarConnected: boolean("calendar_connected").default(false),
   emailVerified: boolean("email_verified").default(false),
   verificationToken: text("verification_token"),
+  resetToken: text("reset_token"),
+  resetTokenExpiresAt: timestamp("reset_token_expires_at"),
   preferredLanguage: text("preferred_language").default("en"), // 'en' | 'es'
   trialStartedAt: timestamp("trial_started_at"),
   lastActivityAt: timestamp("last_activity_at"),

@@ -355,8 +355,8 @@ export interface IStorage {
 }
 
 /** Strip sensitive fields from user object before sending to client */
-export function sanitizeUser(user: User): Omit<User, "password" | "verificationToken"> {
-  const { password, verificationToken, ...safeUser } = user;
+export function sanitizeUser(user: User): Omit<User, "password" | "verificationToken" | "resetToken" | "resetTokenExpiresAt"> {
+  const { password, verificationToken, resetToken, resetTokenExpiresAt, ...safeUser } = user;
   return safeUser;
 }
 
@@ -482,6 +482,8 @@ export class MemStorage implements IStorage {
       calendarConnected: false,
       emailVerified: true,
       verificationToken: null,
+      resetToken: null,
+      resetTokenExpiresAt: null,
       preferredLanguage: "en",
       trialStartedAt: null,
       lastActivityAt: null,
@@ -517,6 +519,8 @@ export class MemStorage implements IStorage {
       calendarConnected: false,
       emailVerified: true,
       verificationToken: null,
+      resetToken: null,
+      resetTokenExpiresAt: null,
       preferredLanguage: "en",
       trialStartedAt: null,
       lastActivityAt: new Date(),
@@ -551,6 +555,8 @@ export class MemStorage implements IStorage {
       calendarConnected: false,
       emailVerified: true,
       verificationToken: null,
+      resetToken: null,
+      resetTokenExpiresAt: null,
       preferredLanguage: "en",
       trialStartedAt: null,
       lastActivityAt: new Date(),
@@ -865,6 +871,8 @@ export class MemStorage implements IStorage {
       calendarConnected: insertUser.calendarConnected || false,
       emailVerified: insertUser.emailVerified ?? false,
       verificationToken: insertUser.verificationToken ?? null,
+      resetToken: (insertUser as any).resetToken ?? null,
+      resetTokenExpiresAt: (insertUser as any).resetTokenExpiresAt ?? null,
       preferredLanguage: (insertUser as any).preferredLanguage ?? "en",
       trialStartedAt: (insertUser as any).trialStartedAt ?? null,
       lastActivityAt: new Date(),
