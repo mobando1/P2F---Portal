@@ -33,6 +33,7 @@ type Tutor = {
   languages: string[] | null;
   certifications: string[] | null;
   yearsOfExperience: number | null;
+  userId: number | null;
 };
 
 type Review = {
@@ -629,8 +630,11 @@ export default function TutorProfilePage() {
 
   const startConversationMutation = useMutation({
     mutationFn: async () => {
+      // Use tutor's userId (user account), not tutorId (tutor profile ID)
+      const recipientUserId = tutor?.userId;
+      if (!recipientUserId) throw new Error("Tutor has no linked account");
       const res = await apiRequest("POST", "/api/messages/start", {
-        recipientId: parseInt(tutorId!),
+        recipientId: recipientUserId,
         message: isEs ? "Hola! Me gustaria saber mas sobre tus clases." : "Hi! I'd like to know more about your classes.",
       });
       return res.json();
@@ -737,11 +741,11 @@ export default function TutorProfilePage() {
                         ))}
                       </div>
                     )}
-                    {currentUser && (
+                    {currentUser && tutor.userId && (
                       <div className="mt-4">
                         <Button
                           onClick={() => startConversationMutation.mutate()}
-                          disabled={startConversationMutation.isPending}
+                          disabled={startConversationMutation.isPending || !tutor.userId}
                           variant="outline"
                           className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white"
                         >
