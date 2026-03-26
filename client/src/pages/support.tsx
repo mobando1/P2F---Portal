@@ -64,21 +64,18 @@ export default function SupportPage() {
   const [newTicket, setNewTicket] = useState({ subject: "", category: "help", message: "" });
   const [replyMessage, setReplyMessage] = useState("");
 
-  if (!isAuthenticated() || !user) {
-    setLocation("/login");
-    return null;
-  }
+  const isAuthed = isAuthenticated() && !!user;
 
   const { data: tickets, isLoading } = useQuery<Ticket[]>({
     queryKey: ["/api/support/tickets"],
     queryFn: () => apiRequest("GET", "/api/support/tickets").then(r => r.json()),
-    enabled: view === "list",
+    enabled: isAuthed && view === "list",
   });
 
   const { data: ticketDetail, isLoading: isDetailLoading } = useQuery<TicketDetail>({
     queryKey: ["/api/support/tickets", selectedTicketId],
     queryFn: () => apiRequest("GET", `/api/support/tickets/${selectedTicketId}`).then(r => r.json()),
-    enabled: view === "detail" && selectedTicketId !== null,
+    enabled: isAuthed && view === "detail" && selectedTicketId !== null,
   });
 
   const createTicketMutation = useMutation({
@@ -106,6 +103,11 @@ export default function SupportPage() {
       setReplyMessage("");
     },
   });
+
+  if (!isAuthed) {
+    setLocation("/login");
+    return null;
+  }
 
   const statusBadge = (status: string) => {
     const map: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {

@@ -50,22 +50,20 @@ export default function MessagesPage() {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  if (!isAuthenticated() || !user) {
-    setLocation("/login");
-    return null;
-  }
+  const isAuthed = isAuthenticated() && !!user;
 
   const { data: conversations, isLoading } = useQuery<ConversationItem[]>({
     queryKey: ["/api/messages/conversations"],
     queryFn: () => apiRequest("GET", "/api/messages/conversations").then(r => r.json()),
     refetchInterval: 30000,
     refetchIntervalInBackground: false,
+    enabled: isAuthed,
   });
 
   const { data: messages } = useQuery<Message[]>({
     queryKey: ["/api/messages/conversations", selectedConvId],
     queryFn: () => apiRequest("GET", `/api/messages/conversations/${selectedConvId}`).then(r => r.json()),
-    enabled: selectedConvId !== null,
+    enabled: isAuthed && selectedConvId !== null,
     refetchInterval: 15000,
     refetchIntervalInBackground: false,
   });
@@ -91,21 +89,23 @@ export default function MessagesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Auto-start conversation from URL param (?startWith=userId)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const startWith = params.get("startWith");
     if (startWith && conversations && conversations.length >= 0) {
       const targetUserId = parseInt(startWith);
-      // Check if conversation already exists
       const existing = conversations.find(c => c.participant.id === targetUserId);
       if (existing) {
         setSelectedConvId(existing.id);
       }
-      // Clear the URL param
       window.history.replaceState({}, "", "/messages");
     }
   }, [conversations]);
+
+  if (!isAuthed) {
+    setLocation("/login");
+    return null;
+  }
 
   const selectedConv = conversations?.find(c => c.id === selectedConvId);
 

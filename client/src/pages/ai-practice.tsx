@@ -81,14 +81,12 @@ export default function AIPracticePage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const tts = useTTS(aiLanguage);
 
-  if (!isAuthenticated() || !user) {
-    setLocation("/login");
-    return null;
-  }
+  const isAuthed = isAuthenticated() && !!user;
 
-  // Queries
+  // Queries — all hooks MUST be before conditional returns
   const { data: conversations = [] } = useQuery<Conversation[]>({
     queryKey: ["/api/ai/conversations"],
+    enabled: isAuthed,
   });
 
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery<Message[]>({
@@ -303,6 +301,12 @@ export default function AIPracticePage() {
     },
     [tts]
   );
+
+  // Auth check — after all hooks
+  if (!isAuthed) {
+    setLocation("/login");
+    return null;
+  }
 
   // Handle new conversation
   const handleNewConversation = (scenario?: string) => {

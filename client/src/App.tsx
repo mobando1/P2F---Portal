@@ -192,13 +192,12 @@ function EmailVerificationBanner() {
   const [dismissed, setDismissed] = useState(false);
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState(false);
 
   if (!user || dismissed) return null;
-  if (user.emailVerified !== false) return null; // verified or unknown
-  if (user.googleId || user.microsoftId) return null; // OAuth = already verified
+  if (user.emailVerified !== false) return null;
+  if (user.googleId || user.microsoftId) return null;
   if (location === "/login") return null;
-
-  const [sendError, setSendError] = useState(false);
 
   const handleResend = async () => {
     if (sending || sent) return;

@@ -45,10 +45,7 @@ export default function TutorAIAssistant() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isEs = language === "es";
 
-  if (!isAuthenticated() || !user) {
-    setLocation("/login");
-    return null;
-  }
+  const isAuthed = isAuthenticated() && !!user;
 
   const sendMutation = useMutation({
     mutationFn: async (userMessage: string) => {
@@ -78,6 +75,11 @@ export default function TutorAIAssistant() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  if (!isAuthed) {
+    setLocation("/login");
+    return null;
+  }
 
   const handleSend = () => {
     const text = input.trim();

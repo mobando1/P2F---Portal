@@ -55,16 +55,8 @@ export default function TutorAvailability() {
   const [exDate, setExDate] = useState("");
   const [exReason, setExReason] = useState("");
 
-  if (!isAuthenticated() || !user) {
-    setLocation("/login");
-    return null;
-  }
-
-  if (user.userType !== "tutor" && user.userType !== "admin") {
-    setLocation("/home");
-    return null;
-  }
-
+  const isAuthed = isAuthenticated() && !!user;
+  const isTutorOrAdmin = isAuthed && (user?.userType === "tutor" || user?.userType === "admin");
   const dayNames = language === "es" ? DAY_NAMES_ES : DAY_NAMES_EN;
 
   const { isLoading } = useQuery<AvailabilitySlot[]>({
@@ -134,6 +126,9 @@ export default function TutorAvailability() {
       });
     },
   });
+
+  if (!isAuthed) { setLocation("/login"); return null; }
+  if (!isTutorOrAdmin) { setLocation("/home"); return null; }
 
   const addSlot = (dayOfWeek: number) => {
     setSlots((prev) => [...prev, { dayOfWeek, startTime: "09:00", endTime: "10:00" }]);
