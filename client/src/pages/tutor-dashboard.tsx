@@ -35,6 +35,7 @@ import {
   BookOpen,
   History,
   MessageCircle,
+  FileText,
 } from "lucide-react";
 import LevelBadge from "@/components/LevelBadge";
 import StudentProfileDrawer from "@/components/StudentProfileDrawer";
@@ -174,6 +175,16 @@ export default function TutorDashboard() {
   const { data: earnings } = useQuery<EarningsData>({
     queryKey: ["/api/tutor/earnings"],
     queryFn: () => apiRequest("GET", "/api/tutor/earnings").then(r => r.json()),
+    enabled: isTutorOrAdmin && activeTab === "schedule",
+  });
+
+  const { data: tutorPayments } = useQuery<Array<{
+    id: number; amount: string; currency: string; periodStart: string; periodEnd: string;
+    classesCount: number; hoursWorked: string; status: string; paymentMethod: string | null;
+    receiptUrl: string | null; paidAt: string | null; createdAt: string;
+  }>>({
+    queryKey: ["/api/tutor/payments"],
+    queryFn: () => apiRequest("GET", "/api/tutor/payments").then(r => r.json()),
     enabled: isTutorOrAdmin && activeTab === "schedule",
   });
 
@@ -777,6 +788,47 @@ export default function TutorDashboard() {
                         </div>
                       );
                     })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Payment History */}
+            {tutorPayments && tutorPayments.length > 0 && (
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-4 md:p-6">
+                  <h2 className="text-base font-semibold text-[#0A4A6E] mb-3">
+                    {isEs ? "Pagos Recibidos" : "Payments Received"}
+                  </h2>
+                  <div className="space-y-2">
+                    {tutorPayments.map(p => (
+                      <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${p.status === "paid" ? "bg-green-100" : "bg-amber-100"}`}>
+                          <DollarSign className={`h-4 w-4 ${p.status === "paid" ? "text-green-600" : "text-amber-600"}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[#0A4A6E]">
+                            ${parseFloat(p.amount).toFixed(2)} {p.currency}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(p.periodStart).toLocaleDateString(isEs ? "es-ES" : "en-US", { month: "short", day: "numeric" })}
+                            {" — "}
+                            {new Date(p.periodEnd).toLocaleDateString(isEs ? "es-ES" : "en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            {p.paymentMethod && ` · ${p.paymentMethod}`}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${p.status === "paid" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                            {p.status === "paid" ? (isEs ? "Pagado" : "Paid") : (isEs ? "Pendiente" : "Pending")}
+                          </span>
+                          {p.receiptUrl && (
+                            <a href={p.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-[#1C7BB1] hover:text-[#0A4A6E]">
+                              <FileText className="h-4 w-4" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>

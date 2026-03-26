@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/i18n";
 import CrmDashboard from "@/components/crm/CrmDashboard";
+import TutorPaymentsTab from "@/components/admin/TutorPaymentsTab";
 import AdminCalendar from "@/components/admin/AdminCalendar";
 import AdminLearningPath from "@/components/admin/AdminLearningPath";
 import { apiRequest } from "@/lib/queryClient";
@@ -76,7 +77,7 @@ interface ClassItem {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'tutors' | 'classes' | 'calendar' | 'learning-path' | 'analytics' | 'ai-stats' | 'support' | 'settings' | 'crm'>('tutors');
+  const [activeTab, setActiveTab] = useState<'tutors' | 'classes' | 'calendar' | 'learning-path' | 'analytics' | 'ai-stats' | 'support' | 'settings' | 'crm' | 'payments'>('tutors');
   const [showAddTutor, setShowAddTutor] = useState(false);
   const [editingTutor, setEditingTutor] = useState<any>(null);
   const [classFilter, setClassFilter] = useState<'all' | 'scheduled' | 'completed' | 'cancelled'>('all');
@@ -444,6 +445,17 @@ export default function AdminPage() {
               >
                 <Users className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">CRM</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('payments')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'payments'
+                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <DollarSign className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{isEs ? 'Pagos' : 'Payments'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('settings')}
@@ -2323,6 +2335,8 @@ export default function AdminPage() {
         )}
 
         {activeTab === 'crm' && <CrmDashboard />}
+
+        {activeTab === 'payments' && <TutorPaymentsTab />}
 
         {activeTab === 'settings' && (
           <div className="space-y-6">
