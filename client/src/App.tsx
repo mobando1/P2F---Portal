@@ -7,7 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/lib/i18n";
 import { CurrencyProvider } from "@/lib/currency";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { isAuthenticated, getCurrentUser, getSmartRedirect, validateSession } from "@/lib/auth";
+import { isAuthenticated, getCurrentUser, setCurrentUser, getSmartRedirect, validateSession } from "@/lib/auth";
 import HelpButton from "@/components/HelpButton";
 import { useWebSocketConnection, useWsQueryInvalidation } from "@/lib/websocket";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
@@ -193,8 +193,24 @@ function EmailVerificationBanner() {
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState(false);
+  const [verified, setVerified] = useState(false);
 
-  if (!user || dismissed) return null;
+  // If localStorage says unverified, check server in case it was verified in another tab/redirect
+  useEffect(() => {
+    if (user && user.emailVerified === false && !user.googleId && !user.microsoftId) {
+      fetch("/api/auth/me", { credentials: "include" })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data?.user?.emailVerified === true) {
+            setCurrentUser(data.user);
+            setVerified(true);
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  if (!user || dismissed || verified) return null;
   if (user.emailVerified !== false) return null;
   if (user.googleId || user.microsoftId) return null;
   if (location === "/login") return null;
