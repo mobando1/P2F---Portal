@@ -195,7 +195,14 @@ export function registerAuthRoutes(app: Express) {
     req.session.userId = user.id;
     req.session.save((err) => {
       if (err) console.error("[verify-email] Session save error:", err);
-      res.redirect("/home?verified=true");
+      // Redirect based on user role
+      const redirectMap: Record<string, string> = {
+        admin: "/admin",
+        tutor: "/tutor-portal",
+        customer: "/dashboard",
+      };
+      const dest = redirectMap[user.userType] || "/home";
+      res.redirect(`${dest}?verified=true`);
     });
   });
 

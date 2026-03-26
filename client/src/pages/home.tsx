@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { getCurrentUser } from "@/lib/auth";
@@ -90,11 +90,18 @@ const steps = [
 ];
 
 export default function HomePage() {
+  const [, setLocation] = useLocation();
   const user = getCurrentUser();
   const { language } = useLanguage();
   const isEs = language === "es";
 
   const [stepsRef, stepsInView] = useInView({ triggerOnce: true, threshold: 0.2 });
+
+  // Tutors should not see the student home page
+  if (user?.userType === "tutor") {
+    setLocation("/tutor-portal");
+    return null;
+  }
   const [ctaRef, ctaInView] = useInView({ triggerOnce: true, threshold: 0.3 });
 
   return (
