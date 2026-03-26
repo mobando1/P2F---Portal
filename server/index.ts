@@ -444,6 +444,8 @@ async function startServer() {
           ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT;
           ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_language TEXT DEFAULT 'en';
           ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMP;
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token TEXT;
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMP;
           UPDATE users SET email_verified = TRUE
             WHERE email_verified IS FALSE
               AND (google_id IS NOT NULL OR microsoft_id IS NOT NULL OR user_type = 'admin');
