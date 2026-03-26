@@ -475,29 +475,29 @@ export function registerTutorPortalRoutes(app: Express) {
 
       const tutorClasses = await storage.getClassesByTutor(tutor.id);
 
-      // Get unique student IDs
+      // Get unique student IDs and batch fetch (1 query instead of N)
       const studentIds = Array.from(new Set(tutorClasses.map(c => c.userId)));
+      const allStudents = studentIds.length > 0 ? await storage.getUsersByIds(studentIds) : [];
+      const studentMap = new Map(allStudents.map(s => [s.id, s]));
 
-      const students = await Promise.all(
-        studentIds.map(async (studentId) => {
-          const student = await storage.getUser(studentId);
-          const studentClasses = tutorClasses.filter(c => c.userId === studentId);
-          const completed = studentClasses.filter(c => c.status === "completed");
-          const lastClass = studentClasses
-            .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())[0];
+      const students = studentIds.map(studentId => {
+        const student = studentMap.get(studentId);
+        const studentClasses = tutorClasses.filter(c => c.userId === studentId);
+        const completed = studentClasses.filter(c => c.status === "completed");
+        const lastClass = studentClasses
+          .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())[0];
 
-          return {
-            id: studentId,
-            name: student ? `${student.firstName} ${student.lastName}` : "Unknown",
-            email: student?.email || "",
-            level: student?.level || "A1",
-            profileImage: student?.profileImage || null,
-            totalClasses: studentClasses.length,
-            completedClasses: completed.length,
-            lastClassDate: lastClass?.scheduledAt || null,
-          };
-        })
-      );
+        return {
+          id: studentId,
+          name: student ? `${student.firstName} ${student.lastName}` : "Unknown",
+          email: student?.email || "",
+          level: student?.level || "A1",
+          profileImage: student?.profileImage || null,
+          totalClasses: studentClasses.length,
+          completedClasses: completed.length,
+          lastClassDate: lastClass?.scheduledAt || null,
+        };
+      });
 
       res.json(students.sort((a, b) => b.totalClasses - a.totalClasses));
     } catch (error) {
@@ -1030,8 +1030,19 @@ Do not make up platform features that don't exist.`;
 
   app.delete("/api/tutor/materials/:id", requireTutor, async (req, res) => {
     try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
+      // Verify ownership — only delete own materials
+      const materials = await storage.getTutorMaterials(tutor.id);
+      if (!materials.some(m => m.id === id)) {
+        return res.status(403).json({ message: "Not authorized to delete this material" });
+      }
+
       await storage.deleteTutorMaterial(id);
       res.json({ message: "Deleted" });
     } catch (error) {
