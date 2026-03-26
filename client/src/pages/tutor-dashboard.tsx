@@ -41,6 +41,7 @@ import LevelBadge from "@/components/LevelBadge";
 import StudentProfileDrawer from "@/components/StudentProfileDrawer";
 import TutorMaterialsSection from "@/components/TutorMaterialsSection";
 import TutorReviewsSection from "@/components/TutorReviewsSection";
+import TutorCalendarView from "@/components/TutorCalendarView";
 import {
   Select,
   SelectContent,
@@ -147,7 +148,7 @@ export default function TutorDashboard() {
   const [sessionNotes, setSessionNotes] = useState("");
   const [sharedNotes, setSharedNotes] = useState("");
   const [homeworkText, setHomeworkText] = useState("");
-  const [scheduleView, setScheduleView] = useState<"upcoming" | "history">("upcoming");
+  const [scheduleView, setScheduleView] = useState<"upcoming" | "history" | "calendar">("upcoming");
   const [studentSearch, setStudentSearch] = useState("");
 
   // Profile editing state
@@ -640,7 +641,27 @@ export default function TutorDashboard() {
                 <History className="h-4 w-4 mr-1.5" />
                 {isEs ? "Historial" : "History"}
               </Button>
+              <Button
+                variant={scheduleView === "calendar" ? "default" : "outline"}
+                size="sm"
+                className={scheduleView === "calendar" ? "bg-[#1C7BB1] hover:bg-[#0A4A6E]" : ""}
+                onClick={() => setScheduleView("calendar")}
+              >
+                <CalendarCheck className="h-4 w-4 mr-1.5" />
+                {isEs ? "Calendario" : "Calendar"}
+              </Button>
             </div>
+
+            {/* Calendar View */}
+            {scheduleView === "calendar" && allClasses && (
+              <TutorCalendarView
+                classes={allClasses}
+                onCompleteClass={(classId, studentName) => {
+                  setSessionNotes(""); setSharedNotes(""); setHomeworkText("");
+                  setNotesModal({ classId, studentName });
+                }}
+              />
+            )}
 
             {/* Earnings Summary (compact) */}
             {earnings && (
