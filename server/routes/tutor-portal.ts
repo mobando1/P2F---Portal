@@ -205,6 +205,134 @@ export function registerTutorPortalRoutes(app: Express) {
     }
   });
 
+  // Weekly availability view — returns 7 days with 30-min slots showing availability, bookings, and blocks
+  app.get("/api/tutor/availability/week", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      const startDateStr = req.query.startDate as string;
+      const weekStart = startDateStr ? new Date(startDateStr) : (() => {
+        const now = new Date();
+        const day = now.getDay();
+        const diff = day === 0 ? -6 : 1 - day; // Monday as start
+        const mon = new Date(now);
+        mon.setDate(now.getDate() + diff);
+        mon.setHours(0, 0, 0, 0);
+        return mon;
+      })();
+
+      // Fetch recurring slots, classes, and exceptions in parallel
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+
+      const [recurringSlots, tutorClasses, exceptions] = await Promise.all([
+        storage.getTutorAvailability(tutor.id),
+        storage.getClassesByTutor(tutor.id),
+        storage.getTutorExceptions ? storage.getTutorExceptions(tutor.id, weekStart, weekEnd) : Promise.resolve([]),
+      ]);
+
+      // Get student names for booked classes
+      const classStudentIds = Array.from(new Set(tutorClasses.map(c => c.userId)));
+      const students = classStudentIds.length > 0 ? await storage.getUsersByIds(classStudentIds) : [];
+      const studentMap = new Map(students.map(s => [s.id, s]));
+
+      const SLOT_START_HOUR = 6;
+      const SLOT_END_HOUR = 22;
+      const SLOT_MINUTES = 30;
+
+      const days = [];
+      for (let d = 0; d < 7; d++) {
+        const date = new Date(weekStart);
+        date.setDate(weekStart.getDate() + d);
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+        const dayOfWeek = date.getDay(); // 0=Sun...6=Sat
+
+        // Find recurring slots for this day
+        const daySlots = recurringSlots.filter(s => s.dayOfWeek === dayOfWeek);
+
+        // Find booked classes for this day
+        const dayClasses = tutorClasses.filter(c => {
+          if (c.status === "cancelled") return false;
+          const classDate = new Date(c.scheduledAt);
+          return classDate.toISOString().split("T")[0] === dateStr;
+        });
+
+        // Find exceptions for this day
+        const dayExceptions = (exceptions as any[]).filter((e: any) => {
+          const exDate = new Date(e.date);
+          return exDate.toISOString().split("T")[0] === dateStr;
+        });
+
+        const slots = [];
+        for (let h = SLOT_START_HOUR; h < SLOT_END_HOUR; h++) {
+          for (let m = 0; m < 60; m += SLOT_MINUTES) {
+            const timeStr = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+            const slotStart = h * 60 + m;
+            const slotEnd = slotStart + SLOT_MINUTES;
+
+            // Check if within recurring availability
+            const isAvailable = daySlots.some(s => {
+              const [sh, sm] = (s.startTime || "00:00").split(":").map(Number);
+              const [eh, em] = (s.endTime || "00:00").split(":").map(Number);
+              return slotStart >= sh * 60 + sm && slotEnd <= eh * 60 + em;
+            });
+
+            // Check if booked
+            const bookedClass = dayClasses.find(c => {
+              const classTime = new Date(c.scheduledAt);
+              const classStart = classTime.getHours() * 60 + classTime.getMinutes();
+              const classEnd = classStart + (c.duration || 60);
+              return slotStart >= classStart && slotStart < classEnd;
+            });
+
+            // Check if blocked by exception
+            const isBlocked = dayExceptions.some((e: any) => {
+              if (!e.startTime && !e.endTime) return true; // full day block
+              const [esh, esm] = (e.startTime || "00:00").split(":").map(Number);
+              const [eeh, eem] = (e.endTime || "23:59").split(":").map(Number);
+              return slotStart >= esh * 60 + esm && slotStart < eeh * 60 + eem;
+            });
+
+            let classInfo: string | undefined;
+            if (bookedClass) {
+              const student = studentMap.get(bookedClass.userId);
+              classInfo = student ? `${student.firstName} ${student.lastName.charAt(0)}.` : "Student";
+              classInfo += ` · ${bookedClass.duration || 60}min`;
+            }
+
+            slots.push({
+              hour: h,
+              minute: m,
+              time: timeStr,
+              available: isAvailable && !isBlocked && !bookedClass,
+              isRecurring: isAvailable,
+              booked: !!bookedClass,
+              blocked: isBlocked,
+              classInfo,
+            });
+          }
+        }
+
+        days.push({
+          date: dateStr,
+          dayOfWeek,
+          slots,
+        });
+      }
+
+      res.json({
+        weekStart: weekStart.toISOString().split("T")[0],
+        days,
+        recurringSlots,
+      });
+    } catch (error) {
+      console.error("[tutor/availability/week] Error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Update tutor's availability
   app.put("/api/tutor/availability", requireTutor, async (req, res) => {
     try {
@@ -711,6 +839,20 @@ export function registerTutorPortalRoutes(app: Express) {
       if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
 
       const { bio, phone, languages, certifications, avatar, yearsOfExperience } = req.body;
+
+      // Validate avatar if provided
+      if (avatar !== undefined && avatar !== null) {
+        const dataUriMatch = (avatar as string).match(/^data:(image\/(?:jpeg|png|webp|gif));base64,/);
+        if (!dataUriMatch) {
+          return res.status(400).json({ message: "Invalid image format. Supported: JPEG, PNG, WebP, GIF" });
+        }
+        const base64Data = (avatar as string).split(",")[1];
+        const sizeBytes = Math.ceil((base64Data.length * 3) / 4);
+        if (sizeBytes > 5 * 1024 * 1024) {
+          return res.status(400).json({ message: "Image too large. Maximum 5MB" });
+        }
+      }
+
       const updated = await storage.updateTutor(tutor.id, {
         ...(bio !== undefined && { bio }),
         ...(phone !== undefined && { phone }),
