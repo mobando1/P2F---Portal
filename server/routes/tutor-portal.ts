@@ -70,10 +70,13 @@ export function registerTutorPortalRoutes(app: Express) {
         return res.status(404).json({ message: "Tutor profile not found" });
       }
 
-      // Parallel fetch: classes + assignments at the same time
+      // Parallel fetch: classes + assignments — tolerates missing tables
+      const safeDash = <T>(fn: () => Promise<T>, fallback: T): Promise<T> =>
+        fn().catch(err => { console.warn("[tutor/dashboard] query failed:", err.message); return fallback; });
+
       const [tutorClasses, allAssignments] = await Promise.all([
-        storage.getClassesByTutor(tutor.id),
-        storage.getAssignmentsByTutor(tutor.id),
+        safeDash(() => storage.getClassesByTutor(tutor.id), []),
+        safeDash(() => storage.getAssignmentsByTutor(tutor.id), []),
       ]);
 
       const now = new Date();
@@ -271,13 +274,17 @@ export function registerTutorPortalRoutes(app: Express) {
       })();
 
       // Fetch recurring slots, classes, and exceptions in parallel
+      // Each query is wrapped to tolerate missing tables (e.g. after schema changes not yet pushed)
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekEnd.getDate() + 7);
 
+      const safeQuery = <T>(fn: () => Promise<T>, fallback: T): Promise<T> =>
+        fn().catch(err => { console.warn("[tutor/availability/week] query failed, using fallback:", err.message); return fallback; });
+
       const [recurringSlots, tutorClasses, exceptions] = await Promise.all([
-        storage.getTutorAvailability(tutor.id),
-        storage.getClassesByTutor(tutor.id),
-        storage.getTutorExceptions ? storage.getTutorExceptions(tutor.id, weekStart, weekEnd) : Promise.resolve([]),
+        safeQuery(() => storage.getTutorAvailability(tutor.id), []),
+        safeQuery(() => storage.getClassesByTutor(tutor.id), []),
+        safeQuery(() => storage.getTutorExceptions(tutor.id, weekStart, weekEnd), []),
       ]);
 
       // Get student names for booked classes
