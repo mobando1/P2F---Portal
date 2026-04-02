@@ -9,9 +9,42 @@ import { learningPathService } from "../services/learning-path";
 import { requireTutor } from "./auth";
 
 export function registerTutorPortalRoutes(app: Express) {
-  // Helper to get tutor profile from logged-in user
+  // Helper to get tutor profile from logged-in user — auto-creates profile if missing
   async function getTutorFromUser(userId: number) {
-    return await storage.getTutorByUserId(userId);
+    const existing = await storage.getTutorByUserId(userId);
+    if (existing) return existing;
+
+    // If user has userType "tutor" but no tutor profile, auto-create one
+    const user = await storage.getUser(userId);
+    if (!user || (user.userType !== "tutor" && user.userType !== "admin")) return undefined;
+
+    try {
+      const tutor = await storage.createTutor({
+        name: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        specialization: "Language Tutor",
+        specializationEs: "Tutor de Idiomas",
+        hourlyRate: "25.00",
+        bio: null,
+        bioEs: null,
+        avatar: null,
+        isActive: true,
+        classType: ["adults"],
+        languageTaught: ["spanish"],
+        userId: user.id,
+        phone: null,
+        country: null,
+        timezone: null,
+        languages: null,
+        certifications: null,
+        yearsOfExperience: null,
+      });
+      console.log(`[tutor-portal] Auto-created tutor profile ${tutor.id} for user ${userId}`);
+      return tutor;
+    } catch (err) {
+      console.error(`[tutor-portal] Failed to auto-create tutor profile for user ${userId}:`, err);
+      return undefined;
+    }
   }
 
   // Dashboard stats

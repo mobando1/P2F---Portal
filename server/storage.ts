@@ -623,6 +623,7 @@ export class MemStorage implements IStorage {
         certifications: ["M.A. English Teaching Methodology", "Doctorate Student Educational Sciences", "International Relations Graduate"],
         yearsOfExperience: 15,
         userId: null,
+        icsToken: null,
       },
       {
         id: 2,
@@ -650,6 +651,7 @@ export class MemStorage implements IStorage {
         certifications: ["Cultural Connection Expert", "Natural Language Learning Specialist", "Multi-Age Teaching Certified"],
         yearsOfExperience: 5,
         userId: null,
+        icsToken: null,
       },
       {
         id: 3,
@@ -677,6 +679,7 @@ export class MemStorage implements IStorage {
         certifications: ["M.A. Physical Culture Pedagogy", "PhD Student in Education", "Spanish & Physical Education Specialist"],
         yearsOfExperience: 8,
         userId: null,
+        icsToken: null,
       },
       {
         id: 4,
@@ -704,6 +707,7 @@ export class MemStorage implements IStorage {
         certifications: ["Elementary Education Specialist", "Kids Spanish Expert", "Interactive Learning Specialist"],
         yearsOfExperience: 8,
         userId: null,
+        icsToken: null,
       },
       {
         id: 5,
@@ -731,6 +735,7 @@ export class MemStorage implements IStorage {
         certifications: ["B.A. Anthropology Universidad Nacional", "Cultural Immersion Expert", "Regional Dialects Specialist"],
         yearsOfExperience: 6,
         userId: null,
+        icsToken: null,
       }
     ];
 
@@ -1050,6 +1055,7 @@ export class MemStorage implements IStorage {
       languages: tutorData.languages || [],
       inviteToken: tutorData.inviteToken || null,
       inviteTokenExpiresAt: tutorData.inviteTokenExpiresAt || null,
+      icsToken: tutorData.icsToken || null,
     };
     this.tutors.set(id, tutor);
     return tutor;

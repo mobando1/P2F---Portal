@@ -316,6 +316,7 @@ export default function TutorDashboard() {
   const { data: feedStatus } = useQuery<{ active: boolean; feedUrl: string | null }>({
     queryKey: ["/api/tutor/calendar-feed/status"],
     queryFn: () => apiRequest("GET", "/api/tutor/calendar-feed/status").then(r => r.json()),
+    enabled: isTutorOrAdmin,
   });
 
   const generateFeedMutation = useMutation({
