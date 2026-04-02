@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import crypto from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { config } from "../config";
 import { storage } from "../storage";
@@ -1068,4 +1069,134 @@ Do not make up platform features that don't exist.`;
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+  // ── ICS Calendar Feed ──
+
+  // Generate or get existing ICS feed token
+  app.post("/api/tutor/calendar-feed/generate", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      let token = tutor.icsToken;
+      if (!token) {
+        token = crypto.randomBytes(32).toString("hex");
+        await storage.updateTutor(tutor.id, { icsToken: token });
+      }
+
+      const baseUrl = config.NODE_ENV === "production"
+        ? (config.APP_URL || `https://${req.get("host")}`)
+        : `http://${req.get("host")}`;
+      const feedUrl = `${baseUrl}/api/calendar/feed/${token}.ics`;
+
+      res.json({ feedUrl, token });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get current feed status
+  app.get("/api/tutor/calendar-feed/status", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      if (!tutor.icsToken) return res.json({ active: false, feedUrl: null });
+
+      const baseUrl = config.NODE_ENV === "production"
+        ? (config.APP_URL || `https://${req.get("host")}`)
+        : `http://${req.get("host")}`;
+      const feedUrl = `${baseUrl}/api/calendar/feed/${tutor.icsToken}.ics`;
+
+      res.json({ active: true, feedUrl });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Revoke ICS feed token
+  app.delete("/api/tutor/calendar-feed", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      await storage.updateTutor(tutor.id, { icsToken: null });
+      res.json({ message: "Feed revoked" });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Public ICS feed endpoint (no auth — token IS the auth)
+  app.get("/api/calendar/feed/:token.ics", async (req, res) => {
+    try {
+      const { token } = req.params;
+      if (!token || token.length < 32) return res.status(404).send("Not found");
+
+      // Find tutor by ICS token
+      const tutor = await storage.getTutorByIcsToken(token);
+      if (!tutor) return res.status(404).send("Not found");
+
+      // Get all scheduled + completed classes for this tutor
+      const allClasses = await storage.getClassesByTutor(tutor.id);
+      const relevantClasses = allClasses.filter(c => c.status === "scheduled" || c.status === "completed");
+
+      // Build ICS content
+      const now = new Date();
+      const stamp = formatIcsDate(now);
+      let ics = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Passport2Fluency//Classes//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        `X-WR-CALNAME:P2F Classes - ${tutor.name}`,
+        "X-WR-TIMEZONE:UTC",
+      ];
+
+      for (const cls of relevantClasses) {
+        const start = new Date(cls.scheduledAt);
+        const end = new Date(start.getTime() + (cls.duration || 60) * 60000);
+        const student = await storage.getUser(cls.userId);
+        const studentName = student ? `${student.firstName} ${student.lastName}` : "Student";
+
+        ics.push(
+          "BEGIN:VEVENT",
+          `UID:class-${cls.id}@passport2fluency.com`,
+          `DTSTAMP:${stamp}`,
+          `DTSTART:${formatIcsDate(start)}`,
+          `DTEND:${formatIcsDate(end)}`,
+          `SUMMARY:${escapeIcs(cls.title || `Class with ${studentName}`)}`,
+          `DESCRIPTION:${escapeIcs(`Student: ${studentName}\\nDuration: ${cls.duration || 60} min${cls.meetingLink ? `\\nMeeting: ${cls.meetingLink}` : ""}`)}`,
+          cls.meetingLink ? `URL:${cls.meetingLink}` : "",
+          `STATUS:${cls.status === "cancelled" ? "CANCELLED" : "CONFIRMED"}`,
+          "END:VEVENT",
+        );
+      }
+
+      ics.push("END:VCALENDAR");
+
+      const icsContent = ics.filter(Boolean).join("\r\n");
+      res.set({
+        "Content-Type": "text/calendar; charset=utf-8",
+        "Content-Disposition": `attachment; filename="p2f-classes.ics"`,
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+      });
+      res.send(icsContent);
+    } catch (error) {
+      console.error("ICS feed error:", error);
+      res.status(500).send("Internal server error");
+    }
+  });
+}
+
+function formatIcsDate(d: Date): string {
+  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+
+function escapeIcs(s: string): string {
+  return s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 }

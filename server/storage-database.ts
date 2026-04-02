@@ -205,6 +205,11 @@ export class DatabaseStorage implements IStorage {
     return tutor || undefined;
   }
 
+  async getTutorByIcsToken(token: string): Promise<Tutor | undefined> {
+    const [tutor] = await this.db.select().from(tutors).where(eq(tutors.icsToken, token));
+    return tutor || undefined;
+  }
+
   async createTutor(tutorData: InsertTutor): Promise<Tutor> {
     const [tutor] = await this.db
       .insert(tutors)

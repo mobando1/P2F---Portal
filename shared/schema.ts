@@ -127,6 +127,8 @@ export const tutors = pgTable("tutors", {
   // Token de invitación para activar cuenta (one-time use)
   inviteToken: text("invite_token"),
   inviteTokenExpiresAt: timestamp("invite_token_expires_at"),
+  // Token para ICS calendar feed (suscripción externa)
+  icsToken: text("ics_token"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_tutors_user_id").on(table.userId),

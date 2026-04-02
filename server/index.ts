@@ -492,6 +492,7 @@ async function startServer() {
             ALTER TABLE tutors ADD COLUMN IF NOT EXISTS invite_token TEXT;
             ALTER TABLE tutors ADD COLUMN IF NOT EXISTS invite_token_expires_at TIMESTAMP;
             ALTER TABLE tutors ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+            ALTER TABLE tutors ADD COLUMN IF NOT EXISTS ics_token TEXT;
           `);
 
           // 2. Convert class_type text → text[] ONLY if it's not already an array

@@ -37,6 +37,8 @@ import {
   MessageCircle,
   FileText,
   ChevronRight,
+  Copy,
+  Rss,
 } from "lucide-react";
 import LevelBadge from "@/components/LevelBadge";
 import StudentProfileDrawer from "@/components/StudentProfileDrawer";
@@ -307,6 +309,28 @@ export default function TutorDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/google/status"] });
       toast({ title: language === "es" ? "Google Calendar desconectado" : "Google Calendar disconnected" });
+    },
+  });
+
+  // ICS Calendar Feed
+  const { data: feedStatus } = useQuery<{ active: boolean; feedUrl: string | null }>({
+    queryKey: ["/api/tutor/calendar-feed/status"],
+    queryFn: () => apiRequest("GET", "/api/tutor/calendar-feed/status").then(r => r.json()),
+  });
+
+  const generateFeedMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/tutor/calendar-feed/generate").then(r => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tutor/calendar-feed/status"] });
+      toast({ title: language === "es" ? "Link de calendario generado" : "Calendar feed link generated" });
+    },
+  });
+
+  const revokeFeedMutation = useMutation({
+    mutationFn: () => apiRequest("DELETE", "/api/tutor/calendar-feed").then(r => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tutor/calendar-feed/status"] });
+      toast({ title: language === "es" ? "Link de calendario revocado" : "Calendar feed link revoked" });
     },
   });
 
@@ -1196,6 +1220,63 @@ export default function TutorDashboard() {
                     </Button>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* ICS Calendar Feed */}
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${feedStatus?.active ? "bg-purple-100" : "bg-gray-100"}`}>
+                      <Rss className={`h-5 w-5 ${feedStatus?.active ? "text-purple-600" : "text-gray-400"}`} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-[#0A4A6E]">{isEs ? "Suscripción de Calendario" : "Calendar Subscription"}</h3>
+                      <p className="text-xs text-gray-500">
+                        {isEs ? "Apple, Outlook, Google y cualquier app" : "Apple, Outlook, Google & any app"}
+                      </p>
+                    </div>
+                  </div>
+                  {feedStatus?.active ? (
+                    <Button variant="outline" size="sm" onClick={() => revokeFeedMutation.mutate()} disabled={revokeFeedMutation.isPending} className="text-red-500 border-red-200 hover:bg-red-50">
+                      {isEs ? "Revocar" : "Revoke"}
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={() => generateFeedMutation.mutate()} disabled={generateFeedMutation.isPending} className="bg-purple-600 hover:bg-purple-700">
+                      {isEs ? "Generar Link" : "Generate Link"}
+                    </Button>
+                  )}
+                </div>
+                {feedStatus?.active && feedStatus.feedUrl && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-[10px] text-gray-500 mb-1.5">{isEs ? "Copia este link y agrégalo a tu app de calendario:" : "Copy this link and add it to your calendar app:"}</p>
+                    <div className="flex gap-2">
+                      <input
+                        readOnly
+                        value={feedStatus.feedUrl}
+                        className="flex-1 text-xs bg-white border border-gray-200 rounded px-2 py-1.5 text-gray-700 truncate"
+                        onClick={(e) => (e.target as HTMLInputElement).select()}
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(feedStatus.feedUrl!);
+                          toast({ title: isEs ? "Link copiado" : "Link copied" });
+                        }}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-2">
+                      {isEs
+                        ? "En Apple Calendar: Archivo → Nueva suscripción. En Google Calendar: Otros calendarios → Desde URL. En Outlook: Agregar calendario → Desde internet."
+                        : "In Apple Calendar: File → New Subscription. In Google Calendar: Other calendars → From URL. In Outlook: Add calendar → From internet."}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

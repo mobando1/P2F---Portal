@@ -73,6 +73,7 @@ export interface IStorage {
   getTutorByEmail(email: string): Promise<Tutor | undefined>;
   getTutorsByIds(ids: number[]): Promise<Tutor[]>;
   getTutorByUserId(userId: number): Promise<Tutor | undefined>;
+  getTutorByIcsToken(token: string): Promise<Tutor | undefined>;
   getTutorsByCategory(classType?: string, languageTaught?: string): Promise<Tutor[]>;
   createTutor(tutor: InsertTutor): Promise<Tutor>;
   updateTutor(id: number, data: Partial<InsertTutor>): Promise<Tutor | undefined>;
@@ -1016,6 +1017,11 @@ export class MemStorage implements IStorage {
   async getTutorByUserId(userId: number): Promise<Tutor | undefined> {
     await this.ensureInitialized();
     return Array.from(this.tutors.values()).find(t => t.userId === userId);
+  }
+
+  async getTutorByIcsToken(token: string): Promise<Tutor | undefined> {
+    await this.ensureInitialized();
+    return Array.from(this.tutors.values()).find(t => t.icsToken === token);
   }
 
   async createTutor(tutorData: InsertTutor): Promise<Tutor> {
