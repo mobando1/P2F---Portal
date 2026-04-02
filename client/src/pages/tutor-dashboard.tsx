@@ -45,7 +45,7 @@ import StudentProfileDrawer from "@/components/StudentProfileDrawer";
 import TutorMaterialsSection from "@/components/TutorMaterialsSection";
 import TutorReviewsSection from "@/components/TutorReviewsSection";
 import TutorCalendarView from "@/components/TutorCalendarView";
-import TutorAvailabilityGrid from "@/components/TutorAvailabilityGrid";
+import TutorAvailabilityManager from "@/components/tutor-availability/TutorAvailabilityManager";
 import {
   Select,
   SelectContent,
@@ -935,7 +935,7 @@ export default function TutorDashboard() {
 
         {/* ═══════════════ AVAILABILITY TAB ═══════════════ */}
         {activeTab === "availability" && (
-          <TutorAvailabilityGrid />
+          <TutorAvailabilityManager />
         )}
 
         {/* ═══════════════ STUDENTS TAB ═══════════════ */}

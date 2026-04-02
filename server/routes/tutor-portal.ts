@@ -342,11 +342,14 @@ export function registerTutorPortalRoutes(app: Express) {
             });
 
             // Check if blocked by exception
+            let blockingException: any = null;
             const isBlocked = dayExceptions.some((e: any) => {
-              if (!e.startTime && !e.endTime) return true; // full day block
+              if (!e.startTime && !e.endTime) { blockingException = e; return true; } // full day block
               const [esh, esm] = (e.startTime || "00:00").split(":").map(Number);
               const [eeh, eem] = (e.endTime || "23:59").split(":").map(Number);
-              return slotStart >= esh * 60 + esm && slotStart < eeh * 60 + eem;
+              const matches = slotStart >= esh * 60 + esm && slotStart < eeh * 60 + eem;
+              if (matches) blockingException = e;
+              return matches;
             });
 
             let classInfo: string | undefined;
@@ -365,6 +368,8 @@ export function registerTutorPortalRoutes(app: Express) {
               booked: !!bookedClass,
               blocked: isBlocked,
               classInfo,
+              exceptionId: blockingException?.id || undefined,
+              blockReason: blockingException?.reason || undefined,
             });
           }
         }
@@ -426,6 +431,41 @@ export function registerTutorPortalRoutes(app: Express) {
       });
 
       res.status(201).json(exception);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Batch create exceptions (for recurring blocks across multiple weeks)
+  app.post("/api/tutor/availability/exceptions/batch", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.status(404).json({ message: "Tutor profile not found" });
+
+      const { exceptions } = req.body;
+      if (!Array.isArray(exceptions) || exceptions.length === 0) {
+        return res.status(400).json({ message: "exceptions array is required" });
+      }
+      if (exceptions.length > 20) {
+        return res.status(400).json({ message: "Maximum 20 exceptions per batch" });
+      }
+
+      const created = [];
+      for (const exc of exceptions) {
+        if (!exc.date) continue;
+        const exception = await storage.createTutorException({
+          tutorId: tutor.id,
+          date: new Date(exc.date),
+          isBlocked: exc.isBlocked !== false,
+          startTime: exc.startTime || null,
+          endTime: exc.endTime || null,
+          reason: exc.reason || null,
+        });
+        created.push(exception);
+      }
+
+      res.status(201).json({ created: created.length, exceptions: created });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }
