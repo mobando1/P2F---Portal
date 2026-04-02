@@ -9,15 +9,28 @@ import { learningPathService } from "../services/learning-path";
 import { requireTutor } from "./auth";
 
 export function registerTutorPortalRoutes(app: Express) {
-  // Helper to get tutor profile from logged-in user — auto-creates profile if missing
+  // Helper to get tutor profile from logged-in user — auto-links or auto-creates if missing
   async function getTutorFromUser(userId: number) {
     const existing = await storage.getTutorByUserId(userId);
     if (existing) return existing;
 
-    // If user has userType "tutor" but no tutor profile, auto-create one
     const user = await storage.getUser(userId);
     if (!user || (user.userType !== "tutor" && user.userType !== "admin")) return undefined;
 
+    // Check if there's an unlinked tutor profile with the same email (created by admin)
+    try {
+      const byEmail = await storage.getTutorByEmail(user.email);
+      if (byEmail && !byEmail.userId) {
+        // Link existing profile to this user account
+        const linked = await storage.updateTutor(byEmail.id, { userId: user.id });
+        console.log(`[tutor-portal] Linked tutor profile ${byEmail.id} to user ${userId}`);
+        return linked || byEmail;
+      }
+    } catch (err) {
+      console.error(`[tutor-portal] Error linking tutor by email for user ${userId}:`, err);
+    }
+
+    // No profile found — create a new one
     try {
       const tutor = await storage.createTutor({
         name: `${user.firstName} ${user.lastName}`,
