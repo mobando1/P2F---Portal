@@ -482,6 +482,25 @@ async function startServer() {
             category TEXT DEFAULT 'general',
             created_at TIMESTAMP DEFAULT NOW()
           );
+          CREATE TABLE IF NOT EXISTS tutor_availability (
+            id SERIAL PRIMARY KEY,
+            tutor_id INTEGER NOT NULL,
+            day_of_week INTEGER NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            is_available BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT NOW()
+          );
+          CREATE TABLE IF NOT EXISTS tutor_availability_exceptions (
+            id SERIAL PRIMARY KEY,
+            tutor_id INTEGER NOT NULL,
+            date TIMESTAMP NOT NULL,
+            is_blocked BOOLEAN DEFAULT TRUE,
+            start_time TEXT,
+            end_time TEXT,
+            reason TEXT,
+            created_at TIMESTAMP DEFAULT NOW()
+          );
         `);
         log("Schema migrations applied");
 
