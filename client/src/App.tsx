@@ -264,8 +264,9 @@ function WebSocketInit() {
 }
 
 function App() {
+  const [location] = useLocation();
   return (
-    <ErrorBoundary>
+    <ErrorBoundary resetKey={location}>
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
           <CurrencyProvider>

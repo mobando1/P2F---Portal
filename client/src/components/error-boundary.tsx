@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 
 interface Props {
   children: React.ReactNode;
+  resetKey?: string;
 }
 
 interface State {
@@ -20,12 +21,17 @@ export class ErrorBoundary extends React.Component<Props, State> {
     return { hasError: true, error };
   }
 
+  componentDidUpdate(prevProps: Props) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false, error: undefined });
+    }
+  }
+
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("ErrorBoundary caught:", error, errorInfo);
   }
 
   handleGoToLogin = () => {
-    // Clear all session data and redirect to login
     localStorage.removeItem("passport2fluency_user");
     window.location.href = "/login";
   };

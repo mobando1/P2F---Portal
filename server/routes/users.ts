@@ -45,13 +45,29 @@ export function registerUserRoutes(app: Express) {
         return res.status(403).json({ message: "Forbidden: you can only update your own data" });
       }
 
-      const { firstName, lastName, phone } = req.body;
+      const { firstName, lastName, phone, avatar } = req.body;
       // Note: password changes must go through PUT /api/user/password (validates current password)
 
       const updateData: Record<string, unknown> = {};
       if (firstName !== undefined) updateData.firstName = firstName;
       if (lastName !== undefined) updateData.lastName = lastName;
       if (phone !== undefined) updateData.phone = phone;
+      if (avatar !== undefined) {
+        // Validate base64 image: must be a data URI with image MIME type, max ~5MB decoded
+        if (avatar !== null) {
+          const dataUriMatch = (avatar as string).match(/^data:(image\/(?:jpeg|png|webp|gif));base64,/);
+          if (!dataUriMatch) {
+            return res.status(400).json({ message: "Invalid image format. Supported: JPEG, PNG, WebP, GIF" });
+          }
+          const base64Data = (avatar as string).split(",")[1];
+          const sizeBytes = Math.ceil((base64Data.length * 3) / 4);
+          if (sizeBytes > 5 * 1024 * 1024) {
+            return res.status(400).json({ message: "Image too large. Maximum 5MB" });
+          }
+        }
+        updateData.avatar = avatar;
+        updateData.profileImage = avatar;
+      }
 
       const updatedUser = await storage.updateUser(userId, updateData);
 

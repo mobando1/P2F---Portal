@@ -333,8 +333,9 @@ export const learningPathService = {
     if (!user) throw new Error("User not found");
 
     // Only fetch levels up to current + 1 (for preview)
-    const currentIdx = CEFR_LEVELS.indexOf(user.level as any);
-    const relevantLevels = CEFR_LEVELS.slice(0, Math.min(currentIdx + 2, CEFR_LEVELS.length));
+    const userLevel = user.level || "A1";
+    const currentIdx = CEFR_LEVELS.indexOf(userLevel as any);
+    const relevantLevels = CEFR_LEVELS.slice(0, Math.min(Math.max(currentIdx, 0) + 2, CEFR_LEVELS.length));
 
     // Fetch stations only for relevant levels (in parallel)
     const stationsByLevel = await Promise.all(
@@ -369,7 +370,7 @@ export const learningPathService = {
     const classesCompleted = userProgress?.classesCompleted || 0;
 
     return {
-      currentLevel: user.level,
+      currentLevel: userLevel,
       levels,
       stats: { totalCompleted, totalStations, quizAvgScore, classesCompleted },
     };

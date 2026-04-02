@@ -37,7 +37,7 @@ export default function LearningPathPage() {
   const es = language === "es";
   const [selectedStation, setSelectedStation] = useState<number | null>(null);
 
-  const { data: pathData, isLoading, refetch } = useQuery<any>({
+  const { data: pathData, isLoading, isError, refetch } = useQuery<any>({
     queryKey: ["/api/learning-path"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
@@ -53,6 +53,31 @@ export default function LearningPathPage() {
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="animate-spin h-8 w-8 text-[#1C7BB1]" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-[#F0F4F8]">
+        <Header />
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+          <BookOpen className="h-12 w-12 text-gray-300 mb-4" />
+          <h2 className="text-xl font-bold text-[#0A4A6E] mb-2">
+            {es ? "No pudimos cargar tu camino" : "Couldn't load your path"}
+          </h2>
+          <p className="text-gray-500 mb-4 max-w-md">
+            {es
+              ? "Hubo un problema al cargar tu progreso. Intenta de nuevo."
+              : "There was a problem loading your progress. Please try again."}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-[#1C7BB1] text-white rounded-lg hover:bg-[#0A4A6E] transition-colors"
+          >
+            {es ? "Reintentar" : "Try Again"}
+          </button>
         </div>
       </div>
     );

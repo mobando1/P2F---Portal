@@ -858,9 +858,14 @@ export function registerTutorPortalRoutes(app: Express) {
         ...(phone !== undefined && { phone }),
         ...(languages !== undefined && { languages }),
         ...(certifications !== undefined && { certifications }),
-        ...(avatar !== undefined && { avatar, profileImage: avatar }),
+        ...(avatar !== undefined && { avatar }),
         ...(yearsOfExperience !== undefined && { yearsOfExperience }),
       });
+
+      // Sync avatar to users table for consistency
+      if (avatar !== undefined && tutor.userId) {
+        await storage.updateUser(tutor.userId, { avatar, profileImage: avatar });
+      }
 
       res.json(updated);
     } catch (error) {

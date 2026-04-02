@@ -154,7 +154,7 @@ export function registerLearningPathRoutes(app: Express) {
       if (progress.length === 0) {
         const user = await storage.getUser(userId);
         if (user) {
-          await learningPathService.initializeStudentPath(userId, user.level);
+          await learningPathService.initializeStudentPath(userId, user.level || "A1");
         }
       }
 

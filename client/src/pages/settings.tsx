@@ -78,6 +78,8 @@ export default function SettingsPage() {
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [phone, setPhone] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   // Delete account state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -148,14 +150,83 @@ export default function SettingsPage() {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("PUT", `/api/user/${user?.id}`, data),
+    mutationFn: (data: Record<string, unknown>) => apiRequest("PUT", `/api/user/${user?.id}`, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/settings"] });
       toast({ title: isEs ? "Perfil actualizado" : "Profile updated" });
     },
     onError: () => {
       toast({ title: "Error", variant: "destructive" });
     },
   });
+
+  const compressImage = (file: File, maxWidth: number, maxHeight: number, quality: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas not supported"));
+        ctx.drawImage(img, 0, 0, width, height);
+        const outputType = file.type === "image/png" ? "image/png" : "image/jpeg";
+        const dataUrl = canvas.toDataURL(outputType, quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Error",
+        description: isEs ? "Formato no soportado. Usa JPEG, PNG, WebP o GIF." : "Unsupported format. Use JPEG, PNG, WebP or GIF.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: isEs ? "El archivo es demasiado grande. Máximo 20MB." : "File too large. Maximum 20MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      // Compress to max 500x500 for profile photos, quality 0.85
+      const compressed = await compressImage(file, 500, 500, 0.85);
+      setAvatarPreview(compressed);
+      // Save immediately
+      await updateProfileMutation.mutateAsync({ avatar: compressed });
+    } catch {
+      toast({
+        title: "Error",
+        description: isEs ? "Error al procesar la imagen." : "Error processing image.",
+        variant: "destructive",
+      });
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = "";
+    }
+  };
 
   const updateNotifMutation = useMutation({
     mutationFn: (prefs: typeof notifPrefs) =>
@@ -242,15 +313,26 @@ export default function SettingsPage() {
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <div className="w-20 h-20 rounded-full overflow-hidden bg-[#1C7BB1] flex items-center justify-center text-white text-2xl font-bold">
-                    {user.avatar ? (
-                      <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                    {(avatarPreview || user.avatar) ? (
+                      <img src={avatarPreview || user.avatar} alt="" className="w-full h-full object-cover" />
                     ) : (
                       `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`
                     )}
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#F59E1C] rounded-full flex items-center justify-center shadow-md">
-                    <Camera className="w-3.5 h-3.5 text-white" />
-                  </div>
+                  <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#F59E1C] rounded-full flex items-center justify-center shadow-md cursor-pointer hover:bg-[#e08c10] transition-colors">
+                    {avatarUploading ? (
+                      <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                    ) : (
+                      <Camera className="w-3.5 h-3.5 text-white" />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      onChange={handleAvatarUpload}
+                      disabled={avatarUploading}
+                    />
+                  </label>
                 </div>
                 <div>
                   <p className="font-semibold text-[#0A4A6E]">{user.firstName} {user.lastName}</p>

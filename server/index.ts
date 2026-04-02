@@ -401,7 +401,7 @@ async function startServer() {
   });
 
   // NOW add the regular body parsing middleware (after webhook)
-  app.use(express.json());
+  app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: false }));
 
   // Register API routes BEFORE Vite so they don't get intercepted

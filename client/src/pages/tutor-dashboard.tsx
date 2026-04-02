@@ -36,12 +36,14 @@ import {
   History,
   MessageCircle,
   FileText,
+  ChevronRight,
 } from "lucide-react";
 import LevelBadge from "@/components/LevelBadge";
 import StudentProfileDrawer from "@/components/StudentProfileDrawer";
 import TutorMaterialsSection from "@/components/TutorMaterialsSection";
 import TutorReviewsSection from "@/components/TutorReviewsSection";
 import TutorCalendarView from "@/components/TutorCalendarView";
+import TutorAvailabilityGrid from "@/components/TutorAvailabilityGrid";
 import {
   Select,
   SelectContent,
@@ -141,7 +143,7 @@ export default function TutorDashboard() {
   const queryClient = useQueryClient();
   const user = getCurrentUser();
   const { language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<"today" | "schedule" | "students" | "profile">("today");
+  const [activeTab, setActiveTab] = useState<"today" | "schedule" | "availability" | "students" | "profile">("today");
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [drawerStudentId, setDrawerStudentId] = useState<number | null>(null);
   const [notesModal, setNotesModal] = useState<{ classId: number; studentName: string } | null>(null);
@@ -352,12 +354,49 @@ export default function TutorDashboard() {
     return d.toDateString() === new Date().toDateString();
   });
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File, maxW: number, maxH: number, quality: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxW || height > maxH) {
+          const ratio = Math.min(maxW / width, maxH / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas not supported"));
+        ctx.drawImage(img, 0, 0, width, height);
+        const outType = file.type === "image/png" ? "image/png" : "image/jpeg";
+        resolve(canvas.toDataURL(outType, quality));
+      };
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setEditAvatar(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!validTypes.includes(file.type)) {
+      toast({ title: "Error", description: isEs ? "Formato no soportado. Usa JPEG, PNG, WebP o GIF." : "Unsupported format. Use JPEG, PNG, WebP or GIF.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast({ title: "Error", description: isEs ? "Archivo muy grande. Máximo 20MB." : "File too large. Maximum 20MB.", variant: "destructive" });
+      return;
+    }
+    try {
+      const compressed = await compressImage(file, 500, 500, 0.85);
+      setEditAvatar(compressed);
+    } catch {
+      toast({ title: "Error", description: isEs ? "Error al procesar la imagen." : "Error processing image.", variant: "destructive" });
+    }
+    e.target.value = "";
   };
 
   const handleProfileSave = () => {
@@ -398,6 +437,7 @@ export default function TutorDashboard() {
           {[
             { key: "today" as const, labelEs: "Hoy", labelEn: "Today", icon: CalendarCheck },
             { key: "schedule" as const, labelEs: "Agenda", labelEn: "Schedule", icon: Calendar },
+            { key: "availability" as const, labelEs: "Horarios", labelEn: "Availability", icon: Clock },
             { key: "students" as const, labelEs: "Estudiantes", labelEn: "Students", icon: Users },
             { key: "profile" as const, labelEs: "Perfil", labelEn: "Profile", icon: User },
           ].map(tab => (
@@ -446,6 +486,22 @@ export default function TutorDashboard() {
                 </motion.div>
               ))}
             </motion.div>
+
+            {/* Quick Action: Availability */}
+            <Card className="border-0 shadow-sm border-l-4 border-l-[#F59E1C] cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab("availability")}>
+              <CardContent className="p-3 md:p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-[#F59E1C]/10">
+                    <Clock className="h-5 w-5 text-[#F59E1C]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#0A4A6E]">{isEs ? "Mi Disponibilidad" : "My Availability"}</p>
+                    <p className="text-[10px] text-[#0A4A6E]/50">{isEs ? "Configura tu horario semanal" : "Set your weekly schedule"}</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-[#0A4A6E]/40 flex-shrink-0" />
+              </CardContent>
+            </Card>
 
             {/* Alerts */}
             {(stats.classesWithoutNotes > 0 || stats.pendingAssignments > 0) && (
@@ -852,6 +908,11 @@ export default function TutorDashboard() {
           </div>
         )}
 
+        {/* ═══════════════ AVAILABILITY TAB ═══════════════ */}
+        {activeTab === "availability" && (
+          <TutorAvailabilityGrid />
+        )}
+
         {/* ═══════════════ STUDENTS TAB ═══════════════ */}
         {activeTab === "students" && (
           <>
@@ -1151,7 +1212,7 @@ export default function TutorDashboard() {
                       <p className="text-xs text-gray-500">{isEs ? "Configura tu horario semanal" : "Set your weekly schedule"}</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setLocation("/tutor-portal/availability")}>
+                  <Button variant="outline" size="sm" onClick={() => setActiveTab("availability")}>
                     {isEs ? "Gestionar" : "Manage"}
                   </Button>
                 </div>
