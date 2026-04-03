@@ -32,7 +32,12 @@ export class AvailabilityService {
     const daySlots = weeklySlots.filter(s => s.dayOfWeek === dayOfWeek);
 
     if (daySlots.length === 0) {
-      return []; // Tutor not available on this day
+      if (weeklySlots.length === 0) {
+        console.log(`[availability] Tutor ${tutorId}: NO recurring slots in DB at all`);
+      } else {
+        console.log(`[availability] Tutor ${tutorId}: has ${weeklySlots.length} slots but none for dayOfWeek=${dayOfWeek} (date=${dateStr})`);
+      }
+      return [];
     }
 
     // 2. Check for exceptions on this specific date

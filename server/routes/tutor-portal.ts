@@ -404,7 +404,9 @@ export function registerTutorPortalRoutes(app: Express) {
         return res.status(400).json({ message: "slots must be an array" });
       }
 
+      console.log(`[tutor/availability] Saving ${slots.length} slots for tutor ${tutor.id} (user ${userId}):`, JSON.stringify(slots.slice(0, 3)));
       const result = await storage.setTutorAvailability(tutor.id, slots);
+      console.log(`[tutor/availability] Saved ${result.length} slots, first:`, result[0] ? JSON.stringify({ id: result[0].id, dayOfWeek: result[0].dayOfWeek, startTime: result[0].startTime, endTime: result[0].endTime, isAvailable: result[0].isAvailable }) : 'none');
       res.json(result);
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });

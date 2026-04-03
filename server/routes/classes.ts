@@ -452,30 +452,34 @@ export function registerClassRoutes(app: Express) {
       })();
 
       const days = [];
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
+      const now = new Date();
+      // Allow booking same day (slots in the future), not just tomorrow+
+      const cutoff = new Date(now);
+      cutoff.setMinutes(cutoff.getMinutes() + 60); // at least 1h from now
 
       for (let d = 0; d < 7; d++) {
         const date = new Date(weekStart);
         date.setDate(weekStart.getDate() + d);
         const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-        const isPast = date < tomorrow;
+        const isPast = date < new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
         let slots: Array<{ start: string; end: string; available: boolean }> = [];
         if (!isPast) {
           try {
             slots = await calendarService.getTutorAvailability(tutorId, dateStr);
-          } catch {
+          } catch (err: any) {
+            console.warn(`[calendar/week] Failed to get availability for tutor ${tutorId} on ${dateStr}:`, err.message);
             slots = [];
           }
         }
+
+        const availableSlots = slots.filter(s => s.available);
 
         days.push({
           date: dateStr,
           dayOfWeek: date.getDay(),
           isPast,
-          slots: slots.filter(s => s.available),
+          slots: availableSlots,
         });
       }
 
