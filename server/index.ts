@@ -544,6 +544,76 @@ async function startServer() {
           console.error("STARTUP: Tutor migration error:", migErr);
         }
 
+        // Link tutor profiles to user accounts + deduplicate
+        try {
+          // 1. Link unlinked tutor profiles to matching user accounts by email
+          const linked = await pgPool.query(`
+            UPDATE tutors t
+            SET user_id = u.id
+            FROM users u
+            WHERE LOWER(t.email) = LOWER(u.email)
+              AND t.user_id IS NULL
+              AND u.user_type = 'tutor'
+          `);
+          if (linked.rowCount && linked.rowCount > 0) {
+            log(`Linked ${linked.rowCount} tutor profiles to user accounts by email`);
+          }
+
+          // 2. Find duplicate tutor profiles (same user_id linked to multiple tutor rows)
+          // Move availability from duplicates to the LOWEST id (the original profile students see)
+          const dupes = await pgPool.query(`
+            SELECT user_id, MIN(id) as keep_id, ARRAY_AGG(id ORDER BY id) as all_ids
+            FROM tutors
+            WHERE user_id IS NOT NULL
+            GROUP BY user_id
+            HAVING COUNT(*) > 1
+          `);
+          for (const row of dupes.rows) {
+            const keepId = row.keep_id;
+            const allIds = row.all_ids;
+            const dupeIds = allIds.filter((id: number) => id !== keepId);
+            if (dupeIds.length > 0) {
+              // Move availability from duplicate to the kept profile
+              await pgPool.query(
+                `UPDATE tutor_availability SET tutor_id = $1 WHERE tutor_id = ANY($2::int[])`,
+                [keepId, dupeIds]
+              );
+              // Move exceptions too
+              await pgPool.query(
+                `UPDATE tutor_availability_exceptions SET tutor_id = $1 WHERE tutor_id = ANY($2::int[])`,
+                [keepId, dupeIds]
+              );
+              // Deactivate duplicate profiles (don't delete — might have classes linked)
+              await pgPool.query(
+                `UPDATE tutors SET is_active = FALSE, email = email || '_dup_' || id WHERE id = ANY($1::int[])`,
+                [dupeIds]
+              );
+              log(`Merged ${dupeIds.length} duplicate tutor profiles into tutor ${keepId} for user ${row.user_id}`);
+            }
+          }
+
+          // 3. Also handle case where availability exists for a tutor ID that has no user_id
+          // but another tutor with same email HAS a user_id (the auto-linked one)
+          const orphaned = await pgPool.query(`
+            SELECT ta.tutor_id as orphan_id, t2.id as target_id
+            FROM tutor_availability ta
+            JOIN tutors t1 ON ta.tutor_id = t1.id
+            JOIN tutors t2 ON LOWER(t1.email) = LOWER(t2.email) AND t2.id != t1.id
+            WHERE t1.user_id IS NOT NULL AND t2.user_id IS NOT NULL AND t1.id > t2.id
+          `);
+          for (const row of orphaned.rows) {
+            await pgPool.query(
+              `UPDATE tutor_availability SET tutor_id = $1 WHERE tutor_id = $2`,
+              [row.target_id, row.orphan_id]
+            );
+            log(`Moved orphaned availability from tutor ${row.orphan_id} to ${row.target_id}`);
+          }
+
+          log("Tutor profile deduplication complete");
+        } catch (dedupeErr) {
+          console.error("STARTUP: Tutor deduplication error:", dedupeErr);
+        }
+
         // Check tutor count via raw SQL (bypasses Drizzle ORM parsing)
         try {
           const countResult = await pgPool.query("SELECT COUNT(*) as cnt FROM tutors");

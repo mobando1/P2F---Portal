@@ -9,28 +9,39 @@ import { learningPathService } from "../services/learning-path";
 import { requireTutor } from "./auth";
 
 export function registerTutorPortalRoutes(app: Express) {
-  // Helper to get tutor profile from logged-in user — auto-links or auto-creates if missing
+  // Helper to get tutor profile from logged-in user — links existing or creates new
   async function getTutorFromUser(userId: number) {
+    // 1. Direct lookup by userId (fastest path)
     const existing = await storage.getTutorByUserId(userId);
-    if (existing) return existing;
+    if (existing) {
+      console.log(`[tutor-portal] Found tutor ${existing.id} for user ${userId} (by userId)`);
+      return existing;
+    }
 
     const user = await storage.getUser(userId);
     if (!user || (user.userType !== "tutor" && user.userType !== "admin")) return undefined;
 
-    // Check if there's an unlinked tutor profile with the same email (created by admin)
+    // 2. Try to find and link by email (case-insensitive)
     try {
       const byEmail = await storage.getTutorByEmail(user.email);
-      if (byEmail && !byEmail.userId) {
-        // Link existing profile to this user account
+      if (byEmail) {
+        if (!byEmail.userId || byEmail.userId === user.id) {
+          // Link this profile to the user
+          const linked = await storage.updateTutor(byEmail.id, { userId: user.id });
+          console.log(`[tutor-portal] Linked tutor ${byEmail.id} to user ${userId} (by email: ${user.email})`);
+          return linked || byEmail;
+        }
+        // Email match but userId belongs to someone else — use this profile anyway
+        // (admin likely created it for this person)
+        console.log(`[tutor-portal] Found tutor ${byEmail.id} by email but userId=${byEmail.userId} differs from ${userId}, re-linking`);
         const linked = await storage.updateTutor(byEmail.id, { userId: user.id });
-        console.log(`[tutor-portal] Linked tutor profile ${byEmail.id} to user ${userId}`);
         return linked || byEmail;
       }
     } catch (err) {
-      console.error(`[tutor-portal] Error linking tutor by email for user ${userId}:`, err);
+      console.error(`[tutor-portal] Error finding tutor by email for user ${userId}:`, err);
     }
 
-    // No profile found — create a new one
+    // 3. Last resort — create a new profile
     try {
       const tutor = await storage.createTutor({
         name: `${user.firstName} ${user.lastName}`,
@@ -55,10 +66,42 @@ export function registerTutorPortalRoutes(app: Express) {
       console.log(`[tutor-portal] Auto-created tutor profile ${tutor.id} for user ${userId}`);
       return tutor;
     } catch (err) {
-      console.error(`[tutor-portal] Failed to auto-create tutor profile for user ${userId}:`, err);
+      console.error(`[tutor-portal] Failed to auto-create tutor for user ${userId}:`, err);
       return undefined;
     }
   }
+
+  // Debug: show tutor ID chain and availability count
+  app.get("/api/tutor/debug-availability", requireTutor, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const tutor = await getTutorFromUser(userId);
+      if (!tutor) return res.json({ error: "No tutor profile found", userId });
+
+      const availability = await storage.getTutorAvailability(tutor.id);
+      const allTutors = await storage.getAllTutors(true);
+      const matchingTutors = allTutors.filter(t =>
+        t.email === tutor.email || t.userId === userId
+      );
+
+      res.json({
+        userId,
+        tutorId: tutor.id,
+        tutorEmail: tutor.email,
+        tutorName: tutor.name,
+        tutorUserId: tutor.userId,
+        availabilitySlots: availability.length,
+        availabilitySample: availability.slice(0, 3).map(a => ({
+          dayOfWeek: a.dayOfWeek, startTime: a.startTime, endTime: a.endTime, isAvailable: a.isAvailable
+        })),
+        allMatchingTutorProfiles: matchingTutors.map(t => ({
+          id: t.id, name: t.name, email: t.email, userId: t.userId, isActive: t.isActive
+        })),
+      });
+    } catch (error: any) {
+      res.json({ error: error.message });
+    }
+  });
 
   // Dashboard stats
   app.get("/api/tutor/dashboard", requireTutor, async (req, res) => {
