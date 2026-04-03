@@ -191,55 +191,11 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange }
 function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutorId: number; tutorName: string; tutorAvatar: string | null; isEs: boolean }) {
   const user = getCurrentUser();
   const { toast } = useToast();
-  const [view, setView] = useState<"week" | "month" | "grid">("grid");
-  const [weekStart, setWeekStart] = useState(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return getMonday(tomorrow);
-  });
-  const [monthDate, setMonthDate] = useState(new Date());
+  const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringWeeks, setRecurringWeeks] = useState(4);
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // Generate week days
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-
-  // Fetch availability for each day of the visible week
-  const weekDateStrs = weekDays.map(toDateStr);
-  const weekQueries = weekDateStrs.map((dateStr) => {
-    const dayDate = new Date(dateStr);
-    const isPast = dayDate < today;
-    return useQuery<TimeSlot[]>({
-      queryKey: [`/api/calendar/tutor/${tutorId}/availability`, dateStr],
-      queryFn: async () => {
-        const res = await fetch(`/api/calendar/tutor/${tutorId}/availability?date=${dateStr}`, { credentials: "include" });
-        if (!res.ok) return [];
-        return res.json();
-      },
-      enabled: !isPast,
-      staleTime: 60000,
-    });
-  });
-
-  // For month view: fetch selected day's slots
-  const { data: monthDaySlots, isLoading: monthDayLoading } = useQuery<TimeSlot[]>({
-    queryKey: [`/api/calendar/tutor/${tutorId}/availability`, selectedDate],
-    queryFn: async () => {
-      const res = await fetch(`/api/calendar/tutor/${tutorId}/availability?date=${selectedDate}`, { credentials: "include" });
-      if (!res.ok) return [];
-      return res.json();
-    },
-    enabled: view === "month" && !!selectedDate,
-  });
 
   // Book mutations
   const bookMutation = useMutation({
@@ -306,42 +262,7 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
   });
 
   const canBookTrial = user && !user.trialCompleted;
-  const dayNames = isEs ? DAY_NAMES_ES : DAY_NAMES_EN;
-  const monthNames = isEs ? MONTH_NAMES_ES : MONTH_NAMES_EN;
   const isAnyPending = bookMutation.isPending || bookTrialMutation.isPending || bookRecurringMutation.isPending;
-
-  // Week navigation
-  const prevWeek = () => {
-    const minWeekStart = getMonday(new Date());
-    const prev = new Date(weekStart);
-    prev.setDate(prev.getDate() - 7);
-    if (prev >= minWeekStart) setWeekStart(prev);
-  };
-  const nextWeek = () => {
-    const next = new Date(weekStart);
-    next.setDate(next.getDate() + 7);
-    setWeekStart(next);
-  };
-
-  // Month navigation
-  const prevMonth = () => {
-    const prev = new Date(monthDate);
-    prev.setMonth(prev.getMonth() - 1);
-    if (prev >= new Date(today.getFullYear(), today.getMonth(), 1)) setMonthDate(prev);
-  };
-  const nextMonth = () => {
-    const next = new Date(monthDate);
-    next.setMonth(next.getMonth() + 1);
-    setMonthDate(next);
-  };
-
-  // Generate month grid
-  const monthYear = monthDate.getFullYear();
-  const monthIdx = monthDate.getMonth();
-  const firstDay = new Date(monthYear, monthIdx, 1);
-  const lastDay = new Date(monthYear, monthIdx + 1, 0);
-  const startOffset = (firstDay.getDay() + 6) % 7; // Monday = 0
-  const totalDays = lastDay.getDate();
 
   const handleBook = () => {
     if (isRecurring && !canBookTrial) {
@@ -382,273 +303,24 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
         </div>
       )}
 
-      {/* View Toggle */}
-      <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1">
-        <button
-          onClick={() => { setView("week"); setSelectedSlot(null); }}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-            view === "week" ? "bg-white shadow-sm text-[#0A4A6E]" : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <LayoutGrid className="w-3.5 h-3.5" />
-          {isEs ? "Semana" : "Week"}
-        </button>
-        <button
-          onClick={() => { setView("month"); setSelectedSlot(null); setSelectedDate(""); }}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-            view === "month" ? "bg-white shadow-sm text-[#0A4A6E]" : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <CalendarDays className="w-3.5 h-3.5" />
-          {isEs ? "Mes" : "Month"}
-        </button>
-        <button
-          onClick={() => { setView("grid"); setSelectedSlot(null); }}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-            view === "grid" ? "bg-white shadow-sm text-[#0A4A6E]" : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          {isEs ? "Horarios" : "Schedule"}
-        </button>
-      </div>
-
-      {/* WEEK VIEW */}
-      {view === "week" && (
-        <div>
-          {/* Week Navigation */}
-          <div className="flex items-center justify-between mb-3">
-            <button onClick={prevWeek} className="p-1 rounded-md hover:bg-gray-100 text-gray-500">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="text-sm font-medium text-[#0A4A6E]">
-              {weekDays[0].getDate()} {monthNames[weekDays[0].getMonth()].slice(0, 3)} - {weekDays[6].getDate()} {monthNames[weekDays[6].getMonth()].slice(0, 3)}
-            </span>
-            <button onClick={nextWeek} className="p-1 rounded-md hover:bg-gray-100 text-gray-500">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Week Grid */}
-          <div className="grid grid-cols-7 gap-1 mb-3">
-            {weekDays.map((day, dayIdx) => {
-              const dateStr = toDateStr(day);
-              const isPast = day < today;
-              const isSelected = selectedDate === dateStr;
-              const query = weekQueries[dayIdx];
-              const daySlots = (query?.data || []).filter(s => s.available);
-              const hasSlots = daySlots.length > 0 && !isPast;
-
-              return (
-                <button
-                  key={dateStr}
-                  onClick={() => {
-                    if (!isPast) {
-                      setSelectedDate(dateStr);
-                      setSelectedSlot(null);
-                    }
-                  }}
-                  disabled={isPast}
-                  className={`flex flex-col items-center py-2 rounded-lg text-center transition-all ${
-                    isPast
-                      ? "opacity-30 cursor-not-allowed"
-                      : isSelected
-                        ? "bg-[#1C7BB1] text-white shadow-md"
-                        : hasSlots
-                          ? "bg-[#EAF4FA] hover:bg-[#d4ecf6] cursor-pointer"
-                          : "bg-gray-50 text-gray-400"
-                  }`}
-                >
-                  <span className="text-[10px] font-medium">{dayNames[dayIdx]}</span>
-                  <span className="text-sm font-bold">{day.getDate()}</span>
-                  {hasSlots && !isSelected && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#1C7BB1] mt-0.5" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Time Slots for Selected Day */}
-          {selectedDate && (() => {
-            const dayIdx = weekDays.findIndex(d => toDateStr(d) === selectedDate);
-            const query = dayIdx >= 0 ? weekQueries[dayIdx] : null;
-            const loading = query?.isLoading;
-            const daySlots = (query?.data || []).filter(s => s.available);
-
-            return (
-              <div className="mt-2">
-                <p className="text-xs font-medium text-gray-500 mb-2">
-                  {isEs ? "Horarios disponibles" : "Available times"}
-                </p>
-                {loading ? (
-                  <div className="flex justify-center py-3">
-                    <Loader2 className="h-4 w-4 animate-spin text-[#1C7BB1]" />
-                  </div>
-                ) : daySlots.length === 0 ? (
-                  <p className="text-xs text-gray-400 text-center py-2">
-                    {isEs ? "Sin horarios" : "No times available"}
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto">
-                    {daySlots.map((slot) => (
-                      <Button
-                        key={slot.startTime}
-                        variant="outline"
-                        size="sm"
-                        className={`text-xs h-8 ${
-                          selectedSlot === slot.startTime
-                            ? "bg-[#1C7BB1] text-white border-[#1C7BB1]"
-                            : "border-[#1C7BB1]/20 text-[#0A4A6E] hover:bg-[#EAF4FA]"
-                        }`}
-                        onClick={() => setSelectedSlot(slot.startTime)}
-                      >
-                        {slot.startTime}
-                      </Button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </div>
-      )}
-
-      {/* MONTH VIEW */}
-      {view === "month" && (
-        <div>
-          {/* Month Navigation */}
-          <div className="flex items-center justify-between mb-3">
-            <button onClick={prevMonth} className="p-1 rounded-md hover:bg-gray-100 text-gray-500">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="text-sm font-bold text-[#0A4A6E]">
-              {monthNames[monthIdx]} {monthYear}
-            </span>
-            <button onClick={nextMonth} className="p-1 rounded-md hover:bg-gray-100 text-gray-500">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Day headers */}
-          <div className="grid grid-cols-7 gap-1 mb-1">
-            {dayNames.map(name => (
-              <div key={name} className="text-center text-[10px] font-medium text-gray-400 py-1">{name}</div>
-            ))}
-          </div>
-
-          {/* Month grid */}
-          <div className="grid grid-cols-7 gap-1 mb-3">
-            {/* Empty cells for offset */}
-            {Array.from({ length: startOffset }).map((_, i) => (
-              <div key={`empty-${i}`} className="h-9" />
-            ))}
-            {Array.from({ length: totalDays }).map((_, i) => {
-              const dayNum = i + 1;
-              const dayDate = new Date(monthYear, monthIdx, dayNum);
-              const dateStr = toDateStr(dayDate);
-              const isPast = dayDate < today;
-              const isSelected = selectedDate === dateStr;
-              const isToday = toDateStr(dayDate) === toDateStr(new Date());
-
-              return (
-                <button
-                  key={dayNum}
-                  onClick={() => {
-                    if (!isPast) {
-                      setSelectedDate(dateStr);
-                      setSelectedSlot(null);
-                    }
-                  }}
-                  disabled={isPast}
-                  className={`h-9 rounded-lg text-xs font-medium flex items-center justify-center relative transition-all ${
-                    isPast
-                      ? "text-gray-300 cursor-not-allowed"
-                      : isSelected
-                        ? "bg-[#1C7BB1] text-white shadow-md"
-                        : isToday
-                          ? "bg-[#F59E1C]/20 text-[#0A4A6E] font-bold"
-                          : "hover:bg-[#EAF4FA] text-[#0A4A6E]"
-                  }`}
-                >
-                  {dayNum}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Tutor photo + selected day slots */}
-          {selectedDate && (
-            <div className="border-t border-gray-100 pt-3">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                  {tutorAvatar ? (
-                    <img src={tutorAvatar} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-[#1C7BB1] flex items-center justify-center text-white text-[10px] font-bold">
-                      {tutorName.charAt(0)}
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500">
-                  {new Date(selectedDate + "T12:00:00").toLocaleDateString(isEs ? "es" : "en", { weekday: "long", month: "long", day: "numeric" })}
-                </p>
-              </div>
-
-              {monthDayLoading ? (
-                <div className="flex justify-center py-3">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#1C7BB1]" />
-                </div>
-              ) : (monthDaySlots || []).filter(s => s.available).length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-2">
-                  {isEs ? "Sin horarios disponibles" : "No available times"}
-                </p>
-              ) : (
-                <div className="grid grid-cols-3 gap-1.5 max-h-28 overflow-y-auto">
-                  {(monthDaySlots || []).filter(s => s.available).map((slot) => (
-                    <Button
-                      key={slot.startTime}
-                      variant="outline"
-                      size="sm"
-                      className={`text-xs h-8 ${
-                        selectedSlot === slot.startTime
-                          ? "bg-[#1C7BB1] text-white border-[#1C7BB1]"
-                          : "border-[#1C7BB1]/20 text-[#0A4A6E] hover:bg-[#EAF4FA]"
-                      }`}
-                      onClick={() => setSelectedSlot(slot.startTime)}
-                    >
-                      {slot.startTime}
-                    </Button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* GRID VIEW — Weekly schedule (Preply-style) */}
-      {view === "grid" && (
-        <WeeklyGridView
-          tutorId={Number(tutorId) || 0}
-          weekStart={toDateStr(weekStart)}
-          isEs={isEs}
-          onSlotSelect={(date: string, slot: string) => {
-            setSelectedDate(date);
-            setSelectedSlot(slot);
-          }}
-          onWeekChange={(dir: number) => {
-            const current = new Date(weekStart);
-            current.setDate(current.getDate() + dir * 7);
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const minMonday = getMonday(tomorrow);
-            if (current >= minMonday) {
-              setWeekStart(current);
-            }
-          }}
-        />
-      )}
+      {/* Weekly Grid (Preply-style) */}
+      <WeeklyGridView
+        tutorId={Number(tutorId) || 0}
+        weekStart={toDateStr(weekStart)}
+        isEs={isEs}
+        onSlotSelect={(date: string, slot: string) => {
+          setSelectedDate(date);
+          setSelectedSlot(slot);
+        }}
+        onWeekChange={(dir: number) => {
+          const current = new Date(weekStart);
+          current.setDate(current.getDate() + dir * 7);
+          const minMonday = getMonday(new Date());
+          if (current >= minMonday) {
+            setWeekStart(current);
+          }
+        }}
+      />
 
       {/* BOOKING PANEL */}
       {selectedSlot && selectedDate && (
