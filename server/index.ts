@@ -502,6 +502,8 @@ async function startServer() {
             created_at TIMESTAMP DEFAULT NOW()
           );
         `);
+        // Fix any availability rows with NULL isAvailable
+        await pgPool.query(`UPDATE tutor_availability SET is_available = TRUE WHERE is_available IS NULL`);
         log("Schema migrations applied");
 
         // Migrate tutors table

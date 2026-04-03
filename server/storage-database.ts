@@ -602,7 +602,7 @@ export class DatabaseStorage implements IStorage {
     await this.db.delete(tutorAvailability).where(eq(tutorAvailability.tutorId, tutorId));
     // Insert new slots
     if (slots.length === 0) return [];
-    const values = slots.map(s => ({ ...s, tutorId }));
+    const values = slots.map(s => ({ ...s, tutorId, isAvailable: true }));
     return await this.db.insert(tutorAvailability).values(values).returning();
   }
 
