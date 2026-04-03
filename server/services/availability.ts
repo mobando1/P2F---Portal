@@ -23,8 +23,12 @@ export class AvailabilityService {
     const date = new Date(dateStr);
     const dayOfWeek = date.getDay(); // 0=Sun, 1=Mon, ...
 
+    // Safe query wrapper — tolerates missing tables
+    const safe = <T>(fn: () => Promise<T>, fallback: T): Promise<T> =>
+      fn().catch(err => { console.warn("[availability] query failed:", err.message); return fallback; });
+
     // 1. Get recurring weekly availability for this day of week
-    const weeklySlots = await storage.getTutorAvailability(tutorId);
+    const weeklySlots = await safe(() => storage.getTutorAvailability(tutorId), []);
     const daySlots = weeklySlots.filter(s => s.dayOfWeek === dayOfWeek);
 
     if (daySlots.length === 0) {
@@ -36,7 +40,7 @@ export class AvailabilityService {
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
-    const exceptions = await storage.getTutorExceptions(tutorId, startOfDay, endOfDay);
+    const exceptions = await safe(() => storage.getTutorExceptions(tutorId, startOfDay, endOfDay), []);
 
     // If entire day is blocked
     const fullDayBlock = exceptions.find(e => e.isBlocked && !e.startTime);
@@ -45,7 +49,7 @@ export class AvailabilityService {
     }
 
     // 3. Get existing booked classes for this date
-    const bookedClasses = await storage.getTutorClassesForDate(tutorId, date);
+    const bookedClasses = await safe(() => storage.getTutorClassesForDate(tutorId, date), []);
 
     // 4. Generate time slots from availability windows
     const allSlots: TimeSlot[] = [];
@@ -105,9 +109,13 @@ export class AvailabilityService {
       return { valid: false, reason: 'Cannot book a class in the past' };
     }
 
+    // Safe query wrapper
+    const safe = <T>(fn: () => Promise<T>, fallback: T): Promise<T> =>
+      fn().catch(err => { console.warn("[availability/validate] query failed:", err.message); return fallback; });
+
     // 3. Check weekly availability for this day of week
     const dayOfWeek = scheduledAt.getDay();
-    const weeklySlots = await storage.getTutorAvailability(tutorId);
+    const weeklySlots = await safe(() => storage.getTutorAvailability(tutorId), []);
     const daySlots = weeklySlots.filter(s => s.dayOfWeek === dayOfWeek);
 
     if (daySlots.length === 0) {
@@ -133,7 +141,7 @@ export class AvailabilityService {
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(scheduledAt);
     endOfDay.setHours(23, 59, 59, 999);
-    const exceptions = await storage.getTutorExceptions(tutorId, startOfDay, endOfDay);
+    const exceptions = await safe(() => storage.getTutorExceptions(tutorId, startOfDay, endOfDay), []);
 
     // Full day block
     const fullDayBlock = exceptions.find(e => e.isBlocked && !e.startTime);

@@ -191,7 +191,7 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange }
 function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutorId: number; tutorName: string; tutorAvatar: string | null; isEs: boolean }) {
   const user = getCurrentUser();
   const { toast } = useToast();
-  const [view, setView] = useState<"week" | "month" | "grid">("week");
+  const [view, setView] = useState<"week" | "month" | "grid">("grid");
   const [weekStart, setWeekStart] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
