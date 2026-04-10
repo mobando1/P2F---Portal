@@ -368,6 +368,33 @@ export const emailService = {
     return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Nueva Clase" : "New Class", body, lang) });
   },
 
+  async sendTutorClassReminder(params: {
+    to: string;
+    tutorName: string;
+    studentName: string;
+    date: string;
+    time: string;
+    meetingLink?: string;
+    lang: "es" | "en";
+  }): Promise<boolean> {
+    const { to, tutorName, studentName, date, time, meetingLink, lang } = params;
+    const isEs = lang === "es";
+
+    const subject = isEs ? `Recordatorio: Clase mañana con ${studentName}` : `Reminder: Class tomorrow with ${studentName}`;
+    const body = `
+      <p style="color: #374151; font-size: 16px;">${isEs ? "Hola" : "Hi"} <strong>${tutorName}</strong>,</p>
+      <p style="color: #374151;">${isEs ? "Te recordamos que tienes una clase programada:" : "This is a reminder about your upcoming class:"}</p>
+      <div style="background: #FFF7ED; border-left: 4px solid #F59E1C; padding: 16px; margin: 16px 0; border-radius: 0 8px 8px 0;">
+        <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Estudiante:" : "Student:"}</strong> ${studentName}</p>
+        <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Fecha:" : "Date:"}</strong> ${date}</p>
+        <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Hora:" : "Time:"}</strong> ${time}</p>
+      </div>
+      ${meetingLink ? `<p style="margin: 16px 0;"><a href="${meetingLink}" style="background: #F59E1C; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">${isEs ? "Unirse a la clase" : "Join class"}</a></p>` : ""}
+    `;
+
+    return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Recordatorio de Clase" : "Class Reminder", body, lang) });
+  },
+
   async sendCampaignEmail(params: {
     to: string;
     subject: string;

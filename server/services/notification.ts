@@ -336,6 +336,35 @@ export const notificationService = {
           lang,
         });
       }
+
+      // Also send reminder to the tutor
+      if (tutor.userId) {
+        const tutorUser = await storage.getUser(tutor.userId);
+        if (tutorUser) {
+          // In-app notification for tutor
+          await createAndPush({
+            userId: tutor.userId,
+            type: "reminder",
+            title: lang === "es" ? "Recordatorio de Clase" : "Class Reminder",
+            message: lang === "es"
+              ? `Tienes una clase con ${student.firstName} ${student.lastName} mañana a las ${time}.`
+              : `You have a class with ${student.firstName} ${student.lastName} tomorrow at ${time}.`,
+            link: "/tutor-portal",
+            isRead: false,
+          });
+
+          // Email to tutor
+          emailService.sendTutorClassReminder({
+            to: tutorUser.email,
+            tutorName: tutor.name,
+            studentName: `${student.firstName} ${student.lastName}`,
+            date,
+            time,
+            meetingLink,
+            lang,
+          });
+        }
+      }
     } catch (error) {
       console.error("Error in sendClassReminder notification:", error);
     }

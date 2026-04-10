@@ -187,6 +187,7 @@ export function registerClassRoutes(app: Express) {
         tutorId,
         classId: trialClass.id,
         scheduledAt: new Date(scheduledAt),
+        meetingLink: meetingLink || undefined,
       });
 
       // Drip campaign: send pre-class tips (fire-and-forget)

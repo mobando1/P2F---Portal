@@ -428,6 +428,11 @@ async function startServer() {
     const { dripCampaignService } = await import("./services/drip-campaign");
     dripCampaignService.startPeriodicCheck();
     log("Drip campaign service started");
+
+    const { ClassSchedulerService } = await import("./services/class-scheduler");
+    const classScheduler = new ClassSchedulerService();
+    classScheduler.startReminderService();
+    log("Class reminder service started (24h before class reminders)");
   } catch (error) {
     console.error("Failed to start background services:", error);
   }
