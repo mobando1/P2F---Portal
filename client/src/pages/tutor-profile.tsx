@@ -72,12 +72,14 @@ const MONTH_NAMES_ES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "
 const MONTH_NAMES_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 // Weekly Grid View — Preply-style day columns with available time pills
-function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange }: {
+function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange, selectedDate, selectedSlot }: {
   tutorId: number;
   weekStart: string;
   isEs: boolean;
   onSlotSelect: (date: string, slot: string) => void;
   onWeekChange: (dir: number) => void;
+  selectedDate?: string;
+  selectedSlot?: string | null;
 }) {
   const { data, isLoading } = useQuery<{
     weekStart: string;
@@ -151,15 +153,22 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange }
               {/* Available Time Slots */}
               <div className="w-full space-y-1.5">
                 {availableSlots.length > 0 ? (
-                  availableSlots.map(slot => (
-                    <button
-                      key={slot.start}
-                      onClick={() => onSlotSelect(dayData!.date, slot.start)}
-                      className="w-full py-2 rounded-full border border-[#1C7BB1]/25 bg-white text-[#1C7BB1] text-xs font-medium hover:bg-[#1C7BB1] hover:text-white hover:border-[#1C7BB1] transition-all active:scale-95"
-                    >
-                      {slot.start}
-                    </button>
-                  ))
+                  availableSlots.map(slot => {
+                    const isSelected = selectedDate === dayData?.date && selectedSlot === slot.start;
+                    return (
+                      <button
+                        key={slot.start}
+                        onClick={() => onSlotSelect(dayData!.date, slot.start)}
+                        className={`w-full py-2 rounded-full border text-xs font-medium transition-all active:scale-95 ${
+                          isSelected
+                            ? "bg-[#1C7BB1] text-white border-[#1C7BB1] shadow-md"
+                            : "border-[#1C7BB1]/25 bg-white text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white hover:border-[#1C7BB1]"
+                        }`}
+                      >
+                        {slot.start}
+                      </button>
+                    );
+                  })
                 ) : (
                   <p className="text-center text-gray-300 text-xs py-3">—</p>
                 )}
@@ -267,25 +276,10 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
   };
 
   return (
-    <Card className="p-5">
-      {/* Header with tutor avatar + title */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-          {tutorAvatar ? (
-            <img src={tutorAvatar} alt={tutorName} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-[#1C7BB1] flex items-center justify-center text-white text-sm font-bold">
-              {tutorName.split(" ").map(n => n[0]).join("").slice(0, 2)}
-            </div>
-          )}
-        </div>
-        <div>
-          <h3 className="text-base font-bold text-[#0A4A6E]">
-            {isEs ? "Reservar Clase" : "Book a Class"}
-          </h3>
-          <p className="text-xs text-gray-500">{tutorName}</p>
-        </div>
-      </div>
+    <Card className="p-5 md:p-6">
+      <h3 className="text-lg font-bold text-[#0A4A6E] mb-4">
+        {isEs ? "Reservar Clase" : "Book a Class"}
+      </h3>
 
       {canBookTrial && (
         <div className="bg-[#F59E1C]/10 border border-[#F59E1C]/30 rounded-lg p-2.5 mb-4">
@@ -300,6 +294,8 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
         tutorId={Number(tutorId) || 0}
         weekStart={toDateStr(weekStart)}
         isEs={isEs}
+        selectedDate={selectedDate}
+        selectedSlot={selectedSlot}
         onSlotSelect={(date: string, slot: string) => {
           setSelectedDate(date);
           setSelectedSlot(slot);
@@ -498,94 +494,89 @@ export default function TutorProfilePage() {
           </Button>
         </Link>
 
+        {/* Tutor Profile Header — above calendar */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+          <Card className="p-6">
+            <div className="flex flex-col sm:flex-row gap-6">
+              <div className="w-32 h-32 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
+                {tutor.avatar ? (
+                  <img src={tutor.avatar} alt={tutor.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-[#1C7BB1] flex items-center justify-center text-white text-3xl font-bold">
+                    {tutor.name.split(" ").map(n => n[0]).join("")}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-[#0A4A6E]">{tutor.name}</h1>
+                <p className="text-[#1C7BB1] font-medium mt-1">{isEs && tutor.specializationEs ? tutor.specializationEs : tutor.specialization}</p>
+                <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 fill-[#F59E1C] text-[#F59E1C]" />
+                    <span className="font-semibold">{tutor.rating}</span>
+                    <span>({tutor.reviewCount} {isEs ? "resenas" : "reviews"})</span>
+                  </div>
+                  {tutor.country && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>{tutor.country}</span>
+                    </div>
+                  )}
+                  {tutor.yearsOfExperience && (
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      <span>{tutor.yearsOfExperience} {isEs ? "anos exp." : "yrs exp."}</span>
+                    </div>
+                  )}
+                </div>
+                {tutor.languages && tutor.languages.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {tutor.languages.map(lang => (
+                      <span key={lang} className="px-2 py-1 bg-[#EAF4FA] text-[#1C7BB1] rounded-full text-xs font-medium">
+                        {lang}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {currentUser && tutor.userId && (
+                  <div className="mt-4">
+                    <Button
+                      onClick={() => startConversationMutation.mutate()}
+                      disabled={startConversationMutation.isPending || !tutor.userId}
+                      variant="outline"
+                      className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white"
+                    >
+                      {startConversationMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                      )}
+                      {isEs ? "Enviar Mensaje" : "Send Message"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
         {/* Booking Calendar — Full Width (Preply-style) */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
           className="mb-8"
         >
           <TutorBookingCalendar tutorId={tutor.id} tutorName={tutor.name} tutorAvatar={tutor.avatar} isEs={isEs} />
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
+        <div className="grid grid-cols-1 gap-8">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="lg:col-span-3 space-y-6"
+            className="space-y-6"
           >
-            {/* Profile Header */}
-            <motion.div variants={fadeInLeft}>
-              <Card className="p-6">
-                <div className="flex flex-col sm:flex-row gap-6">
-                  <div className="w-32 h-32 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
-                    {tutor.avatar ? (
-                      <img
-                        src={tutor.avatar}
-                        alt={tutor.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-[#1C7BB1] flex items-center justify-center text-white text-3xl font-bold">
-                        {tutor.name.split(" ").map(n => n[0]).join("")}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-[#0A4A6E]">{tutor.name}</h1>
-                    <p className="text-[#1C7BB1] font-medium mt-1">{isEs && tutor.specializationEs ? tutor.specializationEs : tutor.specialization}</p>
-                    <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-[#F59E1C] text-[#F59E1C]" />
-                        <span className="font-semibold">{tutor.rating}</span>
-                        <span>({tutor.reviewCount} {isEs ? "resenas" : "reviews"})</span>
-                      </div>
-                      {tutor.country && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          <span>{tutor.country}</span>
-                        </div>
-                      )}
-                      {tutor.yearsOfExperience && (
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          <span>{tutor.yearsOfExperience} {isEs ? "anos exp." : "yrs exp."}</span>
-                        </div>
-                      )}
-                    </div>
-                    {tutor.languages && tutor.languages.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {tutor.languages.map(lang => (
-                          <span key={lang} className="px-2 py-1 bg-[#EAF4FA] text-[#1C7BB1] rounded-full text-xs font-medium">
-                            {lang}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {currentUser && tutor.userId && (
-                      <div className="mt-4">
-                        <Button
-                          onClick={() => startConversationMutation.mutate()}
-                          disabled={startConversationMutation.isPending || !tutor.userId}
-                          variant="outline"
-                          className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white"
-                        >
-                          {startConversationMutation.isPending ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <MessageCircle className="w-4 h-4 mr-2" />
-                          )}
-                          {isEs ? "Enviar Mensaje" : "Send Message"}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-
             {/* About */}
             <motion.div variants={fadeInUp}>
               <Card className="p-6">

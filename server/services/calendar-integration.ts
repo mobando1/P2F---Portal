@@ -84,14 +84,24 @@ export class CalendarIntegrationService {
 
       // Generar link de videollamada (Google Meet con fallback a Jitsi)
       const title = `${tutor.languageTaught.includes('spanish') ? 'Spanish' : 'English'} Class - ${tutor.name}`;
-      const { meetingLink, calendarEventId, tutorCalendarEventId } = await googleMeetService.createMeetingLink({
-        title,
-        scheduledAt,
-        duration,
-        tutorName: tutor.name,
-        tutorId,
-        studentName: user.firstName || undefined,
-      });
+      let meetingLink: string | null = null;
+      let calendarEventId: string | null = null;
+      let tutorCalendarEventId: string | null = null;
+      try {
+        const meetResult = await googleMeetService.createMeetingLink({
+          title,
+          scheduledAt,
+          duration,
+          tutorName: tutor.name,
+          tutorId,
+          studentName: user.firstName || undefined,
+        });
+        meetingLink = meetResult.meetingLink || null;
+        calendarEventId = meetResult.calendarEventId || null;
+        tutorCalendarEventId = meetResult.tutorCalendarEventId || null;
+      } catch (meetErr) {
+        console.warn("[calendar-integration] Google Meet link creation failed, booking without link:", meetErr);
+      }
 
       // Crear clase en storage
       const classData = {
@@ -102,8 +112,8 @@ export class CalendarIntegrationService {
         duration,
         status: 'scheduled' as const,
         meetingLink,
-        calendarEventId: calendarEventId || null,
-        tutorCalendarEventId: tutorCalendarEventId || null,
+        calendarEventId,
+        tutorCalendarEventId,
       };
 
       const newClass = await storage.createClass(classData);
@@ -117,13 +127,13 @@ export class CalendarIntegrationService {
         tutorId,
         classId: newClass.id,
         scheduledAt,
-        meetingLink,
+        meetingLink: meetingLink || undefined,
       });
 
       return {
         success: true,
         classId: newClass.id,
-        meetingLink,
+        meetingLink: meetingLink || undefined,
         message: 'Class booked successfully'
       };
     } catch (error) {
