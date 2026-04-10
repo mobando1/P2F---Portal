@@ -140,14 +140,24 @@ export function registerClassRoutes(app: Express) {
         return res.status(409).json({ message: validation.reason });
       }
 
-      // Generate meeting link
-      const { meetingLink, calendarEventId, tutorCalendarEventId } = await googleMeetService.createMeetingLink({
-        title: `Free Trial Class - ${tutor.name}`,
-        scheduledAt: new Date(scheduledAt),
-        duration: 50,
-        tutorName: tutor.name,
-        tutorId,
-      });
+      // Generate meeting link (optional — don't block booking if Meet API fails)
+      let meetingLink: string | null = null;
+      let calendarEventId: string | null = null;
+      let tutorCalendarEventId: string | null = null;
+      try {
+        const meetResult = await googleMeetService.createMeetingLink({
+          title: `Free Trial Class - ${tutor.name}`,
+          scheduledAt: new Date(scheduledAt),
+          duration: 50,
+          tutorName: tutor.name,
+          tutorId,
+        });
+        meetingLink = meetResult.meetingLink || null;
+        calendarEventId = meetResult.calendarEventId || null;
+        tutorCalendarEventId = meetResult.tutorCalendarEventId || null;
+      } catch (meetErr) {
+        console.warn("[book-trial] Google Meet link creation failed, booking without link:", meetErr);
+      }
 
       // Create the trial class
       const trialClass = await storage.createClass({
@@ -184,6 +194,7 @@ export function registerClassRoutes(app: Express) {
 
       res.status(201).json(trialClass);
     } catch (error) {
+      console.error("[book-trial] Error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

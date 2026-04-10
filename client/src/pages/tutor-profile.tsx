@@ -71,7 +71,7 @@ const DAY_NAMES_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTH_NAMES_ES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 const MONTH_NAMES_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-// Weekly Grid View — shows all available slots for a week at once (Preply-style)
+// Weekly Grid View — Preply-style day columns with available time pills
 function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange }: {
   tutorId: number;
   weekStart: string;
@@ -87,27 +87,21 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange }
     queryFn: () => apiRequest("GET", `/api/calendar/tutor/${tutorId}/week?startDate=${weekStart}`).then(r => r.json()),
   });
 
-  // Get all unique time slots across the week
-  const allTimes = useMemo(() => {
-    if (!data) return [];
-    const timeSet = new Set<string>();
-    data.days.forEach(d => d.slots.forEach(s => timeSet.add(s.start)));
-    return Array.from(timeSet).sort();
-  }, [data]);
-
   const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Mon-Sun
   const dayLabels = isEs ? DAY_NAMES_ES : DAY_NAMES_EN;
 
   if (isLoading) {
-    return <div className="flex justify-center py-8"><Loader2 className="animate-spin h-6 w-6 text-[#1C7BB1]" /></div>;
+    return <div className="flex justify-center py-12"><Loader2 className="animate-spin h-6 w-6 text-[#1C7BB1]" /></div>;
   }
 
-  if (!data || allTimes.length === 0) {
+  const hasAnySlots = data?.days.some(d => d.slots.length > 0);
+
+  if (!data || !hasAnySlots) {
     return (
-      <div className="text-center py-8">
-        <Clock className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+      <div className="text-center py-10">
+        <Clock className="w-10 h-10 text-gray-300 mx-auto mb-3" />
         <p className="text-sm text-gray-500">{isEs ? "No hay horarios disponibles esta semana" : "No available times this week"}</p>
-        <button onClick={() => onWeekChange(1)} className="mt-2 text-xs text-[#1C7BB1] hover:underline">
+        <button onClick={() => onWeekChange(1)} className="mt-3 text-sm text-[#1C7BB1] hover:underline font-medium">
           {isEs ? "Ver siguiente semana →" : "See next week →"}
         </button>
       </div>
@@ -122,68 +116,63 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange }
 
   return (
     <div>
-      {/* Navigation */}
-      <div className="flex items-center justify-between mb-3">
-        <button onClick={() => onWeekChange(-1)} className="p-1 rounded hover:bg-gray-100">
-          <ChevronLeft className="h-4 w-4 text-[#0A4A6E]" />
+      {/* Week Navigation */}
+      <div className="flex items-center justify-between mb-5">
+        <button onClick={() => onWeekChange(-1)} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <ChevronLeft className="h-5 w-5 text-[#0A4A6E]" />
         </button>
-        <span className="text-sm font-medium text-[#0A4A6E]">{weekLabel}</span>
-        <button onClick={() => onWeekChange(1)} className="p-1 rounded hover:bg-gray-100">
-          <ChevronRight className="h-4 w-4 text-[#0A4A6E]" />
+        <span className="text-base font-semibold text-[#0A4A6E]">{weekLabel}</span>
+        <button onClick={() => onWeekChange(1)} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <ChevronRight className="h-5 w-5 text-[#0A4A6E]" />
         </button>
       </div>
 
-      {/* Grid */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse min-w-[500px]">
-          <thead>
-            <tr>
-              <th className="w-14 p-1" />
-              {DAY_ORDER.map((dow, idx) => {
-                const dayData = data.days.find(d => d.dayOfWeek === dow);
-                const dateNum = dayData ? new Date(dayData.date + "T12:00:00").getDate() : "";
-                return (
-                  <th key={dow} className="p-1 text-center">
-                    <p className="text-xs font-semibold text-[#0A4A6E]">{dayLabels[idx]}</p>
-                    <p className="text-[10px] text-gray-400">{dateNum}</p>
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {allTimes.map(time => (
-              <tr key={time}>
-                <td className="p-0.5 text-right pr-2">
-                  <span className="text-[10px] text-gray-400">{time}</span>
-                </td>
-                {DAY_ORDER.map(dow => {
-                  const dayData = data.days.find(d => d.dayOfWeek === dow);
-                  const slot = dayData?.slots.find(s => s.start === time);
-                  const hasSlot = slot && slot.available;
+      {/* Day Columns — Preply style */}
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3">
+        {DAY_ORDER.map((dow, idx) => {
+          const dayData = data.days.find(d => d.dayOfWeek === dow);
+          const dateObj = dayData ? new Date(dayData.date + "T12:00:00") : null;
+          const dateNum = dateObj ? dateObj.getDate() : "";
+          const isToday = dayData?.date === new Date().toISOString().split("T")[0];
+          const availableSlots = dayData?.slots.filter(s => s.available) || [];
 
-                  return (
-                    <td key={dow} className="p-0.5">
-                      {hasSlot ? (
-                        <button
-                          onClick={() => onSlotSelect(dayData!.date, time)}
-                          className="w-full h-7 rounded-md border border-[#1C7BB1]/30 bg-white text-[#1C7BB1] text-[11px] font-medium hover:bg-[#1C7BB1] hover:text-white transition-all"
-                        >
-                          {time}
-                        </button>
-                      ) : (
-                        <div className="w-full h-7 flex items-center justify-center">
-                          <span className="text-gray-300 text-[10px]">—</span>
-                        </div>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          return (
+            <div key={dow} className="flex flex-col items-center">
+              {/* Day Header */}
+              <div className={`text-center mb-2 pb-2 w-full border-b-2 ${isToday ? "border-[#1C7BB1]" : "border-transparent"}`}>
+                <p className={`text-xs font-semibold ${isToday ? "text-[#1C7BB1]" : "text-[#0A4A6E]"}`}>
+                  {dayLabels[idx]}
+                </p>
+                <p className={`text-sm font-bold ${isToday ? "text-[#1C7BB1]" : "text-[#0A4A6E]/70"}`}>
+                  {dateNum}
+                </p>
+              </div>
+
+              {/* Available Time Slots */}
+              <div className="w-full space-y-1.5">
+                {availableSlots.length > 0 ? (
+                  availableSlots.map(slot => (
+                    <button
+                      key={slot.start}
+                      onClick={() => onSlotSelect(dayData!.date, slot.start)}
+                      className="w-full py-2 rounded-full border border-[#1C7BB1]/25 bg-white text-[#1C7BB1] text-xs font-medium hover:bg-[#1C7BB1] hover:text-white hover:border-[#1C7BB1] transition-all active:scale-95"
+                    >
+                      {slot.start}
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-center text-gray-300 text-xs py-3">—</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {/* Timezone */}
+      <p className="text-[10px] text-gray-400 mt-4 text-center">
+        {isEs ? "En tu zona horaria local" : "In your local timezone"}
+      </p>
     </div>
   );
 }
@@ -201,11 +190,14 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
   const bookMutation = useMutation({
     mutationFn: async () => {
       if (!selectedSlot || !selectedDate) throw new Error("Missing");
+      const [sh, sm] = selectedSlot.split(":").map(Number);
+      const endMin = sh * 60 + sm + 60;
+      const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
       const response = await apiRequest("POST", "/api/calendar/book", {
         tutorId,
         date: selectedDate,
         startTime: selectedSlot,
-        endTime: selectedSlot,
+        endTime,
       });
       return response.json();
     },
@@ -506,13 +498,23 @@ export default function TutorProfilePage() {
           </Button>
         </Link>
 
+        {/* Booking Calendar — Full Width (Preply-style) */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-8"
+        >
+          <TutorBookingCalendar tutorId={tutor.id} tutorName={tutor.name} tutorAvatar={tutor.avatar} isEs={isEs} />
+        </motion.div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <motion.div
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="lg:col-span-2 space-y-6"
+            className="lg:col-span-3 space-y-6"
           >
             {/* Profile Header */}
             <motion.div variants={fadeInLeft}>
@@ -707,17 +709,6 @@ export default function TutorProfilePage() {
             </motion.div>
           </motion.div>
 
-          {/* Booking Sidebar */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-1"
-          >
-            <div className="sticky top-24">
-              <TutorBookingCalendar tutorId={tutor.id} tutorName={tutor.name} tutorAvatar={tutor.avatar} isEs={isEs} />
-            </div>
-          </motion.div>
         </div>
       </main>
 
