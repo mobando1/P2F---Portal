@@ -448,6 +448,13 @@ async function startServer() {
           ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMP;
           ALTER TABLE reviews ADD COLUMN IF NOT EXISTS tutor_response TEXT;
           ALTER TABLE reviews ADD COLUMN IF NOT EXISTS responded_at TIMESTAMP;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS calendar_event_id TEXT;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS tutor_calendar_event_id TEXT;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS session_notes TEXT;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS shared_notes TEXT;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS homework_text TEXT;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS topics_covered TEXT[];
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_tutor_id INTEGER;
           UPDATE users SET email_verified = TRUE
             WHERE email_verified IS FALSE
               AND (google_id IS NOT NULL OR microsoft_id IS NOT NULL OR user_type = 'admin');

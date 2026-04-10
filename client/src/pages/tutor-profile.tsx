@@ -232,8 +232,14 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
       setSelectedSlot(null);
       setSelectedDate("");
     },
-    onError: () => {
-      toast({ title: "Error", description: isEs ? "No se pudo reservar." : "Could not book.", variant: "destructive" });
+    onError: (err: any) => {
+      let msg = isEs ? "No se pudo reservar." : "Could not book.";
+      try {
+        const body = err?.message?.includes(":") ? err.message.substring(err.message.indexOf(":") + 2) : "";
+        const parsed = JSON.parse(body);
+        if (parsed?.message) msg = parsed.message;
+      } catch { /* use default */ }
+      toast({ title: "Error", description: msg, variant: "destructive" });
     },
   });
 
