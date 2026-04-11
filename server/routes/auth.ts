@@ -159,8 +159,9 @@ export function registerAuthRoutes(app: Express) {
         lang,
       }).catch((err) => console.error("[register] Failed to send verification email:", err));
 
-      // Send welcome email (fire-and-forget)
-      dripCampaignService.onUserRegistered(user.id);
+      // Send welcome email
+      dripCampaignService.onUserRegistered(user.id)
+        .catch(err => console.error("[register] Drip campaign error:", err));
 
       // Notify admin of new registration
       emailService.sendAdminNotification({

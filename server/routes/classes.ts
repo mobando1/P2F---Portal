@@ -188,10 +188,11 @@ export function registerClassRoutes(app: Express) {
         classId: trialClass.id,
         scheduledAt: new Date(scheduledAt),
         meetingLink: meetingLink || undefined,
-      });
+      }).catch(err => console.error("[book-trial] Notification error:", err));
 
-      // Drip campaign: send pre-class tips (fire-and-forget)
-      dripCampaignService.onTrialBooked(userId, new Date(scheduledAt));
+      // Drip campaign: send pre-class tips
+      dripCampaignService.onTrialBooked(userId, new Date(scheduledAt))
+        .catch(err => console.error("[book-trial] Drip campaign error:", err));
 
       res.status(201).json(trialClass);
     } catch (error) {
