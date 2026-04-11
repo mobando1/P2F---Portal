@@ -109,6 +109,24 @@ export const notificationService = {
           });
         }
       }
+
+      // Notify admin
+      const allClasses = await storage.getUserClasses(studentId);
+      const bookedClass = allClasses.find(c => c.id === classId);
+      const isTrial = bookedClass?.isTrial ?? false;
+      emailService.sendAdminNotification({
+        subject: isTrial
+          ? `Trial agendada — ${student.firstName} ${student.lastName}`
+          : `Clase agendada — ${student.firstName} ${student.lastName}`,
+        eventType: isTrial ? "Clase de Prueba Agendada" : "Nueva Clase Agendada",
+        details: [
+          { label: "Estudiante", value: `${student.firstName} ${student.lastName} (${student.email})` },
+          { label: "Tutor", value: tutor.name },
+          { label: "Fecha", value: date },
+          { label: "Hora", value: time },
+          ...(isTrial ? [{ label: "Tipo", value: "🎯 TRIAL — Lead caliente" }] : []),
+        ],
+      }).catch(err => console.error("Error sending admin booking notification:", err));
     } catch (error) {
       console.error("Error in onClassBooked notification:", error);
     }
@@ -256,6 +274,17 @@ export const notificationService = {
           });
         }
       }
+
+      // Notify admin
+      emailService.sendAdminNotification({
+        subject: `Clase cancelada — ${student.firstName} ${student.lastName}`,
+        eventType: "Clase Cancelada",
+        details: [
+          { label: "Estudiante", value: `${student.firstName} ${student.lastName} (${student.email})` },
+          { label: "Tutor", value: tutor.name },
+          { label: "Fecha", value: date },
+        ],
+      }).catch(err => console.error("Error sending admin cancellation notification:", err));
     } catch (error) {
       console.error("Error in onClassCancelled notification:", error);
     }

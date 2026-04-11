@@ -7,6 +7,7 @@ if (!resend) {
 }
 
 const FROM_EMAIL = "Passport2Fluency <noreply@passport2fluency.com>";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@passport2fluency.com";
 
 interface EmailParams {
   to: string;
@@ -393,6 +394,24 @@ export const emailService = {
     `;
 
     return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Recordatorio de Clase" : "Class Reminder", body, lang) });
+  },
+
+  async sendAdminNotification(params: {
+    subject: string;
+    eventType: string;
+    details: { label: string; value: string }[];
+  }): Promise<boolean> {
+    const body = `
+      <p style="color: #374151; font-size: 16px;">Nuevo evento en la plataforma:</p>
+      <div style="background: #EAF4FA; border-left: 4px solid #1C7BB1; padding: 16px; margin: 16px 0; border-radius: 0 8px 8px 0;">
+        <p style="margin: 4px 0; color: #0A4A6E; font-weight: bold; font-size: 15px;">${params.eventType}</p>
+        ${params.details.map(d => `<p style="margin: 4px 0; color: #0A4A6E;"><strong>${d.label}:</strong> ${d.value}</p>`).join("")}
+        <p style="margin: 8px 0 0; color: #6B7280; font-size: 12px;">${new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" })}</p>
+      </div>
+      <p style="margin: 16px 0;"><a href="https://portal.passport2fluency.com/admin" style="background: #1C7BB1; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Ir al Admin Panel</a></p>
+    `;
+
+    return sendEmail({ to: ADMIN_EMAIL, subject: `[P2F Admin] ${params.subject}`, html: wrapTemplate("Admin Alert", body, "es") });
   },
 
   async sendCampaignEmail(params: {

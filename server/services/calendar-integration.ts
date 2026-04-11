@@ -68,8 +68,9 @@ export class CalendarIntegrationService {
         return { success: false, message: 'User or tutor not found' };
       }
 
-      // Verificar créditos de clase
-      if (!user.classCredits || user.classCredits <= 0) {
+      // Atomic credit deduction BEFORE creating class — prevents booking with 0 credits
+      const deducted = await storage.deductClassCredit(userId);
+      if (!deducted) {
         return { success: false, message: 'No class credits available' };
       }
 
@@ -79,6 +80,7 @@ export class CalendarIntegrationService {
       // Validar disponibilidad y conflictos
       const validation = await availabilityService.validateBooking(tutorId, scheduledAt, duration);
       if (!validation.valid) {
+        await storage.refundClassCredit(userId);
         return { success: false, message: validation.reason };
       }
 
@@ -103,23 +105,24 @@ export class CalendarIntegrationService {
         console.warn("[calendar-integration] Google Meet link creation failed, booking without link:", meetErr);
       }
 
-      // Crear clase en storage
-      const classData = {
-        userId,
-        tutorId,
-        title,
-        scheduledAt,
-        duration,
-        status: 'scheduled' as const,
-        meetingLink,
-        calendarEventId,
-        tutorCalendarEventId,
-      };
-
-      const newClass = await storage.createClass(classData);
-
-      // Reducir créditos (atomic)
-      await storage.deductClassCredit(userId);
+      // Crear clase en storage — refund credit on failure
+      let newClass;
+      try {
+        newClass = await storage.createClass({
+          userId,
+          tutorId,
+          title,
+          scheduledAt,
+          duration,
+          status: 'scheduled' as const,
+          meetingLink,
+          calendarEventId,
+          tutorCalendarEventId,
+        });
+      } catch (err) {
+        await storage.refundClassCredit(userId);
+        throw err;
+      }
 
       // Send notifications
       notificationService.onClassBooked({

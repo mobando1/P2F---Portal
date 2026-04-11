@@ -269,6 +269,7 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
   });
 
   const canBookTrial = user && !user.trialCompleted;
+  const hasCredits = canBookTrial || (user?.classCredits ?? 0) > 0;
   const isAnyPending = bookMutation.isPending || bookTrialMutation.isPending || bookRecurringMutation.isPending;
 
   const handleBook = () => {
@@ -369,6 +370,18 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
 
           {/* Book Button */}
           {user ? (
+            !hasCredits ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center space-y-2">
+                <p className="text-sm font-medium text-red-700">
+                  {isEs ? "No tienes créditos de clase disponibles" : "No class credits available"}
+                </p>
+                <Link href="/packages">
+                  <Button variant="outline" className="text-xs border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#EAF4FA]">
+                    {isEs ? "Comprar clases" : "Buy classes"}
+                  </Button>
+                </Link>
+              </div>
+            ) : (
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
                 className={`w-full font-semibold py-5 text-white shadow-lg ${
@@ -388,6 +401,7 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
                       : (isEs ? "Reservar Clase" : "Book Class")}
               </Button>
             </motion.div>
+            )
           ) : (
             <p className="text-center text-xs text-gray-400">
               <Link href="/login" className="text-[#1C7BB1] underline">

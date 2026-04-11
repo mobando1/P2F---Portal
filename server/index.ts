@@ -12,6 +12,7 @@ import { PLAN_DETAILS, PACKAGE_DETAILS, AMOUNT_TO_PACKAGE } from "./constants/pl
 import { stripeCache } from "./services/stripe-cache";
 import { wsService } from "./services/websocket";
 import rateLimit from "express-rate-limit";
+import { emailService } from "./services/email";
 
 // Initialize Stripe - allow running without keys in development
 const stripeKey = config.STRIPE_SECRET_KEY || config.TESTING_STRIPE_SECRET_KEY;
@@ -203,6 +204,19 @@ async function startServer() {
                       await storage.updateUser(parseInt(userId), { userType: 'customer' });
                     }
                     console.log(`Subscription created for user ${userId}, plan ${plan.name}`);
+
+                    // Notify admin of new subscription
+                    emailService.sendAdminNotification({
+                      subject: `Nueva suscripción — ${user.firstName} ${user.lastName}`,
+                      eventType: "Nueva Suscripción",
+                      details: [
+                        { label: "Usuario", value: `${user.firstName} ${user.lastName} (${user.email})` },
+                        { label: "Plan", value: plan.name },
+                        { label: "Clases incluidas", value: `${plan.classesIncluded}` },
+                        { label: "Monto", value: `$${((checkoutSession.amount_total || 0) / 100).toFixed(2)} ${(checkoutSession.currency || 'usd').toUpperCase()}` },
+                      ],
+                    }).catch(err => console.error("Error sending admin subscription notification:", err));
+
                     await storage.createStripeEvent({ eventType: event.type, stripeEventId: event.id, stripeCustomerId: (event.data.object as any).customer || null, userId: parseInt(userId), amount: checkoutSession.amount_total, currency: checkoutSession.currency || 'usd', metadata: { planId } });
                     return res.json({ received: true, processed: true });
                   } catch (error) {
@@ -228,6 +242,18 @@ async function startServer() {
                       await storage.updateUser(parseInt(userId), { userType: 'customer' });
                     }
                     console.log(`Added ${packageInfo.classes} credits to user ${userId}`);
+
+                    // Notify admin of package purchase
+                    emailService.sendAdminNotification({
+                      subject: `Compra de paquete — ${user.firstName} ${user.lastName}`,
+                      eventType: "Compra de Paquete de Clases",
+                      details: [
+                        { label: "Usuario", value: `${user.firstName} ${user.lastName} (${user.email})` },
+                        { label: "Clases", value: `${packageInfo.classes}` },
+                        { label: "Monto", value: `$${((checkoutSession.amount_total || 0) / 100).toFixed(2)} ${(checkoutSession.currency || 'usd').toUpperCase()}` },
+                      ],
+                    }).catch(err => console.error("Error sending admin package notification:", err));
+
                     await storage.createStripeEvent({ eventType: event.type, stripeEventId: event.id, stripeCustomerId: (event.data.object as any).customer || null, userId: parseInt(userId), amount: checkoutSession.amount_total, currency: checkoutSession.currency || 'usd', metadata: { packageId } });
                     return res.json({ received: true, processed: true });
                   } catch (error) {

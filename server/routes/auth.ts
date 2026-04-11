@@ -162,6 +162,17 @@ export function registerAuthRoutes(app: Express) {
       // Send welcome email (fire-and-forget)
       dripCampaignService.onUserRegistered(user.id);
 
+      // Notify admin of new registration
+      emailService.sendAdminNotification({
+        subject: `Nuevo registro — ${user.firstName} ${user.lastName}`,
+        eventType: "Nuevo Usuario Registrado",
+        details: [
+          { label: "Nombre", value: `${user.firstName} ${user.lastName}` },
+          { label: "Email", value: user.email },
+          { label: "Username", value: user.username },
+        ],
+      }).catch(err => console.error("[register] Failed to send admin notification:", err));
+
       res.status(201).json({ user: sanitizeUser(user) });
     } catch (error: any) {
       console.error("[register] Registration error:", error);
