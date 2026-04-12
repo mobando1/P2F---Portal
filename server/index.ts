@@ -542,6 +542,42 @@ async function startServer() {
         `);
         // Fix any availability rows with NULL isAvailable
         await pgPool.query(`UPDATE tutor_availability SET is_available = TRUE WHERE is_available IS NULL`);
+
+        // Revert wrongly auto-completed classes back to "scheduled"
+        // Classes that were completed but never actually had a tutor confirm them
+        // Only revert classes that were completed within the last 7 days (recent auto-completes)
+        try {
+          const reverted = await pgPool.query(`
+            UPDATE classes SET status = 'scheduled'
+            WHERE status = 'completed'
+              AND session_notes IS NULL
+              AND shared_notes IS NULL
+              AND scheduled_at > NOW() - INTERVAL '7 days'
+          `);
+          if (reverted.rowCount && reverted.rowCount > 0) {
+            log(`Reverted ${reverted.rowCount} wrongly auto-completed classes back to scheduled`);
+          }
+
+          // Reset inflated user_progress counters to match actual completed classes
+          await pgPool.query(`
+            UPDATE user_progress up SET
+              classes_completed = COALESCE(sub.cnt, 0),
+              learning_hours = COALESCE(sub.hrs, '0.00')
+            FROM (
+              SELECT c.user_id,
+                COUNT(*) as cnt,
+                ROUND(SUM(COALESCE(c.duration, 60)) / 60.0, 2)::text as hrs
+              FROM classes c
+              WHERE c.status = 'completed'
+              GROUP BY c.user_id
+            ) sub
+            WHERE up.user_id = sub.user_id
+              AND (up.classes_completed != sub.cnt OR up.learning_hours != sub.hrs)
+          `);
+        } catch (fixErr) {
+          console.error("STARTUP: Class data fix error:", fixErr);
+        }
+
         log("Schema migrations applied");
 
         // Migrate tutors table

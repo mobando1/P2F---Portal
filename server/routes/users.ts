@@ -119,6 +119,14 @@ export function registerUserRoutes(app: Express) {
       try { upcomingClasses = await storage.getUpcomingClasses(userId); } catch (e) { console.error("Dashboard: upcoming classes fetch failed:", e); }
       try { recentCompletedClasses = await storage.getRecentCompletedClasses(userId, 3); } catch (e) { console.error("Dashboard: recent classes fetch failed:", e); }
 
+      // Calculate stats from actual class records (source of truth)
+      let allUserClasses: any[] = [];
+      try { allUserClasses = await storage.getUserClasses(userId); } catch {}
+      const completedClasses = allUserClasses.filter(c => c.status === "completed");
+      const scheduledClasses = allUserClasses.filter(c => c.status === "scheduled");
+      const actualCompleted = completedClasses.length;
+      const actualHours = completedClasses.reduce((sum: number, c: any) => sum + (c.duration || 60), 0) / 60;
+
       res.json({
         user: {
           id: user.id,
@@ -132,9 +140,9 @@ export function registerUserRoutes(app: Express) {
         upcomingClasses,
         recentCompletedClasses,
         stats: {
-          classesBooked: upcomingClasses.length + (progress?.classesCompleted || 0),
-          classesCompleted: progress?.classesCompleted || 0,
-          learningHours: progress?.learningHours || "0.00",
+          classesBooked: scheduledClasses.length + actualCompleted,
+          classesCompleted: actualCompleted,
+          learningHours: actualHours.toFixed(2),
           currentLevel: user.level,
           remainingClasses: Math.max((user.classCredits || 0), 0),
         },
