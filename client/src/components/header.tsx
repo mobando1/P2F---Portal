@@ -63,12 +63,10 @@ export default function Header() {
   // Clean, minimal navigation — secondary items go in avatar dropdown
   const primaryLinks = isTutorOnly ? [
     { href: "/tutor-portal", label: language === 'es' ? 'Mi Panel' : 'My Dashboard' },
-    { href: "/messages", label: language === 'es' ? 'Mensajes' : 'Messages' },
   ] : [
     { href: "/home", label: language === 'es' ? 'Inicio' : 'Home' },
     { href: "/tutors", label: language === 'es' ? 'Profesores' : 'Tutors' },
     { href: "/dashboard", label: language === 'es' ? 'Mis Clases' : 'My Classes' },
-    { href: "/messages", label: language === 'es' ? 'Mensajes' : 'Messages' },
     ...(isAdmin ? [{ href: "/admin", label: 'Admin' }] : []),
   ];
 
