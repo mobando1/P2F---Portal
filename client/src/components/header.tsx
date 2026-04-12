@@ -72,9 +72,7 @@ export default function Header() {
     ...(isAdmin ? [{ href: "/admin", label: 'Admin' }] : []),
   ];
 
-  const secondaryLinks: typeof primaryLinks = []; // Empty — all secondary items in avatar dropdown now
-
-  const navLinks = [...primaryLinks, ...secondaryLinks];
+  const navLinks = primaryLinks;
 
   return (
     <header
@@ -146,26 +144,6 @@ export default function Header() {
                 </Coachmark>
               );
             })}
-            {/* More dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1 text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium text-sm">
-                  {language === 'es' ? 'Más' : 'More'}
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-48">
-                {secondaryLinks.map((link) => (
-                  <Link key={link.href} href={link.href}>
-                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
-                      {link.href === "/ai-practice" && <Sparkles className="w-3.5 h-3.5 text-[#F59E1C]" />}
-                      {link.href === "/tutor-portal" && <GraduationCap className="w-3.5 h-3.5 text-[#1C7BB1]" />}
-                      {link.label}
-                    </DropdownMenuItem>
-                  </Link>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </nav>
 
           {/* Desktop User Profile & Login */}

@@ -43,16 +43,21 @@ class GoogleMeetService {
     }
 
     try {
+      const impersonateEmail = process.env.GOOGLE_IMPERSONATE_EMAIL;
+
       const auth = new google.auth.JWT({
         email,
         key: privateKey,
         scopes: ["https://www.googleapis.com/auth/calendar"],
+        subject: impersonateEmail,
       });
 
       this.calendar = google.calendar({ version: "v3", auth });
       this.calendarId = calendarId;
       this.initialized = true;
-      console.log("[GoogleMeet] Service account initialized successfully");
+      console.log(
+        `[GoogleMeet] Service account initialized${impersonateEmail ? ` (impersonating ${impersonateEmail})` : " (no impersonation — Meet links may not generate)"}`
+      );
     } catch (error) {
       console.error("[GoogleMeet] Failed to initialize:", error);
     }
@@ -132,13 +137,15 @@ class GoogleMeetService {
 
       const meetLink = this.extractMeetLink(event.data);
       if (!meetLink) {
-        console.error("[GoogleMeet] No Meet link from tutor calendar");
+        console.error("[GoogleMeet] No Meet link from tutor calendar. conferenceData:",
+          JSON.stringify(event.data.conferenceData, null, 2));
         return null;
       }
 
       return { meetingLink: meetLink, eventId: event.data.id! };
-    } catch (error) {
-      console.error("[GoogleMeet] Error creating in tutor calendar:", error);
+    } catch (error: any) {
+      console.error("[GoogleMeet] Error creating in tutor calendar:",
+        error?.response?.data || error?.message || error);
       return null;
     }
   }
@@ -157,13 +164,16 @@ class GoogleMeetService {
 
       const meetLink = this.extractMeetLink(event.data);
       if (!meetLink) {
-        console.error("[GoogleMeet] No Meet link from admin calendar");
+        console.error("[GoogleMeet] No Meet link from admin calendar. conferenceData:",
+          JSON.stringify(event.data.conferenceData, null, 2),
+          "| Impersonating:", process.env.GOOGLE_IMPERSONATE_EMAIL || "none");
         return null;
       }
 
       return { meetingLink: meetLink, eventId: event.data.id! };
-    } catch (error) {
-      console.error("[GoogleMeet] Error creating in admin calendar:", error);
+    } catch (error: any) {
+      console.error("[GoogleMeet] Error creating in admin calendar:",
+        error?.response?.data || error?.message || error);
       return null;
     }
   }
