@@ -539,6 +539,61 @@ async function startServer() {
             reason TEXT,
             created_at TIMESTAMP DEFAULT NOW()
           );
+          CREATE TABLE IF NOT EXISTS ai_conversations (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL DEFAULT 'New Conversation',
+            language TEXT NOT NULL DEFAULT 'spanish',
+            mode TEXT NOT NULL DEFAULT 'chat',
+            scenario TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+          );
+          CREATE TABLE IF NOT EXISTS ai_messages (
+            id SERIAL PRIMARY KEY,
+            conversation_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            corrections JSONB,
+            created_at TIMESTAMP DEFAULT NOW()
+          );
+          CREATE TABLE IF NOT EXISTS ai_student_profiles (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            detected_level TEXT DEFAULT 'A1',
+            interests JSONB DEFAULT '[]',
+            common_errors JSONB DEFAULT '[]',
+            recent_vocabulary JSONB DEFAULT '[]',
+            practice_streak INTEGER DEFAULT 0,
+            last_practice_date TIMESTAMP,
+            total_messages INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+          );
+          CREATE TABLE IF NOT EXISTS ai_saved_corrections (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            message_id INTEGER,
+            original TEXT NOT NULL,
+            corrected TEXT NOT NULL,
+            explanation TEXT,
+            is_reviewed BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT NOW()
+          );
+          CREATE TABLE IF NOT EXISTS ai_vocabulary (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            message_id INTEGER,
+            word TEXT NOT NULL,
+            translation TEXT,
+            context TEXT,
+            language TEXT DEFAULT 'spanish',
+            mastery_level INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT NOW()
+          );
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_messages_used INTEGER DEFAULT 0;
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_messages_reset_at TIMESTAMP;
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS autoconfirm_mode TEXT DEFAULT 'all';
         `);
         // Fix any availability rows with NULL isAvailable
         await pgPool.query(`UPDATE tutor_availability SET is_available = TRUE WHERE is_available IS NULL`);
