@@ -317,6 +317,59 @@ export default function Header() {
                     )}
                   </nav>
 
+                  {user && (
+                    <nav className="flex flex-col gap-3 pt-3 border-t">
+                      {!isTutorOnly && (
+                        <>
+                          <SheetClose asChild>
+                            <Link href="/learning-path" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
+                              <GraduationCap className="w-4 h-4 text-[#1C7BB1]" />
+                              {language === 'es' ? 'Mi Camino' : 'My Path'}
+                            </Link>
+                          </SheetClose>
+                          <SheetClose asChild>
+                            <Link href="/ai-practice" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-[#F59E1C]" />
+                              Practice Partner
+                            </Link>
+                          </SheetClose>
+                          <SheetClose asChild>
+                            <Link href="/packages" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
+                              <CreditCard className="w-4 h-4" />
+                              {language === 'es' ? 'Planes' : 'Plans'}
+                            </Link>
+                          </SheetClose>
+                        </>
+                      )}
+                      {isTutorOnly && (
+                        <SheetClose asChild>
+                          <Link href="/tutor-portal/assistant" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-[#F59E1C]" />
+                            {language === 'es' ? 'Asistente IA' : 'AI Assistant'}
+                          </Link>
+                        </SheetClose>
+                      )}
+                      <SheetClose asChild>
+                        <Link href="/profile" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          {language === 'es' ? 'Mi Perfil' : 'My Profile'}
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link href="/settings" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
+                          <Settings className="w-4 h-4" />
+                          {language === 'es' ? 'Configuración' : 'Settings'}
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link href="/support" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
+                          <LifeBuoy className="w-4 h-4" />
+                          {language === 'es' ? 'Soporte' : 'Support'}
+                        </Link>
+                      </SheetClose>
+                    </nav>
+                  )}
+
                   <div className="pt-4 border-t">
                     {user ? (
                       <Button variant="outline" className="w-full text-red-600 border-red-200" onClick={handleLogout}>
