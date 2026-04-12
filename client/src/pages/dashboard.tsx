@@ -393,89 +393,43 @@ export default function Dashboard() {
         )}
 
         {/* Stats Cards */}
-        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6 mb-8">
-          <motion.div variants={fadeInUp}>
-            <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center">
-                  <div className="p-2 md:p-3 rounded-lg bg-[#1C7BB1]/10">
-                    <CalendarCheck className="h-5 w-5 md:h-6 md:w-6 text-[#1C7BB1]" />
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-8">
+          {[
+            { label: t.classesBooked, value: stats.classesBooked, icon: CalendarCheck, color: "text-[#1C7BB1]", bg: "bg-[#1C7BB1]/10" },
+            { label: t.classesCompleted, value: stats.classesCompleted, icon: GraduationCap, color: "text-[#F59E1C]", bg: "bg-[#F59E1C]/10" },
+            { label: t.learningHours, value: stats.learningHours, icon: Clock, color: "text-[#1C7BB1]", bg: "bg-[#1C7BB1]/10" },
+            { label: t.currentLevel, value: stats.currentLevel, icon: Star, color: "text-[#F59E1C]", bg: "bg-[#F59E1C]/10" },
+          ].map((stat, i) => (
+            <motion.div key={i} variants={fadeInUp}>
+              <Card className="shadow-md border-0 hover:shadow-lg transition-shadow h-full">
+                <CardContent className="p-4 md:p-5 flex flex-col items-center text-center">
+                  <div className={`p-2.5 rounded-xl ${stat.bg} mb-2`}>
+                    <stat.icon className={`h-5 w-5 ${stat.color}`} />
                   </div>
-                  <div className="ml-3 md:ml-4">
-                    <p className="text-[11px] sm:text-xs md:text-sm font-medium text-[#0A4A6E]">{t.classesBooked}</p>
-                    <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.classesBooked}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={fadeInUp}>
-            <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center">
-                  <div className="p-2 md:p-3 rounded-lg bg-[#F59E1C]/10">
-                    <GraduationCap className="h-5 w-5 md:h-6 md:w-6 text-[#F59E1C]" />
-                  </div>
-                  <div className="ml-3 md:ml-4">
-                    <p className="text-[11px] sm:text-xs md:text-sm font-medium text-[#0A4A6E]">{t.classesCompleted}</p>
-                    <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.classesCompleted}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={fadeInUp}>
-            <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center">
-                  <div className="p-2 md:p-3 rounded-lg bg-[#1C7BB1]/10">
-                    <Clock className="h-5 w-5 md:h-6 md:w-6 text-[#1C7BB1]" />
-                  </div>
-                  <div className="ml-3 md:ml-4">
-                    <p className="text-[11px] sm:text-xs md:text-sm font-medium text-[#0A4A6E]">{t.learningHours}</p>
-                    <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.learningHours}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={fadeInUp}>
-            <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center">
-                  <div className="p-2 md:p-3 rounded-lg bg-[#F59E1C]/10">
-                    <Star className="h-5 w-5 md:h-6 md:w-6 text-[#F59E1C]" />
-                  </div>
-                  <div className="ml-3 md:ml-4">
-                    <p className="text-[11px] sm:text-xs md:text-sm font-medium text-[#0A4A6E]">{t.currentLevel}</p>
-                    <p className="text-xl md:text-2xl font-bold text-[#0A4A6E]">{stats.currentLevel}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                  <p className="text-2xl md:text-3xl font-bold text-[#0A4A6E]">{stat.value}</p>
+                  <p className="text-[10px] sm:text-xs text-[#0A4A6E]/60 font-medium mt-0.5">{stat.label}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
 
           <motion.div variants={fadeInUp} className="col-span-2 md:col-span-1">
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-[#1C7BB1] to-[#0A4A6E] text-white h-full">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[11px] sm:text-xs md:text-sm font-medium text-white/90">
-                      {language === 'es' ? 'Clases Restantes' : 'Remaining Classes'}
-                    </p>
-                    <p className="text-xl md:text-2xl font-bold text-white">{stats.remainingClasses}</p>
-                  </div>
-                  <Button
-                    onClick={() => setLocation("/packages")}
-                    size="sm"
-                    className="bg-white text-[#1C7BB1] hover:bg-white/90 font-medium"
-                  >
-                    {language === 'es' ? 'Comprar Más' : 'Buy More'}
-                  </Button>
+            <Card className="shadow-md border-0 bg-gradient-to-br from-[#1C7BB1] to-[#0A4A6E] text-white h-full">
+              <CardContent className="p-4 md:p-5 flex flex-col items-center text-center">
+                <div className="p-2.5 rounded-xl bg-white/15 mb-2">
+                  <CalendarCheck className="h-5 w-5 text-white" />
                 </div>
+                <p className="text-2xl md:text-3xl font-bold text-white">{stats.remainingClasses}</p>
+                <p className="text-[10px] sm:text-xs text-white/70 font-medium mt-0.5">
+                  {language === 'es' ? 'Clases Restantes' : 'Remaining'}
+                </p>
+                <Button
+                  onClick={() => setLocation("/packages")}
+                  size="sm"
+                  className="bg-white text-[#1C7BB1] hover:bg-white/90 font-medium text-xs mt-2 h-7 px-3"
+                >
+                  {language === 'es' ? 'Comprar Más' : 'Buy More'}
+                </Button>
               </CardContent>
             </Card>
           </motion.div>
