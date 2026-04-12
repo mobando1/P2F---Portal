@@ -74,6 +74,18 @@ export default function Header() {
 
   const navLinks = primaryLinks;
 
+  const moreLinks = isTutorOnly ? [
+    { href: "/tutor-portal/assistant", label: language === 'es' ? 'Asistente IA' : 'AI Assistant', icon: Sparkles, iconColor: "text-[#F59E1C]" },
+    { href: "/settings", label: language === 'es' ? 'Configuración' : 'Settings', icon: Settings, iconColor: "" },
+    { href: "/support", label: language === 'es' ? 'Soporte' : 'Support', icon: LifeBuoy, iconColor: "" },
+  ] : [
+    { href: "/ai-practice", label: 'Practice Partner', icon: Sparkles, iconColor: "text-[#F59E1C]" },
+    { href: "/learning-path", label: language === 'es' ? 'Mi Camino' : 'My Path', icon: GraduationCap, iconColor: "text-[#1C7BB1]" },
+    { href: "/packages", label: language === 'es' ? 'Planes' : 'Plans', icon: CreditCard, iconColor: "" },
+    { href: "/settings", label: language === 'es' ? 'Configuración' : 'Settings', icon: Settings, iconColor: "" },
+    { href: "/support", label: language === 'es' ? 'Soporte' : 'Support', icon: LifeBuoy, iconColor: "" },
+  ];
+
   return (
     <header
       className={`sticky top-0 z-50 border-b transition-all duration-300 ${
@@ -144,6 +156,27 @@ export default function Header() {
                 </Coachmark>
               );
             })}
+            {/* More dropdown */}
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1 text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium text-sm">
+                    {language === 'es' ? 'Más' : 'More'}
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-48">
+                  {moreLinks.map((link) => (
+                    <Link key={link.href} href={link.href}>
+                      <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
+                        <link.icon className={`w-3.5 h-3.5 ${link.iconColor}`} />
+                        {link.label}
+                      </DropdownMenuItem>
+                    </Link>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </nav>
 
           {/* Desktop User Profile & Login */}
