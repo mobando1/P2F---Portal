@@ -200,11 +200,21 @@ export default function PackagesPage() {
       } else {
         throw new Error('No checkout URL received');
       }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
+    } catch (error: any) {
+      const errMsg = error?.message || "";
+      console.error('Error creating checkout session:', errMsg);
+      // Extract server error message if available
+      let detail = language === 'es' ? "No se pudo abrir el checkout. Intenta de nuevo." : "Could not open checkout. Please try again.";
+      try {
+        const jsonPart = errMsg.includes(" - ") ? errMsg.substring(errMsg.indexOf(" - ") + 3) : "";
+        if (jsonPart) {
+          const parsed = JSON.parse(jsonPart);
+          if (parsed?.message) detail = parsed.message;
+        }
+      } catch { /* use default */ }
       toast({
         title: language === 'es' ? "Error de Pago" : "Payment Error",
-        description: language === 'es' ? "No se pudo abrir el checkout. Intenta de nuevo." : "Could not open checkout. Please try again.",
+        description: detail,
         variant: "destructive",
       });
     } finally {

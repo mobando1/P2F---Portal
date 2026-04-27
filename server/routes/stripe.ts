@@ -178,6 +178,9 @@ export function registerStripeRoutes(app: Express) {
   // Create Stripe checkout session for subscription
   app.post("/api/create-checkout-session", requireAuth, async (req, res) => {
     try {
+      const s = requireStripe(res);
+      if (!s) return;
+
       const { planId, userId } = req.body;
 
       if (!planId || !userId) {
@@ -200,7 +203,7 @@ export function registerStripeRoutes(app: Express) {
       if (isTestMode) {
         console.log(`Checkout TEST - Creando precio dinamico para ${currentPlan.name}`);
 
-        const price = await stripe!.prices.create({
+        const price = await s.prices.create({
           unit_amount: currentPlan.price,
           currency: "usd",
           recurring: { interval: "month" },
@@ -238,7 +241,7 @@ export function registerStripeRoutes(app: Express) {
       }
 
       // Create checkout session with proper subscription metadata
-      const session = await stripe!.checkout.sessions.create({
+      const session = await s.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "subscription",
         line_items: [{ price: priceId, quantity: 1 }],
