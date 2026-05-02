@@ -466,9 +466,10 @@ export function registerClassRoutes(app: Express) {
 
       const days = [];
       const now = new Date();
-      // Allow booking same day (slots in the future), not just tomorrow+
+      // Allow booking same day, but require at least 1h lead time for the slot start
       const cutoff = new Date(now);
-      cutoff.setMinutes(cutoff.getMinutes() + 60); // at least 1h from now
+      cutoff.setMinutes(cutoff.getMinutes() + 60);
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
       for (let d = 0; d < 7; d++) {
         const date = new Date(weekStart);
@@ -486,7 +487,15 @@ export function registerClassRoutes(app: Express) {
           }
         }
 
-        const availableSlots = slots.filter(s => s.available);
+        let availableSlots = slots.filter(s => s.available);
+
+        // For today, drop slots whose start time is already past (or within the 1h lead window)
+        if (dateStr === todayStr) {
+          availableSlots = availableSlots.filter(s => {
+            const slotStart = new Date(`${dateStr}T${s.start}`);
+            return slotStart >= cutoff;
+          });
+        }
 
         days.push({
           date: dateStr,
