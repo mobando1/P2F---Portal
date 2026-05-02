@@ -242,6 +242,44 @@ export function registerCrmRoutes(app: Express) {
     }
   });
 
+  // ── Class Credits Adjustment (manual admin grant: QA, demos, refunds) ──
+  app.patch("/api/admin/crm/:userId/credits", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (!Number.isFinite(userId)) {
+        return res.status(400).json({ message: "Invalid userId" });
+      }
+      const { classCredits } = req.body ?? {};
+      if (
+        typeof classCredits !== "number" ||
+        !Number.isInteger(classCredits) ||
+        classCredits < 0 ||
+        classCredits > 1000
+      ) {
+        return res
+          .status(400)
+          .json({ message: "classCredits must be an integer between 0 and 1000" });
+      }
+      const target = await storage.getUser(userId);
+      if (!target) return res.status(404).json({ message: "User not found" });
+      if (target.userType === "admin" || target.userType === "tutor") {
+        return res
+          .status(403)
+          .json({ message: "Credits can only be adjusted on student accounts" });
+      }
+      const previous = target.classCredits ?? 0;
+      const user = await storage.updateUser(userId, { classCredits });
+      if (!user) return res.status(404).json({ message: "User not found" });
+      console.log(
+        `[admin] credits adjusted: userId=${userId} by=${req.session.userId} from=${previous} to=${classCredits}`
+      );
+      res.json(sanitizeUser(user));
+    } catch (error) {
+      console.error("CRM credits update error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // ── Delete Student ──
   app.delete("/api/admin/crm/:userId", requireAdmin, async (req, res) => {
     try {

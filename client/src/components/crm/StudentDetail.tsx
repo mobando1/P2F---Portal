@@ -15,6 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import {
   Loader2,
   X,
@@ -116,6 +117,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
   const { language } = useLanguage();
   const isEs = language === "es";
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState("overview");
   const [noteContent, setNoteContent] = useState("");
@@ -123,6 +125,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
   const [taskDueDate, setTaskDueDate] = useState("");
   const [taskPriority, setTaskPriority] = useState<string>("medium");
   const [showQuickSend, setShowQuickSend] = useState(false);
+  const [creditsDraft, setCreditsDraft] = useState<string>("");
 
   const { data: student, isLoading } = useQuery<StudentDetailData>({
     queryKey: ["/api/admin/crm", userId],
@@ -195,6 +198,55 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
       queryClient.invalidateQueries({ queryKey: ["/api/admin/crm", userId] });
     },
   });
+
+  const updateCreditsMutation = useMutation({
+    mutationFn: async (classCredits: number) => {
+      await apiRequest("PATCH", `/api/admin/crm/${userId}/credits`, { classCredits });
+    },
+    onSuccess: (_data, classCredits) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/crm", userId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/crm?limit=500"] });
+      setCreditsDraft("");
+      toast({
+        title: isEs ? "Creditos actualizados" : "Credits updated",
+        description: isEs
+          ? `Saldo nuevo: ${classCredits}`
+          : `New balance: ${classCredits}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: isEs ? "Error al actualizar creditos" : "Failed to update credits",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleUpdateCredits = () => {
+    if (!student) return;
+    const trimmed = creditsDraft.trim();
+    if (trimmed === "") return;
+    const parsed = Number(trimmed);
+    if (!Number.isInteger(parsed) || parsed < 0 || parsed > 1000) {
+      toast({
+        title: isEs ? "Valor invalido" : "Invalid value",
+        description: isEs
+          ? "Ingresa un entero entre 0 y 1000"
+          : "Enter an integer between 0 and 1000",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (parsed === student.classCredits) return;
+    const confirmed = window.confirm(
+      isEs
+        ? `Cambiar creditos de ${student.firstName} ${student.lastName} de ${student.classCredits} a ${parsed}?`
+        : `Change credits for ${student.firstName} ${student.lastName} from ${student.classCredits} to ${parsed}?`
+    );
+    if (!confirmed) return;
+    updateCreditsMutation.mutate(parsed);
+  };
 
   const handleAddNote = () => {
     if (!noteContent.trim()) return;
@@ -317,9 +369,36 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                   )}
                   <div className="flex items-center gap-2 text-gray-600">
                     <CreditCard className="h-4 w-4 text-[#1C7BB1]" />
-                    <span>
+                    <span className="font-medium">
                       {isEs ? "Creditos:" : "Credits:"} {student.classCredits}
                     </span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={1000}
+                      step={1}
+                      placeholder={isEs ? "Nuevo" : "New"}
+                      value={creditsDraft}
+                      onChange={(e) => setCreditsDraft(e.target.value)}
+                      className="h-7 w-20 text-xs ml-2"
+                      data-testid="input-credits"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleUpdateCredits}
+                      disabled={
+                        creditsDraft.trim() === "" || updateCreditsMutation.isPending
+                      }
+                      className="h-7 text-xs px-2 text-[#1C7BB1] border-[#1C7BB1] hover:bg-[#EAF4FA]"
+                      data-testid="button-update-credits"
+                    >
+                      {updateCreditsMutation.isPending ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        isEs ? "Actualizar" : "Update"
+                      )}
+                    </Button>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <CheckCircle2 className="h-4 w-4 text-[#1C7BB1]" />
