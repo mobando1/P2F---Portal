@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { getCurrentUser, isAuthenticated } from "@/lib/auth";
+import { getCurrentUser, setCurrentUser, isAuthenticated } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
@@ -126,7 +126,15 @@ export default function Dashboard() {
       });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) setCurrentUser(data.user);
+        }
+      } catch { /* invalidations below will refetch */ }
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/classes", user?.id] });
       toast({

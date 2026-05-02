@@ -1,9 +1,9 @@
 import { useRoute, Link, useLocation } from "wouter";
 import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/i18n";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, setCurrentUser } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/header";
@@ -186,9 +186,25 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange, 
   );
 }
 
+async function refreshUserAndCredits(queryClient: ReturnType<typeof useQueryClient>, userId: number | undefined) {
+  try {
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.user) setCurrentUser(data.user);
+    }
+  } catch { /* swallow — invalidations below will still refetch */ }
+  queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+  if (userId !== undefined) {
+    queryClient.invalidateQueries({ queryKey: ["/api/dashboard", userId] });
+    queryClient.invalidateQueries({ queryKey: ["/api/classes", userId] });
+  }
+}
+
 function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutorId: number; tutorName: string; tutorAvatar: string | null; isEs: boolean }) {
   const user = getCurrentUser();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -210,7 +226,8 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
       });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await refreshUserAndCredits(queryClient, user?.id);
       toast({ title: isEs ? "Clase reservada" : "Class booked", description: isEs ? "Tu clase ha sido reservada exitosamente." : "Your class has been booked successfully." });
       setSelectedSlot(null);
       setSelectedDate("");
@@ -227,7 +244,8 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
       const response = await apiRequest("POST", "/api/classes/book-trial", { tutorId, scheduledAt });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await refreshUserAndCredits(queryClient, user?.id);
       toast({ title: isEs ? "Clase de prueba reservada" : "Trial class booked", description: isEs ? "Tu clase gratuita ha sido reservada." : "Your free trial has been booked." });
       setSelectedSlot(null);
       setSelectedDate("");
@@ -254,7 +272,8 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
       });
       return response.json();
     },
-    onSuccess: (data: any) => {
+    onSuccess: async (data: any) => {
+      await refreshUserAndCredits(queryClient, user?.id);
       toast({
         title: isEs ? "Clases recurrentes reservadas" : "Recurring classes booked",
         description: isEs ? `${data.booked || recurringWeeks} clases reservadas exitosamente.` : `${data.booked || recurringWeeks} classes booked successfully.`,
