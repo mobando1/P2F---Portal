@@ -557,6 +557,19 @@ export function registerTutorPortalRoutes(app: Express) {
       });
       if (!updated) return res.status(400).json({ message: "Class could not be completed" });
 
+      // Nivel 1: tutor confirmó implícitamente al dejar notas — saltar flujo de confirmación
+      try {
+        const { pool } = await import("../db");
+        if (pool) {
+          await pool.query(
+            `UPDATE classes SET confirmation_status='auto', tutor_confirmation='attended' WHERE id=$1`,
+            [classId]
+          );
+        }
+      } catch (err) {
+        console.error("[complete-with-notes] failed to mark confirmation_status=auto:", err);
+      }
+
       // Update student progress
       const progress = await storage.getUserProgress(classItem.userId);
       await storage.updateUserProgress(classItem.userId, {

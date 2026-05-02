@@ -650,4 +650,238 @@ export function registerClassRoutes(app: Express) {
     }
   });
 
+  // List classes that need attendance confirmation from the calling user.
+  // Tutor sees their pending_tutor classes; student sees their pending_student classes.
+  app.get("/api/classes/pending-confirmation", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const { pool } = await import("../db");
+      if (!pool) return res.json([]);
+
+      const tutor = await storage.getTutorByUserId(userId);
+      const params: any[] = [];
+      let query: string;
+      if (tutor) {
+        params.push(tutor.id);
+        query = `
+          SELECT c.id, c.title, c.scheduled_at, c.duration, c.tutor_confirmation_deadline AS deadline,
+                 'tutor' AS role,
+                 (u.first_name || ' ' || u.last_name) AS counterpart_name
+          FROM classes c JOIN users u ON u.id = c.user_id
+          WHERE c.tutor_id = $1 AND c.confirmation_status = 'pending_tutor'
+          ORDER BY c.scheduled_at ASC LIMIT 20
+        `;
+      } else {
+        params.push(userId);
+        query = `
+          SELECT c.id, c.title, c.scheduled_at, c.duration, c.student_confirmation_deadline AS deadline,
+                 'student' AS role,
+                 t.name AS counterpart_name
+          FROM classes c JOIN tutors t ON t.id = c.tutor_id
+          WHERE c.user_id = $1 AND c.confirmation_status = 'pending_student'
+          ORDER BY c.scheduled_at ASC LIMIT 20
+        `;
+      }
+      const result = await pool.query(query, params);
+      res.json(result.rows.map(r => ({
+        id: r.id,
+        title: r.title,
+        scheduledAt: r.scheduled_at,
+        duration: r.duration,
+        deadline: r.deadline,
+        role: r.role,
+        counterpartName: r.counterpart_name,
+      })));
+    } catch (error) {
+      console.error("Error fetching pending confirmations:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Confirm whether a class actually happened
+  app.post("/api/classes/:id/confirm-attendance", requireAuth, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      const { attended } = req.body || {};
+      if (typeof attended !== "boolean") {
+        return res.status(400).json({ message: "Body must include { attended: boolean }" });
+      }
+
+      const classItem = await storage.getClassById(classId);
+      if (!classItem) return res.status(404).json({ message: "Class not found" });
+
+      const tutor = await storage.getTutorByUserId(userId);
+      const isTutor = !!tutor && classItem.tutorId === tutor.id;
+      const isStudent = classItem.userId === userId;
+      if (!isTutor && !isStudent) {
+        return res.status(403).json({ message: "Not a participant of this class" });
+      }
+
+      const { pool } = await import("../db");
+      if (!pool) return res.status(500).json({ message: "Database unavailable" });
+
+      const cs = (classItem as any).confirmationStatus as string | null;
+
+      if (isTutor) {
+        if (cs !== "pending_tutor") {
+          return res.status(400).json({ message: "Class not waiting for tutor confirmation" });
+        }
+        if (attended) {
+          // Tutor sí dictó → pasa al estudiante con 48h de plazo
+          await pool.query(
+            `UPDATE classes
+             SET tutor_confirmation='attended',
+                 confirmation_status='pending_student',
+                 student_confirmation_deadline = NOW() + interval '48 hours'
+             WHERE id=$1`,
+            [classId]
+          );
+          notificationService.onAttendanceConfirmationNeeded({
+            to: "student",
+            classId,
+            tutorId: classItem.tutorId,
+            studentId: classItem.userId,
+            scheduledAt: new Date(classItem.scheduledAt),
+          }).catch(err => console.error("notify student failed:", err));
+        } else {
+          // Tutor reporta no-show → refund + cancelled
+          await storage.refundClassCredit(classItem.userId);
+          await pool.query(
+            `UPDATE classes
+             SET tutor_confirmation='no_show',
+                 status='cancelled',
+                 confirmation_status='no_show_refunded'
+             WHERE id=$1`,
+            [classId]
+          );
+          notificationService.onClassCancelled({
+            studentId: classItem.userId,
+            tutorId: classItem.tutorId,
+            scheduledAt: new Date(classItem.scheduledAt),
+          }).catch(() => {});
+        }
+        return res.json({ ok: true });
+      }
+
+      // Student confirmation
+      if (cs !== "pending_student") {
+        return res.status(400).json({ message: "Class not waiting for student confirmation" });
+      }
+      if (attended) {
+        await pool.query(
+          `UPDATE classes
+           SET student_confirmation='attended',
+               status='completed',
+               confirmation_status='confirmed'
+           WHERE id=$1`,
+          [classId]
+        );
+        // Bump progress (mirrors complete-with-notes flow)
+        const progress = await storage.getUserProgress(classItem.userId);
+        await storage.updateUserProgress(classItem.userId, {
+          classesCompleted: (progress?.classesCompleted || 0) + 1,
+          learningHours: String(parseFloat(progress?.learningHours || "0") + (classItem.duration || 60) / 60),
+        });
+        notificationService.onClassCompleted({
+          studentId: classItem.userId,
+          tutorId: classItem.tutorId,
+          scheduledAt: new Date(classItem.scheduledAt),
+        }).catch(() => {});
+      } else {
+        // Estudiante dice que no, tutor dijo que sí → disputa
+        await pool.query(
+          `UPDATE classes
+           SET student_confirmation='no_show',
+               confirmation_status='disputed'
+           WHERE id=$1`,
+          [classId]
+        );
+        notificationService.onClassDisputed({
+          classId,
+          studentId: classItem.userId,
+          tutorId: classItem.tutorId,
+          scheduledAt: new Date(classItem.scheduledAt),
+        }).catch(() => {});
+      }
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error confirming attendance:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin: list disputed classes
+  app.get("/api/admin/classes/disputed", requireAdmin, async (_req, res) => {
+    try {
+      const { pool } = await import("../db");
+      if (!pool) return res.json([]);
+      const result = await pool.query(`
+        SELECT c.id, c.title, c.scheduled_at, c.duration,
+               c.tutor_confirmation, c.student_confirmation,
+               c.user_id, c.tutor_id,
+               (u.first_name || ' ' || u.last_name) AS student_name,
+               u.email AS student_email,
+               t.name AS tutor_name
+        FROM classes c
+        JOIN users u ON u.id = c.user_id
+        JOIN tutors t ON t.id = c.tutor_id
+        WHERE c.confirmation_status = 'disputed'
+        ORDER BY c.scheduled_at DESC
+      `);
+      res.json(result.rows.map(r => ({
+        id: r.id,
+        title: r.title,
+        scheduledAt: r.scheduled_at,
+        duration: r.duration,
+        tutorConfirmation: r.tutor_confirmation,
+        studentConfirmation: r.student_confirmation,
+        userId: r.user_id,
+        tutorId: r.tutor_id,
+        studentName: r.student_name,
+        studentEmail: r.student_email,
+        tutorName: r.tutor_name,
+      })));
+    } catch (error) {
+      console.error("Error fetching disputed classes:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin: resolve a disputed class
+  app.post("/api/admin/classes/:id/resolve-dispute", requireAdmin, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      const { resolution } = req.body || {};
+      if (resolution !== "attended" && resolution !== "refund") {
+        return res.status(400).json({ message: "resolution must be 'attended' or 'refund'" });
+      }
+      const classItem = await storage.getClassById(classId);
+      if (!classItem) return res.status(404).json({ message: "Class not found" });
+      if ((classItem as any).confirmationStatus !== "disputed") {
+        return res.status(400).json({ message: "Class is not in disputed state" });
+      }
+
+      const { pool } = await import("../db");
+      if (!pool) return res.status(500).json({ message: "Database unavailable" });
+
+      if (resolution === "attended") {
+        await pool.query(
+          `UPDATE classes SET status='completed', confirmation_status='confirmed' WHERE id=$1`,
+          [classId]
+        );
+      } else {
+        await storage.refundClassCredit(classItem.userId);
+        await pool.query(
+          `UPDATE classes SET status='cancelled', confirmation_status='no_show_refunded' WHERE id=$1`,
+          [classId]
+        );
+      }
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error resolving dispute:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
 }

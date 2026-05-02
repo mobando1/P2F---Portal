@@ -123,6 +123,32 @@ export const logout = async () => {
   setCurrentUser(null);
 };
 
+/**
+ * Refresh the cached user (localStorage + module singleton) from /api/auth/me
+ * and invalidate the React Query caches that depend on classCredits.
+ * Call after any mutation that changes the user's credit balance (book, cancel, refund).
+ */
+export const refreshUserAndCredits = async (
+  queryClient: { invalidateQueries: (opts: { queryKey: any[] }) => void },
+  userId?: number,
+): Promise<void> => {
+  try {
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.user) setCurrentUser(data.user);
+    }
+  } catch {
+    // Invalidations below will trigger a refetch even if this fetch failed
+  }
+  queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+  if (userId !== undefined) {
+    queryClient.invalidateQueries({ queryKey: ["/api/dashboard", userId] });
+    queryClient.invalidateQueries({ queryKey: ["/api/classes", userId] });
+  }
+  queryClient.invalidateQueries({ queryKey: ["/api/classes/pending-confirmation"] });
+};
+
 export const validateSession = async (): Promise<AuthUser | null> => {
   try {
     const response = await fetch("/api/auth/me", { credentials: "include" });

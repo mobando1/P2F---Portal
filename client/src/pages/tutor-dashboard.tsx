@@ -10,6 +10,7 @@ import { getCurrentUser, isAuthenticated } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
+import { AttendanceConfirmationBanner } from "@/components/AttendanceConfirmationBanner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 import {
@@ -449,6 +450,7 @@ export default function TutorDashboard() {
       <Header />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <AttendanceConfirmationBanner />
         {/* Welcome */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A4A6E]">

@@ -194,11 +194,21 @@ export const classes = pgTable("classes", {
   sharedNotes: text("shared_notes"),           // visible to student
   homeworkText: text("homework_text"),         // task/homework for student
   topicsCovered: text("topics_covered").array(), // e.g. ["presente", "A2-3"]
+  // Attendance confirmation flow (post-class)
+  // 'auto' (Nivel 1: tutor dejó notas), 'pending_tutor' (esperando tutor),
+  // 'pending_student' (tutor confirmó, esperando estudiante), 'confirmed',
+  // 'disputed' (tutor=sí / estudiante=no → admin), 'no_show_refunded'
+  confirmationStatus: text("confirmation_status"),
+  tutorConfirmation: text("tutor_confirmation"),     // 'attended' | 'no_show' | null
+  studentConfirmation: text("student_confirmation"), // 'attended' | 'no_show' | null
+  tutorConfirmationDeadline: timestamp("tutor_confirmation_deadline"),
+  studentConfirmationDeadline: timestamp("student_confirmation_deadline"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_classes_user_id").on(table.userId),
   index("idx_classes_tutor_id").on(table.tutorId),
   index("idx_classes_status_scheduled").on(table.status, table.scheduledAt),
+  index("idx_classes_confirmation_status").on(table.confirmationStatus),
 ]);
 
 export const videos = pgTable("videos", {

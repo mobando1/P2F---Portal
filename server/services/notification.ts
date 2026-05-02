@@ -322,6 +322,117 @@ export const notificationService = {
   },
 
   /**
+   * Called when a class needs attendance confirmation post-class.
+   * Sent first to tutor right after the class ends; then to student if tutor confirms.
+   */
+  async onAttendanceConfirmationNeeded(params: {
+    to: "tutor" | "student";
+    studentId: number;
+    tutorId: number;
+    classId: number;
+    scheduledAt: Date;
+  }): Promise<void> {
+    try {
+      const { to, studentId, tutorId, scheduledAt } = params;
+      const student = await storage.getUser(studentId);
+      const tutor = await storage.getTutor(tutorId);
+      if (!student || !tutor) return;
+
+      const lang: "es" | "en" = (student.timezone?.includes("America") ? "es" : "en");
+      const date = formatDate(scheduledAt, lang);
+      const time = formatTime(scheduledAt, lang);
+
+      if (to === "tutor" && tutor.userId) {
+        await createAndPush({
+          userId: tutor.userId,
+          type: "system",
+          title: lang === "es" ? "¿Se realizó la clase?" : "Did the class happen?",
+          message: lang === "es"
+            ? `Confirma si la clase con ${student.firstName} ${student.lastName} del ${date} a las ${time} se realizó. Tienes 24 horas.`
+            : `Please confirm whether your class with ${student.firstName} ${student.lastName} on ${date} at ${time} took place. You have 24 hours.`,
+          link: "/tutor-portal",
+          isRead: false,
+        });
+
+        const tutorUser = await storage.getUser(tutor.userId);
+        if (tutorUser) {
+          emailService.sendAttendanceConfirmationRequest({
+            to: tutorUser.email,
+            recipientName: tutor.name,
+            counterpartName: `${student.firstName} ${student.lastName}`,
+            role: "tutor",
+            date,
+            time,
+            deadlineHours: 24,
+            lang,
+          }).catch(err => console.error("Error sending tutor confirmation email:", err));
+        }
+      }
+
+      if (to === "student") {
+        await createAndPush({
+          userId: studentId,
+          type: "system",
+          title: lang === "es" ? "¿Tomaste tu clase?" : "Did you take your class?",
+          message: lang === "es"
+            ? `Confirma si tu clase con ${tutor.name} del ${date} a las ${time} se realizó. Tienes 48 horas.`
+            : `Please confirm whether your class with ${tutor.name} on ${date} at ${time} took place. You have 48 hours.`,
+          link: "/dashboard",
+          isRead: false,
+        });
+
+        emailService.sendAttendanceConfirmationRequest({
+          to: student.email,
+          recipientName: `${student.firstName} ${student.lastName}`,
+          counterpartName: tutor.name,
+          role: "student",
+          date,
+          time,
+          deadlineHours: 48,
+          lang,
+        }).catch(err => console.error("Error sending student confirmation email:", err));
+      }
+    } catch (error) {
+      console.error("Error in onAttendanceConfirmationNeeded:", error);
+    }
+  },
+
+  /**
+   * Called when tutor=attended but student=no_show → admin must resolve.
+   */
+  async onClassDisputed(params: {
+    studentId: number;
+    tutorId: number;
+    classId: number;
+    scheduledAt: Date;
+  }): Promise<void> {
+    try {
+      const { studentId, tutorId, scheduledAt } = params;
+      const student = await storage.getUser(studentId);
+      const tutor = await storage.getTutor(tutorId);
+      if (!student || !tutor) return;
+
+      const date = formatDate(scheduledAt, "es");
+      const time = formatTime(scheduledAt, "es");
+
+      emailService.sendAdminNotification({
+        subject: `Clase en disputa — ${student.firstName} ${student.lastName} vs ${tutor.name}`,
+        eventType: "Clase en Disputa",
+        details: [
+          { label: "Estudiante", value: `${student.firstName} ${student.lastName} (${student.email})` },
+          { label: "Tutor", value: tutor.name },
+          { label: "Fecha", value: `${date} ${time}` },
+          { label: "Tutor dice", value: "Sí dictó la clase" },
+          { label: "Estudiante dice", value: "No la tomó" },
+          { label: "Acción", value: "Resuelve en /admin → Clases en disputa" },
+        ],
+      }).catch(err => console.error("Error sending disputed class admin notification:", err));
+    } catch (error) {
+      console.error("Error in onClassDisputed:", error);
+    }
+  },
+
+  /**
    * Send class reminder (called 24h before class)
    */
   async sendClassReminder(params: {

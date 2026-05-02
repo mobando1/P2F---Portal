@@ -764,6 +764,11 @@ export class MemStorage implements IStorage {
         sharedNotes: null,
         homeworkText: null,
         topicsCovered: null,
+        confirmationStatus: null,
+        tutorConfirmation: null,
+        studentConfirmation: null,
+        tutorConfirmationDeadline: null,
+        studentConfirmationDeadline: null,
         createdAt: new Date(),
       },
       {
@@ -784,6 +789,11 @@ export class MemStorage implements IStorage {
         sharedNotes: null,
         homeworkText: null,
         topicsCovered: null,
+        confirmationStatus: null,
+        tutorConfirmation: null,
+        studentConfirmation: null,
+        tutorConfirmationDeadline: null,
+        studentConfirmationDeadline: null,
         createdAt: new Date(),
       },
       {
@@ -804,6 +814,11 @@ export class MemStorage implements IStorage {
         sharedNotes: null,
         homeworkText: null,
         topicsCovered: null,
+        confirmationStatus: null,
+        tutorConfirmation: null,
+        studentConfirmation: null,
+        tutorConfirmationDeadline: null,
+        studentConfirmationDeadline: null,
         createdAt: new Date(),
       }
     ];
@@ -1146,6 +1161,11 @@ export class MemStorage implements IStorage {
       sharedNotes: null,
       homeworkText: null,
       topicsCovered: null,
+      confirmationStatus: null,
+      tutorConfirmation: null,
+      studentConfirmation: null,
+      tutorConfirmationDeadline: null,
+      studentConfirmationDeadline: null,
     };
     this.classes.set(id, classItem);
     return classItem;

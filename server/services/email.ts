@@ -396,6 +396,41 @@ export const emailService = {
     return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Recordatorio de Clase" : "Class Reminder", body, lang) });
   },
 
+  async sendAttendanceConfirmationRequest(params: {
+    to: string;
+    recipientName: string;
+    counterpartName: string;       // tutor name if recipient is student, vice versa
+    role: "tutor" | "student";
+    date: string;
+    time: string;
+    deadlineHours: number;
+    lang: "es" | "en";
+  }): Promise<boolean> {
+    const { to, recipientName, counterpartName, role, date, time, deadlineHours, lang } = params;
+    const isEs = lang === "es";
+    const subject = isEs
+      ? `¿Se realizó tu clase del ${date}?`
+      : `Did your class on ${date} happen?`;
+    const ctaPath = role === "tutor" ? "/tutor-portal" : "/dashboard";
+    const headline = isEs
+      ? (role === "tutor" ? "Confirma si dictaste la clase" : "Confirma si tomaste la clase")
+      : (role === "tutor" ? "Confirm whether you taught the class" : "Confirm whether you took the class");
+    const body = `
+      <p style="color: #374151; font-size: 16px;">${isEs ? `Hola ${recipientName},` : `Hi ${recipientName},`}</p>
+      <p style="color: #374151; font-size: 15px;">${headline}:</p>
+      <div style="background: #EAF4FA; border-left: 4px solid #1C7BB1; padding: 16px; margin: 16px 0; border-radius: 0 8px 8px 0;">
+        <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Con:" : "With:"}</strong> ${counterpartName}</p>
+        <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Fecha:" : "Date:"}</strong> ${date}</p>
+        <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Hora:" : "Time:"}</strong> ${time}</p>
+      </div>
+      <p style="color: #6B7280; font-size: 14px;">${isEs
+        ? `Tienes ${deadlineHours} horas para responder. Si no respondes, asumiremos automáticamente que ${role === "tutor" ? "la clase no se realizó y devolveremos el crédito al estudiante" : "la clase sí se tomó"}.`
+        : `You have ${deadlineHours} hours to respond. If you don't, we will automatically assume ${role === "tutor" ? "the class did not happen and refund the student's credit" : "the class did happen"}.`}</p>
+      <p style="margin: 16px 0;"><a href="https://portal.passport2fluency.com${ctaPath}" style="background: #F59E1C; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">${isEs ? "Confirmar ahora" : "Confirm now"}</a></p>
+    `;
+    return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Confirmación de Asistencia" : "Attendance Confirmation", body, lang) });
+  },
+
   async sendAdminNotification(params: {
     subject: string;
     eventType: string;

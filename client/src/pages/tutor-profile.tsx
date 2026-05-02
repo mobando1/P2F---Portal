@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/i18n";
-import { getCurrentUser, setCurrentUser } from "@/lib/auth";
+import { getCurrentUser, refreshUserAndCredits } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/header";
@@ -184,21 +184,6 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange, 
       </p>
     </div>
   );
-}
-
-async function refreshUserAndCredits(queryClient: ReturnType<typeof useQueryClient>, userId: number | undefined) {
-  try {
-    const res = await fetch("/api/auth/me", { credentials: "include" });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.user) setCurrentUser(data.user);
-    }
-  } catch { /* swallow — invalidations below will still refetch */ }
-  queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-  if (userId !== undefined) {
-    queryClient.invalidateQueries({ queryKey: ["/api/dashboard", userId] });
-    queryClient.invalidateQueries({ queryKey: ["/api/classes", userId] });
-  }
 }
 
 function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutorId: number; tutorName: string; tutorAvatar: string | null; isEs: boolean }) {

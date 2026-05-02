@@ -594,6 +594,12 @@ async function startServer() {
           ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_messages_used INTEGER DEFAULT 0;
           ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_messages_reset_at TIMESTAMP;
           ALTER TABLE users ADD COLUMN IF NOT EXISTS autoconfirm_mode TEXT DEFAULT 'all';
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS confirmation_status TEXT;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS tutor_confirmation TEXT;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS student_confirmation TEXT;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS tutor_confirmation_deadline TIMESTAMP;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS student_confirmation_deadline TIMESTAMP;
+          CREATE INDEX IF NOT EXISTS idx_classes_confirmation_status ON classes (confirmation_status);
         `);
         // Fix any availability rows with NULL isAvailable
         await pgPool.query(`UPDATE tutor_availability SET is_available = TRUE WHERE is_available IS NULL`);
@@ -763,6 +769,10 @@ async function startServer() {
       console.error("STARTUP: Database connectivity or migration failed:", err);
     }
   }
+
+  // Attendance confirmation sweep — fires every 15 min, idempotent
+  const { startAttendanceCron } = await import("./services/attendance-cron");
+  startAttendanceCron();
 
   server.listen(config.PORT, "0.0.0.0", () => {
     log(`Server running on http://0.0.0.0:${config.PORT}`);

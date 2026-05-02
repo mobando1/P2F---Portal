@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { getCurrentUser, setCurrentUser, isAuthenticated } from "@/lib/auth";
+import { getCurrentUser, refreshUserAndCredits, isAuthenticated } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
@@ -13,6 +13,7 @@ import { Coachmark } from "@/components/onboarding/Coachmark";
 import SubscriptionCard from "@/components/subscription-card";
 import { ClassCard } from "@/components/ClassCard";
 import RescheduleDialog from "@/components/RescheduleDialog";
+import { AttendanceConfirmationBanner } from "@/components/AttendanceConfirmationBanner";
 import { DashboardSkeleton } from "@/components/loading-skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
@@ -127,16 +128,7 @@ export default function Dashboard() {
       return response.json();
     },
     onSuccess: async () => {
-      try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.user) setCurrentUser(data.user);
-        }
-      } catch { /* invalidations below will refetch */ }
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard", user?.id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/classes", user?.id] });
+      await refreshUserAndCredits(queryClient, user?.id);
       toast({
         title: language === 'es' ? "Clase cancelada" : "Class cancelled",
         description: language === 'es' ? "Tu clase ha sido cancelada." : "Your class has been cancelled successfully.",
@@ -269,6 +261,7 @@ export default function Dashboard() {
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <AttendanceConfirmationBanner />
         {/* Welcome Section */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
