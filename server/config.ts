@@ -24,6 +24,10 @@ const envSchema = z.object({
   APP_URL: z.string().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().default(3000),
+  // Observability — all optional. If unset, the corresponding tool is no-op.
+  SENTRY_DSN: z.string().optional(),
+  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).optional(),
+  RAILWAY_GIT_COMMIT_SHA: z.string().optional(),
 });
 
 function loadConfig() {

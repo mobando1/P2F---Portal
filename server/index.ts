@@ -1,3 +1,8 @@
+// Sentry MUST be imported and initialized before any other module so it can
+// instrument the runtime. Keep these two lines at the very top.
+import { initSentry, Sentry } from "./services/sentry";
+initSentry();
+
 import express from "express";
 import { createServer } from "http";
 import session from "express-session";
@@ -13,6 +18,7 @@ import { stripeCache } from "./services/stripe-cache";
 import { wsService } from "./services/websocket";
 import rateLimit from "express-rate-limit";
 import { emailService } from "./services/email";
+import { httpLogger, traceIdHeader, logger } from "./services/logger";
 
 // Initialize Stripe - allow running without keys in development
 const stripeKey = config.STRIPE_SECRET_KEY || config.TESTING_STRIPE_SECRET_KEY;
@@ -24,6 +30,11 @@ async function startServer() {
 
   // Trust Railway's reverse proxy so secure cookies work over HTTPS
   app.set("trust proxy", 1);
+
+  // Structured request logging with traceId. Must be before any route handler
+  // so every log inside the request lifecycle inherits req.id.
+  app.use(httpLogger);
+  app.use(traceIdHeader);
 
   // Session configuration - use PG store when database is available
   const sessionSecret = config.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
@@ -417,12 +428,35 @@ async function startServer() {
     });
   }
 
-  // Health check endpoint
-  app.get("/api/health", (_req, res) => {
-    res.json({
-      status: "ok",
+  // Health check endpoint — also pings the DB so Better Stack / Railway can
+  // distinguish "process up but DB unreachable" from "fully healthy".
+  app.get("/api/health", async (_req, res) => {
+    const start = Date.now();
+    let dbStatus: "ok" | "unreachable" | "skipped" = "skipped";
+    let dbLatencyMs: number | undefined;
+    if (config.DATABASE_URL) {
+      try {
+        const { pool } = await import("./db");
+        if (pool) {
+          const t0 = Date.now();
+          await pool.query("SELECT 1");
+          dbLatencyMs = Date.now() - t0;
+          dbStatus = "ok";
+        }
+      } catch (err) {
+        dbStatus = "unreachable";
+        logger.error({ err }, "Health check: DB unreachable");
+      }
+    }
+    const overallOk = dbStatus !== "unreachable";
+    res.status(overallOk ? 200 : 503).json({
+      status: overallOk ? "ok" : "degraded",
       storage: config.DATABASE_URL ? "database" : "memory",
-      timestamp: new Date().toISOString()
+      db: { status: dbStatus, latencyMs: dbLatencyMs },
+      uptimeSeconds: Math.round(process.uptime()),
+      responseTimeMs: Date.now() - start,
+      timestamp: new Date().toISOString(),
+      commit: process.env.RAILWAY_GIT_COMMIT_SHA?.substring(0, 7) || "local",
     });
   });
 
@@ -432,6 +466,20 @@ async function startServer() {
 
   // Register API routes BEFORE Vite so they don't get intercepted
   await registerRoutes(app);
+
+  // Sentry error handler — must be registered AFTER all controllers but BEFORE
+  // any other error middleware. Captures unhandled errors with full request
+  // context (trace, user, headers).
+  Sentry.setupExpressErrorHandler(app);
+
+  // Global error handler. Logs structured error and returns 500. Without this,
+  // an uncaught throw in a route would crash the request silently.
+  app.use((err: any, req: any, res: any, _next: any) => {
+    const log = req.log || logger;
+    log.error({ err, path: req.path }, "Unhandled error in route");
+    if (res.headersSent) return;
+    res.status(500).json({ message: "Internal server error" });
+  });
 
   const server = createServer(app);
 
