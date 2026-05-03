@@ -28,7 +28,26 @@ Sin esto, cuando algo falla en producción no sabes ni qué pasó ni dónde — 
 ### Verificar
 10. Una vez desplegado, abre el portal en browser.
 11. En Sentry → tu proyecto frontend → Issues → debería aparecer el primer evento si hay cualquier error en navegación.
-12. Para forzar un test: en la consola del navegador escribe `throw new Error("sentry test")` → recarga Sentry → debería aparecer.
+12. Para forzar un test frontend: en la consola del navegador escribe `throw new Error("sentry test frontend")` → recarga Sentry → debería aparecer en `p2f-frontend`.
+
+### Verificar backend con endpoints de prueba (admin-gated)
+
+Una vez logueado como admin en el portal, abre la consola del browser y ejecuta:
+
+```js
+// Dispara un error real → captura Sentry backend + log estructurado
+fetch('/api/admin/observability/test-error', { method: 'POST', credentials: 'include' })
+
+// Solo loguea (sin throw) → verifica que el logger funciona
+fetch('/api/admin/observability/test-log', { method: 'POST', credentials: 'include' })
+  .then(r => r.json()).then(d => console.log('traceId:', d.traceId))
+```
+
+Después de ejecutar el primero:
+- En Sentry → `p2f-backend` → Issues → debería aparecer "Sentry test error from /api/admin/observability/test-error".
+- En Railway → Logs (o Better Stack si ya cableaste): busca `observability-test` o el `traceId` que devolvió el segundo endpoint.
+
+Si llegan los dos, observabilidad backend está 100% validada.
 
 ---
 

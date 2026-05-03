@@ -884,4 +884,20 @@ export function registerClassRoutes(app: Express) {
     }
   });
 
+  // Observability self-test endpoints. Admin-only. Used to verify Sentry +
+  // logger pipeline end-to-end after configuring SENTRY_DSN in Railway.
+  // Delete after Phase 0 is fully validated if you want.
+  app.post("/api/admin/observability/test-error", requireAdmin, (req, _res, next) => {
+    (req as any).log?.warn({ marker: "observability-test" }, "About to throw test error");
+    next(new Error("Sentry test error from /api/admin/observability/test-error — safe to ignore"));
+  });
+
+  app.post("/api/admin/observability/test-log", requireAdmin, (req, res) => {
+    const log = (req as any).log;
+    log?.info({ marker: "observability-test", userId: req.session.userId }, "Test log info");
+    log?.warn({ marker: "observability-test" }, "Test log warn");
+    log?.error({ marker: "observability-test", err: new Error("Logged-only test error") }, "Test log error");
+    res.json({ ok: true, traceId: (req as any).id, hint: "Search 'observability-test' in your log aggregator." });
+  });
+
 }
