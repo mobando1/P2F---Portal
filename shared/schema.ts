@@ -203,6 +203,16 @@ export const classes = pgTable("classes", {
   studentConfirmation: text("student_confirmation"), // 'attended' | 'no_show' | null
   tutorConfirmationDeadline: timestamp("tutor_confirmation_deadline"),
   studentConfirmationDeadline: timestamp("student_confirmation_deadline"),
+  // LiveKit embedded classroom (Phase 1)
+  livekitRoomName: text("livekit_room_name"),                // unique room id, e.g. "p2f-class-{id}"
+  recordingUrl: text("recording_url"),                       // R2/S3 URL of the egress recording
+  recordingStartedAt: timestamp("recording_started_at"),
+  recordingFinishedAt: timestamp("recording_finished_at"),
+  recordingDurationSeconds: integer("recording_duration_seconds"),
+  joinedAtTutor: timestamp("joined_at_tutor"),
+  joinedAtStudent: timestamp("joined_at_student"),
+  leftAtTutor: timestamp("left_at_tutor"),
+  leftAtStudent: timestamp("left_at_student"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_classes_user_id").on(table.userId),

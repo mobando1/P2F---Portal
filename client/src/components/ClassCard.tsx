@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { Video, Calendar, Clock, X, RefreshCw } from "lucide-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/i18n";
+import { useFeatureFlag } from "@/lib/feature-flags";
 
 interface ClassCardProps {
   classItem: {
@@ -22,6 +24,7 @@ interface ClassCardProps {
 
 export function ClassCard({ classItem, onCancel, onReschedule, showActions = true }: ClassCardProps) {
   const { language } = useLanguage();
+  const livekitEnabled = useFeatureFlag("livekit_classroom");
   const scheduledAt = new Date(classItem.scheduledAt);
   const now = new Date();
   const minutesUntilClass = (scheduledAt.getTime() - now.getTime()) / (1000 * 60);
@@ -75,22 +78,40 @@ export function ClassCard({ classItem, onCancel, onReschedule, showActions = tru
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Join button - prominent when class is about to start */}
-          {isUpcoming && classItem.meetingLink && (
-            <a href={classItem.meetingLink} target="_blank" rel="noopener noreferrer">
-              <Button
-                size="sm"
-                className={`text-xs ${
-                  isJoinable
-                    ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-200"
-                    : "bg-blue-50 text-blue-700 hover:bg-blue-100"
-                }`}
-                variant={isJoinable ? "default" : "outline"}
-              >
-                <Video className="w-3 h-3 mr-1" />
-                {language === 'es' ? 'Unirse' : 'Join'}
-              </Button>
-            </a>
+          {/* Join button — uses embedded LiveKit classroom when the flag is on
+              for this user; falls back to the external Meet link otherwise. */}
+          {isUpcoming && (livekitEnabled || classItem.meetingLink) && (
+            livekitEnabled ? (
+              <Link href={`/classroom/${classItem.id}/preflight`}>
+                <Button
+                  size="sm"
+                  className={`text-xs ${
+                    isJoinable
+                      ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-200"
+                      : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  }`}
+                  variant={isJoinable ? "default" : "outline"}
+                >
+                  <Video className="w-3 h-3 mr-1" />
+                  {language === 'es' ? 'Unirse' : 'Join'}
+                </Button>
+              </Link>
+            ) : (
+              <a href={classItem.meetingLink!} target="_blank" rel="noopener noreferrer">
+                <Button
+                  size="sm"
+                  className={`text-xs ${
+                    isJoinable
+                      ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-200"
+                      : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  }`}
+                  variant={isJoinable ? "default" : "outline"}
+                >
+                  <Video className="w-3 h-3 mr-1" />
+                  {language === 'es' ? 'Unirse' : 'Join'}
+                </Button>
+              </a>
+            )
           )}
 
           {/* Action buttons */}

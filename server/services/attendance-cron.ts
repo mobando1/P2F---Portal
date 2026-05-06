@@ -10,6 +10,35 @@ let started = false;
 async function runAttendanceSweep(): Promise<void> {
   if (!pool) return;
 
+  // Barrido 0: Nivel 1 técnico — LiveKit detectó que ambos se conectaron y la
+  // duración real fue ≥50% de la clase. Confianza alta de que la clase ocurrió.
+  // Solo aplica a clases con livekit_room_name (las que pasaron por el aula nueva).
+  try {
+    await pool.query(`
+      UPDATE classes
+      SET status = 'completed',
+          confirmation_status = 'auto',
+          tutor_confirmation = 'attended'
+      WHERE status = 'scheduled'
+        AND confirmation_status IS NULL
+        AND livekit_room_name IS NOT NULL
+        AND joined_at_tutor IS NOT NULL
+        AND joined_at_student IS NOT NULL
+        AND scheduled_at + (duration * interval '1 minute') < NOW()
+        AND (
+          EXTRACT(EPOCH FROM (
+            COALESCE(left_at_tutor, NOW()) - joined_at_tutor
+          )) >= duration * 60 * 0.5
+          OR EXTRACT(EPOCH FROM (
+            COALESCE(left_at_student, NOW()) - joined_at_student
+          )) >= duration * 60 * 0.5
+        )
+        AND is_trial IS NOT TRUE
+    `);
+  } catch (err) {
+    console.error("[attendance-cron] Sweep 0 (livekit auto) failed:", err);
+  }
+
   // Barrido 1: clases que terminaron y aún no entran al flujo de confirmación
   // Excluye clases con confirmation_status='auto' (Nivel 1: tutor ya dejó notas)
   let started1: { id: number; tutor_id: number; user_id: number; scheduled_at: Date }[] = [];

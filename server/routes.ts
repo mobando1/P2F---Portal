@@ -21,6 +21,7 @@ import { registerAnalyticsRoutes } from "./routes/analytics";
 import { registerLearningPathRoutes } from "./routes/learning-path";
 import { registerGoogleOAuthRoutes } from "./routes/google-oauth";
 import { registerOAuthRoutes } from "./routes/oauth";
+import { registerLivekitRoutes } from "./routes/livekit";
 
 export async function registerRoutes(app: Express): Promise<void> {
   // Serve static files from attached_assets
@@ -47,6 +48,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   registerLearningPathRoutes(app);
   registerGoogleOAuthRoutes(app);
   registerOAuthRoutes(app);
+  registerLivekitRoutes(app);
 
   // Development-only routes
   if (process.env.NODE_ENV === "development") {

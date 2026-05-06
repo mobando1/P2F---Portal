@@ -702,6 +702,15 @@ async function startServer() {
           );
           CREATE INDEX IF NOT EXISTS idx_recording_consents_user ON recording_consents (user_id);
           CREATE INDEX IF NOT EXISTS idx_recording_consents_class ON recording_consents (class_id);
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS livekit_room_name TEXT;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS recording_url TEXT;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS recording_started_at TIMESTAMP;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS recording_finished_at TIMESTAMP;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS recording_duration_seconds INTEGER;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS joined_at_tutor TIMESTAMP;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS joined_at_student TIMESTAMP;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS left_at_tutor TIMESTAMP;
+          ALTER TABLE classes ADD COLUMN IF NOT EXISTS left_at_student TIMESTAMP;
         `);
         // Fix any availability rows with NULL isAvailable
         await pgPool.query(`UPDATE tutor_availability SET is_available = TRUE WHERE is_available IS NULL`);

@@ -39,6 +39,8 @@ const TutorAIAssistantPage = lazy(() => import("@/pages/tutor-ai-assistant"));
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 const NotFound = lazy(() => import("@/pages/not-found"));
+const ClassroomPage = lazy(() => import("@/pages/classroom"));
+const PreflightCheckPage = lazy(() => import("@/pages/classroom").then(m => ({ default: m.PreflightCheck })));
 
 function LoadingFallback() {
   return (
@@ -142,6 +144,16 @@ function Router() {
         <Route path="/messages">
           <ProtectedRoute>
             <MessagesPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/classroom/:id/preflight">
+          <ProtectedRoute>
+            <PreflightCheckPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/classroom/:id">
+          <ProtectedRoute>
+            <ClassroomPage />
           </ProtectedRoute>
         </Route>
         <Route path="/learning-path">
