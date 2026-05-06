@@ -1,0 +1,114 @@
+{
+  "slug": "b1-spanish-subjunctive",
+  "description": "B1 Spanish — first introduction to subjunctive in expressions of wish/doubt",
+  "input": {
+    "studentName": "James",
+    "studentLevel": "B1.1",
+    "tutorName": "Diego",
+    "targetLanguage": "spanish",
+    "uiLanguage": "en",
+    "durationMinutes": 60,
+    "recurringErrorsContext": [
+      "Confuses ser/estar with emotions",
+      "Skips article 'el/la' with abstract nouns"
+    ],
+    "diarizedTranscript": [
+      { "speaker": "tutor",   "timestamp": "00:00", "text": "Hola James, hoy vamos a empezar con el subjuntivo. ¿Listo?" },
+      { "speaker": "student", "timestamp": "00:08", "text": "Sí, pero un poco asustado. Es difícil, ¿verdad?" },
+      { "speaker": "tutor",   "timestamp": "00:15", "text": "Al principio sí, pero con práctica se vuelve natural. Empezamos con expresiones de deseo: 'Espero que...'" },
+      { "speaker": "student", "timestamp": "00:25", "text": "Espero que mi jefe... me da un aumento? No estoy seguro." },
+      { "speaker": "tutor",   "timestamp": "00:38", "text": "Casi: 'Espero que mi jefe me DÉ un aumento'. 'Da' → 'dé', con tilde, es subjuntivo." },
+      { "speaker": "student", "timestamp": "00:50", "text": "Espero que mi jefe me dé un aumento. Es porque es un deseo, ¿verdad?" },
+      { "speaker": "tutor",   "timestamp": "01:02", "text": "Exacto. Otro: 'Quiero que tú HABLES más español en casa'." },
+      { "speaker": "student", "timestamp": "01:12", "text": "Quiero que mi novia hable más español conmigo. Ella es de Argentina." },
+      { "speaker": "tutor",   "timestamp": "01:22", "text": "¡Perfecto! Ahora con duda: 'Dudo que llueva mañana'." },
+      { "speaker": "student", "timestamp": "01:30", "text": "Dudo que mañana es feriado. Espera, dudo que mañana SEA feriado." },
+      { "speaker": "tutor",   "timestamp": "01:42", "text": "¡Excelente autocorrección! 'Sea' es subjuntivo de 'ser'." },
+      { "speaker": "student", "timestamp": "01:52", "text": "Es complicado pero estoy emocionado de aprender más." },
+      { "speaker": "tutor",   "timestamp": "02:00", "text": "James, dijiste 'estoy emocionado'. ¿Recuerdas la regla ser/estar con emociones?" },
+      { "speaker": "student", "timestamp": "02:10", "text": "Ah, sí. Estar para emoción temporal. Bien usado entonces." },
+      { "speaker": "tutor",   "timestamp": "02:18", "text": "Correcto. Tarea: 5 oraciones con 'espero que', 'quiero que', 'dudo que'." }
+    ]
+  },
+  "expected": {
+    "summary": {
+      "headline": "Introducción al presente de subjuntivo en expresiones de deseo y duda; estudiante captó el contraste rápidamente.",
+      "durationMinutes": 60,
+      "topics": ["presente de subjuntivo", "expresiones de deseo", "expresiones de duda"],
+      "levelFocus": "B1.1"
+    },
+    "keyMoments": [
+      { "timestamp": "00:38", "type": "concept_taught", "description": "Primera explicación de subjuntivo con 'espero que mi jefe me dé'" },
+      { "timestamp": "01:30", "type": "student_breakthrough", "description": "Estudiante autocorrigió 'es' → 'sea' al detectar contexto de duda" },
+      { "timestamp": "02:00", "type": "concept_taught", "description": "Tutor verificó dominio de ser/estar — error recurrente confirmado como superado" }
+    ],
+    "vocabularyIntroduced": [
+      { "word": "aumento", "translation": "raise (salary)", "context": "me dé un aumento", "mastered": true },
+      { "word": "feriado", "translation": "holiday", "context": "mañana sea feriado", "mastered": true }
+    ],
+    "errorsDetected": [
+      {
+        "type": "verb_mode",
+        "incorrect": "Espero que mi jefe me da un aumento",
+        "correct": "Espero que mi jefe me dé un aumento",
+        "explanation": "Después de 'espero que' (deseo) se usa subjuntivo, no indicativo.",
+        "frequency": 1,
+        "severity": "medium"
+      },
+      {
+        "type": "verb_mode",
+        "incorrect": "Dudo que mañana es feriado",
+        "correct": "Dudo que mañana sea feriado",
+        "explanation": "'Dudo que' requiere subjuntivo. La estudiante se autocorrigió sin ayuda.",
+        "frequency": 1,
+        "severity": "low"
+      },
+      {
+        "type": "ser_estar",
+        "incorrect": "estoy emocionado",
+        "correct": "estoy emocionado",
+        "explanation": "Uso correcto: estar + emoción temporal. Patrón recurrente ahora dominado.",
+        "frequency": 0,
+        "severity": "none"
+      }
+    ],
+    "skillsAssessment": {
+      "speakingFluency": { "score": 7.0, "level": "B1.1" },
+      "grammarAccuracy": { "score": 6.5, "level": "B1.1" },
+      "vocabularyRange": { "score": 7.0, "level": "B1.1" },
+      "listeningComprehension": { "score": 8.0, "level": "B1.2" },
+      "pronunciation": { "score": 7.0, "level": "B1.1" }
+    },
+    "homework": [
+      {
+        "title": "5 oraciones con expresiones de deseo y duda",
+        "description": "Escribe oraciones con 'espero que', 'quiero que', 'dudo que' usando subjuntivo. Inclúyelas en un párrafo coherente.",
+        "estimatedTimeMin": 20,
+        "dueInDays": 7,
+        "type": "writing"
+      },
+      {
+        "title": "Conversa con Lingo sobre tu futuro",
+        "description": "Habla 10 min sobre tus deseos y dudas para los próximos años. Lingo te corrige el subjuntivo.",
+        "estimatedTimeMin": 10,
+        "dueInDays": 4,
+        "type": "ai_practice"
+      }
+    ],
+    "nextClassRecommendations": [
+      "Continuar subjuntivo con expresiones de emoción ('me alegra que', 'temo que')",
+      "Aprovechar contexto: novia argentina — vocabulario rioplatense / vos",
+      "Profundizar uso de artículos con sustantivos abstractos (error pendiente)"
+    ],
+    "tutorPrivateNotes": "James progresa muy rápido — capturó subjuntivo en una sesión, raro. Aprovechar momentum para subjuntivo con emoción la próxima clase. Su novia argentina es contexto perfecto para conversación natural.",
+    "sharedNotes": "¡Hoy aprendiste el subjuntivo! Es uno de los temas más temidos del español pero te corregiste solo con 'sea' — eso muestra que ya entendiste la lógica. Practica con Lingo esta semana para que se vuelva automático.",
+    "engagementMetrics": {
+      "studentSpeakingTimePct": 50,
+      "tutorSpeakingTimePct": 50,
+      "questionsFromStudent": 1,
+      "silencePeriodsOver5s": 0,
+      "offTopicPeriods": 0
+    },
+    "confidenceScore": 0.88
+  }
+}

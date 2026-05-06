@@ -9,7 +9,8 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "db:seed": "tsx --env-file=.env server/seed.ts"
+    "db:seed": "tsx --env-file=.env server/seed.ts",
+    "eval-ai": "tsx --env-file=.env evals/run.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

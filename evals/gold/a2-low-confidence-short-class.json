@@ -1,0 +1,59 @@
+{
+  "slug": "a2-low-confidence-short-class",
+  "description": "Short, sparse class — tests confidenceScore behavior when transcript is poor",
+  "input": {
+    "studentName": "Pierre",
+    "studentLevel": "A2.1",
+    "tutorName": "Lucia",
+    "targetLanguage": "spanish",
+    "uiLanguage": "es",
+    "durationMinutes": 12,
+    "recurringErrorsContext": [],
+    "diarizedTranscript": [
+      { "speaker": "tutor",   "timestamp": "00:00", "text": "Hola Pierre, ¿cómo estás?" },
+      { "speaker": "student", "timestamp": "00:10", "text": "Hola. Bien." },
+      { "speaker": "tutor",   "timestamp": "00:20", "text": "¿Qué hiciste el fin de semana?" },
+      { "speaker": "student", "timestamp": "00:35", "text": "Eh... nada. Trabajo." },
+      { "speaker": "tutor",   "timestamp": "00:50", "text": "¿Solo trabajo? ¿Algo divertido?" },
+      { "speaker": "student", "timestamp": "01:05", "text": "No. Cansado." },
+      { "speaker": "tutor",   "timestamp": "01:20", "text": "Entiendo. ¿Quieres terminar antes hoy?" },
+      { "speaker": "student", "timestamp": "01:30", "text": "Sí, por favor. Lo siento." },
+      { "speaker": "tutor",   "timestamp": "01:38", "text": "Sin problema, descansa. Hablamos la próxima semana." }
+    ]
+  },
+  "expected": {
+    "summary": {
+      "headline": "Clase corta — estudiante reportó cansancio y pidió terminar antes. Sin contenido pedagógico significativo.",
+      "durationMinutes": 12,
+      "topics": [],
+      "levelFocus": "A2.1"
+    },
+    "keyMoments": [
+      { "timestamp": "01:20", "type": "off_topic", "description": "Tutora detectó cansancio y ofreció terminar antes" }
+    ],
+    "vocabularyIntroduced": [],
+    "errorsDetected": [],
+    "skillsAssessment": {
+      "speakingFluency": { "score": 4.0, "level": "A2.1" },
+      "grammarAccuracy": { "score": 4.0, "level": "A2.1" },
+      "vocabularyRange": { "score": 4.0, "level": "A2.1" },
+      "listeningComprehension": { "score": 5.0, "level": "A2.2" },
+      "pronunciation": { "score": 4.5, "level": "A2.1" }
+    },
+    "homework": [],
+    "nextClassRecommendations": [
+      "Reagendar contenido planeado de hoy para próxima clase",
+      "Preguntar al inicio si está descansado antes de empezar"
+    ],
+    "tutorPrivateNotes": "Pierre llegó visiblemente cansado, mencionó solo trabajo el fin de semana. No insistí. Considerar mensaje empático antes de la próxima clase. Posible burnout a monitorear.",
+    "sharedNotes": "Hoy hablamos brevemente. Descansa bien y nos vemos la próxima semana con energías renovadas.",
+    "engagementMetrics": {
+      "studentSpeakingTimePct": 25,
+      "tutorSpeakingTimePct": 60,
+      "questionsFromStudent": 0,
+      "silencePeriodsOver5s": 3,
+      "offTopicPeriods": 1
+    },
+    "confidenceScore": 0.45
+  }
+}

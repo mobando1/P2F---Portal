@@ -1,0 +1,108 @@
+{
+  "slug": "a2-preterite-vs-imperfect",
+  "description": "A2 Spanish — student practices narrating a trip, confuses pretérito vs imperfecto",
+  "input": {
+    "studentName": "Sarah",
+    "studentLevel": "A2.2",
+    "tutorName": "María",
+    "targetLanguage": "spanish",
+    "uiLanguage": "es",
+    "durationMinutes": 45,
+    "recurringErrorsContext": [
+      "Confused pretérito/imperfecto in last 2 classes",
+      "Forgets accents on agudas"
+    ],
+    "diarizedTranscript": [
+      { "speaker": "tutor",   "timestamp": "00:00", "text": "Hola Sarah, ¿cómo estás? Hoy vamos a practicar contar historias en pasado." },
+      { "speaker": "student", "timestamp": "00:08", "text": "Hola María, estoy bien. Sí, quiero practicar pasado." },
+      { "speaker": "tutor",   "timestamp": "00:18", "text": "Cuéntame sobre tu último viaje. Usa pretérito para acciones específicas y imperfecto para descripciones." },
+      { "speaker": "student", "timestamp": "00:32", "text": "Vale. El verano pasado iba a Italia. Estaba muy bonito. Hacía calor." },
+      { "speaker": "tutor",   "timestamp": "00:45", "text": "Cuidado: 'iba a Italia' es imperfecto, suena como acción habitual. Si fue una vez, di 'fui a Italia'." },
+      { "speaker": "student", "timestamp": "00:58", "text": "Ah, entiendo. Fui a Italia el verano pasado." },
+      { "speaker": "tutor",   "timestamp": "01:05", "text": "¡Perfecto! Continúa." },
+      { "speaker": "student", "timestamp": "01:10", "text": "Comimos pizza todos los días. Era deliciosa. Visitamos Roma y Florencia." },
+      { "speaker": "tutor",   "timestamp": "01:24", "text": "Excelente uso. ¿Y qué tiempo hacía?" },
+      { "speaker": "student", "timestamp": "01:30", "text": "Hizo mucho calor. No, hacía mucho calor, todo el tiempo." },
+      { "speaker": "tutor",   "timestamp": "01:38", "text": "Muy bien, te corregiste sola. Esa es la diferencia clave." },
+      { "speaker": "student", "timestamp": "01:48", "text": "Una noche fuimos a un restaurante. La camarera era muy simpática. Nos recomendó alojamiento barato cerca." },
+      { "speaker": "tutor",   "timestamp": "02:05", "text": "¡Excelente! Mezclaste los dos tiempos correctamente. 'Alojamiento' es palabra nueva, ¿la sabías?" },
+      { "speaker": "student", "timestamp": "02:15", "text": "No, la aprendí en una guía de viaje. Significa 'place to stay'." },
+      { "speaker": "tutor",   "timestamp": "02:22", "text": "Correcto. Otra: 'imprescindible' — necesario absolutamente." },
+      { "speaker": "student", "timestamp": "02:32", "text": "Vale. Es imprescindible reservar en agosto." },
+      { "speaker": "tutor",   "timestamp": "02:38", "text": "Perfecto uso. Para la próxima clase: escribe 5 oraciones contrastando los dos tiempos." }
+    ]
+  },
+  "expected": {
+    "summary": {
+      "headline": "Repaso de pretérito vs imperfecto narrando un viaje a Italia, con vocabulario de viajes nuevo.",
+      "durationMinutes": 45,
+      "topics": ["pretérito indefinido", "imperfecto", "vocabulario de viajes"],
+      "levelFocus": "A2.2"
+    },
+    "keyMoments": [
+      { "timestamp": "00:45", "type": "concept_taught", "description": "Tutor explicó la diferencia entre 'iba' (imperfecto/habitual) y 'fui' (pretérito/único)" },
+      { "timestamp": "01:30", "type": "student_breakthrough", "description": "Estudiante se autocorrigió de 'hizo calor' a 'hacía calor' sin ayuda" },
+      { "timestamp": "01:48", "type": "student_breakthrough", "description": "Mezcló pretérito (fuimos, recomendó) e imperfecto (era) correctamente en una narración" }
+    ],
+    "vocabularyIntroduced": [
+      { "word": "alojamiento", "translation": "accommodation / place to stay", "context": "alojamiento barato cerca", "mastered": true },
+      { "word": "imprescindible", "translation": "essential", "context": "es imprescindible reservar", "mastered": true }
+    ],
+    "errorsDetected": [
+      {
+        "type": "verb_tense",
+        "incorrect": "El verano pasado iba a Italia",
+        "correct": "El verano pasado fui a Italia",
+        "explanation": "Acción puntual completada en el pasado requiere pretérito, no imperfecto",
+        "frequency": 1,
+        "severity": "medium"
+      },
+      {
+        "type": "verb_tense",
+        "incorrect": "Hizo mucho calor",
+        "correct": "Hacía mucho calor",
+        "explanation": "Descripción del clima durante el viaje es imperfecto. La estudiante se autocorrigió.",
+        "frequency": 1,
+        "severity": "low"
+      }
+    ],
+    "skillsAssessment": {
+      "speakingFluency": { "score": 6.5, "level": "A2.2" },
+      "grammarAccuracy": { "score": 6.0, "level": "A2.2" },
+      "vocabularyRange": { "score": 6.5, "level": "A2.2" },
+      "listeningComprehension": { "score": 7.5, "level": "B1.1" },
+      "pronunciation": { "score": 6.5, "level": "A2.2" }
+    },
+    "homework": [
+      {
+        "title": "5 oraciones contrastando pretérito e imperfecto",
+        "description": "Escribe 5 momentos específicos de tu próximo viaje. Usa pretérito para acciones únicas (fui, comí) e imperfecto para descripciones (hacía calor, era bonito).",
+        "estimatedTimeMin": 15,
+        "dueInDays": 7,
+        "type": "writing"
+      },
+      {
+        "title": "Practica vocabulario nuevo con Lingo",
+        "description": "Conversa con Lingo sobre planificar un viaje y usa: alojamiento, imprescindible.",
+        "estimatedTimeMin": 10,
+        "dueInDays": 3,
+        "type": "ai_practice"
+      }
+    ],
+    "nextClassRecommendations": [
+      "Reforzar pretérito vs imperfecto con ejercicios de listening — la mejora se ve pero el patrón persiste",
+      "Introducir más vocabulario de viajes (transporte, alojamiento)",
+      "Trabajar pronunciación de 'rr' — pendiente de clases anteriores"
+    ],
+    "tutorPrivateNotes": "Sarah viene mejorando en autocorrección — eso indica internalización del contraste pretérito/imperfecto, aunque aún no es automática. Mencionó interés en Italia, podemos hilar próximas clases con vocabulario de viajes mediterráneos.",
+    "sharedNotes": "¡Hoy practicamos cómo contar historias en pasado y lo hiciste muy bien! Te corregiste sola con 'hacía calor' — eso es señal de que ya estás internalizando la diferencia. Para la próxima clase, intenta usar las dos palabras nuevas en una conversación con Lingo.",
+    "engagementMetrics": {
+      "studentSpeakingTimePct": 55,
+      "tutorSpeakingTimePct": 45,
+      "questionsFromStudent": 0,
+      "silencePeriodsOver5s": 0,
+      "offTopicPeriods": 0
+    },
+    "confidenceScore": 0.85
+  }
+}

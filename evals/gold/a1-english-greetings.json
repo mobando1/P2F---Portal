@@ -1,0 +1,110 @@
+{
+  "slug": "a1-english-greetings",
+  "description": "A1 English — first introductions, basic greetings, simple present",
+  "input": {
+    "studentName": "Carlos",
+    "studentLevel": "A1.1",
+    "tutorName": "Emma",
+    "targetLanguage": "english",
+    "uiLanguage": "es",
+    "durationMinutes": 30,
+    "recurringErrorsContext": [],
+    "diarizedTranscript": [
+      { "speaker": "tutor",   "timestamp": "00:00", "text": "Hi Carlos! Nice to meet you. How are you today?" },
+      { "speaker": "student", "timestamp": "00:08", "text": "Hi. I am Carlos. I am... bien. Sorry, fine." },
+      { "speaker": "tutor",   "timestamp": "00:18", "text": "Great! Where are you from?" },
+      { "speaker": "student", "timestamp": "00:24", "text": "I from Mexico. From Guadalajara." },
+      { "speaker": "tutor",   "timestamp": "00:30", "text": "Nice. Remember: 'I AM from Mexico'. Try again." },
+      { "speaker": "student", "timestamp": "00:38", "text": "I am from Mexico." },
+      { "speaker": "tutor",   "timestamp": "00:43", "text": "Perfect. What do you do?" },
+      { "speaker": "student", "timestamp": "00:48", "text": "I am... ingeniero. Engineer? I am engineer." },
+      { "speaker": "tutor",   "timestamp": "00:56", "text": "Almost! 'I am AN engineer'. We use 'a' or 'an' before jobs." },
+      { "speaker": "student", "timestamp": "01:05", "text": "I am an engineer." },
+      { "speaker": "tutor",   "timestamp": "01:10", "text": "Excellent. Do you have hobbies?" },
+      { "speaker": "student", "timestamp": "01:15", "text": "Yes. I like... fútbol. Football. And I like cook." },
+      { "speaker": "tutor",   "timestamp": "01:25", "text": "I like cookING. Add -ing for activities." },
+      { "speaker": "student", "timestamp": "01:32", "text": "I like cooking. And I like running." }
+    ]
+  },
+  "expected": {
+    "summary": {
+      "headline": "First class — introductions, simple present 'to be', articles a/an, gerunds for hobbies.",
+      "durationMinutes": 30,
+      "topics": ["introductions", "to be", "articles a/an", "gerunds"],
+      "levelFocus": "A1.1"
+    },
+    "keyMoments": [
+      { "timestamp": "00:30", "type": "concept_taught", "description": "Tutor corrected 'I from' → 'I am from'" },
+      { "timestamp": "00:56", "type": "concept_taught", "description": "Article 'a/an' before professions explained" },
+      { "timestamp": "01:32", "type": "student_breakthrough", "description": "Student applied -ing to a new verb without prompting" }
+    ],
+    "vocabularyIntroduced": [
+      { "word": "engineer", "translation": "ingeniero", "context": "I am an engineer", "mastered": true },
+      { "word": "cooking", "translation": "cocinar (gerundio)", "context": "I like cooking", "mastered": true }
+    ],
+    "errorsDetected": [
+      {
+        "type": "verb_omission",
+        "incorrect": "I from Mexico",
+        "correct": "I am from Mexico",
+        "explanation": "El verbo 'to be' es obligatorio en presente simple en inglés.",
+        "frequency": 1,
+        "severity": "high"
+      },
+      {
+        "type": "article_omission",
+        "incorrect": "I am engineer",
+        "correct": "I am an engineer",
+        "explanation": "Profesiones contables siempre llevan artículo a/an en inglés.",
+        "frequency": 1,
+        "severity": "medium"
+      },
+      {
+        "type": "verb_form",
+        "incorrect": "I like cook",
+        "correct": "I like cooking",
+        "explanation": "Después de 'like' para hobbies se usa gerundio (-ing).",
+        "frequency": 1,
+        "severity": "medium"
+      }
+    ],
+    "skillsAssessment": {
+      "speakingFluency": { "score": 3.5, "level": "A1.1" },
+      "grammarAccuracy": { "score": 3.0, "level": "A1.1" },
+      "vocabularyRange": { "score": 3.5, "level": "A1.1" },
+      "listeningComprehension": { "score": 4.5, "level": "A1.2" },
+      "pronunciation": { "score": 4.0, "level": "A1.2" }
+    },
+    "homework": [
+      {
+        "title": "Write 10 sentences about yourself",
+        "description": "Use 'I am', 'I am from', 'I am a/an [job]', 'I like [activity-ing]'.",
+        "estimatedTimeMin": 20,
+        "dueInDays": 7,
+        "type": "writing"
+      },
+      {
+        "title": "Practice introductions with Lingo",
+        "description": "Have a 5-minute conversation introducing yourself. Use the structures from class.",
+        "estimatedTimeMin": 10,
+        "dueInDays": 3,
+        "type": "ai_practice"
+      }
+    ],
+    "nextClassRecommendations": [
+      "Drill 'to be' affirmative + negative forms — still inconsistent",
+      "Introduce articles a/an with more profession examples",
+      "Add basic question forms (Where are you from? What do you do?)"
+    ],
+    "tutorPrivateNotes": "Carlos parece motivado, mezcla bastante español pero entiende correcciones rápido. Es ingeniero en Guadalajara — usar contexto profesional en próximas clases (vocabulario técnico básico).",
+    "sharedNotes": "Welcome! In your first class you learned how to introduce yourself. Great job correcting yourself when I pointed things out. Keep practicing 'I am' before nouns and -ing for activities you like.",
+    "engagementMetrics": {
+      "studentSpeakingTimePct": 40,
+      "tutorSpeakingTimePct": 60,
+      "questionsFromStudent": 0,
+      "silencePeriodsOver5s": 1,
+      "offTopicPeriods": 0
+    },
+    "confidenceScore": 0.78
+  }
+}

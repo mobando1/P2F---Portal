@@ -10,3 +10,5 @@ coverage
 attached_assets
 .local
 *.zip
+evals/runs/
+evals/results/

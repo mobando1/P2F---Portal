@@ -1,0 +1,105 @@
+{
+  "slug": "c1-spanish-discourse-markers",
+  "description": "C1 Spanish — discourse markers for argumentation, register variation",
+  "input": {
+    "studentName": "Anna",
+    "studentLevel": "C1.1",
+    "tutorName": "Sofía",
+    "targetLanguage": "spanish",
+    "uiLanguage": "en",
+    "durationMinutes": 60,
+    "recurringErrorsContext": [
+      "Uses 'pero' too often where 'sin embargo' or 'no obstante' would be more formal"
+    ],
+    "diarizedTranscript": [
+      { "speaker": "tutor",   "timestamp": "00:00", "text": "Anna, hoy vamos a refinar tu registro formal con marcadores discursivos. ¿De acuerdo?" },
+      { "speaker": "student", "timestamp": "00:08", "text": "Perfecto. Necesito esto para presentaciones en el trabajo." },
+      { "speaker": "tutor",   "timestamp": "00:15", "text": "Empecemos con contraste. En vez de 'pero' constante, usa: 'sin embargo', 'no obstante', 'ahora bien', 'aun así'." },
+      { "speaker": "student", "timestamp": "00:30", "text": "Vale. Por ejemplo: 'El mercado europeo crece. Sin embargo, la regulación se endurece.'" },
+      { "speaker": "tutor",   "timestamp": "00:42", "text": "Excelente. Para concesión: 'a pesar de que', 'aunque', 'si bien'." },
+      { "speaker": "student", "timestamp": "00:52", "text": "'Si bien las cifras son positivas, debemos ser cautos.' Eso suena más profesional." },
+      { "speaker": "tutor",   "timestamp": "01:05", "text": "Sí. Para causa: 'debido a', 'puesto que', 'dado que' en vez de 'porque'." },
+      { "speaker": "student", "timestamp": "01:15", "text": "'Dado que la inflación persiste, debido a la crisis energética, recomendamos...' Espera, ¿puedo encadenar dos así?" },
+      { "speaker": "tutor",   "timestamp": "01:30", "text": "Funciona pero pesado. Mejor: 'Debido a la crisis energética, la inflación persiste; por consiguiente, recomendamos...'" },
+      { "speaker": "student", "timestamp": "01:45", "text": "Ah, 'por consiguiente' para consecuencia. ¿Diferencia con 'por lo tanto'?" },
+      { "speaker": "tutor",   "timestamp": "01:55", "text": "Casi sinónimos. 'Por consiguiente' es un punto más formal y de registro escrito. 'Por lo tanto' es neutro." },
+      { "speaker": "student", "timestamp": "02:08", "text": "Entendido. Una pregunta: en mis emails uso 'cabe destacar'. ¿Es correcto o pomposo?" },
+      { "speaker": "tutor",   "timestamp": "02:20", "text": "Apropiado en informes ejecutivos. Pero en email de equipo, 'vale la pena destacar' es más natural." }
+    ]
+  },
+  "expected": {
+    "summary": {
+      "headline": "Refinamiento de registro formal: marcadores de contraste, concesión, causa y consecuencia para presentaciones profesionales.",
+      "durationMinutes": 60,
+      "topics": ["marcadores discursivos", "registro formal", "argumentación escrita"],
+      "levelFocus": "C1.1"
+    },
+    "keyMoments": [
+      { "timestamp": "00:30", "type": "student_breakthrough", "description": "Anna construyó su primera oración con 'sin embargo' espontáneamente" },
+      { "timestamp": "01:15", "type": "confusion_point", "description": "Encadenó dos marcadores causales — tutora explicó cómo simplificar" },
+      { "timestamp": "02:08", "type": "concept_taught", "description": "Distinción entre 'cabe destacar' (informe) y 'vale la pena destacar' (email)" }
+    ],
+    "vocabularyIntroduced": [
+      { "word": "sin embargo", "translation": "however / nevertheless", "context": "Sin embargo, la regulación se endurece", "mastered": true },
+      { "word": "no obstante", "translation": "nonetheless", "context": "marcador de contraste formal", "mastered": false },
+      { "word": "puesto que", "translation": "given that", "context": "marcador causal formal", "mastered": false },
+      { "word": "por consiguiente", "translation": "consequently", "context": "marcador consecutivo escrito", "mastered": true }
+    ],
+    "errorsDetected": [
+      {
+        "type": "register_chaining",
+        "incorrect": "Dado que la inflación persiste, debido a la crisis energética",
+        "correct": "Debido a la crisis energética, la inflación persiste",
+        "explanation": "Encadenar dos marcadores causales sobrecarga la oración. Mejor separar causa y consecuencia.",
+        "frequency": 1,
+        "severity": "low"
+      },
+      {
+        "type": "register_overuse",
+        "incorrect": "uso de 'pero' en contexto profesional",
+        "correct": "alternar con 'sin embargo', 'no obstante', 'aun así'",
+        "explanation": "Patrón recurrente de clases anteriores ya en mejora.",
+        "frequency": 0,
+        "severity": "none"
+      }
+    ],
+    "skillsAssessment": {
+      "speakingFluency": { "score": 8.5, "level": "C1.1" },
+      "grammarAccuracy": { "score": 9.0, "level": "C1.2" },
+      "vocabularyRange": { "score": 8.0, "level": "C1.1" },
+      "listeningComprehension": { "score": 9.0, "level": "C1.2" },
+      "pronunciation": { "score": 8.0, "level": "C1.1" }
+    },
+    "homework": [
+      {
+        "title": "Reescribir email profesional con registro formal",
+        "description": "Toma un email reciente que escribiste y reescríbelo usando 5 marcadores discursivos formales distintos. Compártelo en la próxima clase.",
+        "estimatedTimeMin": 20,
+        "dueInDays": 7,
+        "type": "writing"
+      },
+      {
+        "title": "Lectura: artículo de El País sobre economía",
+        "description": "Lee un artículo de la sección Economía y subraya 10 marcadores discursivos. Identifica función de cada uno.",
+        "estimatedTimeMin": 25,
+        "dueInDays": 5,
+        "type": "reading"
+      }
+    ],
+    "nextClassRecommendations": [
+      "Practicar marcadores en speaking — Anna los maneja en escrito pero en conversación todavía revierte a 'pero'",
+      "Introducir marcadores de reformulación ('en otras palabras', 'es decir', 'dicho de otro modo')",
+      "Trabajar conectores de adición sofisticados ('asimismo', 'igualmente', 'cabe añadir')"
+    ],
+    "tutorPrivateNotes": "Anna es C1 sólida en gramática, casi C2 en comprensión. Su brecha es pragmática/registro. Excelente para drill ejecutivo: presentaciones, informes, emails formales. Su nicho profesional (consultoría) es perfecto para estos materiales.",
+    "sharedNotes": "Hoy refinaste tu registro formal con marcadores que sonarán perfectos en presentaciones profesionales. Aplica 'sin embargo', 'por consiguiente', y 'puesto que' en tus próximos emails y verás la diferencia inmediata.",
+    "engagementMetrics": {
+      "studentSpeakingTimePct": 55,
+      "tutorSpeakingTimePct": 45,
+      "questionsFromStudent": 2,
+      "silencePeriodsOver5s": 0,
+      "offTopicPeriods": 0
+    },
+    "confidenceScore": 0.92
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "slug": "b2-english-conditionals",
+  "description": "B2 English — second and third conditionals, hypothetical scenarios",
+  "input": {
+    "studentName": "Lucia",
+    "studentLevel": "B2.1",
+    "tutorName": "John",
+    "targetLanguage": "english",
+    "uiLanguage": "es",
+    "durationMinutes": 60,
+    "recurringErrorsContext": [
+      "Mixes 'would' with present tense",
+      "Pronunciation of 'would' as 'wood' clear"
+    ],
+    "diarizedTranscript": [
+      { "speaker": "tutor",   "timestamp": "00:00", "text": "Hi Lucia. Today: second and third conditionals. Hypotheticals." },
+      { "speaker": "student", "timestamp": "00:08", "text": "Okay. The second is for unreal present, right? If I had money I would travel." },
+      { "speaker": "tutor",   "timestamp": "00:18", "text": "Exactly. And third is for unreal past. If I had studied medicine, I would have become a doctor." },
+      { "speaker": "student", "timestamp": "00:30", "text": "Got it. If I had studied earlier, I would pass the exam." },
+      { "speaker": "tutor",   "timestamp": "00:40", "text": "Mix-up: that's mixing second and third. Either 'I would have passed' (third, past consequence) or 'if I studied earlier I would pass' (second, present pattern)." },
+      { "speaker": "student", "timestamp": "00:55", "text": "Right. If I had studied earlier, I would have passed the exam yesterday." },
+      { "speaker": "tutor",   "timestamp": "01:05", "text": "Perfect. Now you: imagine you won the lottery." },
+      { "speaker": "student", "timestamp": "01:12", "text": "If I won the lottery, I would buy a house in Barcelona and quit my job." },
+      { "speaker": "tutor",   "timestamp": "01:22", "text": "Excellent. Pronunciation note: 'would' — w-uud, not 'wood'." },
+      { "speaker": "student", "timestamp": "01:30", "text": "Would, would. I will practice." },
+      { "speaker": "tutor",   "timestamp": "01:38", "text": "Now mixed conditional: 'If I were richer (now), I would have bought that car (past)'." },
+      { "speaker": "student", "timestamp": "01:50", "text": "If I were taller, I would have played basketball professionally." },
+      { "speaker": "tutor",   "timestamp": "02:02", "text": "Beautiful sentence. Mixed conditional mastered." },
+      { "speaker": "student", "timestamp": "02:10", "text": "Thanks. Conditionals make English feel philosophical." },
+      { "speaker": "tutor",   "timestamp": "02:18", "text": "True. Homework: write a short story using 5 conditionals — mix types." }
+    ]
+  },
+  "expected": {
+    "summary": {
+      "headline": "Conditionals 2nd, 3rd, and mixed — Lucia produced a mixed conditional independently and pronunciation of 'would' improved.",
+      "durationMinutes": 60,
+      "topics": ["second conditional", "third conditional", "mixed conditional", "would pronunciation"],
+      "levelFocus": "B2.1"
+    },
+    "keyMoments": [
+      { "timestamp": "00:40", "type": "concept_taught", "description": "Tutor distinguished mixing of second and third conditional" },
+      { "timestamp": "01:50", "type": "student_breakthrough", "description": "Estudiante construyó mixed conditional sin error en su segundo intento" },
+      { "timestamp": "01:22", "type": "concept_taught", "description": "Pronunciation: 'would' has 'uu' sound, not 'oo'" }
+    ],
+    "vocabularyIntroduced": [],
+    "errorsDetected": [
+      {
+        "type": "tense_mixing",
+        "incorrect": "If I had studied earlier, I would pass the exam",
+        "correct": "If I had studied earlier, I would have passed the exam",
+        "explanation": "Tercer condicional requiere 'would have + past participle' en la consecuencia. Mezcló segundo con tercero.",
+        "frequency": 1,
+        "severity": "medium"
+      },
+      {
+        "type": "pronunciation",
+        "incorrect": "would (as 'wood')",
+        "correct": "would (with /ʊ/ sound)",
+        "explanation": "Sonido 'uu' corto, no 'oo' largo. Patrón recurrente del estudiante.",
+        "frequency": 2,
+        "severity": "low"
+      }
+    ],
+    "skillsAssessment": {
+      "speakingFluency": { "score": 8.0, "level": "B2.1" },
+      "grammarAccuracy": { "score": 7.5, "level": "B2.1" },
+      "vocabularyRange": { "score": 8.0, "level": "B2.1" },
+      "listeningComprehension": { "score": 8.5, "level": "B2.2" },
+      "pronunciation": { "score": 7.0, "level": "B1.2" }
+    },
+    "homework": [
+      {
+        "title": "Write a short story using 5 conditionals",
+        "description": "Mix second, third, and mixed conditionals. Theme: regrets and dreams. ~150 words.",
+        "estimatedTimeMin": 25,
+        "dueInDays": 7,
+        "type": "writing"
+      },
+      {
+        "title": "Pronunciation drill: 'would'",
+        "description": "Record yourself saying 10 sentences with 'would'. Send to tutor for feedback.",
+        "estimatedTimeMin": 10,
+        "dueInDays": 4,
+        "type": "speaking"
+      }
+    ],
+    "nextClassRecommendations": [
+      "Continue mixed conditionals — Lucia handles them well, push to spontaneous use",
+      "Address pronunciation of 'would/could/should' systematically",
+      "Introduce inversion in conditionals ('Had I known...')"
+    ],
+    "tutorPrivateNotes": "Lucia es B2 sólida casi B2.2 en speaking. Usar temas más complejos (filosofía, hipotéticos morales) para empujar a C1. Pronunciación 'would' resistente — necesita drill enfocado.",
+    "sharedNotes": "Today you mastered mixed conditionals on your own — that's an advanced skill! Your sentences were natural and accurate. Keep practicing the pronunciation of 'would' and you'll sound even more natural.",
+    "engagementMetrics": {
+      "studentSpeakingTimePct": 60,
+      "tutorSpeakingTimePct": 40,
+      "questionsFromStudent": 0,
+      "silencePeriodsOver5s": 0,
+      "offTopicPeriods": 0
+    },
+    "confidenceScore": 0.9
+  }
+}
