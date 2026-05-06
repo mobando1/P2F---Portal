@@ -1135,8 +1135,8 @@ export const aiUsage = pgTable("ai_usage", {
   provider: text("provider").notNull(),       // 'openai' | 'anthropic' | 'whisper' | 'deepgram'
   model: text("model").notNull(),             // 'gpt-4o-mini' | 'claude-haiku-4-5' | 'whisper-1' | etc
   feature: text("feature").notNull(),         // 'ai_partner' | 'class_summary' | 'transcription' | 'eval' | etc
-  userId: integer("user_id"),                 // student or tutor whose action triggered the call (null for system jobs)
-  classId: integer("class_id"),               // optional, when call is tied to a class
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  classId: integer("class_id").references(() => classes.id, { onDelete: "set null" }),
   tokensIn: integer("tokens_in").default(0),
   tokensOut: integer("tokens_out").default(0),
   audioSeconds: integer("audio_seconds").default(0),  // for Whisper/Deepgram

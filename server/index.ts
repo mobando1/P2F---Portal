@@ -31,11 +31,6 @@ async function startServer() {
   // Trust Railway's reverse proxy so secure cookies work over HTTPS
   app.set("trust proxy", 1);
 
-  // Structured request logging with traceId. Must be before any route handler
-  // so every log inside the request lifecycle inherits req.id.
-  app.use(httpLogger);
-  app.use(traceIdHeader);
-
   // Session configuration - use PG store when database is available
   const sessionSecret = config.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 
@@ -74,6 +69,12 @@ async function startServer() {
   });
 
   app.use(sessionMiddleware);
+
+  // Structured request logging with traceId. After session so userId is
+  // available in the log serializer, before all routes so every log inside
+  // the request lifecycle inherits req.id.
+  app.use(httpLogger);
+  app.use(traceIdHeader);
 
   // Passport initialization (OAuth strategies — no passport.session(), we use express-session)
   const passport = await import("passport");
@@ -747,7 +748,29 @@ async function startServer() {
               ALTER TABLE ai_usage ADD CONSTRAINT check_ai_usage_status
                 CHECK (status IN ('success','error','budget_blocked'));
             END IF;
+            -- ai_usage FKs (set null on delete so historical records survive
+            -- a user being purged, but never reference a non-existent row).
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_ai_usage_user') THEN
+              ALTER TABLE ai_usage ADD CONSTRAINT fk_ai_usage_user
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_ai_usage_class') THEN
+              ALTER TABLE ai_usage ADD CONSTRAINT fk_ai_usage_class
+                FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL;
+            END IF;
           END $do$;
+          -- recording_consents is an audit log: prevent UPDATE/DELETE at the
+          -- DB level so even a buggy admin endpoint can't tamper with it.
+          CREATE OR REPLACE FUNCTION prevent_recording_consents_modification()
+            RETURNS trigger LANGUAGE plpgsql AS $fn$
+          BEGIN
+            RAISE EXCEPTION 'recording_consents is append-only (% blocked)', TG_OP;
+          END;
+          $fn$;
+          DROP TRIGGER IF EXISTS trg_recording_consents_no_update ON recording_consents;
+          CREATE TRIGGER trg_recording_consents_no_update
+            BEFORE UPDATE OR DELETE ON recording_consents
+            FOR EACH ROW EXECUTE FUNCTION prevent_recording_consents_modification();
         `);
         // Fix any availability rows with NULL isAvailable
         await pgPool.query(`UPDATE tutor_availability SET is_available = TRUE WHERE is_available IS NULL`);
