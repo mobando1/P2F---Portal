@@ -681,6 +681,15 @@ async function startServer() {
           CREATE INDEX IF NOT EXISTS idx_ai_usage_created ON ai_usage (created_at);
           CREATE INDEX IF NOT EXISTS idx_ai_usage_user_created ON ai_usage (user_id, created_at);
           CREATE INDEX IF NOT EXISTS idx_ai_usage_feature_created ON ai_usage (feature, created_at);
+          CREATE TABLE IF NOT EXISTS feature_flags (
+            key TEXT PRIMARY KEY,
+            enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            rollout_percentage INTEGER NOT NULL DEFAULT 0,
+            user_overrides INTEGER[] DEFAULT '{}',
+            description TEXT,
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_by INTEGER
+          );
         `);
         // Fix any availability rows with NULL isAvailable
         await pgPool.query(`UPDATE tutor_availability SET is_available = TRUE WHERE is_available IS NULL`);

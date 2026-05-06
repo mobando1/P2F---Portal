@@ -887,6 +887,63 @@ export function registerClassRoutes(app: Express) {
   // Observability self-test endpoints. Admin-only. Used to verify Sentry +
   // logger pipeline end-to-end after configuring SENTRY_DSN in Railway.
   // Delete after Phase 0 is fully validated if you want.
+  // ─── Feature flags ────────────────────────────────────────────────
+  // Public: evaluated flags for the current user (or anonymous baseline).
+  app.get("/api/feature-flags", async (req, res) => {
+    try {
+      const { evaluateAllFlags } = await import("../services/feature-flags");
+      const userId = req.session?.userId;
+      const flags = await evaluateAllFlags(userId);
+      res.json(flags);
+    } catch (err) {
+      console.error("feature-flags evaluate error", err);
+      res.json({});
+    }
+  });
+
+  app.get("/api/admin/feature-flags", requireAdmin, async (_req, res) => {
+    try {
+      const { listFlags } = await import("../services/feature-flags");
+      res.json(await listFlags());
+    } catch (err) {
+      console.error("feature-flags list error", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/admin/feature-flags/:key", requireAdmin, async (req, res) => {
+    try {
+      const { upsertFlag } = await import("../services/feature-flags");
+      const { enabled, rolloutPercentage, userOverrides, description } = req.body || {};
+      if (rolloutPercentage !== undefined && (rolloutPercentage < 0 || rolloutPercentage > 100)) {
+        return res.status(400).json({ message: "rolloutPercentage must be 0-100" });
+      }
+      await upsertFlag({
+        key: req.params.key,
+        enabled,
+        rolloutPercentage,
+        userOverrides: Array.isArray(userOverrides) ? userOverrides : undefined,
+        description,
+        updatedBy: req.session.userId,
+      });
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("feature-flags upsert error", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/admin/feature-flags/:key", requireAdmin, async (req, res) => {
+    try {
+      const { deleteFlag } = await import("../services/feature-flags");
+      await deleteFlag(req.params.key);
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("feature-flags delete error", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // AI cost dashboard — totals and breakdown for admin observability
   app.get("/api/admin/ai-cost", requireAdmin, async (_req, res) => {
     try {

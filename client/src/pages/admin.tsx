@@ -12,6 +12,7 @@ import CrmDashboard from "@/components/crm/CrmDashboard";
 import TutorPaymentsTab from "@/components/admin/TutorPaymentsTab";
 import DisputedClassesTab from "@/components/admin/DisputedClassesTab";
 import AiCostTab from "@/components/admin/AiCostTab";
+import FeatureFlagsTab from "@/components/admin/FeatureFlagsTab";
 import AdminCalendar from "@/components/admin/AdminCalendar";
 import AdminLearningPath from "@/components/admin/AdminLearningPath";
 import { apiRequest } from "@/lib/queryClient";
@@ -79,7 +80,7 @@ interface ClassItem {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'tutors' | 'classes' | 'calendar' | 'learning-path' | 'analytics' | 'ai-stats' | 'ai-cost' | 'support' | 'settings' | 'crm' | 'payments' | 'disputes'>('tutors');
+  const [activeTab, setActiveTab] = useState<'tutors' | 'classes' | 'calendar' | 'learning-path' | 'analytics' | 'ai-stats' | 'ai-cost' | 'feature-flags' | 'support' | 'settings' | 'crm' | 'payments' | 'disputes'>('tutors');
   const [showAddTutor, setShowAddTutor] = useState(false);
   const [editingTutor, setEditingTutor] = useState<any>(null);
   const [classFilter, setClassFilter] = useState<'all' | 'scheduled' | 'completed' | 'cancelled'>('all');
@@ -480,6 +481,17 @@ export default function AdminPage() {
               >
                 <DollarSign className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">{isEs ? 'Costo IA' : 'AI Cost'}</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('feature-flags')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'feature-flags'
+                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Settings className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{isEs ? 'Flags' : 'Flags'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('settings')}
@@ -2365,6 +2377,8 @@ export default function AdminPage() {
         {activeTab === 'disputes' && <DisputedClassesTab isEs={isEs} />}
 
         {activeTab === 'ai-cost' && <AiCostTab isEs={isEs} />}
+
+        {activeTab === 'feature-flags' && <FeatureFlagsTab isEs={isEs} />}
 
         {activeTab === 'settings' && (
           <div className="space-y-6">

@@ -1146,6 +1146,22 @@ export const insertAiUsageSchema = createInsertSchema(aiUsage).omit({ id: true, 
 export type AiUsage = typeof aiUsage.$inferSelect;
 export type InsertAiUsage = z.infer<typeof insertAiUsageSchema>;
 
+// Feature flags — runtime gradual rollout control. Avoids redeploy to flip a
+// feature on/off and lets us run features at e.g. 5% of users before 100%.
+export const featureFlags = pgTable("feature_flags", {
+  key: text("key").primaryKey(),
+  enabled: boolean("enabled").notNull().default(false),
+  rolloutPercentage: integer("rollout_percentage").notNull().default(0), // 0-100
+  userOverrides: integer("user_overrides").array().default([]),          // userIds always-on
+  description: text("description"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedBy: integer("updated_by"),  // admin userId who last changed it
+});
+
+export const insertFeatureFlagSchema = createInsertSchema(featureFlags).omit({ updatedAt: true });
+export type FeatureFlag = typeof featureFlags.$inferSelect;
+export type InsertFeatureFlag = z.infer<typeof insertFeatureFlagSchema>;
+
 export const insertTutorGoogleTokenSchema = createInsertSchema(tutorGoogleTokens).omit({
   id: true,
   createdAt: true,
