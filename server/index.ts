@@ -661,6 +661,26 @@ async function startServer() {
           ALTER TABLE classes ADD COLUMN IF NOT EXISTS tutor_confirmation_deadline TIMESTAMP;
           ALTER TABLE classes ADD COLUMN IF NOT EXISTS student_confirmation_deadline TIMESTAMP;
           CREATE INDEX IF NOT EXISTS idx_classes_confirmation_status ON classes (confirmation_status);
+          CREATE TABLE IF NOT EXISTS ai_usage (
+            id SERIAL PRIMARY KEY,
+            provider TEXT NOT NULL,
+            model TEXT NOT NULL,
+            feature TEXT NOT NULL,
+            user_id INTEGER,
+            class_id INTEGER,
+            tokens_in INTEGER DEFAULT 0,
+            tokens_out INTEGER DEFAULT 0,
+            audio_seconds INTEGER DEFAULT 0,
+            cost_usd NUMERIC(10,6) NOT NULL,
+            duration_ms INTEGER,
+            status TEXT NOT NULL DEFAULT 'success',
+            error_message TEXT,
+            trace_id TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          );
+          CREATE INDEX IF NOT EXISTS idx_ai_usage_created ON ai_usage (created_at);
+          CREATE INDEX IF NOT EXISTS idx_ai_usage_user_created ON ai_usage (user_id, created_at);
+          CREATE INDEX IF NOT EXISTS idx_ai_usage_feature_created ON ai_usage (feature, created_at);
         `);
         // Fix any availability rows with NULL isAvailable
         await pgPool.query(`UPDATE tutor_availability SET is_available = TRUE WHERE is_available IS NULL`);

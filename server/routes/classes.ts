@@ -887,6 +887,62 @@ export function registerClassRoutes(app: Express) {
   // Observability self-test endpoints. Admin-only. Used to verify Sentry +
   // logger pipeline end-to-end after configuring SENTRY_DSN in Railway.
   // Delete after Phase 0 is fully validated if you want.
+  // AI cost dashboard — totals and breakdown for admin observability
+  app.get("/api/admin/ai-cost", requireAdmin, async (_req, res) => {
+    try {
+      const { pool } = await import("../db");
+      if (!pool) return res.json({ available: false });
+
+      const [totals, byFeature, byModel, topUsers] = await Promise.all([
+        pool.query<{ scope: string; total: string; calls: string }>(`
+          SELECT 'today' AS scope, COALESCE(SUM(cost_usd),0)::text AS total, COUNT(*)::text AS calls
+            FROM ai_usage WHERE created_at >= NOW() - INTERVAL '24 hours' AND status='success'
+          UNION ALL
+          SELECT 'last_7_days', COALESCE(SUM(cost_usd),0)::text, COUNT(*)::text
+            FROM ai_usage WHERE created_at >= NOW() - INTERVAL '7 days' AND status='success'
+          UNION ALL
+          SELECT 'this_month', COALESCE(SUM(cost_usd),0)::text, COUNT(*)::text
+            FROM ai_usage WHERE created_at >= date_trunc('month', NOW()) AND status='success'
+          UNION ALL
+          SELECT 'blocked_today', COALESCE(SUM(cost_usd),0)::text, COUNT(*)::text
+            FROM ai_usage WHERE created_at >= NOW() - INTERVAL '24 hours' AND status='budget_blocked'
+        `),
+        pool.query<{ feature: string; total: string; calls: string }>(`
+          SELECT feature, SUM(cost_usd)::text AS total, COUNT(*)::text AS calls
+            FROM ai_usage WHERE created_at >= NOW() - INTERVAL '24 hours' AND status='success'
+            GROUP BY feature ORDER BY SUM(cost_usd) DESC LIMIT 20
+        `),
+        pool.query<{ model: string; provider: string; total: string; calls: string }>(`
+          SELECT model, provider, SUM(cost_usd)::text AS total, COUNT(*)::text AS calls
+            FROM ai_usage WHERE created_at >= NOW() - INTERVAL '24 hours' AND status='success'
+            GROUP BY model, provider ORDER BY SUM(cost_usd) DESC LIMIT 20
+        `),
+        pool.query<{ user_id: number; total: string; calls: string }>(`
+          SELECT user_id, SUM(cost_usd)::text AS total, COUNT(*)::text AS calls
+            FROM ai_usage
+           WHERE created_at >= NOW() - INTERVAL '24 hours' AND status='success' AND user_id IS NOT NULL
+           GROUP BY user_id ORDER BY SUM(cost_usd) DESC LIMIT 10
+        `),
+      ]);
+
+      res.json({
+        available: true,
+        budgets: {
+          dailyUsd: parseFloat(process.env.AI_DAILY_BUDGET_USD || "10"),
+          monthlyUsd: parseFloat(process.env.AI_MONTHLY_BUDGET_USD || "200"),
+          perUserDailyUsd: parseFloat(process.env.AI_PER_USER_DAILY_USD || "1"),
+        },
+        totals: Object.fromEntries(totals.rows.map(r => [r.scope, { usd: parseFloat(r.total), calls: parseInt(r.calls) }])),
+        byFeature: byFeature.rows.map(r => ({ feature: r.feature, usd: parseFloat(r.total), calls: parseInt(r.calls) })),
+        byModel: byModel.rows.map(r => ({ model: r.model, provider: r.provider, usd: parseFloat(r.total), calls: parseInt(r.calls) })),
+        topUsers: topUsers.rows.map(r => ({ userId: r.user_id, usd: parseFloat(r.total), calls: parseInt(r.calls) })),
+      });
+    } catch (err) {
+      console.error("ai-cost error", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/admin/observability/test-error", requireAdmin, (req, _res, next) => {
     (req as any).log?.warn({ marker: "observability-test" }, "About to throw test error");
     next(new Error("Sentry test error from /api/admin/observability/test-error — safe to ignore"));

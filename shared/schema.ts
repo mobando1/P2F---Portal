@@ -1118,6 +1118,34 @@ export type InsertTutorAssignment = z.infer<typeof insertTutorAssignmentSchema>;
 export type LevelProgressionRule = typeof levelProgressionRules.$inferSelect;
 export type InsertLevelProgressionRule = z.infer<typeof insertLevelProgressionRuleSchema>;
 
+// AI usage log — every call to OpenAI / Anthropic / Whisper / Deepgram is
+// recorded here so we can budget-cap, audit, and bill back per feature.
+export const aiUsage = pgTable("ai_usage", {
+  id: serial("id").primaryKey(),
+  provider: text("provider").notNull(),       // 'openai' | 'anthropic' | 'whisper' | 'deepgram'
+  model: text("model").notNull(),             // 'gpt-4o-mini' | 'claude-haiku-4-5' | 'whisper-1' | etc
+  feature: text("feature").notNull(),         // 'ai_partner' | 'class_summary' | 'transcription' | 'eval' | etc
+  userId: integer("user_id"),                 // student or tutor whose action triggered the call (null for system jobs)
+  classId: integer("class_id"),               // optional, when call is tied to a class
+  tokensIn: integer("tokens_in").default(0),
+  tokensOut: integer("tokens_out").default(0),
+  audioSeconds: integer("audio_seconds").default(0),  // for Whisper/Deepgram
+  costUsd: decimal("cost_usd", { precision: 10, scale: 6 }).notNull(),
+  durationMs: integer("duration_ms"),
+  status: text("status").notNull().default("success"), // 'success' | 'error' | 'budget_blocked'
+  errorMessage: text("error_message"),
+  traceId: text("trace_id"),                  // tied to req.id for cross-system correlation
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_ai_usage_created").on(table.createdAt),
+  index("idx_ai_usage_user_created").on(table.userId, table.createdAt),
+  index("idx_ai_usage_feature_created").on(table.feature, table.createdAt),
+]);
+
+export const insertAiUsageSchema = createInsertSchema(aiUsage).omit({ id: true, createdAt: true });
+export type AiUsage = typeof aiUsage.$inferSelect;
+export type InsertAiUsage = z.infer<typeof insertAiUsageSchema>;
+
 export const insertTutorGoogleTokenSchema = createInsertSchema(tutorGoogleTokens).omit({
   id: true,
   createdAt: true,
