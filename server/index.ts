@@ -428,6 +428,18 @@ async function startServer() {
     });
   }
 
+  // Public runtime config served to the frontend. Anything safe to expose to
+  // any browser (no secrets) goes here. Lets us push env vars without
+  // rebuilding the frontend bundle — Vite's build-time inlining is fragile
+  // under Docker/Nixpacks because build args don't always inherit.
+  app.get("/api/config/public", (_req, res) => {
+    res.json({
+      sentryDsn: process.env.VITE_SENTRY_DSN || process.env.SENTRY_DSN_FRONTEND || null,
+      env: process.env.NODE_ENV || "development",
+      commit: process.env.RAILWAY_GIT_COMMIT_SHA?.substring(0, 7) || "local",
+    });
+  });
+
   // Health check endpoint — also pings the DB so Better Stack / Railway can
   // distinguish "process up but DB unreachable" from "fully healthy".
   app.get("/api/health", async (_req, res) => {
