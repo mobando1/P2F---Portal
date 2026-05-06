@@ -887,6 +887,45 @@ export function registerClassRoutes(app: Express) {
   // Observability self-test endpoints. Admin-only. Used to verify Sentry +
   // logger pipeline end-to-end after configuring SENTRY_DSN in Railway.
   // Delete after Phase 0 is fully validated if you want.
+  // ─── Recording consent ────────────────────────────────────────────
+  app.get("/api/recording-consent/status", requireAuth, async (req, res) => {
+    try {
+      const { hasUserConsented, CURRENT_POLICY_VERSION } = await import("../services/recording-consent");
+      const userId = req.session.userId!;
+      const classId = req.query.classId ? parseInt(req.query.classId as string) : undefined;
+      const consented = await hasUserConsented(userId, classId);
+      res.json({ consented, policyVersion: CURRENT_POLICY_VERSION });
+    } catch (err) {
+      console.error("recording-consent status error", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/recording-consent", requireAuth, async (req, res) => {
+    try {
+      const { recordConsent, CURRENT_POLICY_VERSION } = await import("../services/recording-consent");
+      const userId = req.session.userId!;
+      const { classId, scope } = req.body || {};
+      const finalScope = scope === "global" ? "global" : "class";
+      if (finalScope === "class" && !classId) {
+        return res.status(400).json({ message: "classId required for class-scope consent" });
+      }
+      const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || undefined;
+      const userAgent = req.headers["user-agent"] || undefined;
+      await recordConsent({
+        userId,
+        classId: finalScope === "class" ? classId : undefined,
+        scope: finalScope,
+        ipAddress: ip,
+        userAgent,
+      });
+      res.json({ ok: true, policyVersion: CURRENT_POLICY_VERSION });
+    } catch (err) {
+      console.error("recording-consent record error", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // ─── Feature flags ────────────────────────────────────────────────
   // Public: evaluated flags for the current user (or anonymous baseline).
   app.get("/api/feature-flags", async (req, res) => {

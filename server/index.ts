@@ -690,6 +690,18 @@ async function startServer() {
             updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
             updated_by INTEGER
           );
+          CREATE TABLE IF NOT EXISTS recording_consents (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            class_id INTEGER REFERENCES classes(id),
+            scope TEXT NOT NULL DEFAULT 'class',
+            policy_version TEXT NOT NULL,
+            ip_address TEXT,
+            user_agent TEXT,
+            accepted_at TIMESTAMP NOT NULL DEFAULT NOW()
+          );
+          CREATE INDEX IF NOT EXISTS idx_recording_consents_user ON recording_consents (user_id);
+          CREATE INDEX IF NOT EXISTS idx_recording_consents_class ON recording_consents (class_id);
         `);
         // Fix any availability rows with NULL isAvailable
         await pgPool.query(`UPDATE tutor_availability SET is_available = TRUE WHERE is_available IS NULL`);

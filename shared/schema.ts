@@ -1162,6 +1162,27 @@ export const insertFeatureFlagSchema = createInsertSchema(featureFlags).omit({ u
 export type FeatureFlag = typeof featureFlags.$inferSelect;
 export type InsertFeatureFlag = z.infer<typeof insertFeatureFlagSchema>;
 
+// Recording consent log — immutable audit trail of every "I accept this class
+// will be recorded and transcribed" click. Required for legal compliance
+// before LiveKit recording is enabled.
+export const recordingConsents = pgTable("recording_consents", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  classId: integer("class_id").references(() => classes.id),  // null for blanket account-level consent
+  scope: text("scope").notNull().default("class"),            // 'class' | 'global'
+  policyVersion: text("policy_version").notNull(),            // bumps when wording changes
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  acceptedAt: timestamp("accepted_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_recording_consents_user").on(table.userId),
+  index("idx_recording_consents_class").on(table.classId),
+]);
+
+export const insertRecordingConsentSchema = createInsertSchema(recordingConsents).omit({ id: true, acceptedAt: true });
+export type RecordingConsent = typeof recordingConsents.$inferSelect;
+export type InsertRecordingConsent = z.infer<typeof insertRecordingConsentSchema>;
+
 export const insertTutorGoogleTokenSchema = createInsertSchema(tutorGoogleTokens).omit({
   id: true,
   createdAt: true,
