@@ -213,40 +213,54 @@ export function PreflightCheck() {
   const { language } = useLanguage();
   const isEs = language === "es";
   const [camOk, setCamOk] = useState<null | boolean>(null);
+  const [camError, setCamError] = useState<string | null>(null);
   const [micOk, setMicOk] = useState<null | boolean>(null);
-  const [bandwidthMbps, setBandwidthMbps] = useState<null | number>(null);
+  const [latencyMs, setLatencyMs] = useState<null | number>(null);
   const [running, setRunning] = useState(false);
 
   const runChecks = async () => {
     setRunning(true);
+    setCamError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       const tracks = stream.getTracks();
       setCamOk(tracks.some(t => t.kind === "video" && t.readyState === "live"));
       setMicOk(tracks.some(t => t.kind === "audio" && t.readyState === "live"));
       tracks.forEach(t => t.stop());
-    } catch {
+    } catch (err: any) {
       setCamOk(false);
       setMicOk(false);
+      // Distinguish denied vs no-device vs other so the user knows what to fix.
+      if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+        setCamError(isEs ? "Permisos rechazados — habilita cámara y mic en tu navegador" : "Permission denied — enable camera and mic in your browser");
+      } else if (err?.name === "NotFoundError") {
+        setCamError(isEs ? "No se detectó cámara o micrófono" : "No camera or microphone detected");
+      } else {
+        setCamError(isEs ? "No se pudo acceder al equipo" : "Could not access devices");
+      }
     }
-    // Crude bandwidth check: download a small file and measure.
+    // Honest network check: 3 sequential pings to /api/health, take the median.
+    // We report latency, not "Mbps", because we can't reliably estimate
+    // throughput from a 250-byte response.
     try {
-      const t0 = performance.now();
-      const res = await fetch("/api/health", { cache: "no-store" });
-      await res.text();
-      const dt = (performance.now() - t0) / 1000;
-      // Health response is ~250 bytes; not a real bandwidth test, just a
-      // latency proxy. Treat <500ms as OK.
-      setBandwidthMbps(dt < 0.5 ? 5 : dt < 1.5 ? 1 : 0.3);
+      const samples: number[] = [];
+      for (let i = 0; i < 3; i++) {
+        const t0 = performance.now();
+        await fetch("/api/health", { cache: "no-store" }).then(r => r.text());
+        samples.push(performance.now() - t0);
+      }
+      samples.sort((a, b) => a - b);
+      setLatencyMs(Math.round(samples[1])); // median
     } catch {
-      setBandwidthMbps(0);
+      setLatencyMs(null);
     }
     setRunning(false);
   };
 
   useEffect(() => { runChecks(); }, []);
 
-  const allOk = camOk && micOk && (bandwidthMbps ?? 0) >= 1;
+  const networkOk = latencyMs !== null && latencyMs < 800;
+  const allOk = camOk && micOk && networkOk;
 
   return (
     <div className="max-w-lg mx-auto mt-16 p-4">
@@ -263,10 +277,18 @@ export function PreflightCheck() {
           <CheckRow icon={<Mic className="w-5 h-5" />} label={isEs ? "Micrófono" : "Microphone"} state={micOk} />
           <CheckRow
             icon={<Wifi className="w-5 h-5" />}
-            label={isEs ? "Conexión" : "Connection"}
-            state={bandwidthMbps === null ? null : bandwidthMbps >= 1}
-            detail={bandwidthMbps !== null ? `~${bandwidthMbps.toFixed(1)} Mbps` : undefined}
+            label={isEs ? "Latencia" : "Latency"}
+            state={latencyMs === null ? null : latencyMs < 800}
+            detail={latencyMs !== null
+              ? (latencyMs < 200 ? `${latencyMs}ms (${isEs ? "excelente" : "excellent"})`
+                : latencyMs < 500 ? `${latencyMs}ms (${isEs ? "buena" : "good"})`
+                : latencyMs < 800 ? `${latencyMs}ms (${isEs ? "aceptable" : "fair"})`
+                : `${latencyMs}ms (${isEs ? "alta" : "high"})`)
+              : undefined}
           />
+          {camError && (
+            <p className="text-xs text-red-600 text-center">{camError}</p>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <Button variant="outline" onClick={runChecks} disabled={running} className="flex-1">

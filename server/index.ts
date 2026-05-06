@@ -711,6 +711,43 @@ async function startServer() {
           ALTER TABLE classes ADD COLUMN IF NOT EXISTS joined_at_student TIMESTAMP;
           ALTER TABLE classes ADD COLUMN IF NOT EXISTS left_at_tutor TIMESTAMP;
           ALTER TABLE classes ADD COLUMN IF NOT EXISTS left_at_student TIMESTAMP;
+          -- Widen ai_usage.cost_usd from NUMERIC(10,6) to NUMERIC(14,6) so a
+          -- single expensive call (>$9999) doesn't overflow. Idempotent: type
+          -- already matches a no-op.
+          ALTER TABLE ai_usage ALTER COLUMN cost_usd TYPE NUMERIC(14,6);
+          -- Constraints: enforce enum-ish text fields at the DB so a buggy
+          -- writer can't sneak in invalid values that confuse the read paths.
+          DO $do$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'check_classes_confirmation_status') THEN
+              ALTER TABLE classes ADD CONSTRAINT check_classes_confirmation_status
+                CHECK (confirmation_status IS NULL OR confirmation_status IN
+                  ('auto','pending_tutor','pending_student','confirmed','disputed','no_show_refunded','cancelled_by_student'));
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'check_classes_tutor_confirmation') THEN
+              ALTER TABLE classes ADD CONSTRAINT check_classes_tutor_confirmation
+                CHECK (tutor_confirmation IS NULL OR tutor_confirmation IN ('attended','no_show'));
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'check_classes_student_confirmation') THEN
+              ALTER TABLE classes ADD CONSTRAINT check_classes_student_confirmation
+                CHECK (student_confirmation IS NULL OR student_confirmation IN ('attended','no_show'));
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'check_recording_consents_scope') THEN
+              ALTER TABLE recording_consents ADD CONSTRAINT check_recording_consents_scope
+                CHECK (scope IN ('class','global'));
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'check_feature_flags_rollout_pct') THEN
+              ALTER TABLE feature_flags ADD CONSTRAINT check_feature_flags_rollout_pct
+                CHECK (rollout_percentage >= 0 AND rollout_percentage <= 100);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'check_feature_flags_key_format') THEN
+              ALTER TABLE feature_flags ADD CONSTRAINT check_feature_flags_key_format
+                CHECK (key ~ '^[a-z][a-z0-9_]{0,63}$');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'check_ai_usage_status') THEN
+              ALTER TABLE ai_usage ADD CONSTRAINT check_ai_usage_status
+                CHECK (status IN ('success','error','budget_blocked'));
+            END IF;
+          END $do$;
         `);
         // Fix any availability rows with NULL isAvailable
         await pgPool.query(`UPDATE tutor_availability SET is_available = TRUE WHERE is_available IS NULL`);

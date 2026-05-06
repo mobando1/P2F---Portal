@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/i18n";
-import { useFeatureFlag } from "@/lib/feature-flags";
+import { useFeatureFlagState } from "@/lib/feature-flags";
 
 interface ClassCardProps {
   classItem: {
@@ -24,7 +24,7 @@ interface ClassCardProps {
 
 export function ClassCard({ classItem, onCancel, onReschedule, showActions = true }: ClassCardProps) {
   const { language } = useLanguage();
-  const livekitEnabled = useFeatureFlag("livekit_classroom");
+  const livekitFlag = useFeatureFlagState("livekit_classroom");
   const scheduledAt = new Date(classItem.scheduledAt);
   const now = new Date();
   const minutesUntilClass = (scheduledAt.getTime() - now.getTime()) / (1000 * 60);
@@ -78,10 +78,23 @@ export function ClassCard({ classItem, onCancel, onReschedule, showActions = tru
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Join button — uses embedded LiveKit classroom when the flag is on
-              for this user; falls back to the external Meet link otherwise. */}
-          {isUpcoming && (livekitEnabled || classItem.meetingLink) && (
-            livekitEnabled ? (
+          {/* Join button — picks LiveKit when the flag is on, falls back to the
+              external Meet link otherwise. While the flag is still loading we
+              render a disabled placeholder so the user never sees the button
+              flip destinations under their cursor. */}
+          {isUpcoming && (livekitFlag.loading
+            ? (
+              <Button
+                size="sm"
+                disabled
+                className="text-xs bg-gray-100 text-gray-400"
+                variant="outline"
+              >
+                <Video className="w-3 h-3 mr-1" />
+                {language === 'es' ? 'Unirse' : 'Join'}
+              </Button>
+            )
+            : livekitFlag.enabled ? (
               <Link href={`/classroom/${classItem.id}/preflight`}>
                 <Button
                   size="sm"
@@ -96,8 +109,8 @@ export function ClassCard({ classItem, onCancel, onReschedule, showActions = tru
                   {language === 'es' ? 'Unirse' : 'Join'}
                 </Button>
               </Link>
-            ) : (
-              <a href={classItem.meetingLink!} target="_blank" rel="noopener noreferrer">
+            ) : classItem.meetingLink ? (
+              <a href={classItem.meetingLink} target="_blank" rel="noopener noreferrer">
                 <Button
                   size="sm"
                   className={`text-xs ${
@@ -111,7 +124,7 @@ export function ClassCard({ classItem, onCancel, onReschedule, showActions = tru
                   {language === 'es' ? 'Unirse' : 'Join'}
                 </Button>
               </a>
-            )
+            ) : null
           )}
 
           {/* Action buttons */}

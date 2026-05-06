@@ -7,6 +7,7 @@ import { notificationService } from "../services/notification";
 import { dripCampaignService } from "../services/drip-campaign";
 import { googleMeetService } from "../services/google-meet";
 import { requireAuth, requireAdmin } from "./auth";
+import { logger } from "../services/logger";
 
 const calendarService = new CalendarIntegrationService();
 
@@ -201,56 +202,103 @@ export function registerClassRoutes(app: Express) {
     }
   });
 
-  // Cancel a class
+  // Cancel a class.
+  // Atomic: locks the row, validates state (only 'scheduled' classes that
+  // haven't already been refunded by the cron), refunds, and updates status —
+  // all inside one transaction so the cron's Sweep 2 can't double-refund.
   app.put("/api/classes/:id/cancel", requireAuth, async (req, res) => {
+    const classId = parseInt(req.params.id);
+    const userId = req.session.userId!;
+    const { pool } = await import("../db");
+    if (!pool) return res.status(500).json({ message: "Database unavailable" });
+
+    const client = await pool.connect();
+    let outcome: "ok" | "not_found" | "forbidden" | "too_late" | "wrong_state" = "wrong_state";
+    let snapshot: { tutorId: number; scheduledAt: Date; calendarEventId: string | null; tutorCalendarEventId: string | null } | null = null;
+
     try {
-      const classId = parseInt(req.params.id);
-      const userId = req.session.userId!; // From session, not body
-
-      // Get class info before cancelling for notifications
-      const classInfo = await storage.getClassById(classId);
-
-      // Check 12h rule
-      if (classInfo && classInfo.status === "scheduled") {
-        const now = new Date();
-        const classDate = new Date(classInfo.scheduledAt);
-        const hoursDiff = (classDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+      await client.query("BEGIN");
+      const lockRes = await client.query<{
+        id: number;
+        user_id: number;
+        tutor_id: number;
+        status: string;
+        scheduled_at: Date;
+        confirmation_status: string | null;
+        calendar_event_id: string | null;
+        tutor_calendar_event_id: string | null;
+      }>(
+        `SELECT id, user_id, tutor_id, status, scheduled_at, confirmation_status,
+                calendar_event_id, tutor_calendar_event_id
+           FROM classes WHERE id = $1 FOR UPDATE`,
+        [classId]
+      );
+      const cls = lockRes.rows[0];
+      if (!cls) {
+        outcome = "not_found";
+      } else if (cls.user_id !== userId) {
+        outcome = "forbidden";
+      } else if (cls.status !== "scheduled") {
+        outcome = "wrong_state";
+      } else {
+        const hoursDiff = (new Date(cls.scheduled_at).getTime() - Date.now()) / (1000 * 60 * 60);
         if (hoursDiff < 12) {
-          return res.status(400).json({ message: "Cannot cancel within 12 hours of class" });
+          outcome = "too_late";
+        } else {
+          const refund = await client.query<{ class_credits: number | null }>(
+            `UPDATE users SET class_credits = COALESCE(class_credits, 0) + 1
+              WHERE id = $1 RETURNING class_credits`,
+            [userId]
+          );
+          if (!refund.rows[0]) {
+            throw new Error(`User ${userId} not found while refunding cancel of class ${classId}`);
+          }
+          await client.query(
+            `UPDATE classes
+                SET status='cancelled',
+                    confirmation_status = COALESCE(confirmation_status, 'cancelled_by_student')
+              WHERE id=$1`,
+            [classId]
+          );
+          outcome = "ok";
+          snapshot = {
+            tutorId: cls.tutor_id,
+            scheduledAt: new Date(cls.scheduled_at),
+            calendarEventId: cls.calendar_event_id,
+            tutorCalendarEventId: cls.tutor_calendar_event_id,
+          };
         }
       }
-
-      const success = await storage.cancelClass(classId, userId);
-
-      if (!success) {
-        return res.status(404).json({ message: "Class not found or not authorized" });
-      }
-
-      // Delete Google Calendar events if they exist
-      if (classInfo?.calendarEventId || classInfo?.tutorCalendarEventId) {
-        googleMeetService.deleteCalendarEvent(
-          classInfo.calendarEventId || "",
-          classInfo.tutorCalendarEventId || undefined,
-          classInfo.tutorId
-        ).catch(() => {});
-      }
-
-      // Refund the class credit to user (atomic)
-      await storage.refundClassCredit(userId);
-
-      // Notify
-      if (classInfo) {
-        notificationService.onClassCancelled({
-          studentId: userId,
-          tutorId: classInfo.tutorId,
-          scheduledAt: new Date(classInfo.scheduledAt),
-        });
-      }
-
-      res.json({ message: "Class cancelled successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => {});
+      logger.error({ err, classId, userId }, "cancel-class transaction failed");
+      client.release();
+      return res.status(500).json({ message: "Internal server error" });
+    } finally {
+      client.release();
     }
+
+    if (outcome === "not_found") return res.status(404).json({ message: "Class not found or not authorized" });
+    if (outcome === "forbidden") return res.status(404).json({ message: "Class not found or not authorized" });
+    if (outcome === "wrong_state") return res.status(400).json({ message: "Class is not in a cancellable state" });
+    if (outcome === "too_late") return res.status(400).json({ message: "Cannot cancel within 12 hours of class" });
+
+    if (snapshot && (snapshot.calendarEventId || snapshot.tutorCalendarEventId)) {
+      googleMeetService.deleteCalendarEvent(
+        snapshot.calendarEventId || "",
+        snapshot.tutorCalendarEventId || undefined,
+        snapshot.tutorId
+      ).catch(() => {});
+    }
+    if (snapshot) {
+      notificationService.onClassCancelled({
+        studentId: userId,
+        tutorId: snapshot.tutorId,
+        scheduledAt: snapshot.scheduledAt,
+      }).catch(err => logger.error({ err, classId }, "cancel notify failed"));
+    }
+    res.json({ message: "Class cancelled successfully" });
   });
 
   // Reschedule a class
@@ -668,7 +716,9 @@ export function registerClassRoutes(app: Express) {
                  'tutor' AS role,
                  (u.first_name || ' ' || u.last_name) AS counterpart_name
           FROM classes c JOIN users u ON u.id = c.user_id
-          WHERE c.tutor_id = $1 AND c.confirmation_status = 'pending_tutor'
+          WHERE c.tutor_id = $1
+            AND c.confirmation_status = 'pending_tutor'
+            AND c.scheduled_at > NOW() - INTERVAL '30 days'
           ORDER BY c.scheduled_at ASC LIMIT 20
         `;
       } else {
@@ -678,7 +728,9 @@ export function registerClassRoutes(app: Express) {
                  'student' AS role,
                  t.name AS counterpart_name
           FROM classes c JOIN tutors t ON t.id = c.tutor_id
-          WHERE c.user_id = $1 AND c.confirmation_status = 'pending_student'
+          WHERE c.user_id = $1
+            AND c.confirmation_status = 'pending_student'
+            AND c.scheduled_at > NOW() - INTERVAL '30 days'
           ORDER BY c.scheduled_at ASC LIMIT 20
         `;
       }
@@ -698,117 +750,181 @@ export function registerClassRoutes(app: Express) {
     }
   });
 
-  // Confirm whether a class actually happened
+  // Confirm whether a class actually happened.
+  // All state mutations happen inside a single transaction with SELECT FOR
+  // UPDATE so concurrent confirmations (tutor + student firing at the same
+  // moment, or the cron racing the user) can't double-debit / double-refund
+  // / overwrite each other's state.
   app.post("/api/classes/:id/confirm-attendance", requireAuth, async (req, res) => {
-    try {
-      const classId = parseInt(req.params.id);
-      const userId = req.session.userId!;
-      const { attended } = req.body || {};
-      if (typeof attended !== "boolean") {
-        return res.status(400).json({ message: "Body must include { attended: boolean }" });
-      }
-
-      const classItem = await storage.getClassById(classId);
-      if (!classItem) return res.status(404).json({ message: "Class not found" });
-
-      const tutor = await storage.getTutorByUserId(userId);
-      const isTutor = !!tutor && classItem.tutorId === tutor.id;
-      const isStudent = classItem.userId === userId;
-      if (!isTutor && !isStudent) {
-        return res.status(403).json({ message: "Not a participant of this class" });
-      }
-
-      const { pool } = await import("../db");
-      if (!pool) return res.status(500).json({ message: "Database unavailable" });
-
-      const cs = (classItem as any).confirmationStatus as string | null;
-
-      if (isTutor) {
-        if (cs !== "pending_tutor") {
-          return res.status(400).json({ message: "Class not waiting for tutor confirmation" });
-        }
-        if (attended) {
-          // Tutor sí dictó → pasa al estudiante con 48h de plazo
-          await pool.query(
-            `UPDATE classes
-             SET tutor_confirmation='attended',
-                 confirmation_status='pending_student',
-                 student_confirmation_deadline = NOW() + interval '48 hours'
-             WHERE id=$1`,
-            [classId]
-          );
-          notificationService.onAttendanceConfirmationNeeded({
-            to: "student",
-            classId,
-            tutorId: classItem.tutorId,
-            studentId: classItem.userId,
-            scheduledAt: new Date(classItem.scheduledAt),
-          }).catch(err => console.error("notify student failed:", err));
-        } else {
-          // Tutor reporta no-show → refund + cancelled
-          await storage.refundClassCredit(classItem.userId);
-          await pool.query(
-            `UPDATE classes
-             SET tutor_confirmation='no_show',
-                 status='cancelled',
-                 confirmation_status='no_show_refunded'
-             WHERE id=$1`,
-            [classId]
-          );
-          notificationService.onClassCancelled({
-            studentId: classItem.userId,
-            tutorId: classItem.tutorId,
-            scheduledAt: new Date(classItem.scheduledAt),
-          }).catch(() => {});
-        }
-        return res.json({ ok: true });
-      }
-
-      // Student confirmation
-      if (cs !== "pending_student") {
-        return res.status(400).json({ message: "Class not waiting for student confirmation" });
-      }
-      if (attended) {
-        await pool.query(
-          `UPDATE classes
-           SET student_confirmation='attended',
-               status='completed',
-               confirmation_status='confirmed'
-           WHERE id=$1`,
-          [classId]
-        );
-        // Bump progress (mirrors complete-with-notes flow)
-        const progress = await storage.getUserProgress(classItem.userId);
-        await storage.updateUserProgress(classItem.userId, {
-          classesCompleted: (progress?.classesCompleted || 0) + 1,
-          learningHours: String(parseFloat(progress?.learningHours || "0") + (classItem.duration || 60) / 60),
-        });
-        notificationService.onClassCompleted({
-          studentId: classItem.userId,
-          tutorId: classItem.tutorId,
-          scheduledAt: new Date(classItem.scheduledAt),
-        }).catch(() => {});
-      } else {
-        // Estudiante dice que no, tutor dijo que sí → disputa
-        await pool.query(
-          `UPDATE classes
-           SET student_confirmation='no_show',
-               confirmation_status='disputed'
-           WHERE id=$1`,
-          [classId]
-        );
-        notificationService.onClassDisputed({
-          classId,
-          studentId: classItem.userId,
-          tutorId: classItem.tutorId,
-          scheduledAt: new Date(classItem.scheduledAt),
-        }).catch(() => {});
-      }
-      res.json({ ok: true });
-    } catch (error) {
-      console.error("Error confirming attendance:", error);
-      res.status(500).json({ message: "Internal server error" });
+    const classId = parseInt(req.params.id);
+    const userId = req.session.userId!;
+    const { attended } = req.body || {};
+    if (typeof attended !== "boolean") {
+      return res.status(400).json({ message: "Body must include { attended: boolean }" });
     }
+
+    const tutor = await storage.getTutorByUserId(userId);
+    const { pool } = await import("../db");
+    if (!pool) return res.status(500).json({ message: "Database unavailable" });
+
+    const client = await pool.connect();
+    let outcome: "ok" | "not_found" | "forbidden" | "wrong_state" = "wrong_state";
+    let postCommitNotify: (() => void) | null = null;
+    let classSnapshot: { tutorId: number; userId: number; scheduledAt: Date; duration: number } | null = null;
+
+    try {
+      await client.query("BEGIN");
+      const lockRes = await client.query<{
+        id: number;
+        user_id: number;
+        tutor_id: number;
+        scheduled_at: Date;
+        duration: number;
+        confirmation_status: string | null;
+      }>(
+        `SELECT id, user_id, tutor_id, scheduled_at, duration, confirmation_status
+           FROM classes WHERE id = $1 FOR UPDATE`,
+        [classId]
+      );
+      const cls = lockRes.rows[0];
+      if (!cls) {
+        outcome = "not_found";
+      } else {
+        const isTutor = !!tutor && cls.tutor_id === tutor.id;
+        const isStudent = cls.user_id === userId;
+        classSnapshot = {
+          tutorId: cls.tutor_id,
+          userId: cls.user_id,
+          scheduledAt: new Date(cls.scheduled_at),
+          duration: cls.duration,
+        };
+        if (!isTutor && !isStudent) {
+          outcome = "forbidden";
+        } else if (isTutor) {
+          if (cls.confirmation_status !== "pending_tutor") {
+            outcome = "wrong_state";
+          } else if (attended) {
+            await client.query(
+              `UPDATE classes
+                  SET tutor_confirmation='attended',
+                      confirmation_status='pending_student',
+                      student_confirmation_deadline = NOW() + interval '48 hours'
+                WHERE id=$1`,
+              [classId]
+            );
+            outcome = "ok";
+            postCommitNotify = () => {
+              notificationService.onAttendanceConfirmationNeeded({
+                to: "student",
+                classId,
+                tutorId: cls.tutor_id,
+                studentId: cls.user_id,
+                scheduledAt: new Date(cls.scheduled_at),
+              }).catch(err => logger.error({ err, classId }, "notify student failed"));
+            };
+          } else {
+            // Tutor reports no-show: refund inside the same txn so no double-refund
+            // can happen with the cron's Sweep 2.
+            const refund = await client.query<{ class_credits: number | null }>(
+              `UPDATE users SET class_credits = COALESCE(class_credits, 0) + 1
+                WHERE id = $1 RETURNING class_credits`,
+              [cls.user_id]
+            );
+            if (!refund.rows[0]) {
+              throw new Error(`User ${cls.user_id} not found while refunding class ${classId}`);
+            }
+            await client.query(
+              `UPDATE classes
+                  SET tutor_confirmation='no_show',
+                      status='cancelled',
+                      confirmation_status='no_show_refunded'
+                WHERE id=$1`,
+              [classId]
+            );
+            outcome = "ok";
+            postCommitNotify = () => {
+              notificationService.onClassCancelled({
+                studentId: cls.user_id,
+                tutorId: cls.tutor_id,
+                scheduledAt: new Date(cls.scheduled_at),
+              }).catch(err => logger.error({ err, classId }, "notify cancel failed"));
+            };
+          }
+        } else {
+          // Student confirmation
+          if (cls.confirmation_status !== "pending_student") {
+            outcome = "wrong_state";
+          } else if (attended) {
+            await client.query(
+              `UPDATE classes
+                  SET student_confirmation='attended',
+                      status='completed',
+                      confirmation_status='confirmed'
+                WHERE id=$1`,
+              [classId]
+            );
+            outcome = "ok";
+            postCommitNotify = () => {
+              notificationService.onClassCompleted({
+                studentId: cls.user_id,
+                tutorId: cls.tutor_id,
+                scheduledAt: new Date(cls.scheduled_at),
+              }).catch(err => logger.error({ err, classId }, "notify completed failed"));
+            };
+          } else {
+            await client.query(
+              `UPDATE classes
+                  SET student_confirmation='no_show',
+                      confirmation_status='disputed'
+                WHERE id=$1`,
+              [classId]
+            );
+            outcome = "ok";
+            postCommitNotify = () => {
+              notificationService.onClassDisputed({
+                classId,
+                studentId: cls.user_id,
+                tutorId: cls.tutor_id,
+                scheduledAt: new Date(cls.scheduled_at),
+              }).catch(err => logger.error({ err, classId }, "notify disputed failed"));
+            };
+          }
+        }
+      }
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => {});
+      logger.error({ err, classId, userId }, "confirm-attendance transaction failed");
+      client.release();
+      return res.status(500).json({ message: "Internal server error" });
+    } finally {
+      client.release();
+    }
+
+    if (outcome === "not_found") return res.status(404).json({ message: "Class not found" });
+    if (outcome === "forbidden") return res.status(403).json({ message: "Not a participant of this class" });
+    if (outcome === "wrong_state") return res.status(400).json({ message: "Class not in a confirmable state for you" });
+
+    // After the txn commits, fire notifications and update progress (best-effort).
+    if (postCommitNotify) postCommitNotify();
+    if (classSnapshot && outcome === "ok") {
+      // Student confirming attended: bump progress counters.
+      try {
+        if (typeof attended === "boolean" && attended) {
+          const isStudentPath = classSnapshot.userId === userId;
+          if (isStudentPath) {
+            const progress = await storage.getUserProgress(classSnapshot.userId);
+            await storage.updateUserProgress(classSnapshot.userId, {
+              classesCompleted: (progress?.classesCompleted || 0) + 1,
+              learningHours: String(parseFloat(progress?.learningHours || "0") + (classSnapshot.duration || 60) / 60),
+            });
+          }
+        }
+      } catch (err) {
+        logger.error({ err, classId }, "post-commit progress update failed (non-fatal)");
+      }
+    }
+    res.json({ ok: true });
   });
 
   // Admin: list disputed classes

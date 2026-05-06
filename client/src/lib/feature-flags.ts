@@ -14,7 +14,24 @@ export function useFeatureFlags() {
   });
 }
 
+export interface FlagState {
+  enabled: boolean;
+  loading: boolean;
+}
+
+/**
+ * Returns the flag state including loading. Prefer this over useFeatureFlag
+ * for UI that branches on the flag (e.g. "Join class" routing) so we don't
+ * flicker the user to the wrong destination during the initial fetch.
+ */
+export function useFeatureFlagState(key: string): FlagState {
+  const { data, isLoading, isFetching } = useFeatureFlags();
+  return {
+    enabled: Boolean(data?.[key]),
+    loading: isLoading || (isFetching && data === undefined),
+  };
+}
+
 export function useFeatureFlag(key: string): boolean {
-  const { data } = useFeatureFlags();
-  return Boolean(data?.[key]);
+  return useFeatureFlagState(key).enabled;
 }

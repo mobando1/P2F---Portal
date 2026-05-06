@@ -1140,7 +1140,7 @@ export const aiUsage = pgTable("ai_usage", {
   tokensIn: integer("tokens_in").default(0),
   tokensOut: integer("tokens_out").default(0),
   audioSeconds: integer("audio_seconds").default(0),  // for Whisper/Deepgram
-  costUsd: decimal("cost_usd", { precision: 10, scale: 6 }).notNull(),
+  costUsd: decimal("cost_usd", { precision: 14, scale: 6 }).notNull(),
   durationMs: integer("duration_ms"),
   status: text("status").notNull().default("success"), // 'success' | 'error' | 'budget_blocked'
   errorMessage: text("error_message"),

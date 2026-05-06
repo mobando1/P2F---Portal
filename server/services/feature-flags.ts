@@ -1,6 +1,7 @@
 import { pool } from "../db";
 import { logger } from "./logger";
 import crypto from "crypto";
+import type { PoolClient } from "pg";
 
 interface CachedFlag {
   enabled: boolean;
@@ -9,9 +10,46 @@ interface CachedFlag {
 }
 
 const CACHE_TTL_MS = 60 * 1000;
+const NOTIFY_CHANNEL = "feature_flags_changed";
 let cache: Map<string, CachedFlag> | null = null;
 let cacheLoadedAt = 0;
 let cacheLoading: Promise<void> | null = null;
+let listenerStarted = false;
+let listenerClient: PoolClient | null = null;
+
+/**
+ * Long-lived LISTEN client that picks up NOTIFY 'feature_flags_changed'
+ * broadcasts and invalidates the in-memory cache across every replica.
+ * Without this, two Railway instances can serve a stale flag value for up
+ * to 60s after an admin toggles it. With this, propagation is sub-second.
+ */
+async function ensureListener(): Promise<void> {
+  if (listenerStarted || !pool) return;
+  listenerStarted = true;
+  try {
+    listenerClient = await pool.connect();
+    listenerClient.on("notification", (msg) => {
+      if (msg.channel === NOTIFY_CHANNEL) {
+        invalidateFeatureFlagCache();
+      }
+    });
+    listenerClient.on("error", (err) => {
+      logger.error({ err }, "feature-flags listener errored, will reconnect");
+      try { listenerClient?.release(true); } catch { /* ignore */ }
+      listenerClient = null;
+      listenerStarted = false;
+      // Reconnect on next ensureCache() call; meanwhile other replicas/timers
+      // still keep the cache from going totally stale via the 60s TTL.
+    });
+    await listenerClient.query(`LISTEN ${NOTIFY_CHANNEL}`);
+    logger.info("feature-flags: LISTEN channel established");
+  } catch (err) {
+    logger.error({ err }, "feature-flags: failed to start listener");
+    listenerStarted = false;
+    try { listenerClient?.release(true); } catch { /* ignore */ }
+    listenerClient = null;
+  }
+}
 
 async function loadCache(): Promise<void> {
   if (!pool) {
@@ -44,6 +82,7 @@ async function loadCache(): Promise<void> {
 }
 
 async function ensureCache(): Promise<void> {
+  await ensureListener();
   if (cache && Date.now() - cacheLoadedAt < CACHE_TTL_MS) return;
   if (cacheLoading) return cacheLoading;
   cacheLoading = loadCache().finally(() => { cacheLoading = null; });
@@ -148,10 +187,13 @@ export async function upsertFlag(input: {
     ]
   );
   invalidateFeatureFlagCache();
+  // Broadcast to all replicas listening on the channel.
+  await pool.query(`SELECT pg_notify($1, $2)`, [NOTIFY_CHANNEL, input.key]).catch(() => {});
 }
 
 export async function deleteFlag(key: string): Promise<void> {
   if (!pool) return;
   await pool.query(`DELETE FROM feature_flags WHERE key = $1`, [key]);
   invalidateFeatureFlagCache();
+  await pool.query(`SELECT pg_notify($1, $2)`, [NOTIFY_CHANNEL, key]).catch(() => {});
 }
