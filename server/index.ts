@@ -1,6 +1,6 @@
 // Sentry MUST be imported and initialized before any other module so it can
 // instrument the runtime. Keep these two lines at the very top.
-import { initSentry, Sentry } from "./services/sentry";
+import { initSentry, Sentry, isSentryInitialized } from "./services/sentry";
 initSentry();
 
 import express from "express";
@@ -453,6 +453,7 @@ async function startServer() {
       status: overallOk ? "ok" : "degraded",
       storage: config.DATABASE_URL ? "database" : "memory",
       db: { status: dbStatus, latencyMs: dbLatencyMs },
+      sentry: isSentryInitialized() ? "enabled" : "disabled",
       uptimeSeconds: Math.round(process.uptime()),
       responseTimeMs: Date.now() - start,
       timestamp: new Date().toISOString(),

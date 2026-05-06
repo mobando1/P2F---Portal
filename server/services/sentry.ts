@@ -3,6 +3,10 @@ import { logger } from "./logger";
 
 let initialized = false;
 
+export function isSentryInitialized(): boolean {
+  return initialized;
+}
+
 /**
  * Initialize Sentry for the backend. No-op if SENTRY_DSN is not set.
  * Must be called BEFORE registering any Express middleware so the request
