@@ -10,10 +10,18 @@ const FROM_EMAIL = "Passport2Fluency <noreply@passport2fluency.com>";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@passport2fluency.com";
 
 interface EmailParams {
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
 }
+
+// Recipients for internal team notifications (new leads, bookings, etc.)
+const LEAD_NOTIFICATION_EMAILS = (
+  process.env.LEAD_NOTIFICATION_EMAILS || "info@passport2fluency.com,mateo@passport2fluency.com"
+)
+  .split(",")
+  .map((e) => e.trim())
+  .filter(Boolean);
 
 async function sendEmail(params: EmailParams): Promise<boolean> {
   if (!resend) {
@@ -447,6 +455,49 @@ export const emailService = {
     `;
 
     return sendEmail({ to: ADMIN_EMAIL, subject: `[P2F Admin] ${params.subject}`, html: wrapTemplate("Admin Alert", body, "es") });
+  },
+
+  // Notifies the internal team (info@ + mateo@) of a new lead / class request from the marketing website
+  async sendLeadNotification(params: {
+    name: string;
+    email: string;
+    phone: string;
+    classLabel: string;
+    preferredDate?: string;
+    preferredTime?: string;
+    message?: string;
+    source: string;
+    isNew: boolean;
+  }): Promise<boolean> {
+    const details: { label: string; value: string }[] = [
+      { label: "Tipo de clase", value: params.classLabel },
+      { label: "Nombre", value: params.name },
+      { label: "Email", value: params.email },
+      { label: "Teléfono", value: params.phone },
+    ];
+    if (params.preferredDate) details.push({ label: "Día preferido", value: params.preferredDate });
+    if (params.preferredTime) details.push({ label: "Hora preferida", value: params.preferredTime });
+    if (params.message) details.push({ label: "Mensaje", value: params.message });
+    details.push({ label: "Origen", value: params.source });
+
+    const intro = params.isNew
+      ? "Se registró un <strong>nuevo lead</strong> desde el sitio web:"
+      : "Un contacto existente envió una <strong>nueva solicitud de clase</strong> desde el sitio web:";
+
+    const body = `
+      <p style="color: #374151; font-size: 16px;">${intro}</p>
+      <div style="background: #EAF4FA; border-left: 4px solid #1C7BB1; padding: 16px; margin: 16px 0; border-radius: 0 8px 8px 0;">
+        ${details.map(d => `<p style="margin: 4px 0; color: #0A4A6E;"><strong>${d.label}:</strong> ${d.value}</p>`).join("")}
+        <p style="margin: 8px 0 0; color: #6B7280; font-size: 12px;">${new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" })}</p>
+      </div>
+      <p style="margin: 16px 0;"><a href="https://portal.passport2fluency.com/admin" style="background: #1C7BB1; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Ver en el CRM</a></p>
+    `;
+
+    return sendEmail({
+      to: LEAD_NOTIFICATION_EMAILS,
+      subject: `Nuevo lead — ${params.classLabel} — ${params.name}`,
+      html: wrapTemplate("Nuevo Lead", body, "es"),
+    });
   },
 
   async sendCampaignEmail(params: {
