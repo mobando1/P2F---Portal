@@ -1,9 +1,28 @@
 import { storage } from '../storage';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 export interface TimeSlot {
   start: string; // "HH:MM"
   end: string;   // "HH:MM"
   available: boolean;
+}
+
+/** Canonical business timezone used when a tutor has no explicit timezone set */
+export const APP_TIMEZONE = process.env.APP_TIMEZONE || 'America/New_York';
+
+/** Timezone in which a tutor's HH:MM availability is expressed */
+export function tutorTimezone(tutor?: { timezone?: string | null } | null): string {
+  return tutor?.timezone || APP_TIMEZONE;
+}
+
+/** Weekday (0=Sun..6=Sat) of a calendar date string "YYYY-MM-DD", server-timezone-independent */
+function weekdayOf(dateStr: string): number {
+  return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
+}
+
+/** Convert a local wall-clock (dateStr "YYYY-MM-DD", "HH:MM") in a timezone to an absolute UTC Date */
+export function localSlotToUtc(dateStr: string, hhmm: string, timeZone: string): Date {
+  return fromZonedTime(`${dateStr}T${hhmm}:00`, timeZone);
 }
 
 /**
@@ -20,12 +39,16 @@ export class AvailabilityService {
    * Obtiene los slots disponibles para un tutor en una fecha específica
    */
   async getAvailableSlots(tutorId: number, dateStr: string): Promise<TimeSlot[]> {
-    const date = new Date(dateStr);
-    const dayOfWeek = date.getDay(); // 0=Sun, 1=Mon, ...
+    const date = new Date(`${dateStr}T00:00:00Z`);
+    const dayOfWeek = weekdayOf(dateStr); // 0=Sun, 1=Mon, ... (calendar weekday of dateStr)
 
     // Safe query wrapper — tolerates missing tables
     const safe = <T>(fn: () => Promise<T>, fallback: T): Promise<T> =>
       fn().catch(err => { console.warn("[availability] query failed:", err.message); return fallback; });
+
+    // Tutor timezone — availability HH:MM is expressed in the tutor's local time
+    const tutor = await safe(() => storage.getTutor(tutorId), undefined as any);
+    const tz = tutorTimezone(tutor);
 
     // 1. Get recurring weekly availability for this day of week
     const weeklySlots = await safe(() => storage.getTutorAvailability(tutorId), []);
@@ -53,8 +76,15 @@ export class AvailabilityService {
       return [];
     }
 
-    // 3. Get existing booked classes for this date
-    const bookedClasses = await safe(() => storage.getTutorClassesForDate(tutorId, date), []);
+    // 3. Get existing booked classes. Fetch a ±1 day UTC window because a class on the
+    // tutor's LOCAL calendar day can land on an adjacent UTC day for non-UTC timezones.
+    const dayMs = 86_400_000;
+    const [cPrev, cCur, cNext] = await Promise.all([
+      safe(() => storage.getTutorClassesForDate(tutorId, new Date(date.getTime() - dayMs)), []),
+      safe(() => storage.getTutorClassesForDate(tutorId, date), []),
+      safe(() => storage.getTutorClassesForDate(tutorId, new Date(date.getTime() + dayMs)), []),
+    ]);
+    const bookedClasses = [...cPrev, ...cCur, ...cNext];
 
     // 4. Generate time slots from availability windows
     const allSlots: TimeSlot[] = [];
@@ -76,10 +106,14 @@ export class AvailabilityService {
           return min < excEnd && min + 60 > excStart;
         });
 
-        // Check if this slot conflicts with an existing booking
+        // Check if this slot conflicts with an existing booking.
+        // Convert each booked class's absolute time to the tutor's local wall-clock and
+        // only compare classes that actually fall on this local calendar day.
         const isBooked = bookedClasses.some(c => {
-          const classStart = new Date(c.scheduledAt);
-          const classStartMin = classStart.getHours() * 60 + classStart.getMinutes();
+          const local = toZonedTime(new Date(c.scheduledAt), tz);
+          const cDateStr = `${local.getFullYear()}-${String(local.getMonth() + 1).padStart(2, '0')}-${String(local.getDate()).padStart(2, '0')}`;
+          if (cDateStr !== dateStr) return false;
+          const classStartMin = local.getHours() * 60 + local.getMinutes();
           const classEndMin = classStartMin + (c.duration || 60);
           return min < classEndMin && min + 60 > classStartMin;
         });
@@ -118,8 +152,12 @@ export class AvailabilityService {
     const safe = <T>(fn: () => Promise<T>, fallback: T): Promise<T> =>
       fn().catch(err => { console.warn("[availability/validate] query failed:", err.message); return fallback; });
 
-    // 3. Check weekly availability for this day of week
-    const dayOfWeek = scheduledAt.getDay();
+    // Interpret the absolute instant in the tutor's local timezone for day/window checks
+    const tz = tutorTimezone(tutor);
+    const local = toZonedTime(scheduledAt, tz);
+
+    // 3. Check weekly availability for this day of week (tutor-local)
+    const dayOfWeek = local.getDay();
     const weeklySlots = await safe(() => storage.getTutorAvailability(tutorId), []);
     const daySlots = weeklySlots.filter(s => s.dayOfWeek === dayOfWeek);
 
@@ -127,8 +165,8 @@ export class AvailabilityService {
       return { valid: false, reason: 'Tutor is not available on this day' };
     }
 
-    // 4. Check if the requested time falls within an availability window
-    const requestedStartMin = scheduledAt.getHours() * 60 + scheduledAt.getMinutes();
+    // 4. Check if the requested time falls within an availability window (tutor-local minutes)
+    const requestedStartMin = local.getHours() * 60 + local.getMinutes();
     const requestedEndMin = requestedStartMin + duration;
 
     const withinAvailability = daySlots.some(slot => {
@@ -141,11 +179,10 @@ export class AvailabilityService {
       return { valid: false, reason: 'Requested time is outside tutor availability' };
     }
 
-    // 5. Check for exceptions on this date
-    const startOfDay = new Date(scheduledAt);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(scheduledAt);
-    endOfDay.setHours(23, 59, 59, 999);
+    // 5. Check for exceptions on this date (tutor-local calendar day)
+    const localDateStr = `${local.getFullYear()}-${String(local.getMonth() + 1).padStart(2, '0')}-${String(local.getDate()).padStart(2, '0')}`;
+    const startOfDay = new Date(`${localDateStr}T00:00:00Z`);
+    const endOfDay = new Date(`${localDateStr}T23:59:59Z`);
     const exceptions = await safe(() => storage.getTutorExceptions(tutorId, startOfDay, endOfDay), []);
 
     // Full day block

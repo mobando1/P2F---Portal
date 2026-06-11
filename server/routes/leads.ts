@@ -1,7 +1,8 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import type { Express, Request, Response } from "express";
 import { randomUUID } from "crypto";
 import { storage } from "../storage";
 import { emailService } from "../services/email";
+import { requireApiKey } from "../middleware/apiKey";
 import { z } from "zod";
 
 // Human-readable labels for the 4 class types offered on the marketing website
@@ -29,20 +30,6 @@ const leadSchema = z.object({
   message: z.string().optional(),
   source: z.string().optional(),
 });
-
-// Shared-secret guard for server-to-server calls coming from the marketing website
-function requireApiKey(req: Request, res: Response, next: NextFunction) {
-  const expected = process.env.LEADS_API_KEY;
-  if (!expected) {
-    console.error("[leads] LEADS_API_KEY not configured — rejecting lead intake request");
-    return res.status(503).json({ success: false, message: "Lead intake not configured" });
-  }
-  const provided = req.header("x-api-key");
-  if (provided !== expected) {
-    return res.status(401).json({ success: false, message: "Unauthorized" });
-  }
-  next();
-}
 
 export function registerLeadRoutes(app: Express) {
   // Public lead-capture endpoint consumed by the P2F marketing website.

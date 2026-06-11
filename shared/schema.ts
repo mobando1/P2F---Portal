@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, time, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -219,6 +220,10 @@ export const classes = pgTable("classes", {
   index("idx_classes_tutor_id").on(table.tutorId),
   index("idx_classes_status_scheduled").on(table.status, table.scheduledAt),
   index("idx_classes_confirmation_status").on(table.confirmationStatus),
+  // Prevents two scheduled classes for the same tutor at the same instant (auto-booking race guard)
+  uniqueIndex("uniq_classes_tutor_slot_scheduled")
+    .on(table.tutorId, table.scheduledAt)
+    .where(sql`status = 'scheduled'`),
 ]);
 
 export const videos = pgTable("videos", {

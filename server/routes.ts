@@ -8,6 +8,7 @@ import { registerTutorRoutes } from "./routes/tutors";
 
 import { registerContactRoutes } from "./routes/contact";
 import { registerLeadRoutes } from "./routes/leads";
+import { registerPublicBookingRoutes } from "./routes/public-booking";
 import { registerReviewRoutes } from "./routes/reviews";
 import { registerAiTutorRoutes } from "./routes/ai-tutor";
 import { registerDevRoutes } from "./routes/dev";
@@ -37,6 +38,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   registerContactRoutes(app);
   registerLeadRoutes(app);
+  registerPublicBookingRoutes(app);
   registerReviewRoutes(app);
   registerAiTutorRoutes(app);
   registerTutorPortalRoutes(app);

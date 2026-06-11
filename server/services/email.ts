@@ -500,6 +500,39 @@ export const emailService = {
     });
   },
 
+  // Notifies the team (info@ + mateo@) that someone auto-booked a trial class from the website
+  async sendTrialBookingNotification(params: {
+    name: string;
+    email: string;
+    phone: string;
+    classLabel: string;
+    tutorName: string;
+    date: string;
+    time: string;
+  }): Promise<boolean> {
+    const details: { label: string; value: string }[] = [
+      { label: "Tipo de clase", value: params.classLabel },
+      { label: "Profe asignado", value: params.tutorName },
+      { label: "Fecha", value: params.date },
+      { label: "Hora", value: params.time },
+      { label: "Nombre", value: params.name },
+      { label: "Email", value: params.email },
+      { label: "Teléfono", value: params.phone },
+    ];
+    const body = `
+      <p style="color: #374151; font-size: 16px;">Alguien <strong>agendó una clase de prueba</strong> desde el sitio web:</p>
+      <div style="background: #EAF4FA; border-left: 4px solid #1C7BB1; padding: 16px; margin: 16px 0; border-radius: 0 8px 8px 0;">
+        ${details.map(d => `<p style="margin: 4px 0; color: #0A4A6E;"><strong>${d.label}:</strong> ${d.value}</p>`).join("")}
+      </div>
+      <p style="margin: 16px 0;"><a href="https://portal.passport2fluency.com/admin" style="background: #1C7BB1; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Ver en el CRM</a></p>
+    `;
+    return sendEmail({
+      to: LEAD_NOTIFICATION_EMAILS,
+      subject: `Clase agendada — ${params.classLabel} — ${params.name}`,
+      html: wrapTemplate("Clase Agendada", body, "es"),
+    });
+  },
+
   async sendCampaignEmail(params: {
     to: string;
     subject: string;
