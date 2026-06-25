@@ -15,6 +15,20 @@ export function tutorTimezone(tutor?: { timezone?: string | null } | null): stri
   return tutor?.timezone || APP_TIMEZONE;
 }
 
+/**
+ * Reglas globales de negocio (horario de oficina), aplicadas en la zona horaria
+ * LOCAL de cada profe. Ningún slot que viole estas reglas se ofrece ni se puede
+ * agendar, sin importar lo que cada profe tenga configurado en su calendario.
+ */
+// Horario de oficina, en minutos desde medianoche (hora local del profe).
+export const BUSINESS_OPEN_MIN = 8 * 60;   // 08:00 — primera clase no puede empezar antes
+export const BUSINESS_CLOSE_MIN = 18 * 60; // 18:00 — toda clase debe terminar a más tardar a esta hora (última clase inicia 17:00)
+
+/** Día hábil: lunes(1) a viernes(5). Se excluyen domingo(0) y sábado(6) — no se agendan fines de semana. */
+export function isBusinessDay(dayOfWeek: number): boolean {
+  return dayOfWeek >= 1 && dayOfWeek <= 5;
+}
+
 /** Weekday (0=Sun..6=Sat) of a calendar date string "YYYY-MM-DD", server-timezone-independent */
 function weekdayOf(dateStr: string): number {
   return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
@@ -41,6 +55,11 @@ export class AvailabilityService {
   async getAvailableSlots(tutorId: number, dateStr: string): Promise<TimeSlot[]> {
     const date = new Date(`${dateStr}T00:00:00Z`);
     const dayOfWeek = weekdayOf(dateStr); // 0=Sun, 1=Mon, ... (calendar weekday of dateStr)
+
+    // Regla de negocio: no se agendan clases los fines de semana
+    if (!isBusinessDay(dayOfWeek)) {
+      return [];
+    }
 
     // Safe query wrapper — tolerates missing tables
     const safe = <T>(fn: () => Promise<T>, fallback: T): Promise<T> =>
@@ -90,8 +109,10 @@ export class AvailabilityService {
     const allSlots: TimeSlot[] = [];
 
     for (const daySlot of daySlots) {
-      const startMinutes = timeToMinutes(daySlot.startTime);
-      const endMinutes = timeToMinutes(daySlot.endTime);
+      // Recortar la ventana del profe al horario de oficina (08:00–18:00, hora local del profe).
+      // Si la ventana queda fuera por completo, el bucle no genera ningún slot.
+      const startMinutes = Math.max(timeToMinutes(daySlot.startTime), BUSINESS_OPEN_MIN);
+      const endMinutes = Math.min(timeToMinutes(daySlot.endTime), BUSINESS_CLOSE_MIN);
 
       // Generate 60-minute slots
       for (let min = startMinutes; min + 60 <= endMinutes; min += 60) {
@@ -158,6 +179,12 @@ export class AvailabilityService {
 
     // 3. Check weekly availability for this day of week (tutor-local)
     const dayOfWeek = local.getDay();
+
+    // Regla de negocio: no se agendan clases los fines de semana (hora local del profe)
+    if (!isBusinessDay(dayOfWeek)) {
+      return { valid: false, reason: 'No bookings on weekends' };
+    }
+
     const weeklySlots = await safe(() => storage.getTutorAvailability(tutorId), []);
     const daySlots = weeklySlots.filter(s => s.dayOfWeek === dayOfWeek);
 
@@ -168,6 +195,12 @@ export class AvailabilityService {
     // 4. Check if the requested time falls within an availability window (tutor-local minutes)
     const requestedStartMin = local.getHours() * 60 + local.getMinutes();
     const requestedEndMin = requestedStartMin + duration;
+
+    // Regla de negocio: solo horario de oficina (08:00–18:00, hora local del profe).
+    // La clase no puede empezar antes de las 8:00 ni terminar después de las 18:00.
+    if (requestedStartMin < BUSINESS_OPEN_MIN || requestedEndMin > BUSINESS_CLOSE_MIN) {
+      return { valid: false, reason: 'Requested time is outside office hours (08:00–18:00)' };
+    }
 
     const withinAvailability = daySlots.some(slot => {
       const slotStart = timeToMinutes(slot.startTime);
