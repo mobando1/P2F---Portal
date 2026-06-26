@@ -1,21 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Users, UserCheck, UserPlus, TrendingUp } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
-import { Loader2, Users, UserCheck, UserPlus, TrendingUp } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+import { PageHeader } from "./ui/page-header";
+import { StatCard } from "./ui/stat-card";
+import { SectionCard } from "./ui/section-card";
+import { TrendChart } from "./ui/trend-chart";
+import { EmptyState } from "./ui/empty-state";
 
 interface FunnelStage {
   stage: string;
@@ -29,14 +19,6 @@ interface MetricsResponse {
   funnel: FunnelStage[];
 }
 
-const STAGE_COLORS: Record<string, string> = {
-  trial: "#1C7BB1",
-  lead: "#F59E1C",
-  negotiation: "#0A4A6E",
-  customer: "#22c55e",
-  inactive: "#94a3b8",
-};
-
 export default function CrmMetrics() {
   const { language } = useLanguage();
   const isEs = language === "es";
@@ -45,120 +27,52 @@ export default function CrmMetrics() {
     queryKey: ["/api/admin/crm/metrics"],
   });
 
-  if (isLoading) {
+  if (error) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1C7BB1]" />
+      <div className="py-10 text-center text-destructive">
+        {isEs ? "Error al cargar métricas" : "Failed to load metrics"}
       </div>
     );
   }
 
-  if (error || !data) {
-    return (
-      <div className="text-center py-10 text-red-500">
-        {isEs ? "Error al cargar metricas" : "Failed to load metrics"}
-      </div>
-    );
-  }
-
-  const trialCount =
-    data.funnel.find((s) => s.stage === "trial")?.count ?? 0;
-  const customerCount =
-    data.funnel.find((s) => s.stage === "customer")?.count ?? 0;
-
-  const summaryCards = [
-    {
-      title: isEs ? "Total Estudiantes" : "Total Students",
-      value: data.totalStudents,
-      icon: Users,
-      color: "#1C7BB1",
-    },
-    {
-      title: isEs ? "En Prueba" : "Trial",
-      value: trialCount,
-      icon: UserPlus,
-      color: "#F59E1C",
-    },
-    {
-      title: isEs ? "Clientes" : "Customers",
-      value: customerCount,
-      icon: UserCheck,
-      color: "#22c55e",
-    },
-    {
-      title: isEs ? "Tasa de Conversion" : "Conversion Rate",
-      value: `${data.conversionRate.toFixed(1)}%`,
-      icon: TrendingUp,
-      color: "#0A4A6E",
-    },
-  ];
-
-  const chartData = data.funnel.map((stage) => ({
-    name: stage.label,
-    count: stage.count,
-    stage: stage.stage,
-  }));
+  const trialCount = data?.funnel.find((s) => s.stage === "trial")?.count ?? 0;
+  const customerCount = data?.funnel.find((s) => s.stage === "customer")?.count ?? 0;
+  const chartData = (data?.funnel ?? []).map((stage) => ({ name: stage.label, count: stage.count }));
 
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {summaryCards.map((card) => (
-          <Card key={card.title} className="border-t-4" style={{ borderTopColor: card.color }}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {card.title}
-              </CardTitle>
-              <card.icon className="h-5 w-5" style={{ color: card.color }} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{card.value}</div>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="mx-auto max-w-7xl">
+      <PageHeader
+        title={isEs ? "Métricas" : "Metrics"}
+        description={isEs ? "Embudo de conversión y salud del pipeline" : "Conversion funnel and pipeline health"}
+      />
+
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label={isEs ? "Total estudiantes" : "Total students"} value={data?.totalStudents ?? 0} icon={Users} loading={isLoading} accent="primary" />
+        <StatCard label={isEs ? "En prueba" : "Trial"} value={trialCount} icon={UserPlus} loading={isLoading} accent="accent" />
+        <StatCard label={isEs ? "Clientes" : "Customers"} value={customerCount} icon={UserCheck} loading={isLoading} accent="success" />
+        <StatCard
+          label={isEs ? "Tasa de conversión" : "Conversion rate"}
+          value={data?.conversionRate ?? 0}
+          format={(n) => `${n.toFixed(1)}%`}
+          icon={TrendingUp}
+          loading={isLoading}
+          accent="success"
+        />
       </div>
 
-      {/* Funnel Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {isEs ? "Embudo de Conversion" : "Conversion Funnel"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                layout="vertical"
-                margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
-              >
-                <XAxis type="number" />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={75}
-                  tick={{ fontSize: 13 }}
-                />
-                <Tooltip
-                  formatter={(value: number) => [
-                    value,
-                    isEs ? "Estudiantes" : "Students",
-                  ]}
-                />
-                <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={36}>
-                  {chartData.map((entry) => (
-                    <Cell
-                      key={entry.stage}
-                      fill={STAGE_COLORS[entry.stage] ?? "#1C7BB1"}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      <SectionCard title={isEs ? "Embudo de conversión" : "Conversion funnel"} loading={isLoading}>
+        {chartData.length > 0 ? (
+          <TrendChart
+            type="bar"
+            data={chartData}
+            series={[{ key: "count", label: isEs ? "Estudiantes" : "Students" }]}
+            xKey="name"
+            height={340}
+          />
+        ) : (
+          <EmptyState icon={TrendingUp} size="sm" title={isEs ? "Sin datos" : "No data"} />
+        )}
+      </SectionCard>
     </div>
   );
 }

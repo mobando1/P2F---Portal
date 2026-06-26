@@ -113,7 +113,7 @@ export default function CrmTasksGlobal() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1C7BB1]" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -151,7 +151,7 @@ export default function CrmTasksGlobal() {
         <Button
           size="sm"
           onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+          className="bg-primary hover:bg-primary-900"
         >
           <Plus className="h-4 w-4 mr-1" />
           {isEs ? "Agregar Tarea" : "Add Task"}
@@ -160,7 +160,7 @@ export default function CrmTasksGlobal() {
 
       {/* Add Task Form */}
       {showAddForm && (
-        <Card className="border-[#1C7BB1]/30">
+        <Card className="border-primary/30">
           <CardContent className="pt-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <Input
@@ -188,7 +188,7 @@ export default function CrmTasksGlobal() {
               <Button
                 onClick={handleAddTask}
                 disabled={!newTitle.trim() || addMutation.isPending}
-                className="bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+                className="bg-primary hover:bg-primary-900"
               >
                 {addMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

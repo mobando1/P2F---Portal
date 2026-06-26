@@ -5,7 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
-    <meta name="theme-color" content="#1C7BB1" />
+    <meta name="theme-color" content="#1C7BB1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0B1220" media="(prefers-color-scheme: dark)" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Anti-FOUC: apply persisted/system theme before the bundle paints
+      (function () {
+        try {
+          var stored = localStorage.getItem("p2f-theme");
+          var theme = stored;
+          if (!theme || theme === "system") {
+            theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          var root = document.documentElement;
+          if (theme === "dark") root.classList.add("dark");
+          root.style.colorScheme = theme;
+        } catch (e) {}
+      })();
+    </script>
     <title>Passport2Fluency</title>
   </head>
   <body>

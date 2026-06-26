@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "./ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -91,14 +92,6 @@ interface StudentDetailProps {
   open: boolean;
   onClose: () => void;
 }
-
-const STAGE_COLORS: Record<string, string> = {
-  trial: "#1C7BB1",
-  lead: "#F59E1C",
-  negotiation: "#0A4A6E",
-  customer: "#22c55e",
-  inactive: "#94a3b8",
-};
 
 const PRIORITY_COLORS: Record<string, string> = {
   low: "bg-gray-100 text-gray-700",
@@ -273,30 +266,25 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
         <SheetHeader className="pb-4 border-b">
           <SheetTitle>
             {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-[#1C7BB1]" />
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
             ) : student ? (
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-[#EAF4FA] flex items-center justify-center">
-                    <User className="h-5 w-5 text-[#1C7BB1]" />
+                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                    <User className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="text-lg font-semibold">
                       {student.firstName} {student.lastName}
                     </p>
-                    <Badge
-                      className="text-[10px] text-white mt-0.5"
-                      style={{ backgroundColor: STAGE_COLORS[student.userType] || "#94a3b8" }}
-                    >
-                      {student.userType}
-                    </Badge>
+                    <StatusBadge status={student.userType} variant="stage" size="sm" className="mt-0.5" />
                   </div>
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setShowQuickSend(true)}
-                  className="gap-1 text-[#1C7BB1] border-[#1C7BB1] hover:bg-[#EAF4FA]"
+                  className="gap-1 text-primary border-primary hover:bg-muted"
                 >
                   <Send className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">{isEs ? "Enviar" : "Send"}</span>
@@ -336,17 +324,17 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                 </h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-gray-600">
-                    <Mail className="h-4 w-4 text-[#1C7BB1]" />
+                    <Mail className="h-4 w-4 text-primary" />
                     <span>{student.email}</span>
                   </div>
                   {student.phone && (
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Phone className="h-4 w-4 text-[#1C7BB1]" />
+                      <Phone className="h-4 w-4 text-primary" />
                       <span>{student.phone}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-gray-600">
-                    <Calendar className="h-4 w-4 text-[#1C7BB1]" />
+                    <Calendar className="h-4 w-4 text-primary" />
                     <span>
                       {isEs ? "Registro:" : "Registered:"}{" "}
                       {new Date(student.createdAt).toLocaleDateString(
@@ -357,7 +345,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                   </div>
                   {student.lastActivityAt && (
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Clock className="h-4 w-4 text-[#1C7BB1]" />
+                      <Clock className="h-4 w-4 text-primary" />
                       <span>
                         {isEs ? "Ultima actividad:" : "Last activity:"}{" "}
                         {new Date(student.lastActivityAt).toLocaleDateString(
@@ -368,7 +356,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-gray-600">
-                    <CreditCard className="h-4 w-4 text-[#1C7BB1]" />
+                    <CreditCard className="h-4 w-4 text-primary" />
                     <span className="font-medium">
                       {isEs ? "Creditos:" : "Credits:"} {student.classCredits}
                     </span>
@@ -390,7 +378,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                       disabled={
                         creditsDraft.trim() === "" || updateCreditsMutation.isPending
                       }
-                      className="h-7 text-xs px-2 text-[#1C7BB1] border-[#1C7BB1] hover:bg-[#EAF4FA]"
+                      className="h-7 text-xs px-2 text-primary border-primary hover:bg-muted"
                       data-testid="button-update-credits"
                     >
                       {updateCreditsMutation.isPending ? (
@@ -401,7 +389,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                     </Button>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
-                    <CheckCircle2 className="h-4 w-4 text-[#1C7BB1]" />
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
                     <span>
                       {isEs ? "Trial completado:" : "Trial completed:"}{" "}
                       {student.trialCompleted ? (isEs ? "Si" : "Yes") : "No"}
@@ -470,7 +458,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                   size="sm"
                   onClick={handleAddNote}
                   disabled={!noteContent.trim() || addNoteMutation.isPending}
-                  className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+                  className="bg-primary hover:bg-primary-900 text-white"
                 >
                   {addNoteMutation.isPending && (
                     <Loader2 className="h-3 w-3 animate-spin mr-1" />
@@ -552,7 +540,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                   size="sm"
                   onClick={handleAddTask}
                   disabled={!taskTitle.trim() || !taskDueDate || addTaskMutation.isPending}
-                  className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+                  className="bg-primary hover:bg-primary-900 text-white"
                 >
                   {addTaskMutation.isPending && (
                     <Loader2 className="h-3 w-3 animate-spin mr-1" />
@@ -595,7 +583,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                           {isCompleted ? (
                             <CheckCircle2 className="h-5 w-5 text-green-500" />
                           ) : (
-                            <Circle className="h-5 w-5 text-gray-300 hover:text-[#1C7BB1]" />
+                            <Circle className="h-5 w-5 text-gray-300 hover:text-primary" />
                           )}
                         </button>
                         <div className="flex-1 min-w-0">
@@ -675,7 +663,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                       {cls.isTrial && (
                         <Badge
                           variant="outline"
-                          className="text-[10px] border-[#F59E1C] text-[#F59E1C]"
+                          className="text-[10px] border-accent text-accent"
                         >
                           Trial
                         </Badge>

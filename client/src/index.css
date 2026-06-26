@@ -2,29 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+   Passport2Fluency — Design tokens
+   Reglas:
+   - Tokens semánticos (--primary, --background, etc.) en formato hsl(...) completo
+     porque tailwind.config.ts los consume como var(--token) directo.
+   - Tokens de sidebar (--sidebar-*) en formato RAW ("H S% L%") porque el config
+     los envuelve con hsl(var(--sidebar-*)) (igual que el patrón shadcn original).
+   - NUNCA hardcodear hex de marca en componentes: usar primary/accent/foreground...
+   ============================================================================= */
+
 :root {
-  --background: hsl(0, 0%, 100%); /* Blanco puro */
-  --foreground: hsl(208, 74%, 25%); /* Azul noche */
-  --muted: hsl(200, 71%, 96%); /* Azul niebla */
-  --muted-foreground: hsl(0, 0%, 45%);
+  --background: hsl(210, 40%, 99%); /* blanco con tinte frío */
+  --foreground: hsl(208, 74%, 25%); /* night-blue */
+  --surface: hsl(0, 0%, 100%);
+  --surface-elevated: hsl(0, 0%, 100%);
+  --muted: hsl(200, 60%, 96%); /* fog-blue suave */
+  --muted-foreground: hsl(208, 18%, 46%);
   --popover: hsl(0, 0%, 100%);
   --popover-foreground: hsl(208, 74%, 25%);
   --card: hsl(0, 0%, 100%);
   --card-foreground: hsl(208, 74%, 25%);
-  --border: hsl(0, 0%, 82%); /* Gris piedra */
-  --input: hsl(0, 0%, 82%);
-  --primary: hsl(200, 69%, 43%); /* Azul cielo */
+  --border: hsl(208, 24%, 90%); /* borde azulado, no gris neutro */
+  --input: hsl(208, 24%, 90%);
+  --primary: hsl(200, 69%, 43%); /* sky-blue #1C7BB1 */
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(37, 95%, 58%); /* Naranja sol */
-  --secondary-foreground: hsl(0, 0%, 0%);
-  --accent: hsl(37, 95%, 58%); /* Naranja sol */
-  --accent-foreground: hsl(0, 0%, 0%);
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --secondary: hsl(37, 95%, 58%); /* sun-orange #F59E1C */
+  --secondary-foreground: hsl(208, 74%, 18%);
+  --accent: hsl(37, 95%, 58%); /* sun-orange */
+  --accent-foreground: hsl(208, 74%, 18%);
+  --destructive: hsl(0, 72%, 51%);
+  --destructive-foreground: hsl(0, 0%, 100%);
   --ring: hsl(200, 69%, 43%);
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 
-  /* Passport2Fluency Brand Colors */
+  /* Brand ramp — sky-blue → night-blue */
+  --primary-50: hsl(200, 70%, 97%);
+  --primary-100: hsl(200, 70%, 92%);
+  --primary-200: hsl(200, 69%, 83%);
+  --primary-300: hsl(200, 69%, 70%);
+  --primary-400: hsl(200, 69%, 56%);
+  --primary-500: hsl(200, 69%, 43%);
+  --primary-600: hsl(201, 71%, 37%);
+  --primary-700: hsl(203, 72%, 30%);
+  --primary-800: hsl(206, 73%, 26%);
+  --primary-900: hsl(208, 74%, 25%);
+  --primary-950: hsl(209, 75%, 16%);
+
+  /* Accent ramp — sun-orange */
+  --accent-50: hsl(37, 95%, 96%);
+  --accent-100: hsl(37, 95%, 90%);
+  --accent-200: hsl(37, 95%, 80%);
+  --accent-300: hsl(37, 95%, 70%);
+  --accent-400: hsl(37, 95%, 64%);
+  --accent-500: hsl(37, 95%, 58%);
+  --accent-600: hsl(32, 90%, 50%);
+  --accent-700: hsl(27, 88%, 43%);
+  --accent-800: hsl(23, 84%, 36%);
+  --accent-900: hsl(20, 80%, 30%);
+  --accent-950: hsl(17, 80%, 20%);
+
+  /* Passport2Fluency Brand Colors (legacy compat) */
   --p2f-sky-blue: hsl(200, 69%, 43%); /* #1C7BB1 */
   --p2f-sun-orange: hsl(37, 95%, 58%); /* #F59E1C */
   --p2f-night-blue: hsl(208, 74%, 25%); /* #0A4A6E */
@@ -32,34 +70,111 @@
   --p2f-cloud-gray: hsl(0, 0%, 97%); /* #F8F9FA */
   --p2f-stone-gray: hsl(0, 0%, 82%); /* #D3D3D3 */
   --p2f-pure-white: hsl(0, 0%, 100%); /* #FFFFFF */
-  
-  /* Custom colors matching the design */
-  --success: hsl(142, 76%, 36%);
-  --warning: hsl(45, 93%, 47%);
+
+  /* Semantic states */
+  --success: hsl(152, 60%, 40%);
+  --success-foreground: hsl(0, 0%, 100%);
+  --warning: hsl(37, 95%, 52%);
+  --warning-foreground: hsl(208, 74%, 18%);
   --info: hsl(200, 69%, 43%);
+  --info-foreground: hsl(0, 0%, 100%);
+
+  /* Chart palette (brand-aligned) */
+  --chart-1: hsl(200, 69%, 43%);
+  --chart-2: hsl(37, 95%, 58%);
+  --chart-3: hsl(208, 74%, 35%);
+  --chart-4: hsl(152, 60%, 42%);
+  --chart-5: hsl(265, 60%, 58%);
+
+  /* Sidebar tokens — RAW format (config wraps with hsl()) */
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 208 74% 25%;
+  --sidebar-primary: 200 69% 43%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 200 60% 96%;
+  --sidebar-accent-foreground: 208 74% 25%;
+  --sidebar-border: 208 24% 90%;
+  --sidebar-ring: 200 69% 43%;
 }
 
 .dark {
-  --background: hsl(240, 10%, 3.9%);
-  --foreground: hsl(0, 0%, 98%);
-  --muted: hsl(240, 3.7%, 15.9%);
-  --muted-foreground: hsl(240, 5%, 64.9%);
-  --popover: hsl(240, 10%, 3.9%);
-  --popover-foreground: hsl(0, 0%, 98%);
-  --card: hsl(240, 10%, 3.9%);
-  --card-foreground: hsl(0, 0%, 98%);
-  --border: hsl(240, 3.7%, 15.9%);
-  --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(207, 90%, 54%);
-  --primary-foreground: hsl(211, 100%, 99%);
-  --secondary: hsl(240, 3.7%, 15.9%);
-  --secondary-foreground: hsl(0, 0%, 98%);
-  --accent: hsl(240, 3.7%, 15.9%);
-  --accent-foreground: hsl(0, 0%, 98%);
-  --destructive: hsl(0, 62.8%, 30.6%);
-  --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(240, 4.9%, 83.9%);
-  --radius: 0.5rem;
+  --background: hsl(217, 33%, 7%); /* #0B1220 near-black azulado */
+  --foreground: hsl(210, 40%, 96%);
+  --surface: hsl(217, 30%, 10%);
+  --surface-elevated: hsl(216, 28%, 13%);
+  --muted: hsl(216, 24%, 16%);
+  --muted-foreground: hsl(210, 16%, 64%);
+  --popover: hsl(216, 28%, 12%);
+  --popover-foreground: hsl(210, 40%, 96%);
+  --card: hsl(216, 28%, 12%);
+  --card-foreground: hsl(210, 40%, 96%);
+  --border: hsl(214, 22%, 20%);
+  --input: hsl(214, 22%, 22%);
+  --primary: hsl(199, 89%, 58%); /* sky brillante para contraste */
+  --primary-foreground: hsl(217, 40%, 8%);
+  --secondary: hsl(37, 96%, 62%);
+  --secondary-foreground: hsl(217, 40%, 8%);
+  --accent: hsl(37, 96%, 62%);
+  --accent-foreground: hsl(217, 40%, 8%);
+  --destructive: hsl(0, 70%, 58%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --ring: hsl(199, 89%, 60%);
+
+  /* Brand ramp adjusted for dark (50 = más oscuro, 500 = sky brillante) */
+  --primary-50: hsl(209, 75%, 12%);
+  --primary-100: hsl(208, 73%, 16%);
+  --primary-200: hsl(206, 72%, 22%);
+  --primary-300: hsl(203, 70%, 30%);
+  --primary-400: hsl(201, 72%, 42%);
+  --primary-500: hsl(200, 78%, 52%);
+  --primary-600: hsl(199, 89%, 58%);
+  --primary-700: hsl(199, 90%, 68%);
+  --primary-800: hsl(199, 92%, 78%);
+  --primary-900: hsl(200, 95%, 88%);
+  --primary-950: hsl(200, 100%, 95%);
+
+  --accent-50: hsl(20, 60%, 14%);
+  --accent-100: hsl(22, 65%, 20%);
+  --accent-200: hsl(25, 75%, 28%);
+  --accent-300: hsl(28, 82%, 38%);
+  --accent-400: hsl(32, 90%, 48%);
+  --accent-500: hsl(37, 95%, 58%);
+  --accent-600: hsl(38, 96%, 64%);
+  --accent-700: hsl(40, 96%, 72%);
+  --accent-800: hsl(42, 96%, 80%);
+  --accent-900: hsl(44, 96%, 88%);
+  --accent-950: hsl(46, 100%, 94%);
+
+  /* Legacy brand vars point to luminous variants in dark */
+  --p2f-sky-blue: hsl(199, 89%, 58%);
+  --p2f-sun-orange: hsl(37, 96%, 62%);
+  --p2f-night-blue: hsl(200, 95%, 88%);
+  --p2f-fog-blue: hsl(216, 24%, 16%);
+  --p2f-cloud-gray: hsl(217, 30%, 10%);
+  --p2f-stone-gray: hsl(214, 22%, 30%);
+  --p2f-pure-white: hsl(216, 28%, 12%);
+
+  --success: hsl(152, 55%, 50%);
+  --success-foreground: hsl(217, 40%, 8%);
+  --warning: hsl(37, 96%, 60%);
+  --warning-foreground: hsl(217, 40%, 8%);
+  --info: hsl(199, 89%, 58%);
+  --info-foreground: hsl(217, 40%, 8%);
+
+  --chart-1: hsl(199, 89%, 58%);
+  --chart-2: hsl(37, 96%, 62%);
+  --chart-3: hsl(200, 80%, 72%);
+  --chart-4: hsl(152, 55%, 52%);
+  --chart-5: hsl(265, 70%, 70%);
+
+  --sidebar-background: 217 35% 9%;
+  --sidebar-foreground: 210 40% 92%;
+  --sidebar-primary: 199 89% 58%;
+  --sidebar-primary-foreground: 217 40% 8%;
+  --sidebar-accent: 216 24% 16%;
+  --sidebar-accent-foreground: 210 40% 96%;
+  --sidebar-border: 214 22% 18%;
+  --sidebar-ring: 199 89% 60%;
 }
 
 @layer base {
@@ -68,37 +183,102 @@
   }
 
   body {
-    @apply font-sans antialiased text-foreground;
-    background-color: var(--p2f-cloud-gray);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
   }
 }
 
 @layer utilities {
+  /* Glassmorphism */
+  .glass {
+    background: hsl(0 0% 100% / 0.72);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid hsl(0 0% 100% / 0.5);
+  }
+  .dark .glass {
+    background: hsl(216 28% 13% / 0.6);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid hsl(214 22% 32% / 0.4);
+    box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.05);
+  }
+
+  /* Aurora / mesh background (decorative ::before layer) */
+  .aurora-bg {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .aurora-bg::before {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    z-index: -1;
+    background:
+      radial-gradient(40% 40% at 20% 20%, hsl(200 69% 43% / 0.35), transparent 60%),
+      radial-gradient(35% 35% at 80% 25%, hsl(37 95% 58% / 0.25), transparent 60%),
+      radial-gradient(45% 45% at 60% 80%, hsl(208 74% 25% / 0.3), transparent 60%);
+    filter: blur(60px);
+    animation: aurora 18s ease-in-out infinite alternate;
+  }
+  .dark .aurora-bg::before {
+    background:
+      radial-gradient(40% 40% at 20% 20%, hsl(199 89% 58% / 0.22), transparent 60%),
+      radial-gradient(35% 35% at 80% 25%, hsl(37 96% 62% / 0.16), transparent 60%),
+      radial-gradient(45% 45% at 60% 80%, hsl(209 75% 30% / 0.35), transparent 60%);
+  }
+
+  /* Brand glow */
+  .glow-primary {
+    box-shadow: 0 0 0 1px hsl(200 69% 43% / 0.2), 0 8px 32px -8px hsl(200 69% 43% / 0.35);
+  }
+  .glow-accent {
+    box-shadow: 0 0 0 1px hsl(37 95% 58% / 0.25), 0 8px 32px -8px hsl(37 95% 58% / 0.4);
+  }
+
+  /* Brand gradient text */
+  .text-gradient-brand {
+    background: linear-gradient(135deg, hsl(200 69% 43%), hsl(37 95% 58%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurora-bg::before {
+      animation: none;
+    }
+  }
+
+  /* --- Legacy utilities (preserved) --- */
   .calendar-day {
     @apply aspect-square flex items-center justify-center text-sm cursor-pointer transition-colors rounded-lg;
   }
-  
+
   .calendar-day:hover {
-    @apply bg-gray-100;
+    @apply bg-muted;
   }
-  
+
   .calendar-day.today {
     @apply bg-primary text-primary-foreground font-medium;
   }
-  
+
   .calendar-day.completed {
     @apply bg-green-500 text-white font-medium;
   }
-  
+
   .calendar-day.scheduled {
     @apply bg-yellow-500 text-white font-medium;
   }
-  
+
   .calendar-day.disabled {
-    @apply text-gray-400 cursor-not-allowed;
+    @apply text-muted-foreground cursor-not-allowed;
   }
-  
+
   .calendar-day.disabled:hover {
     @apply bg-transparent;
   }
@@ -106,15 +286,15 @@
   .video-card {
     @apply cursor-pointer transition-transform duration-200;
   }
-  
+
   .video-card:hover {
     @apply transform scale-105;
   }
-  
+
   .video-overlay {
     @apply absolute inset-0 bg-black/30 transition-colors flex items-center justify-center;
   }
-  
+
   .play-button {
     @apply w-12 h-12 bg-white/90 rounded-full flex items-center justify-center;
   }

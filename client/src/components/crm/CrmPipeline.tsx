@@ -2,9 +2,10 @@ import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +19,9 @@ import {
 import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { PageHeader } from "./ui/page-header";
+import { StatusBadge } from "./ui/status-badge";
 
 interface CrmStudent {
   id: number;
@@ -53,20 +56,13 @@ interface CrmPipelineProps {
   onSelectStudent: (userId: number) => void;
 }
 
-const COLUMNS = [
-  { key: "trial", color: "#1C7BB1" },
-  { key: "lead", color: "#F59E1C" },
-  { key: "negotiation", color: "#0A4A6E" },
-  { key: "customer", color: "#22c55e" },
-  { key: "inactive", color: "#94a3b8" },
-] as const;
-
-type ColumnKey = (typeof COLUMNS)[number]["key"];
+const COLUMNS = ["trial", "lead", "negotiation", "customer", "inactive"] as const;
+type ColumnKey = (typeof COLUMNS)[number];
 
 const COLUMN_LABELS: Record<ColumnKey, { en: string; es: string }> = {
   trial: { en: "Trial", es: "Prueba" },
   lead: { en: "Lead", es: "Prospecto" },
-  negotiation: { en: "Negotiation", es: "Negociacion" },
+  negotiation: { en: "Negotiation", es: "Negociación" },
   customer: { en: "Customer", es: "Cliente" },
   inactive: { en: "Inactive", es: "Inactivo" },
 };
@@ -120,7 +116,6 @@ export default function CrmPipeline({ onSelectStudent }: CrmPipelineProps) {
       inactive: [],
     };
     if (!data?.students) return map;
-
     for (const student of data.students) {
       const col = (student.userType as ColumnKey) in map ? (student.userType as ColumnKey) : "lead";
       map[col].push(student);
@@ -130,142 +125,151 @@ export default function CrmPipeline({ onSelectStudent }: CrmPipelineProps) {
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-    const { draggableId, destination } = result;
-    const userId = parseInt(draggableId);
-    const newColumn = destination.droppableId as ColumnKey;
-
+    const userId = parseInt(result.draggableId);
+    const newColumn = result.destination.droppableId as ColumnKey;
     stageMutation.mutate({ userId, userType: newColumn });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1C7BB1]" />
-      </div>
-    );
-  }
-
   if (error) {
     return (
-      <div className="text-center py-20 text-red-500">
+      <div className="py-20 text-center text-destructive">
         {isEs ? "Error al cargar datos del CRM" : "Failed to load CRM data"}
       </div>
     );
   }
 
   return (
-    <>
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4 min-h-[600px]">
-        {COLUMNS.map((col) => {
-          const students = grouped[col.key];
-          const label = isEs ? COLUMN_LABELS[col.key].es : COLUMN_LABELS[col.key].en;
+    <div className="mx-auto max-w-[1600px]">
+      <PageHeader
+        title="Pipeline"
+        description={isEs ? "Arrastra contactos entre etapas" : "Drag contacts between stages"}
+      />
 
-          return (
-            <div key={col.key} className="flex-shrink-0 w-[280px]">
-              <div
-                className="rounded-t-lg px-4 py-3 flex items-center justify-between"
-                style={{ borderTop: `3px solid ${col.color}` }}
-              >
-                <h3 className="font-semibold text-sm text-gray-700">{label}</h3>
-                <Badge variant="secondary" className="text-xs">
-                  {students.length}
-                </Badge>
-              </div>
-
-              <Droppable droppableId={col.key}>
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={`space-y-2 p-2 min-h-[500px] rounded-b-lg transition-colors ${
-                      snapshot.isDraggingOver ? "bg-blue-50" : "bg-gray-50/50"
-                    }`}
-                  >
-                    {students.map((student, index) => (
-                      <Draggable
-                        key={student.id}
-                        draggableId={String(student.id)}
-                        index={index}
-                      >
-                        {(dragProvided, dragSnapshot) => (
-                          <div
-                            ref={dragProvided.innerRef}
-                            {...dragProvided.draggableProps}
-                            {...dragProvided.dragHandleProps}
-                            onClick={() => onSelectStudent(student.id)}
-                          >
-                            <Card
-                              className={`bg-white shadow-sm rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow ${
-                                dragSnapshot.isDragging ? "shadow-lg ring-2 ring-[#1C7BB1]/30" : ""
-                              }`}
-                            >
-                              <div className="space-y-2">
-                                <div className="flex items-start justify-between gap-1">
-                                  <p className="font-medium text-sm text-gray-900 leading-tight">
-                                    {student.firstName} {student.lastName}
-                                  </p>
-                                  {student.classCredits > 0 && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-[10px] shrink-0 border-[#1C7BB1] text-[#1C7BB1]"
-                                    >
-                                      {student.classCredits} {isEs ? "cr" : "cr"}
-                                    </Badge>
-                                  )}
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                  <p className="text-xs text-gray-500 truncate flex-1">{student.email}</p>
-                                  <button
-                                    className="ml-1 p-0.5 rounded text-gray-400 hover:text-red-500 transition-colors"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setDeleteTarget(student);
-                                    }}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </button>
-                                </div>
-
-                                {student.lastActivityAt && (
-                                  <p className="text-[10px] text-gray-400">
-                                    {isEs ? "Ultima act:" : "Last activity:"}{" "}
-                                    {new Date(student.lastActivityAt).toLocaleDateString(
-                                      isEs ? "es-CO" : "en-US",
-                                      { month: "short", day: "numeric" }
-                                    )}
-                                  </p>
-                                )}
-
-                                {student.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {student.tags.map((tag) => (
-                                      <span
-                                        key={tag.id}
-                                        className="inline-block text-[10px] px-1.5 py-0.5 rounded-full text-white font-medium"
-                                        style={{ backgroundColor: tag.color }}
-                                      >
-                                        {tag.name}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </Card>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
+      {isLoading ? (
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {COLUMNS.map((col) => (
+            <div key={col} className="w-[280px] shrink-0 space-y-2">
+              <Skeleton shimmer className="h-10 w-full rounded-xl" />
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} shimmer className="h-24 w-full rounded-xl" />
+              ))}
             </div>
-          );
-        })}
-      </div>
-    </DragDropContext>
+          ))}
+        </div>
+      ) : (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="flex min-h-[600px] gap-4 overflow-x-auto pb-4">
+            {COLUMNS.map((col) => {
+              const students = grouped[col];
+              const label = isEs ? COLUMN_LABELS[col].es : COLUMN_LABELS[col].en;
+              const credits = students.reduce((sum, s) => sum + (s.classCredits || 0), 0);
+
+              return (
+                <div key={col} className="w-[280px] shrink-0">
+                  <div className="mb-2 flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2.5">
+                    <StatusBadge status={col} variant="stage" label={label} />
+                    <div className="flex items-center gap-2 text-xs">
+                      {credits > 0 && (
+                        <span className="text-muted-foreground">{credits} cr</span>
+                      )}
+                      <span className="font-display font-semibold tabular-nums text-foreground">{students.length}</span>
+                    </div>
+                  </div>
+
+                  <Droppable droppableId={col}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`min-h-[500px] space-y-2 rounded-xl p-2 transition-colors ${
+                          snapshot.isDraggingOver ? "bg-primary/5 ring-1 ring-primary/20" : "bg-muted/40"
+                        }`}
+                      >
+                        {students.map((student, index) => (
+                          <Draggable key={student.id} draggableId={String(student.id)} index={index}>
+                            {(dragProvided, dragSnapshot) => (
+                              <div
+                                ref={dragProvided.innerRef}
+                                {...dragProvided.draggableProps}
+                                {...dragProvided.dragHandleProps}
+                                onClick={() => onSelectStudent(student.id)}
+                              >
+                                <Card
+                                  className={`cursor-pointer rounded-xl p-3 transition-shadow hover:shadow-md ${
+                                    dragSnapshot.isDragging ? "rotate-1 shadow-glow-primary" : "shadow-sm"
+                                  }`}
+                                >
+                                  <div className="space-y-2">
+                                    <div className="flex items-start gap-2">
+                                      <Avatar className="h-8 w-8 shrink-0">
+                                        <AvatarFallback className="bg-primary/10 text-[11px] font-semibold text-primary">
+                                          {(student.firstName?.[0] ?? "") + (student.lastName?.[0] ?? "")}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium leading-tight text-foreground">
+                                          {student.firstName} {student.lastName}
+                                        </p>
+                                        <p className="truncate text-xs text-muted-foreground">{student.email}</p>
+                                      </div>
+                                      <button
+                                        className="rounded p-0.5 text-muted-foreground/60 transition-colors hover:text-destructive"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setDeleteTarget(student);
+                                        }}
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                      {student.classCredits > 0 ? (
+                                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                                          {student.classCredits} {isEs ? "créditos" : "credits"}
+                                        </span>
+                                      ) : (
+                                        <span />
+                                      )}
+                                      {student.lastActivityAt && (
+                                        <span className="text-[10px] text-muted-foreground">
+                                          {new Date(student.lastActivityAt).toLocaleDateString(isEs ? "es-CO" : "en-US", {
+                                            month: "short",
+                                            day: "numeric",
+                                          })}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {student.tags.length > 0 && (
+                                      <div className="flex flex-wrap gap-1">
+                                        {student.tags.map((tag) => (
+                                          <span
+                                            key={tag.id}
+                                            className="inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                                            style={{ backgroundColor: `${tag.color}22`, color: tag.color }}
+                                          >
+                                            {tag.name}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </Card>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </div>
+              );
+            })}
+          </div>
+        </DragDropContext>
+      )}
 
       {/* Delete Confirmation — requires typing the student name */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteConfirmName(""); } }}>
@@ -303,13 +307,11 @@ export default function CrmPipeline({ onSelectStudent }: CrmPipelineProps) {
                 deleteConfirmName.trim().toLowerCase() !== `${deleteTarget?.firstName} ${deleteTarget?.lastName}`.toLowerCase()
               }
             >
-              {deleteMutation.isPending
-                ? (isEs ? "Eliminando..." : "Deleting...")
-                : (isEs ? "Eliminar" : "Delete")}
+              {deleteMutation.isPending ? (isEs ? "Eliminando..." : "Deleting...") : (isEs ? "Eliminar" : "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/lib/i18n";
 import { CurrencyProvider } from "@/lib/currency";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -27,6 +28,7 @@ const ProfilePage = lazy(() => import("@/pages/profile"));
 const SettingsPage = lazy(() => import("@/pages/settings"));
 const AIPracticePage = lazy(() => import("@/pages/ai-practice"));
 const AdminPage = lazy(() => import("@/pages/admin"));
+const CrmArea = lazy(() => import("@/pages/crm"));
 const TutorDashboardPage = lazy(() => import("@/pages/tutor-dashboard"));
 const TutorAvailabilityPage = lazy(() => import("@/pages/tutor-availability"));
 const SupportPage = lazy(() => import("@/pages/support"));
@@ -124,6 +126,24 @@ function Router() {
         <Route path="/ai-practice">
           <ProtectedRoute>
             <AIPracticePage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/crm">
+          <Redirect to="/admin/crm" />
+        </Route>
+        <Route path="/admin/crm/:rest*">
+          <ProtectedRoute>
+            <CrmArea />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin/crm">
+          <ProtectedRoute>
+            <CrmArea />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin/:tab">
+          <ProtectedRoute>
+            <AdminPage />
           </ProtectedRoute>
         </Route>
         <Route path="/admin">
@@ -246,21 +266,21 @@ function EmailVerificationBanner() {
   };
 
   return (
-    <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-between text-sm">
-      <span className="text-amber-800">
+    <div className="bg-warning/10 border-b border-warning/30 px-4 py-2 flex items-center justify-between text-sm">
+      <span className="text-warning-foreground/90 dark:text-warning">
         Please verify your email address — check your inbox for a verification link.
       </span>
       <div className="flex items-center gap-3 ml-4">
         <button
           onClick={handleResend}
           disabled={sending || sent}
-          className="text-amber-700 hover:text-amber-900 font-medium underline disabled:opacity-50"
+          className="text-warning font-medium underline hover:opacity-80 disabled:opacity-50"
         >
           {sent ? "Email sent!" : sendError ? "Error — try again" : sending ? "Sending…" : "Resend email"}
         </button>
         <button
           onClick={() => setDismissed(true)}
-          className="text-amber-600 hover:text-amber-800 font-medium"
+          className="text-muted-foreground hover:text-foreground font-medium"
         >
           Dismiss
         </button>
@@ -279,21 +299,23 @@ function App() {
   const [location] = useLocation();
   return (
     <ErrorBoundary resetKey={location}>
-      <QueryClientProvider client={queryClient}>
-        <LanguageProvider>
-          <CurrencyProvider>
-            <OnboardingProvider>
-            <TooltipProvider>
-              <WebSocketInit />
-              <EmailVerificationBanner />
-              <Toaster />
-              <Router />
-              <HelpButton />
-            </TooltipProvider>
-            </OnboardingProvider>
-          </CurrencyProvider>
-        </LanguageProvider>
-      </QueryClientProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <LanguageProvider>
+            <CurrencyProvider>
+              <OnboardingProvider>
+              <TooltipProvider>
+                <WebSocketInit />
+                <EmailVerificationBanner />
+                <Toaster />
+                <Router />
+                <HelpButton />
+              </TooltipProvider>
+              </OnboardingProvider>
+            </CurrencyProvider>
+          </LanguageProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

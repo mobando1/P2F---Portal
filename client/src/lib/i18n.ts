@@ -88,6 +88,11 @@ export interface Translations {
   demoCredentials: string;
   welcome: string;
   welcomeBack: string;
+  loginBrandHeadline: string;
+  loginBrandSubtitle: string;
+  loginFeatureLive: string;
+  loginFeatureAi: string;
+  loginFeaturePath: string;
   accountCreated: string;
   loginFailed: string;
   registrationFailed: string;
@@ -247,6 +252,11 @@ export const translations: Record<Language, Translations> = {
     demoCredentials: 'Credenciales de Prueba',
     welcome: '¡Bienvenido!',
     welcomeBack: '¡Bienvenido de nuevo!',
+    loginBrandHeadline: 'Tu pasaporte a la fluidez',
+    loginBrandSubtitle: 'Clases en vivo, práctica con IA y un camino gamificado — todo en un solo lugar.',
+    loginFeatureLive: 'Clases en vivo con tutores reales',
+    loginFeatureAi: 'Practica 24/7 con Lingo, tu compañero IA',
+    loginFeaturePath: 'Camino de aprendizaje gamificado A1 → B2',
     accountCreated: 'Cuenta creada exitosamente',
     loginFailed: 'Error al iniciar sesión',
     registrationFailed: 'Error al registrarse',
@@ -405,6 +415,11 @@ export const translations: Record<Language, Translations> = {
     demoCredentials: 'Demo Credentials',
     welcome: 'Welcome!',
     welcomeBack: 'Welcome back!',
+    loginBrandHeadline: 'Your passport to fluency',
+    loginBrandSubtitle: 'Live classes, AI practice and a gamified path — all in one place.',
+    loginFeatureLive: 'Live classes with real tutors',
+    loginFeatureAi: 'Practice 24/7 with Lingo, your AI partner',
+    loginFeaturePath: 'Gamified learning path A1 → B2',
     accountCreated: 'Account created successfully',
     loginFailed: 'Login failed',
     registrationFailed: 'Registration failed',

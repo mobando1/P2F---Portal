@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -24,16 +23,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useLanguage } from "@/lib/i18n";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Loader2,
-  Search,
-  Download,
-  Users,
-  UserPlus,
-  UserCheck,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
+import { Search, Download, Users, UserPlus, UserCheck, Sparkles, Trash2, Inbox } from "lucide-react";
+import { PageHeader } from "./ui/page-header";
+import { StatCard } from "./ui/stat-card";
+import { StatusBadge } from "./ui/status-badge";
+import { DataTable, type Column } from "./ui/data-table";
+import { EmptyState } from "./ui/empty-state";
 
 interface CrmStudent {
   id: number;
@@ -68,18 +63,10 @@ interface CrmStudentListProps {
   onSelectStudent: (userId: number) => void;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  trial: "bg-[#1C7BB1]/10 text-[#1C7BB1] border-[#1C7BB1]/30",
-  lead: "bg-[#F59E1C]/10 text-[#F59E1C] border-[#F59E1C]/30",
-  negotiation: "bg-[#0A4A6E]/10 text-[#0A4A6E] border-[#0A4A6E]/30",
-  customer: "bg-green-100 text-green-700 border-green-200",
-  inactive: "bg-gray-100 text-gray-500 border-gray-200",
-};
-
 const TYPE_LABELS: Record<string, { en: string; es: string }> = {
   trial: { en: "Trial", es: "Prueba" },
   lead: { en: "Lead", es: "Lead" },
-  negotiation: { en: "Negotiation", es: "Negociacion" },
+  negotiation: { en: "Negotiation", es: "Negociación" },
   customer: { en: "Customer", es: "Cliente" },
   inactive: { en: "Inactive", es: "Inactivo" },
 };
@@ -118,83 +105,161 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
       setDeleteTarget(null);
     },
     onError: () => {
-      toast({
-        title: isEs ? "Error al eliminar" : "Failed to delete",
-        variant: "destructive",
-      });
+      toast({ title: isEs ? "Error al eliminar" : "Failed to delete", variant: "destructive" });
     },
   });
 
-  const handleExport = () => {
-    window.open("/api/admin/crm/export", "_blank");
-  };
+  const handleExport = () => window.open("/api/admin/crm/export", "_blank");
+
+  const summary = data?.summary;
+
+  const columns: Column<CrmStudent>[] = [
+    {
+      key: "name",
+      header: isEs ? "Nombre" : "Name",
+      sortable: true,
+      sortValue: (s) => `${s.firstName} ${s.lastName}`.toLowerCase(),
+      render: (s) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+              {(s.firstName?.[0] ?? "") + (s.lastName?.[0] ?? "")}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="truncate font-medium text-foreground">{s.firstName} {s.lastName}</p>
+            <p className="truncate text-xs text-muted-foreground">{s.email}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "userType",
+      header: isEs ? "Etapa" : "Stage",
+      sortable: true,
+      render: (s) => (
+        <StatusBadge
+          status={s.userType}
+          variant="stage"
+          label={isEs ? (TYPE_LABELS[s.userType]?.es ?? s.userType) : (TYPE_LABELS[s.userType]?.en ?? s.userType)}
+        />
+      ),
+    },
+    {
+      key: "trialCompleted",
+      header: isEs ? "Prueba" : "Trial",
+      align: "center",
+      render: (s) =>
+        s.trialCompleted ? (
+          <StatusBadge status="success" size="sm" dot={false} label={isEs ? "Sí" : "Yes"} />
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
+      key: "classCredits",
+      header: isEs ? "Créditos" : "Credits",
+      align: "center",
+      sortable: true,
+      render: (s) => <span className="tabular-nums">{s.classCredits}</span>,
+    },
+    {
+      key: "classes",
+      header: isEs ? "Clases" : "Classes",
+      align: "center",
+      sortable: true,
+      sortValue: (s) => s.completedClasses,
+      render: (s) => (
+        <span className="tabular-nums text-muted-foreground">
+          {s.completedClasses}/{s.totalClasses}
+        </span>
+      ),
+    },
+    {
+      key: "tags",
+      header: "Tags",
+      render: (s) => (
+        <div className="flex flex-wrap gap-1">
+          {s.tags.map((tag) => (
+            <span
+              key={tag.id}
+              className="inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+              style={{ backgroundColor: `${tag.color}22`, color: tag.color }}
+            >
+              {tag.name}
+            </span>
+          ))}
+        </div>
+      ),
+    },
+    {
+      key: "lastActivityAt",
+      header: isEs ? "Última actividad" : "Last activity",
+      sortable: true,
+      sortValue: (s) => (s.lastActivityAt ? new Date(s.lastActivityAt).getTime() : 0),
+      render: (s) => (
+        <span className="whitespace-nowrap text-xs text-muted-foreground">
+          {s.lastActivityAt
+            ? new Date(s.lastActivityAt).toLocaleDateString(isEs ? "es-CO" : "en-US", { month: "short", day: "numeric" })
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (s) => (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-destructive hover:text-destructive"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDeleteTarget(s);
+          }}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      ),
+    },
+  ];
 
   if (error) {
     return (
-      <div className="text-center py-10 text-red-500">
+      <div className="py-10 text-center text-destructive">
         {isEs ? "Error al cargar estudiantes" : "Failed to load students"}
       </div>
     );
   }
 
-  const summary = data?.summary;
-
   return (
-    <div className="space-y-4">
-      {/* Summary Cards */}
+    <div className="mx-auto max-w-7xl">
+      <PageHeader
+        title={isEs ? "Contactos" : "Contacts"}
+        description={isEs ? "Todos tus leads y clientes" : "All your leads and customers"}
+        actions={
+          <Button variant="outline" onClick={handleExport} className="gap-2">
+            <Download className="h-4 w-4" />
+            CSV
+          </Button>
+        }
+      />
+
+      {/* Summary */}
       {summary && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Card className="border-t-4 border-t-[#1C7BB1]">
-            <CardHeader className="pb-1 pt-3 px-4">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                <Users className="h-3.5 w-3.5" />
-                {isEs ? "Total" : "Total"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-3">
-              <div className="text-xl font-bold">{summary.total}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-t-4 border-t-[#F59E1C]">
-            <CardHeader className="pb-1 pt-3 px-4">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                <UserPlus className="h-3.5 w-3.5" />
-                {isEs ? "Prueba" : "Trial"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-3">
-              <div className="text-xl font-bold">{summary.trial}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-t-4 border-t-[#0A4A6E]">
-            <CardHeader className="pb-1 pt-3 px-4">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                <Sparkles className="h-3.5 w-3.5" />
-                {isEs ? "Lead" : "Lead"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-3">
-              <div className="text-xl font-bold">{summary.lead}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-t-4 border-t-green-500">
-            <CardHeader className="pb-1 pt-3 px-4">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                <UserCheck className="h-3.5 w-3.5" />
-                {isEs ? "Clientes" : "Customers"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-3">
-              <div className="text-xl font-bold">{summary.customer}</div>
-            </CardContent>
-          </Card>
+        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard label={isEs ? "Total" : "Total"} value={summary.total} icon={Users} accent="primary" />
+          <StatCard label={isEs ? "Prueba" : "Trial"} value={summary.trial} icon={UserPlus} accent="primary" />
+          <StatCard label="Lead" value={summary.lead} icon={Sparkles} accent="accent" />
+          <StatCard label={isEs ? "Clientes" : "Customers"} value={summary.customer} icon={UserCheck} accent="success" />
         </div>
       )}
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <div className="mb-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={isEs ? "Buscar por nombre o email..." : "Search by name or email..."}
             value={search}
@@ -210,148 +275,34 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
             <SelectItem value="all">{isEs ? "Todos" : "All"}</SelectItem>
             <SelectItem value="trial">{isEs ? "Prueba" : "Trial"}</SelectItem>
             <SelectItem value="lead">Lead</SelectItem>
-            <SelectItem value="negotiation">{isEs ? "Negociacion" : "Negotiation"}</SelectItem>
+            <SelectItem value="negotiation">{isEs ? "Negociación" : "Negotiation"}</SelectItem>
             <SelectItem value="customer">{isEs ? "Cliente" : "Customer"}</SelectItem>
             <SelectItem value="inactive">{isEs ? "Inactivo" : "Inactive"}</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" onClick={handleExport}>
-          <Download className="h-4 w-4 mr-1" />
-          CSV
-        </Button>
       </div>
 
       {/* Table */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1C7BB1]" />
-        </div>
-      ) : !data || data.students.length === 0 ? (
-        <div className="text-center py-10 text-muted-foreground">
-          {isEs ? "No se encontraron estudiantes" : "No students found"}
-        </div>
-      ) : (
-        <div className="border rounded-lg overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="text-left py-3 px-4 font-medium">
-                  {isEs ? "Nombre" : "Name"}
-                </th>
-                <th className="text-left py-3 px-4 font-medium">Email</th>
-                <th className="text-left py-3 px-4 font-medium">
-                  {isEs ? "Tipo" : "Type"}
-                </th>
-                <th className="text-center py-3 px-4 font-medium">
-                  {isEs ? "Prueba" : "Trial"}
-                </th>
-                <th className="text-center py-3 px-4 font-medium">
-                  {isEs ? "Creditos" : "Credits"}
-                </th>
-                <th className="text-center py-3 px-4 font-medium">
-                  {isEs ? "Clases" : "Classes"}
-                </th>
-                <th className="text-left py-3 px-4 font-medium">Tags</th>
-                <th className="text-left py-3 px-4 font-medium">
-                  {isEs ? "Ultima Actividad" : "Last Activity"}
-                </th>
-                <th className="py-3 px-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.students.map((student) => {
-                const typeStyle = TYPE_COLORS[student.userType] ?? TYPE_COLORS.inactive;
-                const typeLabel = TYPE_LABELS[student.userType] ?? {
-                  en: student.userType,
-                  es: student.userType,
-                };
-
-                return (
-                  <tr
-                    key={student.id}
-                    className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
-                    onClick={() => onSelectStudent(student.id)}
-                  >
-                    <td className="py-3 px-4 font-medium">
-                      {student.firstName} {student.lastName}
-                    </td>
-                    <td className="py-3 px-4 text-muted-foreground">
-                      {student.email}
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge variant="outline" className={typeStyle}>
-                        {isEs ? typeLabel.es : typeLabel.en}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {student.trialCompleted ? (
-                        <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
-                          {isEs ? "Si" : "Yes"}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {student.classCredits}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {student.completedClasses}/{student.totalClasses}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex flex-wrap gap-1">
-                        {student.tags.map((tag) => (
-                          <Badge
-                            key={tag.id}
-                            variant="outline"
-                            className="text-xs py-0"
-                            style={{
-                              backgroundColor: `${tag.color}15`,
-                              color: tag.color,
-                              borderColor: `${tag.color}40`,
-                            }}
-                          >
-                            {tag.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap">
-                      {student.lastActivityAt
-                        ? new Date(student.lastActivityAt).toLocaleDateString(
-                            isEs ? "es-CO" : "en-US",
-                            { month: "short", day: "numeric" }
-                          )
-                        : "-"}
-                    </td>
-                    <td className="py-3 px-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteTarget(student);
-                        }}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={data?.students ?? []}
+        rowKey={(s) => s.id}
+        loading={isLoading}
+        onRowClick={(s) => onSelectStudent(s.id)}
+        emptyState={
+          <EmptyState
+            icon={Inbox}
+            title={isEs ? "No se encontraron contactos" : "No contacts found"}
+            description={isEs ? "Ajusta los filtros o agrega nuevos leads." : "Adjust the filters or add new leads."}
+          />
+        }
+      />
 
       {/* Delete Confirmation Dialog — requires typing the student name */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteConfirmName(""); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {isEs ? "Eliminar estudiante" : "Delete student"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>{isEs ? "Eliminar estudiante" : "Delete student"}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <p>
@@ -383,9 +334,7 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
                 deleteConfirmName.trim().toLowerCase() !== `${deleteTarget?.firstName} ${deleteTarget?.lastName}`.toLowerCase()
               }
             >
-              {deleteMutation.isPending
-                ? (isEs ? "Eliminando..." : "Deleting...")
-                : (isEs ? "Eliminar" : "Delete")}
+              {deleteMutation.isPending ? (isEs ? "Eliminando..." : "Deleting...") : (isEs ? "Eliminar" : "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

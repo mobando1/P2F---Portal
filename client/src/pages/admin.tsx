@@ -1,5 +1,8 @@
 import { useState, useMemo } from "react";
+import { useRoute } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AppShell } from "@/components/shell/AppShell";
+import { PageHeader } from "@/components/crm/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/i18n";
-import CrmDashboard from "@/components/crm/CrmDashboard";
 import TutorPaymentsTab from "@/components/admin/TutorPaymentsTab";
 import DisputedClassesTab from "@/components/admin/DisputedClassesTab";
 import AiCostTab from "@/components/admin/AiCostTab";
@@ -16,7 +18,6 @@ import FeatureFlagsTab from "@/components/admin/FeatureFlagsTab";
 import AdminCalendar from "@/components/admin/AdminCalendar";
 import AdminLearningPath from "@/components/admin/AdminLearningPath";
 import { apiRequest } from "@/lib/queryClient";
-import Header from "@/components/header";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -80,7 +81,8 @@ interface ClassItem {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'tutors' | 'classes' | 'calendar' | 'learning-path' | 'analytics' | 'ai-stats' | 'ai-cost' | 'feature-flags' | 'support' | 'settings' | 'crm' | 'payments' | 'disputes'>('tutors');
+  const [, routeParams] = useRoute("/admin/:tab");
+  const activeTab = (routeParams?.tab ?? 'tutors') as 'tutors' | 'classes' | 'calendar' | 'learning-path' | 'analytics' | 'ai-stats' | 'ai-cost' | 'feature-flags' | 'support' | 'settings' | 'payments' | 'disputes';
   const [showAddTutor, setShowAddTutor] = useState(false);
   const [editingTutor, setEditingTutor] = useState<any>(null);
   const [classFilter, setClassFilter] = useState<'all' | 'scheduled' | 'completed' | 'cancelled'>('all');
@@ -349,163 +351,12 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-
-      <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{isEs ? 'Panel de Administración' : 'Admin Dashboard'}</h1>
-          <p className="text-gray-600">{isEs ? 'Gestiona profesores, clases y configuraciones' : 'Manage tutors, classes, and settings'}</p>
-        </div>
-
-        {/* Navegación de pestañas */}
-        <div className="mb-6 -mx-4 sm:mx-0">
-          <nav className="-mb-px flex space-x-1 sm:space-x-8 overflow-x-auto pb-px px-4 sm:px-0 scrollbar-none whitespace-nowrap border-b border-gray-200">
-              <button
-                onClick={() => setActiveTab('tutors')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'tutors'
-                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Users className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'Profesores' : 'Tutors'}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('classes')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'classes'
-                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <CalendarDays className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'Clases' : 'Classes'}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('calendar')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'calendar'
-                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <CalendarIcon className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'Calendario' : 'Calendar'}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('learning-path')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'learning-path'
-                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <BookOpen className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'Culebrita' : 'Learning Path'}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('analytics')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'analytics'
-                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <BarChart3 className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'Analíticas' : 'Analytics'}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('support')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'support'
-                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <LifeBuoy className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'Soporte' : 'Support'}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('ai-stats')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'ai-stats'
-                    ? 'border-[#F59E1C] text-[#F59E1C]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Sparkles className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'IA Práctica' : 'AI Practice'}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('crm')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'crm'
-                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Users className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">CRM</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('payments')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'payments'
-                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <DollarSign className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'Pagos' : 'Payments'}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('disputes')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'disputes'
-                    ? 'border-red-500 text-red-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <AlertTriangle className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'Disputas' : 'Disputes'}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('ai-cost')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'ai-cost'
-                    ? 'border-[#F59E1C] text-[#F59E1C]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <DollarSign className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'Costo IA' : 'AI Cost'}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('feature-flags')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'feature-flags'
-                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Settings className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'Flags' : 'Flags'}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'settings'
-                    ? 'border-[#1C7BB1] text-[#1C7BB1]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Settings className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{isEs ? 'Configuración' : 'Settings'}</span>
-              </button>
-            </nav>
-        </div>
+    <AppShell area="admin">
+      <div className="mx-auto max-w-7xl">
+        <PageHeader
+          title={isEs ? 'Panel de Administración' : 'Admin Dashboard'}
+          description={isEs ? 'Gestiona profesores, clases y configuraciones' : 'Manage tutors, classes, and settings'}
+        />
 
         {/* Contenido de pestañas */}
         {activeTab === 'tutors' && (
@@ -2370,8 +2221,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {activeTab === 'crm' && <CrmDashboard />}
-
         {activeTab === 'payments' && <TutorPaymentsTab />}
 
         {activeTab === 'disputes' && <DisputedClassesTab isEs={isEs} />}
@@ -2393,6 +2242,6 @@ export default function AdminPage() {
           </div>
         )}
       </div>
-    </div>
+    </AppShell>
   );
 }

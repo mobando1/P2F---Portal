@@ -118,7 +118,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plus, Trash2, Eye } from "lucide-react";
 import SegmentBuilder, { type SegmentFilters } from "./SegmentBuilder";
 
-function SegmentsTab() {
+export function SegmentsTab() {
   const { language } = useLanguage();
   const isEs = language === "es";
   const queryClient = useQueryClient();
@@ -232,7 +232,7 @@ function SegmentsTab() {
           {previewData && (
             <div className="space-y-4">
               <div className="text-center">
-                <span className="text-3xl font-bold text-[#1C7BB1]">{previewData.count}</span>
+                <span className="text-3xl font-bold text-primary">{previewData.count}</span>
                 <p className="text-muted-foreground">{isEs ? "estudiantes coinciden" : "students match"}</p>
               </div>
               {previewData.sample.length > 0 && (

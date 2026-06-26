@@ -288,14 +288,14 @@ export default function SegmentBuilder({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Filter className="h-5 w-5 text-[#1C7BB1]" />
+          <Filter className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-semibold">
             {isEs ? "Constructor de Segmentos" : "Segment Builder"}
           </h3>
         </div>
 
         {previewCount !== null && (
-          <Badge className="bg-[#1C7BB1] hover:bg-[#1C7BB1]/90 text-white text-sm px-3 py-1">
+          <Badge className="bg-primary hover:bg-primary/90 text-white text-sm px-3 py-1">
             <Users className="h-4 w-4 mr-1.5" />
             {previewCount} {isEs ? "estudiantes coinciden" : "students match"}
           </Badge>
@@ -313,7 +313,7 @@ export default function SegmentBuilder({
           onClick={filters.logic !== "AND" ? toggleLogic : undefined}
           className={
             filters.logic === "AND"
-              ? "bg-[#1C7BB1] hover:bg-[#1C7BB1]/90"
+              ? "bg-primary hover:bg-primary/90"
               : ""
           }
         >
@@ -325,7 +325,7 @@ export default function SegmentBuilder({
           onClick={filters.logic !== "OR" ? toggleLogic : undefined}
           className={
             filters.logic === "OR"
-              ? "bg-[#1C7BB1] hover:bg-[#1C7BB1]/90"
+              ? "bg-primary hover:bg-primary/90"
               : ""
           }
         >
@@ -453,7 +453,7 @@ export default function SegmentBuilder({
               size="sm"
               onClick={handleSave}
               disabled={!saveName.trim() || filters.rules.length === 0}
-              className="bg-[#1C7BB1] hover:bg-[#1C7BB1]/90"
+              className="bg-primary hover:bg-primary/90"
             >
               <Save className="h-4 w-4 mr-1.5" />
               {isEs ? "Guardar" : "Save"}

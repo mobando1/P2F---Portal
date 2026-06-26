@@ -184,7 +184,7 @@ export default function SubscriberList() {
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Bar dataKey="value" fill="#1C7BB1" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
