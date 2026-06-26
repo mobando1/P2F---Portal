@@ -79,16 +79,45 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<Set<string | number>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<CrmStudent | null>(null);
   const [deleteConfirmName, setDeleteConfirmName] = useState("");
 
-  const queryParams = new URLSearchParams({ limit: "50" });
+  const LIMIT = 50;
+  const queryParams = new URLSearchParams({ limit: String(LIMIT), page: String(page) });
   if (search) queryParams.set("search", search);
   if (statusFilter !== "all") queryParams.set("status", statusFilter);
 
   const { data, isLoading, error } = useQuery<CrmResponse>({
     queryKey: [`/api/admin/crm?${queryParams.toString()}`],
   });
+
+  const { data: allTags = [] } = useQuery<{ id: number; name: string; color: string }[]>({
+    queryKey: ["/api/admin/crm/tags"],
+  });
+
+  const invalidateCrm = () =>
+    queryClient.invalidateQueries({
+      predicate: (q) => typeof q.queryKey[0] === "string" && (q.queryKey[0] as string).startsWith("/api/admin/crm"),
+    });
+
+  const bulkMutation = useMutation({
+    mutationFn: async (payload: { action: "stage" | "tag"; value: string }) => {
+      await apiRequest("POST", "/api/admin/crm/bulk", { ids: Array.from(selected), ...payload });
+    },
+    onSuccess: (_d, payload) => {
+      invalidateCrm();
+      setSelected(new Set());
+      toast({
+        title: isEs ? "Acción aplicada" : "Action applied",
+        description: payload.action === "stage" ? (isEs ? "Etapa actualizada" : "Stage updated") : (isEs ? "Tag añadido" : "Tag added"),
+      });
+    },
+    onError: () => toast({ title: isEs ? "Error" : "Error", variant: "destructive" }),
+  });
+
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / LIMIT)) : 1;
 
   const deleteMutation = useMutation({
     mutationFn: async (userId: number) => {
@@ -263,11 +292,11 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
           <Input
             placeholder={isEs ? "Buscar por nombre o email..." : "Search by name or email..."}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder={isEs ? "Estado" : "Status"} />
           </SelectTrigger>
@@ -282,6 +311,42 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
         </Select>
       </div>
 
+      {/* Bulk actions toolbar */}
+      {selected.size > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5">
+          <span className="text-sm font-medium text-foreground">
+            {selected.size} {isEs ? "seleccionados" : "selected"}
+          </span>
+          <Select onValueChange={(v) => bulkMutation.mutate({ action: "stage", value: v })}>
+            <SelectTrigger className="h-8 w-[160px] text-xs">
+              <SelectValue placeholder={isEs ? "Cambiar etapa…" : "Change stage…"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="trial">{isEs ? "Prueba" : "Trial"}</SelectItem>
+              <SelectItem value="lead">Lead</SelectItem>
+              <SelectItem value="negotiation">{isEs ? "Negociación" : "Negotiation"}</SelectItem>
+              <SelectItem value="customer">{isEs ? "Cliente" : "Customer"}</SelectItem>
+              <SelectItem value="inactive">{isEs ? "Inactivo" : "Inactive"}</SelectItem>
+            </SelectContent>
+          </Select>
+          {allTags.length > 0 && (
+            <Select onValueChange={(v) => bulkMutation.mutate({ action: "tag", value: v })}>
+              <SelectTrigger className="h-8 w-[150px] text-xs">
+                <SelectValue placeholder={isEs ? "Añadir tag…" : "Add tag…"} />
+              </SelectTrigger>
+              <SelectContent>
+                {allTags.map((t) => (
+                  <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button variant="ghost" size="sm" className="ml-auto h-8 text-xs" onClick={() => setSelected(new Set())}>
+            {isEs ? "Limpiar" : "Clear"}
+          </Button>
+        </div>
+      )}
+
       {/* Table */}
       <DataTable
         columns={columns}
@@ -289,6 +354,9 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
         rowKey={(s) => s.id}
         loading={isLoading}
         onRowClick={(s) => onSelectStudent(s.id)}
+        selectable
+        selectedKeys={selected}
+        onSelectionChange={setSelected}
         emptyState={
           <EmptyState
             icon={Inbox}
@@ -297,6 +365,23 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
           />
         }
       />
+
+      {/* Pagination */}
+      {data && data.total > LIMIT && (
+        <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            {isEs ? "Página" : "Page"} {page} {isEs ? "de" : "of"} {totalPages} · {data.total} {isEs ? "contactos" : "contacts"}
+          </span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+              {isEs ? "Anterior" : "Previous"}
+            </Button>
+            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+              {isEs ? "Siguiente" : "Next"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog — requires typing the student name */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteConfirmName(""); } }}>

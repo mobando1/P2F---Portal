@@ -195,6 +195,28 @@ export function registerClassRoutes(app: Express) {
       dripCampaignService.onTrialBooked(userId, new Date(scheduledAt))
         .catch(err => console.error("[book-trial] Drip campaign error:", err));
 
+      // Speed-to-lead: queue a post-trial follow-up task for sales (due the day after the trial)
+      (async () => {
+        try {
+          const admin = await storage.getFirstAdmin();
+          const student = await storage.getUser(userId);
+          if (admin && student) {
+            const due = new Date(scheduledAt);
+            due.setDate(due.getDate() + 1);
+            await storage.createCrmTask({
+              userId,
+              assignedTo: admin.id,
+              title: `Seguimiento post-trial: ${student.firstName} ${student.lastName}`,
+              description: `Trial con ${tutor.name}. Dar seguimiento para cerrar la venta.`,
+              dueDate: due,
+              priority: "high",
+            });
+          }
+        } catch (e) {
+          console.error("[book-trial] Failed to create post-trial task:", e);
+        }
+      })();
+
       res.status(201).json(trialClass);
     } catch (error) {
       console.error("[book-trial] Error:", error);

@@ -69,6 +69,7 @@ export function registerLeadRoutes(app: Express) {
           lastName,
           phone,
           userType: "lead",
+          leadSource: source,
         } as any);
         leadCreated = true;
       } else if (!user.phone && phone) {
@@ -101,12 +102,31 @@ export function registerLeadRoutes(app: Express) {
           email: data.email,
           firstName,
           lastName,
-          source: "website",
+          source,
           status: "active",
           userId: user?.id,
         });
       } catch (e) {
         /* ignore newsletter failures */
+      }
+
+      // 3b. Speed-to-lead: auto-create a follow-up task for the sales team on brand-new leads
+      if (leadCreated && user) {
+        try {
+          const admin = await storage.getFirstAdmin();
+          if (admin) {
+            await storage.createCrmTask({
+              userId: user.id,
+              assignedTo: admin.id,
+              title: `Contactar nuevo lead: ${rawName}`,
+              description: `Solicitud: ${classLabel}. Origen: ${source}.`,
+              dueDate: new Date(),
+              priority: "high",
+            });
+          }
+        } catch (e) {
+          console.error("[leads] Failed to create follow-up task:", e);
+        }
       }
 
       // 4. Notify the team at info@ + mateo@ (non-blocking)
