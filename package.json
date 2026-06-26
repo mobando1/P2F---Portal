@@ -11,6 +11,7 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx --env-file=.env server/seed.ts",
     "db:seed:demo": "tsx --env-file=.env server/seed-demo.ts",
+    "admin:reset": "tsx --env-file=.env server/reset-admin.ts",
     "eval-ai": "tsx --env-file=.env evals/run.ts"
   },
   "dependencies": {
