@@ -213,7 +213,7 @@ async function startServer() {
 
                     // Promote to customer
                     if (user.userType !== 'customer' && user.userType !== 'admin' && user.userType !== 'tutor') {
-                      await storage.updateUser(parseInt(userId), { userType: 'customer', convertedToCustomerAt: new Date() });
+                      await storage.updateUser(parseInt(userId), { userType: 'customer' });
                     }
                     console.log(`Subscription created for user ${userId}, plan ${plan.name}`);
 
@@ -251,7 +251,7 @@ async function startServer() {
 
                     // Promote to customer
                     if (user.userType !== 'customer' && user.userType !== 'admin' && user.userType !== 'tutor') {
-                      await storage.updateUser(parseInt(userId), { userType: 'customer', convertedToCustomerAt: new Date() });
+                      await storage.updateUser(parseInt(userId), { userType: 'customer' });
                     }
                     console.log(`Added ${packageInfo.classes} credits to user ${userId}`);
 

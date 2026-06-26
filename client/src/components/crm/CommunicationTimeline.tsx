@@ -5,8 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Mail,
   MessageSquare,
-  MessageCircle,
-  Phone,
   Bell,
   Zap,
   ArrowRight,
@@ -37,10 +35,6 @@ function getChannelIcon(channel: string) {
       return <Mail className="h-4 w-4" />;
     case "sms":
       return <MessageSquare className="h-4 w-4" />;
-    case "whatsapp":
-      return <MessageCircle className="h-4 w-4" />;
-    case "call":
-      return <Phone className="h-4 w-4" />;
     case "in_app":
       return <Bell className="h-4 w-4" />;
     case "drip":
@@ -53,33 +47,32 @@ function getChannelIcon(channel: string) {
 function getChannelColor(channel: string) {
   switch (channel) {
     case "email":
-      return "bg-primary/10 text-primary border-primary/20";
+      return "bg-blue-100 text-blue-700 border-blue-300";
     case "sms":
-      return "bg-accent/10 text-accent-700 border-accent/20 dark:text-accent";
-    case "whatsapp":
-    case "call":
-      return "bg-success/10 text-success border-success/20";
+      return "bg-green-100 text-green-700 border-green-300";
     case "in_app":
-      return "bg-warning/15 text-warning-foreground border-warning/30 dark:text-warning";
+      return "bg-amber-100 text-amber-700 border-amber-300";
     case "drip":
-      return "bg-accent/10 text-accent-700 border-accent/20 dark:text-accent";
+      return "bg-purple-100 text-purple-700 border-purple-300";
     default:
-      return "bg-muted text-muted-foreground border-border";
+      return "bg-gray-100 text-gray-700 border-gray-300";
   }
 }
 
 function getStatusVariant(status: string) {
   switch (status) {
     case "sent":
+      return "bg-green-100 text-green-700";
     case "delivered":
-      return "bg-success/10 text-success";
+      return "bg-blue-100 text-blue-700";
     case "opened":
+      return "bg-purple-100 text-purple-700";
     case "clicked":
-      return "bg-primary/10 text-primary";
+      return "bg-indigo-100 text-indigo-700";
     case "failed":
-      return "bg-destructive/10 text-destructive";
+      return "bg-red-100 text-red-700";
     default:
-      return "bg-muted text-muted-foreground";
+      return "bg-gray-100 text-gray-700";
   }
 }
 

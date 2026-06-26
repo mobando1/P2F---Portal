@@ -10,9 +10,6 @@ import {
   CheckSquare,
   CalendarClock,
   Inbox,
-  AlertTriangle,
-  UserPlus,
-  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -55,20 +52,6 @@ interface RecentContact {
   userType: string;
   lastActivityAt: string | null;
 }
-interface TodayTask {
-  id: number;
-  title: string;
-  dueDate: string;
-  priority: string;
-  userId: number | null;
-}
-interface TodayData {
-  overdueTasks: TodayTask[];
-  todayTasks: TodayTask[];
-  newLeads: { id: number; firstName: string; lastName: string; email: string }[];
-  trialsToday: { id: number; userId: number }[];
-  counts: { overdue: number; today: number; newLeads: number; trials: number };
-}
 
 const STAGE_LABEL: Record<string, { es: string; en: string }> = {
   trial: { es: "Prueba", en: "Trial" },
@@ -98,9 +81,6 @@ export default function CrmOverview() {
   const { data: recent } = useQuery<{ students: RecentContact[] }>({
     queryKey: ["/api/admin/crm?limit=6"],
   });
-  const { data: today, isLoading: loadingToday } = useQuery<TodayData>({
-    queryKey: ["/api/admin/crm/today"],
-  });
 
   const funnel = metrics?.funnel ?? [];
   const count = (stage: string) => funnel.find((f) => f.stage === stage)?.count ?? 0;
@@ -121,60 +101,6 @@ export default function CrmOverview() {
           </Button>
         }
       />
-
-      {/* Hoy — inbox accionable */}
-      <SectionCard
-        title={isEs ? "Hoy" : "Today"}
-        description={isEs ? "Lo que necesita tu atención" : "What needs your attention"}
-        loading={loadingToday}
-        className="mb-4"
-      >
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {[
-            { key: "overdue", icon: AlertTriangle, label: isEs ? "Vencidas" : "Overdue", value: today?.counts.overdue ?? 0, accent: "text-destructive bg-destructive/10", href: "/admin/crm/tasks" },
-            { key: "today", icon: CalendarClock, label: isEs ? "Tareas de hoy" : "Tasks today", value: today?.counts.today ?? 0, accent: "text-warning bg-warning/10", href: "/admin/crm/tasks" },
-            { key: "leads", icon: UserPlus, label: isEs ? "Leads nuevos" : "New leads", value: today?.counts.newLeads ?? 0, accent: "text-primary bg-primary/10", href: "/admin/crm/contacts" },
-            { key: "trials", icon: Video, label: isEs ? "Trials hoy" : "Trials today", value: today?.counts.trials ?? 0, accent: "text-success bg-success/10", href: "/admin/crm/pipeline" },
-          ].map((s) => (
-            <button
-              key={s.key}
-              onClick={() => setLocation(s.href)}
-              className="flex items-center gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:bg-muted/50"
-            >
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${s.accent}`}>
-                <s.icon className="h-4 w-4" />
-              </span>
-              <span>
-                <span className="block font-display text-xl font-bold tabular-nums text-foreground">{s.value}</span>
-                <span className="block text-xs text-muted-foreground">{s.label}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {(today?.overdueTasks.length || today?.todayTasks.length) ? (
-          <ul className="mt-4 space-y-1.5 border-t border-border/60 pt-3">
-            {[...(today?.overdueTasks ?? []), ...(today?.todayTasks ?? [])].slice(0, 6).map((task) => {
-              const overdue = new Date(task.dueDate) < new Date(new Date().setHours(0, 0, 0, 0));
-              return (
-                <li
-                  key={task.id}
-                  onClick={() => task.userId && setLocation(`/admin/crm/contacts/${task.userId}`)}
-                  className={`flex items-center gap-2 rounded-lg p-2 text-sm transition-colors ${task.userId ? "cursor-pointer hover:bg-muted/50" : ""}`}
-                >
-                  <CalendarClock className={`h-4 w-4 shrink-0 ${overdue ? "text-destructive" : "text-muted-foreground"}`} />
-                  <span className="flex-1 truncate text-foreground">{task.title}</span>
-                  {overdue && <StatusBadge status="danger" size="sm" dot={false} label={isEs ? "Vencida" : "Overdue"} />}
-                </li>
-              );
-            })}
-          </ul>
-        ) : !loadingToday ? (
-          <p className="mt-4 border-t border-border/60 pt-3 text-sm text-muted-foreground">
-            {isEs ? "Todo al día. Sin pendientes para hoy." : "All caught up. Nothing pending today."}
-          </p>
-        ) : null}
-      </SectionCard>
 
       {/* KPIs */}
       <motion.div

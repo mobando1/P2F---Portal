@@ -321,20 +321,6 @@ export const emailService = {
     return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Última Oportunidad" : "Last Chance", body, lang) });
   },
 
-  async sendWinBack(params: { to: string; name: string; discountPercent: number; lang: "es" | "en" }): Promise<boolean> {
-    const { to, name, discountPercent, lang } = params;
-    const isEs = lang === "es";
-    const subject = isEs ? `Te extrañamos, ${name} 🎁` : `We miss you, ${name} 🎁`;
-    const body = `
-      <p style="color: #374151; font-size: 16px;">${isEs ? "Hola" : "Hi"} <strong>${name}</strong>,</p>
-      <p style="color: #374151;">${isEs
-        ? `Hace un tiempo que no te vemos en clase. Para darte la bienvenida de vuelta, te regalamos un <strong>${discountPercent}% de descuento</strong> en tu próximo paquete.`
-        : `It's been a while since your last class. To welcome you back, here's <strong>${discountPercent}% off</strong> your next package.`}</p>
-      <p style="margin: 16px 0;"><a href="https://portal.passport2fluency.com/packages" style="background: #1C7BB1; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">${isEs ? "Volver a Clases" : "Come Back to Class"}</a></p>
-    `;
-    return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Te Extrañamos" : "We Miss You", body, lang) });
-  },
-
   async sendTutorInvite(params: {
     to: string;
     tutorName: string;

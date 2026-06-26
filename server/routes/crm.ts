@@ -128,127 +128,6 @@ export function registerCrmRoutes(app: Express) {
     }
   });
 
-  // ── Today inbox (actionable daily view) ──
-  app.get("/api/admin/crm/today", requireAdmin, async (_req, res) => {
-    try {
-      const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
-
-      const pendingTasks = await storage.getCrmTasks({ status: "pending" });
-      const overdueTasks = pendingTasks.filter((t) => t.dueDate && new Date(t.dueDate) < startOfDay);
-      const todayTasks = pendingTasks.filter(
-        (t) => t.dueDate && new Date(t.dueDate) >= startOfDay && new Date(t.dueDate) <= endOfDay,
-      );
-
-      const leadRes = await storage.getStudentsCRM({ status: "lead", limit: 500 });
-      const newLeads = leadRes.students
-        .filter((u) => u.createdAt && new Date(u.createdAt) >= startOfDay)
-        .map(sanitizeUser);
-
-      let trialsToday: any[] = [];
-      try {
-        const allClasses = await storage.getAllClasses();
-        trialsToday = allClasses.filter(
-          (c) => c.isTrial && c.scheduledAt && new Date(c.scheduledAt) >= startOfDay && new Date(c.scheduledAt) <= endOfDay,
-        );
-      } catch (e) {
-        console.error("CRM today: failed to load trials:", e);
-      }
-
-      res.json({
-        overdueTasks,
-        todayTasks,
-        newLeads,
-        trialsToday,
-        counts: {
-          overdue: overdueTasks.length,
-          today: todayTasks.length,
-          newLeads: newLeads.length,
-          trials: trialsToday.length,
-        },
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // ── Insights: conversion by source, time-to-convert, trial no-show ──
-  app.get("/api/admin/crm/insights", requireAdmin, async (_req, res) => {
-    try {
-      const { students } = await storage.getStudentsCRM({ limit: 10000 });
-      const sourceMap = new Map<string, { leads: number; customers: number }>();
-      const convDays: number[] = [];
-      for (const s of students) {
-        const src = (s as any).leadSource || "unknown";
-        const e = sourceMap.get(src) || { leads: 0, customers: 0 };
-        e.leads++;
-        if (s.userType === "customer") {
-          e.customers++;
-          const conv = (s as any).convertedToCustomerAt;
-          if (conv && s.createdAt) {
-            const days = (new Date(conv).getTime() - new Date(s.createdAt).getTime()) / 86400000;
-            if (days >= 0 && days < 365) convDays.push(days);
-          }
-        }
-        sourceMap.set(src, e);
-      }
-      const bySource = Array.from(sourceMap.entries())
-        .map(([source, v]) => ({
-          source,
-          leads: v.leads,
-          customers: v.customers,
-          rate: v.leads ? Math.round((v.customers / v.leads) * 100) : 0,
-        }))
-        .sort((a, b) => b.leads - a.leads);
-      const avgDaysToConvert = convDays.length
-        ? +(convDays.reduce((a, b) => a + b, 0) / convDays.length).toFixed(1)
-        : null;
-
-      let trialNoShowRate: number | null = null;
-      try {
-        const allClasses = await storage.getAllClasses();
-        const trials = allClasses.filter((c) => c.isTrial);
-        const noShows = trials.filter((c) => (c as any).tutorConfirmation === "no_show").length;
-        trialNoShowRate = trials.length ? Math.round((noShows / trials.length) * 100) : 0;
-      } catch (e) {
-        console.error("CRM insights: failed to load trials:", e);
-      }
-
-      res.json({ bySource, avgDaysToConvert, trialNoShowRate });
-    } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // ── Bulk actions (change stage / add tag to many) ──
-  app.post("/api/admin/crm/bulk", requireAdmin, async (req, res) => {
-    try {
-      const { ids, action, value } = req.body as { ids: number[]; action: "stage" | "tag"; value: any };
-      if (!Array.isArray(ids) || !ids.length || !action) {
-        return res.status(400).json({ message: "ids and action are required" });
-      }
-      let updated = 0;
-      for (const id of ids) {
-        try {
-          if (action === "stage") {
-            const patch: any = { userType: value };
-            if (value === "customer") patch.convertedToCustomerAt = new Date();
-            await storage.updateUser(id, patch);
-            updated++;
-          } else if (action === "tag") {
-            await storage.addUserCrmTag(id, parseInt(value));
-            updated++;
-          }
-        } catch (e) {
-          /* skip individual failures */
-        }
-      }
-      res.json({ success: true, updated });
-    } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
   // ── CSV Export ──
   app.get("/api/admin/crm/export", requireAdmin, async (_req, res) => {
     try {
@@ -355,13 +234,7 @@ export function registerCrmRoutes(app: Express) {
       const userId = parseInt(req.params.userId);
       const { userType } = req.body;
       if (!userType) return res.status(400).json({ message: "userType is required" });
-      const patch: any = { userType };
-      // Stamp conversion time the first time they become a customer (for time-to-convert)
-      if (userType === "customer") {
-        const existing = await storage.getUser(userId);
-        if (existing && !(existing as any).convertedToCustomerAt) patch.convertedToCustomerAt = new Date();
-      }
-      const user = await storage.updateUser(userId, patch);
+      const user = await storage.updateUser(userId, { userType });
       if (!user) return res.status(404).json({ message: "User not found" });
       res.json(sanitizeUser(user));
     } catch (error) {
@@ -456,32 +329,6 @@ export function registerCrmRoutes(app: Express) {
         tasks,
         tags,
       });
-    } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // ── Log a manual communication (call / sms / whatsapp / email / note) ──
-  app.post("/api/admin/crm/:userId/log", requireAdmin, async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      const { channel, direction, subject, body } = req.body as {
-        channel: string;
-        direction?: string;
-        subject?: string;
-        body?: string;
-      };
-      if (!channel) return res.status(400).json({ message: "channel is required" });
-      const entry = await storage.createCommunicationLog({
-        userId,
-        channel,
-        direction: direction || "outbound",
-        subject: subject || null,
-        body: body || null,
-        status: "sent",
-        sentBy: req.session.userId!,
-      } as any);
-      res.json(entry);
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }

@@ -72,39 +72,11 @@ export const dripCampaignService = {
     try {
       const allUsers = await storage.getAllUsers();
       const now = new Date();
-      const admin = await storage.getFirstAdmin();
 
       for (const user of allUsers) {
-        if (user.userType === "admin" || user.userType === "tutor") continue;
-
-        const lang: "es" | "en" = ((user as any).preferredLanguage === "es" || user.timezone?.includes("America")) ? "es" : "en";
-
-        // Win-back: customers/inactive with no activity for 30+ days — send once
-        if (user.userType === "customer" || user.userType === "inactive") {
-          const lastAct = user.lastActivityAt ? new Date(user.lastActivityAt) : null;
-          const daysInactive = lastAct ? (now.getTime() - lastAct.getTime()) / (1000 * 60 * 60 * 24) : null;
-          if (daysInactive !== null && daysInactive > 30) {
-            const winEvents = await storage.getEmailCampaignEvents(user.id);
-            if (!winEvents.some((e) => e.campaignStep === "winback")) {
-              await emailService.sendWinBack({ to: user.email, name: user.firstName, discountPercent: 20, lang });
-              await storage.createEmailCampaignEvent(user.id, "winback");
-              if (admin) {
-                await storage.createCrmTask({
-                  userId: user.id,
-                  assignedTo: admin.id,
-                  title: `Reactivar a ${user.firstName} ${user.lastName}`,
-                  description: `Sin actividad hace ${Math.round(daysInactive)} días. Se envió oferta win-back.`,
-                  dueDate: now,
-                  priority: "medium",
-                });
-              }
-              console.log(`[Drip] Win-back sent to user ${user.id}`);
-            }
-          }
-        }
-
         // Only process trial/lead users who completed their trial
         if (!user.trialCompleted) continue;
+        if (user.userType === "admin" || user.userType === "tutor") continue;
 
         const events = await storage.getEmailCampaignEvents(user.id);
         const sentSteps = new Set(events.map(e => e.campaignStep));
@@ -122,6 +94,8 @@ export const dripCampaignService = {
         }
 
         const hoursSinceTrial = (now.getTime() - trialDate.getTime()) / (1000 * 60 * 60);
+
+        const lang: "es" | "en" = ((user as any).preferredLanguage === "es" || user.timezone?.includes("America")) ? "es" : "en";
 
         // Step 3: Feedback request (24h after trial)
         if (hoursSinceTrial >= 24 && !sentSteps.has("feedback_request")) {

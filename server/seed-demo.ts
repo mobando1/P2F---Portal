@@ -49,7 +49,6 @@ const PHONES = ["+57 300", "+57 310", "+52 55", "+52 33", "+1 305", "+1 786", "+
 const LEVELS = ["A1", "A1", "A2", "A2", "B1", "B1", "B2"];
 const TZ = ["America/Bogota", "America/Mexico_City", "America/New_York"];
 const CUR = ["USD", "COP", "MXN"];
-const SOURCES = ["organic", "google_ads", "facebook", "instagram", "referral", "website"];
 
 interface StageSpec { type: string; count: number; }
 const STAGES: StageSpec[] = [
@@ -167,11 +166,6 @@ async function seedDemo() {
           timezone: pick(TZ),
           currency: pick(CUR),
           emailVerified: stage.type !== "trial",
-          leadSource: pick(SOURCES),
-          convertedToCustomerAt:
-            stage.type === "customer"
-              ? new Date(created.getTime() + rand(2, 20) * 24 * 60 * 60 * 1000)
-              : null,
           lastActivityAt: lastAct,
           createdAt: created,
         })

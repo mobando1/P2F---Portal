@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Users, UserCheck, UserPlus, TrendingUp, Clock, UserX } from "lucide-react";
+import { Users, UserCheck, UserPlus, TrendingUp } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { PageHeader } from "./ui/page-header";
 import { StatCard } from "./ui/stat-card";
@@ -19,21 +19,12 @@ interface MetricsResponse {
   funnel: FunnelStage[];
 }
 
-interface InsightsResponse {
-  bySource: { source: string; leads: number; customers: number; rate: number }[];
-  avgDaysToConvert: number | null;
-  trialNoShowRate: number | null;
-}
-
 export default function CrmMetrics() {
   const { language } = useLanguage();
   const isEs = language === "es";
 
   const { data, isLoading, error } = useQuery<MetricsResponse>({
     queryKey: ["/api/admin/crm/metrics"],
-  });
-  const { data: insights, isLoading: loadingInsights } = useQuery<InsightsResponse>({
-    queryKey: ["/api/admin/crm/insights"],
   });
 
   if (error) {
@@ -69,62 +60,19 @@ export default function CrmMetrics() {
         />
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <StatCard
-          label={isEs ? "Días promedio a cliente" : "Avg. days to customer"}
-          value={insights?.avgDaysToConvert ?? 0}
-          format={(n) => `${n} ${isEs ? "días" : "days"}`}
-          icon={Clock}
-          loading={loadingInsights}
-          accent="primary"
-        />
-        <StatCard
-          label={isEs ? "No-show de trials" : "Trial no-show rate"}
-          value={insights?.trialNoShowRate ?? 0}
-          format={(n) => `${n}%`}
-          icon={UserX}
-          loading={loadingInsights}
-          accent="accent"
-          invertDelta
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <SectionCard title={isEs ? "Embudo de conversión" : "Conversion funnel"} loading={isLoading}>
-          {chartData.length > 0 ? (
-            <TrendChart
-              type="bar"
-              data={chartData}
-              series={[{ key: "count", label: isEs ? "Estudiantes" : "Students" }]}
-              xKey="name"
-              height={300}
-            />
-          ) : (
-            <EmptyState icon={TrendingUp} size="sm" title={isEs ? "Sin datos" : "No data"} />
-          )}
-        </SectionCard>
-
-        <SectionCard
-          title={isEs ? "Conversión por fuente" : "Conversion by source"}
-          description={isEs ? "Leads vs. clientes por canal" : "Leads vs. customers by channel"}
-          loading={loadingInsights}
-        >
-          {insights?.bySource && insights.bySource.length > 0 ? (
-            <TrendChart
-              type="bar"
-              data={insights.bySource}
-              series={[
-                { key: "leads", label: isEs ? "Leads" : "Leads" },
-                { key: "customers", label: isEs ? "Clientes" : "Customers" },
-              ]}
-              xKey="source"
-              height={300}
-            />
-          ) : (
-            <EmptyState icon={Users} size="sm" title={isEs ? "Sin datos de fuente" : "No source data"} />
-          )}
-        </SectionCard>
-      </div>
+      <SectionCard title={isEs ? "Embudo de conversión" : "Conversion funnel"} loading={isLoading}>
+        {chartData.length > 0 ? (
+          <TrendChart
+            type="bar"
+            data={chartData}
+            series={[{ key: "count", label: isEs ? "Estudiantes" : "Students" }]}
+            xKey="name"
+            height={340}
+          />
+        ) : (
+          <EmptyState icon={TrendingUp} size="sm" title={isEs ? "Sin datos" : "No data"} />
+        )}
+      </SectionCard>
     </div>
   );
 }
