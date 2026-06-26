@@ -46,6 +46,7 @@ import {
 export interface IStorage {
   // Users
   getAllUsers(): Promise<User[]>;
+  getFirstAdmin(): Promise<User | undefined>;
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
@@ -503,6 +504,8 @@ export class MemStorage implements IStorage {
       preferredLanguage: "en",
       trialStartedAt: null,
       lastActivityAt: null,
+      leadSource: null,
+      convertedToCustomerAt: null,
       createdAt: new Date(),
     };
     this.users.set(adminUser.id, adminUser);
@@ -540,6 +543,8 @@ export class MemStorage implements IStorage {
       preferredLanguage: "en",
       trialStartedAt: null,
       lastActivityAt: new Date(),
+      leadSource: null,
+      convertedToCustomerAt: null,
       createdAt: new Date(),
     };
     this.users.set(1, user);
@@ -576,6 +581,8 @@ export class MemStorage implements IStorage {
       preferredLanguage: "en",
       trialStartedAt: null,
       lastActivityAt: new Date(),
+      leadSource: null,
+      convertedToCustomerAt: null,
       createdAt: new Date(),
     };
     this.users.set(2, user2);
@@ -893,6 +900,11 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values());
   }
 
+  async getFirstAdmin(): Promise<User | undefined> {
+    await this.ensureInitialized();
+    return Array.from(this.users.values()).find((u) => u.userType === "admin");
+  }
+
   async getUser(id: number): Promise<User | undefined> {
     await this.ensureInitialized();
     return this.users.get(id);
@@ -938,6 +950,8 @@ export class MemStorage implements IStorage {
       resetTokenExpiresAt: (insertUser as any).resetTokenExpiresAt ?? null,
       preferredLanguage: (insertUser as any).preferredLanguage ?? "en",
       trialStartedAt: (insertUser as any).trialStartedAt ?? null,
+      leadSource: (insertUser as any).leadSource ?? null,
+      convertedToCustomerAt: (insertUser as any).convertedToCustomerAt ?? null,
       lastActivityAt: new Date(),
     };
     this.users.set(id, user);

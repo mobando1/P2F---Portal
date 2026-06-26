@@ -40,6 +40,9 @@ export const users = pgTable("users", {
   preferredLanguage: text("preferred_language").default("en"), // 'en' | 'es'
   trialStartedAt: timestamp("trial_started_at"),
   lastActivityAt: timestamp("last_activity_at"),
+  // Atribución del lead (organic, google_ads, facebook, referral, website...) y velocidad de conversión
+  leadSource: text("lead_source"),
+  convertedToCustomerAt: timestamp("converted_to_customer_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

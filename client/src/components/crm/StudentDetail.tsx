@@ -26,6 +26,9 @@ import {
   Circle,
   Mail,
   Phone,
+  PhoneCall,
+  MessageSquare,
+  MessageCircle,
   Calendar,
   Clock,
   CreditCard,
@@ -68,6 +71,7 @@ interface StudentClass {
   scheduledAt: string;
   status: string;
   isTrial: boolean;
+  tutorConfirmation?: string | null;
 }
 
 interface StudentDetailData {
@@ -81,6 +85,7 @@ interface StudentDetailData {
   trialCompleted: boolean;
   createdAt: string;
   lastActivityAt: string | null;
+  leadSource?: string | null;
   classes: StudentClass[];
   notes: CrmNote[];
   tasks: CrmTask[];
@@ -94,15 +99,15 @@ interface StudentDetailProps {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  low: "bg-gray-100 text-gray-700",
-  medium: "bg-yellow-100 text-yellow-800",
-  high: "bg-red-100 text-red-800",
+  low: "bg-muted text-foreground",
+  medium: "bg-warning/15 text-warning-foreground",
+  high: "bg-destructive/10 text-destructive",
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  scheduled: "bg-blue-100 text-blue-800",
-  completed: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800",
+  scheduled: "bg-primary/10 text-primary",
+  completed: "bg-success/10 text-success",
+  cancelled: "bg-destructive/10 text-destructive",
   "no-show": "bg-orange-100 text-orange-800",
 };
 
@@ -216,6 +221,36 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
     },
   });
 
+  const logMutation = useMutation({
+    mutationFn: async (entry: { channel: string; body?: string }) => {
+      await apiRequest("POST", `/api/admin/crm/${userId}/log`, entry);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["crm-communications", userId] });
+    },
+  });
+
+  const moveStageMutation = useMutation({
+    mutationFn: async (userType: string) => {
+      await apiRequest("PATCH", `/api/admin/crm/${userId}/stage`, { userType });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/crm", userId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/crm?limit=500"] });
+      toast({ title: isEs ? "Etapa actualizada" : "Stage updated" });
+    },
+  });
+
+  // Multichannel click-to-contact (tel/sms/whatsapp). El vendedor elige por contacto.
+  const phoneDigits = (student?.phone || "").replace(/\D/g, "");
+  const contactMsg = isEs
+    ? `Hola ${student?.firstName ?? ""}, te escribo de Passport2Fluency 👋`
+    : `Hi ${student?.firstName ?? ""}, this is Passport2Fluency 👋`;
+  const openChannel = (channel: "call" | "sms" | "whatsapp", url: string) => {
+    window.open(url, channel === "call" ? "_self" : "_blank");
+    logMutation.mutate({ channel, body: channel === "call" ? "Llamada iniciada" : contactMsg });
+  };
+
   const handleUpdateCredits = () => {
     if (!student) return;
     const trimmed = creditsDraft.trim();
@@ -268,33 +303,85 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
             ) : student ? (
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                    <User className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold">
-                      {student.firstName} {student.lastName}
-                    </p>
-                    <StatusBadge status={student.userType} variant="stage" size="sm" className="mt-0.5" />
+              <div className="flex items-center gap-3 w-full">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-semibold truncate">
+                    {student.firstName} {student.lastName}
+                  </p>
+                  <div className="mt-0.5 flex items-center gap-2">
+                    <StatusBadge status={student.userType} variant="stage" size="sm" />
+                    {student.leadSource && (
+                      <span className="text-xs text-muted-foreground">· {student.leadSource}</span>
+                    )}
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowQuickSend(true)}
-                  className="gap-1 text-primary border-primary hover:bg-muted"
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{isEs ? "Enviar" : "Send"}</span>
-                </Button>
               </div>
             ) : (
               isEs ? "Estudiante no encontrado" : "Student not found"
             )}
           </SheetTitle>
         </SheetHeader>
+
+        {student && (
+          <>
+            {/* Quick contact actions (multichannel) + move stage */}
+            <div className="flex flex-wrap items-center gap-2 border-b py-3">
+              {phoneDigits && (
+                <>
+                  <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => openChannel("call", `tel:${student.phone}`)}>
+                    <PhoneCall className="h-3.5 w-3.5" /> {isEs ? "Llamar" : "Call"}
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => openChannel("sms", `sms:${student.phone}?&body=${encodeURIComponent(contactMsg)}`)}>
+                    <MessageSquare className="h-3.5 w-3.5" /> SMS
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 gap-1.5 text-success hover:text-success" onClick={() => openChannel("whatsapp", `https://wa.me/${phoneDigits}?text=${encodeURIComponent(contactMsg)}`)}>
+                    <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                  </Button>
+                </>
+              )}
+              <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setShowQuickSend(true)}>
+                <Mail className="h-3.5 w-3.5" /> Email
+              </Button>
+              <div className="ml-auto">
+                <Select value={student.userType} onValueChange={(v) => moveStageMutation.mutate(v)}>
+                  <SelectTrigger className="h-8 w-[148px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="trial">{isEs ? "Prueba" : "Trial"}</SelectItem>
+                    <SelectItem value="lead">Lead</SelectItem>
+                    <SelectItem value="negotiation">{isEs ? "Negociación" : "Negotiation"}</SelectItem>
+                    <SelectItem value="customer">{isEs ? "Cliente" : "Customer"}</SelectItem>
+                    <SelectItem value="inactive">{isEs ? "Inactivo" : "Inactive"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Trial outcome */}
+            {(() => {
+              const trial = student.classes?.find((c) => c.isTrial);
+              if (!trial) return null;
+              const outcome =
+                trial.tutorConfirmation === "attended" || trial.status === "completed"
+                  ? { status: "success", label: isEs ? "Trial: asistió" : "Trial: attended" }
+                  : trial.tutorConfirmation === "no_show"
+                    ? { status: "danger", label: isEs ? "Trial: no-show" : "Trial: no-show" }
+                    : trial.status === "scheduled"
+                      ? { status: "info", label: isEs ? "Trial: agendado" : "Trial: scheduled" }
+                      : { status: "neutral", label: isEs ? "Trial: pendiente" : "Trial: pending" };
+              return (
+                <div className="flex items-center gap-2 border-b py-2 text-xs text-muted-foreground">
+                  <span>{isEs ? "Resultado del trial:" : "Trial outcome:"}</span>
+                  <StatusBadge status={outcome.status} size="sm" label={outcome.label} />
+                </div>
+              );
+            })()}
+          </>
+        )}
 
         {student && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
@@ -319,21 +406,21 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
             {/* ─── Overview Tab ─── */}
             <TabsContent value="overview" className="space-y-5 mt-4">
               <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-gray-700">
+                <h4 className="text-sm font-semibold text-foreground">
                   {isEs ? "Informacion de contacto" : "Contact Information"}
                 </h4>
                 <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Mail className="h-4 w-4 text-primary" />
                     <span>{student.email}</span>
                   </div>
                   {student.phone && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <Phone className="h-4 w-4 text-primary" />
                       <span>{student.phone}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="h-4 w-4 text-primary" />
                     <span>
                       {isEs ? "Registro:" : "Registered:"}{" "}
@@ -344,7 +431,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                     </span>
                   </div>
                   {student.lastActivityAt && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <Clock className="h-4 w-4 text-primary" />
                       <span>
                         {isEs ? "Ultima actividad:" : "Last activity:"}{" "}
@@ -355,7 +442,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <CreditCard className="h-4 w-4 text-primary" />
                     <span className="font-medium">
                       {isEs ? "Creditos:" : "Credits:"} {student.classCredits}
@@ -388,7 +475,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                       )}
                     </Button>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
                     <span>
                       {isEs ? "Trial completado:" : "Trial completed:"}{" "}
@@ -400,7 +487,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
 
               {/* Tags section */}
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-gray-700">
+                <h4 className="text-sm font-semibold text-foreground">
                   {isEs ? "Etiquetas" : "Tags"}
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
@@ -470,7 +557,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
 
               <div className="space-y-3">
                 {student.notes.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-4">
+                  <p className="text-sm text-muted-foreground text-center py-4">
                     {isEs ? "Sin notas aun" : "No notes yet"}
                   </p>
                 )}
@@ -479,10 +566,10 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                   .map((note) => (
                     <div
                       key={note.id}
-                      className="border rounded-lg p-3 space-y-1 bg-gray-50/50"
+                      className="border rounded-lg p-3 space-y-1 bg-muted/40/50"
                     >
                       <div className="flex items-start justify-between">
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           {isEs ? "Admin" : "Admin"} &middot;{" "}
                           {new Date(note.createdAt).toLocaleDateString(
                             isEs ? "es-CO" : "en-US",
@@ -491,13 +578,13 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                         </p>
                         <button
                           onClick={() => deleteNoteMutation.mutate(note.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors"
+                          className="text-muted-foreground hover:text-destructive transition-colors"
                           aria-label={isEs ? "Eliminar nota" : "Delete note"}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
                     </div>
                   ))}
               </div>
@@ -505,7 +592,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
 
             {/* ─── Tasks Tab ─── */}
             <TabsContent value="tasks" className="space-y-4 mt-4">
-              <div className="space-y-2 border rounded-lg p-3 bg-gray-50/50">
+              <div className="space-y-2 border rounded-lg p-3 bg-muted/40/50">
                 <Input
                   placeholder={isEs ? "Titulo de la tarea..." : "Task title..."}
                   value={taskTitle}
@@ -552,7 +639,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
 
               <div className="space-y-2">
                 {student.tasks.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-4">
+                  <p className="text-sm text-muted-foreground text-center py-4">
                     {isEs ? "Sin tareas aun" : "No tasks yet"}
                   </p>
                 )}
@@ -567,7 +654,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                       <div
                         key={task.id}
                         className={`flex items-start gap-2 border rounded-lg p-3 transition-colors ${
-                          isCompleted ? "bg-gray-50 opacity-60" : "bg-white"
+                          isCompleted ? "bg-muted/40 opacity-60" : "bg-white"
                         }`}
                       >
                         <button
@@ -581,15 +668,15 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                           aria-label={isCompleted ? "Mark as pending" : "Mark as completed"}
                         >
                           {isCompleted ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            <CheckCircle2 className="h-5 w-5 text-success" />
                           ) : (
-                            <Circle className="h-5 w-5 text-gray-300 hover:text-primary" />
+                            <Circle className="h-5 w-5 text-muted-foreground/60 hover:text-primary" />
                           )}
                         </button>
                         <div className="flex-1 min-w-0">
                           <p
                             className={`text-sm font-medium ${
-                              isCompleted ? "line-through text-gray-400" : "text-gray-800"
+                              isCompleted ? "line-through text-muted-foreground" : "text-foreground"
                             }`}
                           >
                             {task.title}
@@ -608,7 +695,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                             </span>
                             <span
                               className={`text-[10px] ${
-                                isOverdue ? "text-red-500 font-medium" : "text-gray-400"
+                                isOverdue ? "text-destructive font-medium" : "text-muted-foreground"
                               }`}
                             >
                               {new Date(task.dueDate).toLocaleDateString(
@@ -627,7 +714,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
             {/* ─── History Tab ─── */}
             <TabsContent value="history" className="space-y-3 mt-4">
               {student.classes.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-4">
+                <p className="text-sm text-muted-foreground text-center py-4">
                   {isEs ? "Sin historial de clases" : "No class history"}
                 </p>
               )}
@@ -642,10 +729,10 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                     className="border rounded-lg p-3 flex items-center justify-between bg-white"
                   >
                     <div className="space-y-1">
-                      <p className="text-sm font-medium text-gray-800">
+                      <p className="text-sm font-medium text-foreground">
                         {isEs ? "Tutor" : "Tutor"} #{cls.tutorId}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         {new Date(cls.scheduledAt).toLocaleDateString(
                           isEs ? "es-CO" : "en-US",
                           {
@@ -670,7 +757,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                       )}
                       <span
                         className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                          STATUS_COLORS[cls.status] || "bg-gray-100 text-gray-600"
+                          STATUS_COLORS[cls.status] || "bg-muted text-muted-foreground"
                         }`}
                       >
                         {cls.status}
