@@ -19,6 +19,16 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Loader2,
   X,
   Trash2,
@@ -125,6 +135,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
   const [taskPriority, setTaskPriority] = useState<string>("medium");
   const [showQuickSend, setShowQuickSend] = useState(false);
   const [creditsDraft, setCreditsDraft] = useState<string>("");
+  const [creditsConfirm, setCreditsConfirm] = useState<number | null>(null);
 
   const { data: student, isLoading } = useQuery<StudentDetailData>({
     queryKey: ["/api/admin/crm", userId],
@@ -287,13 +298,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
       return;
     }
     if (parsed === student.classCredits) return;
-    const confirmed = window.confirm(
-      isEs
-        ? `Cambiar creditos de ${student.firstName} ${student.lastName} de ${student.classCredits} a ${parsed}?`
-        : `Change credits for ${student.firstName} ${student.lastName} from ${student.classCredits} to ${parsed}?`
-    );
-    if (!confirmed) return;
-    updateCreditsMutation.mutate(parsed);
+    setCreditsConfirm(parsed);
   };
 
   const handleAddNote = () => {
@@ -804,6 +809,31 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
             onClose={() => setShowQuickSend(false)}
           />
         )}
+
+        {/* Confirmación de ajuste de créditos (reemplaza window.confirm) */}
+        <AlertDialog open={creditsConfirm !== null} onOpenChange={(o) => { if (!o) setCreditsConfirm(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{isEs ? "¿Ajustar créditos de clase?" : "Adjust class credits?"}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {isEs
+                  ? `Vas a cambiar los créditos de ${student?.firstName} ${student?.lastName} de ${student?.classCredits} a ${creditsConfirm}. El estudiante verá el saldo nuevo de inmediato.`
+                  : `You're changing ${student?.firstName} ${student?.lastName}'s credits from ${student?.classCredits} to ${creditsConfirm}. The student sees the new balance immediately.`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{isEs ? "Cancelar" : "Cancel"}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (creditsConfirm !== null) updateCreditsMutation.mutate(creditsConfirm);
+                  setCreditsConfirm(null);
+                }}
+              >
+                {isEs ? "Ajustar créditos" : "Adjust credits"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SheetContent>
     </Sheet>
   );
