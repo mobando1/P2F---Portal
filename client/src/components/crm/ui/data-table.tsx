@@ -123,7 +123,7 @@ export function DataTable<T>({
               <TableHead
                 key={col.key}
                 style={col.width ? { width: col.width } : undefined}
-                className={cn(cellPad, "text-xs font-medium uppercase tracking-wide", ALIGN[col.align ?? "left"])}
+                className={cn(cellPad, "text-xs font-medium", ALIGN[col.align ?? "left"])}
               >
                 {col.sortable ? (
                   <button

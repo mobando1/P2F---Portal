@@ -58,7 +58,7 @@ export function StatCard({
         )}
       >
         <div className="flex items-start justify-between gap-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground">
             {label}
           </p>
           {Icon && (

@@ -409,7 +409,7 @@ export default function CampaignBuilder({
               {/* Preview */}
               {(form.subject || form.body) && (
                 <div className="border rounded-md p-4 bg-muted/30 space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase">
+                  <p className="text-xs font-medium text-muted-foreground">
                     {isEs ? "Vista Previa" : "Preview"}
                   </p>
                   {form.subject && (

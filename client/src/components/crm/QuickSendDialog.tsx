@@ -231,7 +231,7 @@ export default function QuickSendDialog({
               {/* Template preview */}
               {selectedTemplate && (
                 <div className="rounded-md border bg-muted/50 p-3 space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <p className="text-xs font-medium text-muted-foreground">
                     {isEs ? "Vista previa" : "Preview"}
                   </p>
                   <p className="text-sm font-semibold">
