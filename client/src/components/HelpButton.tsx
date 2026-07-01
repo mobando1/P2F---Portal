@@ -259,15 +259,15 @@ export default function HelpButton() {
           whileHover={{ scale: 1.07 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleOpen}
-          className="relative w-13 h-13 w-[52px] h-[52px] rounded-full shadow-xl flex items-center justify-center bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white transition-colors"
+          className="relative w-13 h-13 w-[52px] h-[52px] rounded-full shadow-xl flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
           aria-label="Help"
         >
           <MessageCircle className="h-5 w-5" />
           {/* Pulsing badge for first-time visitors */}
           {!helpSeen && (
             <span className="absolute -top-1 -right-1 flex h-4 w-4">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F59E1C] opacity-75" />
-              <span className="relative inline-flex rounded-full h-4 w-4 bg-[#F59E1C] items-center justify-center text-[9px] font-bold text-white">!</span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+              <span className="relative inline-flex rounded-full h-4 w-4 bg-accent items-center justify-center text-[9px] font-bold text-white">!</span>
             </span>
           )}
         </motion.button>
@@ -290,19 +290,19 @@ export default function HelpButton() {
           <div className="flex-1 overflow-y-auto">
             {/* Contextual page tips */}
             {pageHelp && (
-              <div className="mx-4 mt-4 rounded-xl bg-blue-50 border border-blue-100 p-4">
+              <div className="mx-4 mt-4 rounded-xl bg-primary/10 border border-blue-100 p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded-lg bg-[#1C7BB1]/10">
-                    <Lightbulb className="h-3.5 w-3.5 text-[#1C7BB1]" />
+                  <div className="p-1.5 rounded-lg bg-primary/10">
+                    <Lightbulb className="h-3.5 w-3.5 text-primary" />
                   </div>
-                  <span className="text-xs font-semibold text-[#0A4A6E] uppercase tracking-wide">
+                  <span className="text-xs font-semibold text-foreground">
                     {es ? `Ayuda: ${pageHelp.titleEs}` : `Tips: ${pageHelp.title}`}
                   </span>
                 </div>
                 <ul className="space-y-2">
                   {(es ? pageHelp.tipsEs : pageHelp.tips).map((tip, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-[#0A4A6E]/80">
-                      <span className="mt-0.5 flex-shrink-0 w-4 h-4 rounded-full bg-[#1C7BB1] text-white text-[9px] font-bold flex items-center justify-center">
+                    <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
+                      <span className="mt-0.5 flex-shrink-0 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
                         {i + 1}
                       </span>
                       {tip}
@@ -314,44 +314,44 @@ export default function HelpButton() {
 
             {/* FAQ */}
             <div className="px-4 mt-4">
-              <p className="text-xs font-semibold text-[#0A4A6E]/60 uppercase tracking-wide mb-2">
+              <p className="text-xs font-semibold text-foreground/60 mb-2">
                 {es ? "Preguntas Frecuentes" : "Frequently Asked Questions"}
               </p>
 
               {/* Search */}
               <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <input
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setExpandedFaq(null); }}
                   placeholder={es ? "Buscar…" : "Search…"}
-                  className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1C7BB1]/30 bg-gray-50"
+                  className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 bg-muted/40"
                 />
               </div>
 
               {/* FAQ items */}
               <div className="space-y-1.5 pb-4">
                 {filteredFaq.length === 0 && (
-                  <p className="text-xs text-gray-400 text-center py-4">
+                  <p className="text-xs text-muted-foreground text-center py-4">
                     {es ? "Sin resultados. Prueba con otra búsqueda." : "No results. Try a different search."}
                   </p>
                 )}
                 {filteredFaq.map((item, i) => (
-                  <div key={i} className="rounded-lg border border-gray-100 bg-white overflow-hidden">
+                  <div key={i} className="rounded-lg border border-border bg-card overflow-hidden">
                     <button
-                      className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left hover:bg-muted/40 transition-colors"
                       onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                     >
-                      <span className="text-xs font-medium text-[#0A4A6E] leading-snug">
+                      <span className="text-xs font-medium text-foreground leading-snug">
                         {es ? item.qEs : item.q}
                       </span>
                       {expandedFaq === i
-                        ? <ChevronUp className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                        : <ChevronDown className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                        ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                       }
                     </button>
                     {expandedFaq === i && (
-                      <div className="px-3 pb-3 text-xs text-gray-600 leading-relaxed border-t border-gray-50 pt-2">
+                      <div className="px-3 pb-3 text-xs text-muted-foreground leading-relaxed border-t border-gray-50 pt-2">
                         {es ? item.aEs : item.a}
                       </div>
                     )}
@@ -362,10 +362,10 @@ export default function HelpButton() {
           </div>
 
           {/* Footer links */}
-          <div className="flex-shrink-0 border-t border-gray-100 p-4 grid grid-cols-2 gap-2">
+          <div className="flex-shrink-0 border-t border-border p-4 grid grid-cols-2 gap-2">
             <button
               onClick={() => { setLocation("/guide"); setOpen(false); }}
-              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#1C7BB1]/8 hover:bg-[#1C7BB1]/15 text-[#1C7BB1] text-xs font-medium transition-colors"
+              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/8 hover:bg-primary/15 text-primary text-xs font-medium transition-colors"
             >
               <BookOpen className="h-3.5 w-3.5" />
               {es ? "Guía completa" : "Full Guide"}
@@ -373,7 +373,7 @@ export default function HelpButton() {
             </button>
             <button
               onClick={() => { setLocation("/support"); setOpen(false); }}
-              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#F59E1C]/8 hover:bg-[#F59E1C]/15 text-[#F59E1C] text-xs font-medium transition-colors"
+              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-accent/8 hover:bg-accent/15 text-accent text-xs font-medium transition-colors"
             >
               <LifeBuoy className="h-3.5 w-3.5" />
               {es ? "Soporte" : "Support"}

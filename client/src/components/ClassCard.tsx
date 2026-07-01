@@ -44,27 +44,27 @@ export function ClassCard({ classItem, onCancel, onReschedule, showActions = tru
     <motion.div
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow"
+      className="bg-card rounded-xl border border-border p-4 shadow-sm hover:shadow-md transition-shadow"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-semibold text-gray-900 text-sm truncate">
+            <h4 className="font-semibold text-foreground text-sm truncate">
               {classItem.tutorName || classItem.title}
             </h4>
             {classItem.isTrial && (
-              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+              <Badge variant="outline" className="text-xs bg-warning/15 text-warning-foreground border-amber-200">
                 Trial
               </Badge>
             )}
             {isJoinable && (
-              <Badge className="text-xs bg-green-100 text-green-700 animate-pulse">
+              <Badge className="text-xs bg-success/15 text-success animate-pulse">
                 {language === 'es' ? 'Ahora' : 'Now'}
               </Badge>
             )}
           </div>
 
-          <div className="flex items-center flex-wrap gap-3 text-xs text-gray-500">
+          <div className="flex items-center flex-wrap gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {dateStr}
@@ -87,7 +87,7 @@ export function ClassCard({ classItem, onCancel, onReschedule, showActions = tru
               <Button
                 size="sm"
                 disabled
-                className="text-xs bg-gray-100 text-gray-400"
+                className="text-xs bg-muted text-muted-foreground"
                 variant="outline"
               >
                 <Video className="w-3 h-3 mr-1" />
@@ -101,7 +101,7 @@ export function ClassCard({ classItem, onCancel, onReschedule, showActions = tru
                   className={`text-xs ${
                     isJoinable
                       ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-200"
-                      : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                      : "bg-primary/10 text-primary hover:bg-primary/15"
                   }`}
                   variant={isJoinable ? "default" : "outline"}
                 >
@@ -116,7 +116,7 @@ export function ClassCard({ classItem, onCancel, onReschedule, showActions = tru
                   className={`text-xs ${
                     isJoinable
                       ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-200"
-                      : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                      : "bg-primary/10 text-primary hover:bg-primary/15"
                   }`}
                   variant={isJoinable ? "default" : "outline"}
                 >
@@ -135,7 +135,7 @@ export function ClassCard({ classItem, onCancel, onReschedule, showActions = tru
                   size="sm"
                   variant="ghost"
                   onClick={() => onReschedule(classItem.id)}
-                  className="text-xs text-gray-400 hover:text-blue-600 p-1.5"
+                  className="text-xs text-muted-foreground hover:text-primary p-1.5"
                   aria-label={language === 'es' ? 'Reagendar' : 'Reschedule'}
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -146,7 +146,7 @@ export function ClassCard({ classItem, onCancel, onReschedule, showActions = tru
                   size="sm"
                   variant="ghost"
                   onClick={() => onCancel(classItem.id)}
-                  className="text-xs text-gray-400 hover:text-red-600 p-1.5"
+                  className="text-xs text-muted-foreground hover:text-destructive p-1.5"
                   aria-label={language === 'es' ? 'Cancelar' : 'Cancel'}
                 >
                   <X className="w-3.5 h-3.5" />

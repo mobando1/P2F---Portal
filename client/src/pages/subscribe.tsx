@@ -70,8 +70,8 @@ function SubscriptionForm({ planInfo }: { planInfo: any }) {
         type="submit" 
         disabled={!stripe || !elements || isLoading}
         className={`w-full text-white ${planInfo.popular 
-          ? 'bg-[#F59E1C] hover:bg-[#F59E1C]/90' 
-          : 'bg-[#1C7BB1] hover:bg-[#0A4A6E]'
+          ? 'bg-accent hover:bg-accent/90' 
+          : 'bg-primary hover:bg-primary-900'
         }`}
       >
         {isLoading ? (
@@ -171,30 +171,30 @@ export default function SubscribePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#EAF4FA] flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-[#1C7BB1] border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-muted flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
 
   if (!clientSecret || !planInfo) {
     return (
-      <div className="min-h-screen bg-[#EAF4FA]">
+      <div className="min-h-screen bg-muted">
         <Header />
         <div className="max-w-4xl mx-auto px-4 py-16 text-center">
           <Card>
             <CardContent className="py-12">
-              <h1 className="text-2xl font-bold text-[#0A4A6E] mb-4">
+              <h1 className="text-2xl font-bold text-foreground mb-4">
                 {language === 'es' ? 'Sesión Expirada' : 'Session Expired'}
               </h1>
-              <p className="text-gray-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 {language === 'es' 
                   ? 'La sesión de pago ha expirado. Por favor, regresa a la página de planes.'
                   : 'The payment session has expired. Please return to the plans page.'
                 }
               </p>
               <Link href="/packages">
-                <Button className="bg-[#1C7BB1] hover:bg-[#0A4A6E]">
+                <Button className="bg-primary hover:bg-primary-900">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   {language === 'es' ? 'Volver a Planes' : 'Back to Plans'}
                 </Button>
@@ -207,13 +207,13 @@ export default function SubscribePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EAF4FA]">
+    <div className="min-h-screen bg-muted">
       <Header />
       
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-6">
           <Link href="/packages">
-            <Button variant="outline" className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white">
+            <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
               <ArrowLeft className="w-4 h-4 mr-2" />
               {language === 'es' ? 'Volver a Planes' : 'Back to Plans'}
             </Button>
@@ -224,10 +224,10 @@ export default function SubscribePage() {
           {/* Plan Summary */}
           <Card className={planInfo.popular ? 'ring-2 ring-[#F59E1C]' : ''}>
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] flex items-center">
+              <CardTitle className="text-foreground flex items-center">
                 {planInfo.name}
                 {planInfo.popular && (
-                  <span className="ml-2 bg-[#F59E1C] text-white text-xs px-2 py-1 rounded-full">
+                  <span className="ml-2 bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full">
                     {language === 'es' ? 'MÁS POPULAR' : 'MOST POPULAR'}
                   </span>
                 )}
@@ -236,41 +236,41 @@ export default function SubscribePage() {
             <CardContent>
               <div className="space-y-4">
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-[#1C7BB1] mb-2">
+                  <div className="text-4xl font-bold text-primary mb-2">
                     ${planInfo.price}
                   </div>
-                  <div className="text-lg text-[#0A4A6E]/80 mb-1">
+                  <div className="text-lg text-foreground/80 mb-1">
                     {language === 'es' ? 'Por Mes' : 'Per Month'}
                   </div>
-                  <div className="text-sm text-[#0A4A6E]/60">
+                  <div className="text-sm text-foreground/60">
                     ${(planInfo.price / planInfo.classesIncluded).toFixed(2)} {language === 'es' ? 'por clase' : 'per class'}
                   </div>
                   {planInfo.discountPercent > 0 && (
-                    <div className="mt-2 bg-[#F59E1C]/20 text-[#F59E1C] text-sm px-2 py-1 rounded-full inline-block">
+                    <div className="mt-2 bg-accent/20 text-accent text-sm px-2 py-1 rounded-full inline-block">
                       {planInfo.discountPercent}% {language === 'es' ? 'descuento' : 'off'}
                     </div>
                   )}
                 </div>
                 
                 <div className="border-t pt-4">
-                  <h4 className="font-semibold text-[#0A4A6E] mb-3">
+                  <h4 className="font-semibold text-foreground mb-3">
                     {language === 'es' ? 'Incluido en tu plan:' : 'Included in your plan:'}
                   </h4>
                   <div className="space-y-2">
                     {planInfo.features.map((feature: string, index: number) => (
                       <div key={index} className="flex items-start gap-2">
-                        <Check className="w-5 h-5 text-[#1C7BB1] mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-[#0A4A6E]/80">{feature}</span>
+                        <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-foreground/80">{feature}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="bg-[#1C7BB1]/10 p-4 rounded-lg">
-                  <h4 className="font-semibold text-[#0A4A6E] mb-2">
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <h4 className="font-semibold text-foreground mb-2">
                     {language === 'es' ? '✓ Garantía de Satisfacción' : '✓ Satisfaction Guarantee'}
                   </h4>
-                  <p className="text-sm text-[#0A4A6E]/80">
+                  <p className="text-sm text-foreground/80">
                     {language === 'es' 
                       ? 'Si no estás satisfecho en los primeros 30 días, te devolvemos tu dinero.'
                       : 'If not satisfied within the first 30 days, we\'ll refund your money.'
@@ -284,7 +284,7 @@ export default function SubscribePage() {
           {/* Payment Form */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E]">
+              <CardTitle className="text-foreground">
                 <CreditCard className="w-5 h-5 mr-2 inline" />
                 {language === 'es' ? 'Información de Pago' : 'Payment Information'}
               </CardTitle>
@@ -302,8 +302,8 @@ export default function SubscribePage() {
                 </Elements>
               ) : (
                 <div className="text-center py-8">
-                  <div className="animate-spin w-8 h-8 border-4 border-[#1C7BB1] border-t-transparent rounded-full mx-auto mb-4" />
-                  <p className="text-gray-600">
+                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                  <p className="text-muted-foreground">
                     {language === 'es' 
                       ? 'Preparando formulario de suscripción...'
                       : 'Preparing subscription form...'
@@ -318,7 +318,7 @@ export default function SubscribePage() {
         {/* Security Notice */}
         <Card className="mt-8">
           <CardContent className="py-6">
-            <div className="text-center text-sm text-gray-600">
+            <div className="text-center text-sm text-muted-foreground">
               <p>
                 {language === 'es' 
                   ? '🔒 Pago seguro procesado por Stripe. Tu información está protegida con encriptación de nivel bancario.'

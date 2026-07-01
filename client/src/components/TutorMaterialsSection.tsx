@@ -178,23 +178,23 @@ export default function TutorMaterialsSection() {
         <CardContent className="p-4 md:p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <FolderOpen className="h-5 w-5 text-[#F59E1C]" />
-              <h3 className="font-semibold text-[#0A4A6E]">{isEs ? "Mis Materiales" : "My Materials"}</h3>
+              <FolderOpen className="h-5 w-5 text-accent" />
+              <h3 className="font-semibold text-foreground">{isEs ? "Mis Materiales" : "My Materials"}</h3>
               {materials && materials.length > 0 && (
-                <Badge className="bg-[#1C7BB1]/10 text-[#1C7BB1]">{materials.length}</Badge>
+                <Badge className="bg-primary/10 text-primary">{materials.length}</Badge>
               )}
             </div>
-            <Button size="sm" className="bg-[#1C7BB1] hover:bg-[#0A4A6E]" onClick={() => { resetForm(); setShowModal(true); }}>
+            <Button size="sm" className="bg-primary hover:bg-primary-900" onClick={() => { resetForm(); setShowModal(true); }}>
               <Plus className="h-4 w-4 mr-1" />
               {isEs ? "Subir" : "Upload"}
             </Button>
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center py-6"><Loader2 className="animate-spin h-5 w-5 text-[#1C7BB1]" /></div>
+            <div className="flex justify-center py-6"><Loader2 className="animate-spin h-5 w-5 text-primary" /></div>
           ) : !materials || materials.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              <FolderOpen className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+            <div className="text-center py-6 text-muted-foreground">
+              <FolderOpen className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm">{isEs ? "Sin materiales. Sube PDFs, documentos o links." : "No materials. Upload PDFs, documents or links."}</p>
             </div>
           ) : (
@@ -204,30 +204,30 @@ export default function TutorMaterialsSection() {
                 return (
                   <div
                     key={m.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer group"
+                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/40 cursor-pointer group"
                     onClick={() => openMaterial(m)}
                   >
                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      m.fileType === "pdf" ? "bg-red-100" : m.fileType === "image" ? "bg-blue-100" : m.fileType === "link" ? "bg-purple-100" : "bg-gray-100"
+                      m.fileType === "pdf" ? "bg-destructive/15" : m.fileType === "image" ? "bg-primary/15" : m.fileType === "link" ? "bg-purple-100" : "bg-muted"
                     }`}>
                       <TypeIcon className={`h-4 w-4 ${
-                        m.fileType === "pdf" ? "text-red-600" : m.fileType === "image" ? "text-blue-600" : m.fileType === "link" ? "text-purple-600" : "text-gray-600"
+                        m.fileType === "pdf" ? "text-destructive" : m.fileType === "image" ? "text-primary" : m.fileType === "link" ? "text-purple-600" : "text-muted-foreground"
                       }`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#0A4A6E] truncate">{m.title}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{m.title}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {m.level && <Badge variant="outline" className="text-[9px] px-1 py-0">{m.level}</Badge>}
                         {m.category && (
-                          <span className="text-[9px] text-gray-400">
+                          <span className="text-[9px] text-muted-foreground">
                             {CATEGORY_LABELS[m.category]?.[isEs ? "es" : "en"] || m.category}
                           </span>
                         )}
-                        {m.externalUrl && <ExternalLink className="h-2.5 w-2.5 text-gray-400" />}
+                        {m.externalUrl && <ExternalLink className="h-2.5 w-2.5 text-muted-foreground" />}
                       </div>
                     </div>
                     <button
-                      className="p-1 rounded hover:bg-red-100 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-1 rounded hover:bg-destructive/15 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(m.id); }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -263,7 +263,7 @@ export default function TutorMaterialsSection() {
               <Button
                 variant={uploadMode === "file" ? "default" : "outline"}
                 size="sm"
-                className={uploadMode === "file" ? "bg-[#1C7BB1]" : ""}
+                className={uploadMode === "file" ? "bg-primary" : ""}
                 onClick={() => setUploadMode("file")}
               >
                 <Upload className="h-3.5 w-3.5 mr-1" />
@@ -272,7 +272,7 @@ export default function TutorMaterialsSection() {
               <Button
                 variant={uploadMode === "link" ? "default" : "outline"}
                 size="sm"
-                className={uploadMode === "link" ? "bg-[#1C7BB1]" : ""}
+                className={uploadMode === "link" ? "bg-primary" : ""}
                 onClick={() => setUploadMode("link")}
               >
                 <Link2 className="h-3.5 w-3.5 mr-1" />
@@ -282,12 +282,12 @@ export default function TutorMaterialsSection() {
 
             {uploadMode === "file" ? (
               <div className="space-y-1.5">
-                <label className="flex items-center gap-2 px-3 py-3 rounded-lg border border-dashed border-gray-300 cursor-pointer hover:bg-gray-50 text-sm text-gray-600">
+                <label className="flex items-center gap-2 px-3 py-3 rounded-lg border border-dashed border-border cursor-pointer hover:bg-muted/40 text-sm text-muted-foreground">
                   <Upload className="h-4 w-4" />
                   {fileName || (isEs ? "Seleccionar archivo (PDF, imagen, doc)" : "Select file (PDF, image, doc)")}
                   <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,image/*" className="hidden" onChange={handleFileUpload} />
                 </label>
-                <p className="text-[10px] text-gray-400">{isEs ? "Máx 5MB" : "Max 5MB"}</p>
+                <p className="text-[10px] text-muted-foreground">{isEs ? "Máx 5MB" : "Max 5MB"}</p>
               </div>
             ) : (
               <div className="space-y-1.5">
@@ -329,7 +329,7 @@ export default function TutorMaterialsSection() {
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowModal(false)}>{isEs ? "Cancelar" : "Cancel"}</Button>
             <Button
-              className="bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+              className="bg-primary hover:bg-primary-900"
               onClick={handleSubmit}
               disabled={!title.trim() || (uploadMode === "file" ? !fileData : !externalUrl.trim()) || createMutation.isPending}
             >

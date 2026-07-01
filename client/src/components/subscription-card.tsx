@@ -65,7 +65,7 @@ export default function SubscriptionCard({ subscription, onUpgrade, onManage, is
 
   return (
     <Card>
-      <CardHeader className="border-b border-gray-200">
+      <CardHeader className="border-b border-border">
         <CardTitle>{isEs ? 'Tu Plan' : 'Your Plan'}</CardTitle>
       </CardHeader>
       <CardContent className="p-6">
@@ -74,14 +74,14 @@ export default function SubscriptionCard({ subscription, onUpgrade, onManage, is
             {getPlanIcon()}
           </div>
           
-          <h3 className="text-lg font-semibold text-gray-900">{subscription.planName}</h3>
-          <p className="text-gray-600 text-sm">{getPlanDescription()}</p>
+          <h3 className="text-lg font-semibold text-foreground">{subscription.planName}</h3>
+          <p className="text-muted-foreground text-sm">{getPlanDescription()}</p>
           
           {subscription.classesLimit && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-4 p-4 bg-muted/40 rounded-lg">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">{isEs ? 'Clases usadas' : 'Classes used'}</span>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm text-muted-foreground">{isEs ? 'Clases usadas' : 'Classes used'}</span>
+                <span className="text-sm font-medium text-foreground">
                   {subscription.classesUsed} / {subscription.classesLimit}
                 </span>
               </div>
@@ -89,7 +89,7 @@ export default function SubscriptionCard({ subscription, onUpgrade, onManage, is
             </div>
           )}
 
-          <div className="mt-4 text-sm text-gray-600 space-y-1">
+          <div className="mt-4 text-sm text-muted-foreground space-y-1">
             <p>
               {isEs ? 'Próximo cobro: ' : 'Next billing: '}<span className="font-medium">{formatDate(subscription.nextBillingDate)}</span>
             </p>

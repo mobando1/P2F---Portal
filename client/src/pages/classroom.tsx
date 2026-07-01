@@ -100,11 +100,11 @@ export default function ClassroomPage() {
     return (
       <Card className="max-w-lg mx-auto mt-12">
         <CardContent className="p-6 space-y-3 text-center">
-          <AlertCircle className="w-10 h-10 text-red-500 mx-auto" />
-          <h2 className="text-xl font-bold text-[#0A4A6E]">{isEs ? "No pudimos conectar" : "Could not connect"}</h2>
-          <p className="text-sm text-gray-600">{tokenError}</p>
+          <AlertCircle className="w-10 h-10 text-destructive mx-auto" />
+          <h2 className="text-xl font-bold text-foreground">{isEs ? "No pudimos conectar" : "Could not connect"}</h2>
+          <p className="text-sm text-muted-foreground">{tokenError}</p>
           {status?.fallbackMeetingLink && (
-            <Button asChild className="bg-[#1C7BB1] hover:bg-[#0A4A6E]">
+            <Button asChild className="bg-primary hover:bg-primary-900">
               <a href={status.fallbackMeetingLink} target="_blank" rel="noreferrer">
                 {isEs ? "Abrir Google Meet (respaldo)" : "Open Google Meet (fallback)"}
               </a>
@@ -131,7 +131,7 @@ export default function ClassroomPage() {
         }}
       />
       {token && (
-        <div className="h-screen w-screen bg-[#0A4A6E]" data-lk-theme="default">
+        <div className="h-screen w-screen bg-primary-900" data-lk-theme="default">
           <LiveKitRoom
             token={token.token}
             serverUrl={token.url}
@@ -152,9 +152,9 @@ export default function ClassroomPage() {
 
 function CenteredLoader({ text }: { text: string }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8F9FA] gap-4">
-      <Loader2 className="w-8 h-8 animate-spin text-[#1C7BB1]" />
-      <p className="text-[#0A4A6E]">{text}</p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <p className="text-foreground">{text}</p>
     </div>
   );
 }
@@ -174,25 +174,25 @@ function FallbackToMeet({
   return (
     <Card className="max-w-lg mx-auto mt-16">
       <CardContent className="p-6 space-y-4 text-center">
-        <Video className="w-12 h-12 text-[#1C7BB1] mx-auto" />
-        <h2 className="text-xl font-bold text-[#0A4A6E]">
+        <Video className="w-12 h-12 text-primary mx-auto" />
+        <h2 className="text-xl font-bold text-foreground">
           {opening
             ? (isEs ? "Abriendo Google Meet…" : "Opening Google Meet…")
             : (isEs ? "Aula nueva no disponible" : "New classroom not available")}
         </h2>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           {reason === "flag_off"
             ? (isEs ? "Tu cuenta todavía no tiene activada el aula integrada. Te llevamos al link de Google Meet." : "Your account doesn't have the embedded classroom yet. Redirecting to Google Meet.")
             : (isEs ? "El aula integrada no está disponible ahora. Usaremos Google Meet." : "Embedded classroom unavailable. Using Google Meet.")}
         </p>
         {meetingLink ? (
-          <Button asChild className="bg-[#1C7BB1] hover:bg-[#0A4A6E]">
+          <Button asChild className="bg-primary hover:bg-primary-900">
             <a href={meetingLink} target="_blank" rel="noreferrer">
               {isEs ? "Abrir clase en Google Meet" : "Open class in Google Meet"}
             </a>
           </Button>
         ) : (
-          <p className="text-sm text-red-600">{isEs ? "No hay link de respaldo. Contacta soporte." : "No fallback link. Contact support."}</p>
+          <p className="text-sm text-destructive">{isEs ? "No hay link de respaldo. Contacta soporte." : "No fallback link. Contact support."}</p>
         )}
         <Button variant="outline" onClick={onBack}>{isEs ? "Volver al dashboard" : "Back to dashboard"}</Button>
       </CardContent>
@@ -266,10 +266,10 @@ export function PreflightCheck() {
     <div className="max-w-lg mx-auto mt-16 p-4">
       <Card>
         <CardContent className="p-6 space-y-5">
-          <h2 className="text-xl font-bold text-[#0A4A6E] text-center">
+          <h2 className="text-xl font-bold text-foreground text-center">
             {isEs ? "Prueba de equipo" : "Equipment check"}
           </h2>
-          <p className="text-sm text-gray-600 text-center">
+          <p className="text-sm text-muted-foreground text-center">
             {isEs ? "Verificamos cámara, micrófono y conexión antes de tu clase." : "Checking camera, microphone, and connection before your class."}
           </p>
 
@@ -287,7 +287,7 @@ export function PreflightCheck() {
               : undefined}
           />
           {camError && (
-            <p className="text-xs text-red-600 text-center">{camError}</p>
+            <p className="text-xs text-destructive text-center">{camError}</p>
           )}
 
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
@@ -298,7 +298,7 @@ export function PreflightCheck() {
             <Button
               onClick={() => setLocation(`/classroom/${classId}`)}
               disabled={!allOk}
-              className="bg-[#1C7BB1] hover:bg-[#0A4A6E] flex-1"
+              className="bg-primary hover:bg-primary-900 flex-1"
             >
               {isEs ? "Entrar a clase" : "Join class"}
             </Button>
@@ -316,16 +316,16 @@ export function PreflightCheck() {
 
 function CheckRow({ icon, label, state, detail }: { icon: React.ReactNode; label: string; state: null | boolean; detail?: string }) {
   return (
-    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+    <div className="flex items-center justify-between p-3 bg-muted/40 rounded-lg">
       <div className="flex items-center gap-3">
-        <div className="text-[#1C7BB1]">{icon}</div>
-        <span className="font-medium text-[#0A4A6E]">{label}</span>
+        <div className="text-primary">{icon}</div>
+        <span className="font-medium text-foreground">{label}</span>
       </div>
       <div className="flex items-center gap-2">
-        {detail && <span className="text-xs text-gray-500">{detail}</span>}
-        {state === null ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+        {detail && <span className="text-xs text-muted-foreground">{detail}</span>}
+        {state === null ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
           : state ? <span className="text-emerald-500 font-bold">✓</span>
-          : <span className="text-red-500 font-bold">✗</span>}
+          : <span className="text-destructive font-bold">✗</span>}
       </div>
     </div>
   );

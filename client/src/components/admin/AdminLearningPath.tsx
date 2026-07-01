@@ -397,7 +397,7 @@ function StationRow({
           {contents.map(content => {
             const Icon = CONTENT_ICONS[content.contentType] || FileText;
             return (
-              <div key={content.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-white border text-sm">
+              <div key={content.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-card border text-sm">
                 <Icon className="w-3.5 h-3.5 text-muted-foreground" />
                 <span className="flex-1 truncate text-foreground">
                   {isEs ? content.titleEs : content.title}

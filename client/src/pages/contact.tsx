@@ -71,16 +71,16 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen bg-[#EAF4FA]">
+    <div className="min-h-screen bg-muted">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-[#0A4A6E] mb-4">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
             {language === 'es' ? 'Contáctanos' : 'Contact Us'}
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             {language === 'es' 
               ? 'Estamos aquí para ayudarte en tu camino hacia la fluidez en español. ¡Ponte en contacto con nosotros!'
               : 'We\'re here to help you on your journey to Spanish fluency. Get in touch with us!'
@@ -90,71 +90,71 @@ export default function Contact() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Información de Contacto */}
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-[#0A4A6E] mb-6">
+          <div className="bg-card rounded-xl shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-foreground mb-6">
               {language === 'es' ? 'Información de Contacto' : 'Contact Information'}
             </h2>
             
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <div className="bg-[#1C7BB1] p-3 rounded-lg">
+                <div className="bg-primary p-3 rounded-lg">
                   <Phone className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#0A4A6E]">
+                  <h3 className="font-semibold text-foreground">
                     {language === 'es' ? 'Teléfono' : 'Phone'}
                   </h3>
-                  <p className="text-gray-600">+1 (555) 123-4567</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-muted-foreground">+1 (555) 123-4567</p>
+                  <p className="text-sm text-muted-foreground">
                     {language === 'es' ? 'Lunes a Viernes, 9:00 AM - 6:00 PM EST' : 'Monday to Friday, 9:00 AM - 6:00 PM EST'}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="bg-[#F59E1C] p-3 rounded-lg">
+                <div className="bg-accent p-3 rounded-lg">
                   <Mail className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#0A4A6E]">
+                  <h3 className="font-semibold text-foreground">
                     {language === 'es' ? 'Correo Electrónico' : 'Email'}
                   </h3>
-                  <p className="text-gray-600">info@passport2fluency.com</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-muted-foreground">info@passport2fluency.com</p>
+                  <p className="text-sm text-muted-foreground">
                     {language === 'es' ? 'Respuesta en menos de 24 horas' : 'Response within 24 hours'}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="bg-[#1C7BB1] p-3 rounded-lg">
+                <div className="bg-primary p-3 rounded-lg">
                   <Clock className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#0A4A6E]">
+                  <h3 className="font-semibold text-foreground">
                     {language === 'es' ? 'Horarios de Atención' : 'Business Hours'}
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     {language === 'es' ? 'Lunes - Viernes: 9:00 AM - 6:00 PM EST' : 'Monday - Friday: 9:00 AM - 6:00 PM EST'}
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     {language === 'es' ? 'Sábados: 10:00 AM - 2:00 PM EST' : 'Saturday: 10:00 AM - 2:00 PM EST'}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="bg-[#F59E1C] p-3 rounded-lg">
+                <div className="bg-accent p-3 rounded-lg">
                   <MapPin className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#0A4A6E]">
+                  <h3 className="font-semibold text-foreground">
                     {language === 'es' ? 'Ubicación' : 'Location'}
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     {language === 'es' ? 'Clases virtuales en línea' : 'Online virtual classes'}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     {language === 'es' ? 'Desde cualquier lugar del mundo' : 'From anywhere in the world'}
                   </p>
                 </div>
@@ -163,15 +163,15 @@ export default function Contact() {
           </div>
 
           {/* Formulario de Contacto */}
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-[#0A4A6E] mb-6">
+          <div className="bg-card rounded-xl shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-foreground mb-6">
               {language === 'es' ? 'Envíanos un Mensaje' : 'Send us a Message'}
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {language === 'es' ? 'Nombre Completo' : 'Full Name'} *
                   </label>
                   <input
@@ -180,13 +180,13 @@ export default function Contact() {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1C7BB1] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder={language === 'es' ? 'Tu nombre completo' : 'Your full name'}
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {language === 'es' ? 'Correo Electrónico' : 'Email'} *
                   </label>
                   <input
@@ -195,7 +195,7 @@ export default function Contact() {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1C7BB1] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder={language === 'es' ? 'tu@email.com' : 'your@email.com'}
                   />
                 </div>
@@ -203,7 +203,7 @@ export default function Contact() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {language === 'es' ? 'Teléfono' : 'Phone'}
                   </label>
                   <input
@@ -211,20 +211,20 @@ export default function Contact() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1C7BB1] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {language === 'es' ? 'Nivel Actual de Español' : 'Current Spanish Level'}
                   </label>
                   <select
                     name="currentLevel"
                     value={formData.currentLevel}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1C7BB1] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     <option value="">
                       {language === 'es' ? 'Seleccionar nivel' : 'Select level'}
@@ -243,7 +243,7 @@ export default function Contact() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   {language === 'es' ? 'Asunto' : 'Subject'} *
                 </label>
                 <input
@@ -252,13 +252,13 @@ export default function Contact() {
                   value={formData.subject}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1C7BB1] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder={language === 'es' ? 'Motivo de tu consulta' : 'Reason for your inquiry'}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   {language === 'es' ? 'Mensaje' : 'Message'} *
                 </label>
                 <textarea
@@ -267,7 +267,7 @@ export default function Contact() {
                   onChange={handleInputChange}
                   required
                   rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1C7BB1] focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                   placeholder={language === 'es' 
                     ? 'Cuéntanos cómo podemos ayudarte con tu aprendizaje de español...'
                     : 'Tell us how we can help you with your Spanish learning...'
@@ -276,7 +276,7 @@ export default function Contact() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#0A4A6E] mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   {language === 'es' ? 'Forma Preferida de Contacto' : 'Preferred Contact Method'}
                 </label>
                 <div className="flex gap-4">
@@ -325,17 +325,17 @@ export default function Contact() {
         </div>
 
         {/* FAQ Section */}
-        <div className="mt-16 bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-[#0A4A6E] mb-8 text-center">
+        <div className="mt-16 bg-card rounded-xl shadow-lg p-8">
+          <h2 className="text-2xl font-bold text-foreground mb-8 text-center">
             {language === 'es' ? 'Preguntas Frecuentes' : 'Frequently Asked Questions'}
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h3 className="font-semibold text-[#0A4A6E] mb-2">
+              <h3 className="font-semibold text-foreground mb-2">
                 {language === 'es' ? '¿Cómo funciona el programa?' : 'How does the program work?'}
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {language === 'es' 
                   ? 'Nuestro programa ofrece clases personalizadas con profesores nativos certificados, materiales interactivos y seguimiento de progreso.'
                   : 'Our program offers personalized classes with certified native teachers, interactive materials, and progress tracking.'
@@ -344,10 +344,10 @@ export default function Contact() {
             </div>
             
             <div>
-              <h3 className="font-semibold text-[#0A4A6E] mb-2">
+              <h3 className="font-semibold text-foreground mb-2">
                 {language === 'es' ? '¿Puedo cancelar mi suscripción?' : 'Can I cancel my subscription?'}
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {language === 'es' 
                   ? 'Sí, puedes cancelar tu suscripción en cualquier momento. Ofrecemos una garantía de 30 días.'
                   : 'Yes, you can cancel your subscription at any time. We offer a 30-day guarantee.'
@@ -356,10 +356,10 @@ export default function Contact() {
             </div>
             
             <div>
-              <h3 className="font-semibold text-[#0A4A6E] mb-2">
+              <h3 className="font-semibold text-foreground mb-2">
                 {language === 'es' ? '¿Qué nivel necesito para empezar?' : 'What level do I need to start?'}
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {language === 'es' 
                   ? 'Aceptamos estudiantes de todos los niveles, desde principiante absoluto hasta avanzado.'
                   : 'We accept students of all levels, from absolute beginner to advanced.'
@@ -368,10 +368,10 @@ export default function Contact() {
             </div>
             
             <div>
-              <h3 className="font-semibold text-[#0A4A6E] mb-2">
+              <h3 className="font-semibold text-foreground mb-2">
                 {language === 'es' ? '¿Las clases son en grupo o individuales?' : 'Are classes group or individual?'}
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {language === 'es' 
                   ? 'Ofrecemos clases individuales personalizadas para maximizar tu aprendizaje.'
                   : 'We offer personalized individual classes to maximize your learning.'

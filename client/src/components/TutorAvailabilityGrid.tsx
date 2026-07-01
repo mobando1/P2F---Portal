@@ -213,10 +213,10 @@ export default function TutorAvailabilityGrid({ showBackButton, className }: Tut
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-[#0A4A6E]">
+          <h2 className="text-xl font-bold text-foreground">
             {isEs ? "Mi Disponibilidad" : "My Availability"}
           </h2>
-          <p className="text-sm text-[#0A4A6E]/60">
+          <p className="text-sm text-foreground/60">
             {isEs ? "Haz clic en las celdas para activar/desactivar horarios" : "Click cells to toggle time slots"}
           </p>
         </div>
@@ -246,8 +246,8 @@ export default function TutorAvailabilityGrid({ showBackButton, className }: Tut
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-[#1C7BB1]" />
-          <span className="text-sm font-medium text-[#0A4A6E]">
+          <Calendar className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium text-foreground">
             {weekData ? (() => {
               const start = new Date(weekData.weekStart + "T12:00:00");
               const end = new Date(start);
@@ -256,7 +256,7 @@ export default function TutorAvailabilityGrid({ showBackButton, className }: Tut
             })() : "..."}
           </span>
           {weekOffset !== 0 && (
-            <Button variant="ghost" size="sm" className="text-xs text-[#1C7BB1]" onClick={() => { setWeekOffset(0); setToggledSlots(new Map()); setIsDirty(false); }}>
+            <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => { setWeekOffset(0); setToggledSlots(new Map()); setIsDirty(false); }}>
               {isEs ? "Hoy" : "Today"}
             </Button>
           )}
@@ -268,22 +268,22 @@ export default function TutorAvailabilityGrid({ showBackButton, className }: Tut
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 mb-4 text-xs">
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-100 border border-green-300" /> {isEs ? "Disponible" : "Available"}</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#1C7BB1]" /> {isEs ? "Clase reservada" : "Booked class"}</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-100 border border-red-300" /> {isEs ? "Bloqueado" : "Blocked"}</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-white border border-gray-200" /> {isEs ? "No disponible" : "Not available"}</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-success/15 border border-green-300" /> {isEs ? "Disponible" : "Available"}</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary" /> {isEs ? "Clase reservada" : "Booked class"}</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-destructive/15 border border-red-300" /> {isEs ? "Bloqueado" : "Blocked"}</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-card border border-border" /> {isEs ? "No disponible" : "Not available"}</span>
       </div>
 
       {/* Calendar Grid */}
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="animate-spin h-8 w-8 text-[#1C7BB1]" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>
       ) : weekData ? (
         <Card className="border-0 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse min-w-[700px]">
               <thead>
                 <tr>
-                  <th className="w-16 p-2 text-[10px] text-gray-400 font-medium text-right border-b border-gray-100">
+                  <th className="w-16 p-2 text-[10px] text-muted-foreground font-medium text-right border-b border-border">
                     <Clock className="h-3 w-3 inline" />
                   </th>
                   {DAY_ORDER.map(dow => {
@@ -292,13 +292,13 @@ export default function TutorAvailabilityGrid({ showBackButton, className }: Tut
                     return (
                       <th
                         key={dow}
-                        className={`p-2 text-center border-b border-gray-100 ${isToday ? "bg-[#EAF4FA]" : ""}`}
+                        className={`p-2 text-center border-b border-border ${isToday ? "bg-muted" : ""}`}
                       >
-                        <p className={`text-xs font-semibold ${isToday ? "text-[#1C7BB1]" : "text-[#0A4A6E]"}`}>
+                        <p className={`text-xs font-semibold ${isToday ? "text-primary" : "text-foreground"}`}>
                           {dayNames[dow]}
                         </p>
                         {dayData && (
-                          <p className={`text-[10px] ${isToday ? "text-[#1C7BB1]" : "text-gray-400"}`}>
+                          <p className={`text-[10px] ${isToday ? "text-primary" : "text-muted-foreground"}`}>
                             {new Date(dayData.date + "T12:00:00").getDate()}
                           </p>
                         )}
@@ -309,10 +309,10 @@ export default function TutorAvailabilityGrid({ showBackButton, className }: Tut
               </thead>
               <tbody>
                 {timeSlots.map((time, timeIdx) => (
-                  <tr key={time} className={timeIdx % 2 === 0 ? "" : "bg-gray-50/30"}>
+                  <tr key={time} className={timeIdx % 2 === 0 ? "" : "bg-muted/40/30"}>
                     <td className="p-0 pr-2 text-right">
                       {timeIdx % 2 === 0 && (
-                        <span className="text-[10px] text-gray-400">{time}</span>
+                        <span className="text-[10px] text-muted-foreground">{time}</span>
                       )}
                     </td>
                     {DAY_ORDER.map(dow => {
@@ -326,17 +326,17 @@ export default function TutorAvailabilityGrid({ showBackButton, className }: Tut
                       let cellClass = "h-6 rounded-sm cursor-pointer transition-all text-[8px] flex items-center justify-center ";
 
                       if (slot.booked) {
-                        cellClass += "bg-[#1C7BB1] text-white cursor-default";
+                        cellClass += "bg-primary text-primary-foreground cursor-default";
                       } else if (slot.blocked) {
-                        cellClass += "bg-red-100 border border-red-200 text-red-400 cursor-default";
+                        cellClass += "bg-destructive/15 border border-destructive/30 text-red-400 cursor-default";
                       } else if (effectiveAvailable) {
-                        cellClass += "bg-green-100 border border-green-200 hover:bg-green-200";
+                        cellClass += "bg-success/15 border border-success/30 hover:bg-green-200";
                       } else {
-                        cellClass += "bg-white border border-gray-100 hover:bg-gray-100";
+                        cellClass += "bg-card border border-border hover:bg-muted";
                       }
 
                       if (isToday && !slot.booked && !slot.blocked) {
-                        cellClass += " ring-1 ring-[#1C7BB1]/20";
+                        cellClass += " ring-1 ring-primary/20";
                       }
 
                       const content = slot.booked ? (slot.classInfo?.split(" · ")[0] || "") : "";
@@ -366,10 +366,10 @@ export default function TutorAvailabilityGrid({ showBackButton, className }: Tut
       ) : isError ? (
         <Card className="border-0 shadow-sm">
           <CardContent className="p-8 text-center">
-            <div className="w-14 h-14 bg-red-50 rounded-full mx-auto mb-3 flex items-center justify-center">
+            <div className="w-14 h-14 bg-destructive/10 rounded-full mx-auto mb-3 flex items-center justify-center">
               <AlertTriangle className="w-7 h-7 text-red-400" />
             </div>
-            <p className="text-sm text-[#0A4A6E]/70 mb-3">
+            <p className="text-sm text-foreground/70 mb-3">
               {isEs ? "No se pudo cargar el calendario. Intenta de nuevo." : "Could not load calendar. Please try again."}
             </p>
             <Button size="sm" variant="outline" onClick={() => refetch()}>
@@ -383,8 +383,8 @@ export default function TutorAvailabilityGrid({ showBackButton, className }: Tut
       {/* Block Date Section */}
       <Card className="border-0 shadow-sm mt-6">
         <CardContent className="p-4">
-          <h3 className="text-sm font-semibold text-[#0A4A6E] mb-3 flex items-center gap-2">
-            <Ban className="h-4 w-4 text-red-500" />
+          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Ban className="h-4 w-4 text-destructive" />
             {isEs ? "Bloquear Fecha" : "Block Date"}
           </h3>
           <div className="flex flex-wrap gap-3 items-end">
@@ -409,7 +409,7 @@ export default function TutorAvailabilityGrid({ showBackButton, className }: Tut
             <Button
               size="sm"
               variant="outline"
-              className="text-red-600 border-red-200 hover:bg-red-50 h-8"
+              className="text-destructive border-destructive/30 hover:bg-destructive/10 h-8"
               disabled={!exDate || addExceptionMutation.isPending}
               onClick={() => addExceptionMutation.mutate({ date: exDate, reason: exReason })}
             >

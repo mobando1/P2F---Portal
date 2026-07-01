@@ -160,11 +160,11 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
           <>
             <SheetHeader className="pb-4 border-b">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center text-xl font-bold text-[#1C7BB1]">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-xl font-bold text-primary">
                   {data.student.name.charAt(0)}
                 </div>
                 <div>
-                  <SheetTitle className="text-[#0A4A6E] text-lg">{data.student.name}</SheetTitle>
+                  <SheetTitle className="text-foreground text-lg">{data.student.name}</SheetTitle>
                   <p className="text-sm text-muted-foreground">{data.student.email}</p>
                 </div>
                 <div className="ml-auto flex flex-col items-end gap-1">
@@ -179,12 +179,12 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
             {/* Stats grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
               {[
-                { icon: CheckCircle, label: language === "es" ? "Clases" : "Classes", value: data.stats.classesCompleted, color: "text-green-600 bg-green-50" },
-                { icon: BookOpen, label: language === "es" ? "Estaciones" : "Stations", value: data.stats.completedStations, color: "text-[#1C7BB1] bg-[#EAF4FA]" },
+                { icon: CheckCircle, label: language === "es" ? "Clases" : "Classes", value: data.stats.classesCompleted, color: "text-success bg-success/10" },
+                { icon: BookOpen, label: language === "es" ? "Estaciones" : "Stations", value: data.stats.completedStations, color: "text-primary bg-muted" },
                 { icon: ClipboardList, label: language === "es" ? "Quiz prom." : "Quiz avg", value: data.stats.quizAvg > 0 ? `${data.stats.quizAvg}%` : "—", color: "text-purple-600 bg-purple-50" },
                 { icon: MessageSquare, label: "IA", value: data.stats.aiConversations, color: "text-orange-500 bg-orange-50" },
-                { icon: Clock, label: language === "es" ? "Tareas" : "Assignments", value: data.stats.pendingAssignments, color: "text-[#F59E1C] bg-[#F59E1C]/10" },
-                { icon: MapPin, label: language === "es" ? "Estación actual" : "Current station", value: data.currentStation ? `${data.currentStation.level}-${data.currentStation.order}` : "—", color: "text-[#0A4A6E] bg-gray-100" },
+                { icon: Clock, label: language === "es" ? "Tareas" : "Assignments", value: data.stats.pendingAssignments, color: "text-accent bg-accent/10" },
+                { icon: MapPin, label: language === "es" ? "Estación actual" : "Current station", value: data.currentStation ? `${data.currentStation.level}-${data.currentStation.order}` : "—", color: "text-foreground bg-muted" },
               ].map(({ icon: Icon, label, value, color }) => (
                 <div key={label} className={`rounded-lg p-3 ${color.split(" ")[1]}`}>
                   <Icon className={`h-4 w-4 mb-1 ${color.split(" ")[0]}`} />
@@ -199,7 +199,7 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
               <Button
                 size="sm"
                 variant="outline"
-                className="text-[#1C7BB1] border-[#1C7BB1]/30 hover:bg-[#EAF4FA]"
+                className="text-primary border-primary/30 hover:bg-muted"
                 onClick={() => setAssignModal(true)}
               >
                 <PlusCircle className="h-3.5 w-3.5 mr-1" />
@@ -209,18 +209,18 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
 
             {/* Current station */}
             {data.currentStation && (
-              <div className="mt-4 p-3 rounded-lg border border-[#1C7BB1]/20 bg-[#EAF4FA]/50">
-                <p className="text-xs font-semibold text-[#1C7BB1] uppercase mb-1">
+              <div className="mt-4 p-3 rounded-lg border border-primary/20 bg-muted/50">
+                <p className="text-xs font-semibold text-primary uppercase mb-1">
                   {language === "es" ? "Trabajando en" : "Currently on"}
                 </p>
-                <p className="text-sm font-medium text-[#0A4A6E]">{data.currentStation.title}</p>
+                <p className="text-sm font-medium text-foreground">{data.currentStation.title}</p>
                 <p className="text-xs text-muted-foreground">{data.currentStation.level} · Estación {data.currentStation.order}</p>
               </div>
             )}
 
             {/* Class history */}
             <div className="mt-5">
-              <h3 className="text-sm font-semibold text-[#0A4A6E] mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 {language === "es" ? "Historial de clases" : "Class history"}
               </h3>
@@ -234,15 +234,15 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
                   {data.classes.map(c => (
                     <div key={c.id} className="border rounded-lg p-3 space-y-2">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-medium text-[#0A4A6E]">
+                        <p className="text-xs font-medium text-foreground">
                           {fmt(c.scheduledAt, language, { weekday: "short", month: "short", day: "numeric" })}
                           {" · "}{c.duration} min
                         </p>
                         <Badge
                           variant="outline"
                           className={c.status === "completed"
-                            ? "border-green-300 text-green-700 text-[10px]"
-                            : "border-gray-300 text-gray-500 text-[10px]"}
+                            ? "border-green-300 text-success text-[10px]"
+                            : "border-border text-muted-foreground text-[10px]"}
                         >
                           {c.status === "completed"
                             ? (language === "es" ? "Completada" : "Completed")
@@ -253,30 +253,30 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
                       {c.topicsCovered && c.topicsCovered.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {c.topicsCovered.map(t => (
-                            <span key={t} className="text-[10px] bg-[#1C7BB1]/10 text-[#1C7BB1] rounded px-2 py-0.5">{t}</span>
+                            <span key={t} className="text-[10px] bg-primary/10 text-primary rounded px-2 py-0.5">{t}</span>
                           ))}
                         </div>
                       )}
 
                       {c.sharedNotes && (
-                        <p className="text-xs text-[#0A4A6E]/80 leading-relaxed">{c.sharedNotes}</p>
+                        <p className="text-xs text-foreground/80 leading-relaxed">{c.sharedNotes}</p>
                       )}
 
                       {c.homeworkText && (
-                        <div className="p-2 bg-[#F59E1C]/10 rounded border-l-2 border-[#F59E1C]">
-                          <p className="text-[10px] font-semibold text-[#F59E1C] uppercase mb-0.5">
+                        <div className="p-2 bg-accent/10 rounded border-l-2 border-accent">
+                          <p className="text-[10px] font-semibold text-accent uppercase mb-0.5">
                             {language === "es" ? "Tarea" : "Homework"}
                           </p>
-                          <p className="text-xs text-[#0A4A6E]">{c.homeworkText}</p>
+                          <p className="text-xs text-foreground">{c.homeworkText}</p>
                         </div>
                       )}
 
                       {c.sessionNotes && (
-                        <div className="p-2 bg-gray-50 rounded border border-dashed border-gray-300">
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase mb-0.5">
+                        <div className="p-2 bg-muted/40 rounded border border-dashed border-border">
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-0.5">
                             {language === "es" ? "Notas privadas" : "Private notes"}
                           </p>
-                          <p className="text-xs text-gray-500">{c.sessionNotes}</p>
+                          <p className="text-xs text-muted-foreground">{c.sessionNotes}</p>
                         </div>
                       )}
 
@@ -294,15 +294,15 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
             {/* Recent quizzes */}
             {data.recentQuizzes.length > 0 && (
               <div className="mt-5">
-                <h3 className="text-sm font-semibold text-[#0A4A6E] mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   {language === "es" ? "Quizzes recientes" : "Recent quizzes"}
                 </h3>
                 <div className="space-y-2">
                   {data.recentQuizzes.map(q => (
-                    <div key={q.id} className="flex items-center justify-between text-sm px-3 py-2 bg-gray-50 rounded-lg">
+                    <div key={q.id} className="flex items-center justify-between text-sm px-3 py-2 bg-muted/40 rounded-lg">
                       <span className="text-xs text-muted-foreground">{fmt(q.createdAt, language)}</span>
-                      <span className={`text-xs font-bold ${q.score >= 80 ? "text-green-600" : q.score >= 60 ? "text-[#F59E1C]" : "text-red-500"}`}>
+                      <span className={`text-xs font-bold ${q.score >= 80 ? "text-success" : q.score >= 60 ? "text-accent" : "text-destructive"}`}>
                         {q.score}%
                       </span>
                     </div>
@@ -314,7 +314,7 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
             {/* Assignments */}
             {data.assignments.length > 0 && (
               <div className="mt-5 pb-8">
-                <h3 className="text-sm font-semibold text-[#0A4A6E] mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                   <ClipboardList className="h-4 w-4" />
                   {language === "es" ? "Tareas asignadas" : "Assignments"}
                 </h3>
@@ -322,15 +322,15 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
                   {data.assignments.map(a => (
                     <div key={a.id} className="flex items-start justify-between text-sm px-3 py-2 border rounded-lg">
                       <div>
-                        <p className="text-xs font-medium text-[#0A4A6E]">{a.title || (language === "es" ? "Tarea" : "Assignment")}</p>
+                        <p className="text-xs font-medium text-foreground">{a.title || (language === "es" ? "Tarea" : "Assignment")}</p>
                         {a.description && <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{a.description}</p>}
                       </div>
                       <Badge
                         variant="outline"
                         className={
                           a.status === "completed"
-                            ? "border-green-300 text-green-700 text-[10px] ml-2 flex-shrink-0"
-                            : "border-[#F59E1C] text-[#F59E1C] text-[10px] ml-2 flex-shrink-0"
+                            ? "border-green-300 text-success text-[10px] ml-2 flex-shrink-0"
+                            : "border-accent text-accent text-[10px] ml-2 flex-shrink-0"
                         }
                       >
                         {a.status === "completed"
@@ -413,7 +413,7 @@ export default function StudentProfileDrawer({ studentId, onClose }: Props) {
               {language === "es" ? "Cancelar" : "Cancel"}
             </Button>
             <Button
-              className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={!taskTitle.trim() || createAssignmentMutation.isPending}
               onClick={() => createAssignmentMutation.mutate()}
             >

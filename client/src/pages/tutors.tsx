@@ -83,7 +83,7 @@ export default function TutorsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#EAF4FA]">
+    <div className="min-h-screen bg-muted">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -94,10 +94,10 @@ export default function TutorsPage() {
           transition={{ duration: 0.4 }}
           className="mb-6"
         >
-          <h1 className="text-3xl font-bold text-[#0A4A6E] mb-1">
+          <h1 className="text-3xl font-bold text-foreground mb-1">
             {isEs ? "Nuestros Profesores" : "Our Tutors"}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {hasActiveFilters
               ? categoryLabel(classType, langFilter)
               : isEs
@@ -109,13 +109,13 @@ export default function TutorsPage() {
         {/* Mobile filter toggle */}
         <Button
           variant="outline"
-          className="lg:hidden mb-4 border-[#1C7BB1] text-[#1C7BB1]"
+          className="lg:hidden mb-4 border-primary text-primary"
           onClick={() => setShowMobileFilters(!showMobileFilters)}
         >
           <Filter className="w-4 h-4 mr-2" />
           {isEs ? "Filtros" : "Filters"}
           {hasActiveFilters && (
-            <span className="ml-2 bg-[#F59E1C] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">!</span>
+            <span className="ml-2 bg-accent text-accent-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">!</span>
           )}
         </Button>
 
@@ -129,11 +129,11 @@ export default function TutorsPage() {
           >
             <Card className="p-5 sticky top-24">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-[#0A4A6E]">
+                <h3 className="font-bold text-foreground">
                   {isEs ? "Filtros" : "Filters"}
                 </h3>
                 {hasActiveFilters && (
-                  <button onClick={clearFilters} className="text-xs text-[#1C7BB1] hover:underline">
+                  <button onClick={clearFilters} className="text-xs text-primary hover:underline">
                     {isEs ? "Limpiar" : "Clear"}
                   </button>
                 )}
@@ -141,11 +141,11 @@ export default function TutorsPage() {
 
               {/* Search */}
               <div className="mb-5">
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
                   {isEs ? "Buscar" : "Search"}
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder={isEs ? "Nombre o especialidad..." : "Name or specialty..."}
                     value={searchTerm}
@@ -157,7 +157,7 @@ export default function TutorsPage() {
 
               {/* Category */}
               <div className="mb-5">
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
                   {isEs ? "Categoria" : "Category"}
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -171,8 +171,8 @@ export default function TutorsPage() {
                       onClick={() => setClassType(opt.value)}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                         classType === opt.value
-                          ? "bg-[#1C7BB1] text-white shadow-md shadow-[#1C7BB1]/20"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? "bg-primary text-primary-foreground shadow-md shadow-[#1C7BB1]/20"
+                          : "bg-muted text-muted-foreground hover:bg-muted"
                       }`}
                     >
                       {opt.label}
@@ -183,7 +183,7 @@ export default function TutorsPage() {
 
               {/* Language */}
               <div className="mb-5">
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
                   {isEs ? "Idioma que ensena" : "Language Taught"}
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -197,8 +197,8 @@ export default function TutorsPage() {
                       onClick={() => setLangFilter(opt.value)}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                         langFilter === opt.value
-                          ? "bg-[#1C7BB1] text-white shadow-md shadow-[#1C7BB1]/20"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? "bg-primary text-primary-foreground shadow-md shadow-[#1C7BB1]/20"
+                          : "bg-muted text-muted-foreground hover:bg-muted"
                       }`}
                     >
                       {opt.label}
@@ -209,7 +209,7 @@ export default function TutorsPage() {
 
               {/* Rating */}
               <div className="mb-2">
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
                   {isEs ? "Calificacion minima" : "Minimum Rating"}
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -223,8 +223,8 @@ export default function TutorsPage() {
                       onClick={() => setRatingFilter(opt.value)}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                         ratingFilter === opt.value
-                          ? "bg-[#F59E1C] text-white shadow-md shadow-[#F59E1C]/20"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? "bg-accent text-accent-foreground shadow-md shadow-[#F59E1C]/20"
+                          : "bg-muted text-muted-foreground hover:bg-muted"
                       }`}
                     >
                       {opt.value !== "all" && <Star className="w-3 h-3" />}
@@ -239,7 +239,7 @@ export default function TutorsPage() {
           {/* Tutor Cards */}
           <div className="flex-1">
             {/* Results count */}
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               {isEs ? `Mostrando ${tutors.length} profesores` : `Showing ${tutors.length} tutors`}
             </p>
 
@@ -251,14 +251,14 @@ export default function TutorsPage() {
                 animate={{ opacity: 1 }}
                 className="text-center py-16"
               >
-                <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-700 mb-2">
+                <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   {isEs ? "No se encontraron profesores" : "No tutors found"}
                 </h3>
-                <p className="text-gray-500 mb-4">
+                <p className="text-muted-foreground mb-4">
                   {isEs ? "Intenta ajustar tus filtros" : "Try adjusting your filters"}
                 </p>
-                <Button onClick={clearFilters} variant="outline" className="border-[#1C7BB1] text-[#1C7BB1]">
+                <Button onClick={clearFilters} variant="outline" className="border-primary text-primary">
                   {isEs ? "Limpiar Filtros" : "Clear Filters"}
                 </Button>
               </motion.div>
@@ -276,7 +276,7 @@ export default function TutorsPage() {
                         <CardContent className="p-5">
                           <div className="flex flex-col sm:flex-row gap-5">
                             {/* Avatar */}
-                            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
+                            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-muted flex-shrink-0">
                               {tutor.avatar ? (
                                 <img
                                   src={tutor.avatar}
@@ -285,7 +285,7 @@ export default function TutorsPage() {
                                   className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                                 />
                               ) : (
-                                <div className="w-full h-full bg-[#1C7BB1] flex items-center justify-center text-white text-2xl font-bold">
+                                <div className="w-full h-full bg-primary flex items-center justify-center text-white text-2xl font-bold">
                                   {tutor.name.split(" ").map(n => n[0]).join("")}
                                 </div>
                               )}
@@ -294,13 +294,13 @@ export default function TutorsPage() {
                             {/* Info */}
                             <div className="flex-1 min-w-0">
                               <div>
-                                <h3 className="text-lg font-bold text-[#0A4A6E]">{tutor.name}</h3>
-                                <p className="text-sm text-[#1C7BB1] font-medium">{isEs && tutor.specializationEs ? tutor.specializationEs : tutor.specialization}</p>
+                                <h3 className="text-lg font-bold text-foreground">{tutor.name}</h3>
+                                <p className="text-sm text-primary font-medium">{isEs && tutor.specializationEs ? tutor.specializationEs : tutor.specialization}</p>
                               </div>
 
-                              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-600">
+                              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
-                                  <Star className="w-4 h-4 fill-[#F59E1C] text-[#F59E1C]" />
+                                  <Star className="w-4 h-4 fill-[#F59E1C] text-accent" />
                                   <span className="font-semibold">{tutor.rating}</span>
                                   <span>({tutor.reviewCount} {isEs ? "resenas" : "reviews"})</span>
                                 </div>
@@ -319,19 +319,19 @@ export default function TutorsPage() {
                               </div>
 
                               {tutor.bio && (
-                                <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                                   {isEs && tutor.bioEs ? tutor.bioEs : tutor.bio}
                                 </p>
                               )}
 
                               <div className="flex gap-3 mt-4">
                                 <Link href={`/tutor/${tutor.id}`}>
-                                  <Button className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white">
+                                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                                     {isEs ? "Ver Perfil" : "View Profile"}
                                   </Button>
                                 </Link>
                                 <Link href={`/tutor/${tutor.id}`}>
-                                  <Button variant="outline" className="border-[#F59E1C] text-[#F59E1C] hover:bg-[#F59E1C] hover:text-white">
+                                  <Button variant="outline" className="border-accent text-accent hover:bg-accent hover:text-white">
                                     {user?.trialCompleted
                                       ? (isEs ? "Reservar Clase" : "Book Class")
                                       : (isEs ? "Clase Gratis" : "Free Trial")}

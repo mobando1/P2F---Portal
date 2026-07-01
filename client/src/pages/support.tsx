@@ -132,12 +132,12 @@ export default function SupportPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
-            <LifeBuoy className="h-7 w-7 text-[#1C7BB1]" />
-            <h1 className="text-3xl font-bold text-[#0A4A6E]">
+            <LifeBuoy className="h-7 w-7 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">
               {language === "es" ? "Soporte" : "Support"}
             </h1>
           </div>
-          <p className="text-[#0A4A6E]/70">
+          <p className="text-foreground/70">
             {language === "es"
               ? "Envía un ticket para problemas técnicos, quejas, o ayuda general."
               : "Submit a ticket for technical issues, complaints, or general help."}
@@ -147,14 +147,14 @@ export default function SupportPage() {
         {/* List View */}
         {view === "list" && (
           <div className="space-y-4">
-            <Button onClick={() => setView("new")} className="bg-[#1C7BB1] hover:bg-[#0A4A6E]">
+            <Button onClick={() => setView("new")} className="bg-primary hover:bg-primary-900">
               <Plus className="h-4 w-4 mr-2" />
               {language === "es" ? "Nuevo Ticket" : "New Ticket"}
             </Button>
 
             {isLoading ? (
               <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C7BB1]" />
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               </div>
             ) : tickets && tickets.length > 0 ? (
               <div className="space-y-3">
@@ -168,10 +168,10 @@ export default function SupportPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <MessageCircle className="h-4 w-4 text-[#1C7BB1]" />
-                            <h3 className="font-semibold text-[#0A4A6E]">{ticket.subject}</h3>
+                            <MessageCircle className="h-4 w-4 text-primary" />
+                            <h3 className="font-semibold text-foreground">{ticket.subject}</h3>
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
                             <span>#{ticket.id}</span>
                             <Badge variant="outline" className="text-xs">{
                               CATEGORIES.find(c => c.value === ticket.category)?.[language === "es" ? "labelEs" : "labelEn"] || ticket.category
@@ -191,8 +191,8 @@ export default function SupportPage() {
             ) : (
               <Card className="border-0 shadow">
                 <CardContent className="p-12 text-center">
-                  <LifeBuoy className="mx-auto h-12 w-12 text-[#1C7BB1]/30 mb-4" />
-                  <p className="text-[#0A4A6E]/50">
+                  <LifeBuoy className="mx-auto h-12 w-12 text-primary/30 mb-4" />
+                  <p className="text-foreground/50">
                     {language === "es" ? "No tienes tickets de soporte" : "No support tickets yet"}
                   </p>
                 </CardContent>
@@ -205,12 +205,12 @@ export default function SupportPage() {
         {view === "new" && (
           <Card className="border-0 shadow-lg">
             <CardContent className="p-6 space-y-4">
-              <h2 className="text-xl font-semibold text-[#0A4A6E]">
+              <h2 className="text-xl font-semibold text-foreground">
                 {language === "es" ? "Nuevo Ticket" : "New Ticket"}
               </h2>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {language === "es" ? "Asunto" : "Subject"}
                 </label>
                 <Input
@@ -221,7 +221,7 @@ export default function SupportPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {language === "es" ? "Categoría" : "Category"}
                 </label>
                 <select
@@ -238,7 +238,7 @@ export default function SupportPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {language === "es" ? "Mensaje" : "Message"}
                 </label>
                 <Textarea
@@ -253,7 +253,7 @@ export default function SupportPage() {
                 <Button
                   onClick={() => createTicketMutation.mutate(newTicket)}
                   disabled={!newTicket.subject || !newTicket.message || createTicketMutation.isPending}
-                  className="bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+                  className="bg-primary hover:bg-primary-900"
                 >
                   <Send className="h-4 w-4 mr-2" />
                   {createTicketMutation.isPending
@@ -273,7 +273,7 @@ export default function SupportPage() {
           <div className="space-y-4">
             {isDetailLoading ? (
               <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C7BB1]" />
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               </div>
             ) : ticketDetail ? (
               <>
@@ -281,8 +281,8 @@ export default function SupportPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h2 className="text-xl font-semibold text-[#0A4A6E]">{ticketDetail.subject}</h2>
-                        <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                        <h2 className="text-xl font-semibold text-foreground">{ticketDetail.subject}</h2>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                           <span>#{ticketDetail.id}</span>
                           <Badge variant="outline">{
                             CATEGORIES.find(c => c.value === ticketDetail.category)?.[language === "es" ? "labelEs" : "labelEn"] || ticketDetail.category
@@ -301,16 +301,16 @@ export default function SupportPage() {
                         >
                           <div className={`max-w-[80%] rounded-lg p-3 ${
                             msg.isAdmin
-                              ? "bg-[#EAF4FA] text-[#0A4A6E]"
-                              : "bg-[#1C7BB1] text-white"
+                              ? "bg-muted text-foreground"
+                              : "bg-primary text-primary-foreground"
                           }`}>
                             <div className="flex items-center gap-2 mb-1">
-                              <span className={`text-xs font-semibold ${msg.isAdmin ? "text-[#1C7BB1]" : "text-white/80"}`}>
+                              <span className={`text-xs font-semibold ${msg.isAdmin ? "text-primary" : "text-white/80"}`}>
                                 {msg.isAdmin ? (language === "es" ? "Soporte" : "Support") : msg.userName}
                               </span>
                             </div>
                             <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-                            <span className={`text-[10px] mt-1 block ${msg.isAdmin ? "text-gray-400" : "text-white/60"}`}>
+                            <span className={`text-[10px] mt-1 block ${msg.isAdmin ? "text-muted-foreground" : "text-white/60"}`}>
                               {new Date(msg.createdAt).toLocaleString(language === "es" ? "es-ES" : "en-US", {
                                 day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
                               })}
@@ -333,7 +333,7 @@ export default function SupportPage() {
                         <Button
                           onClick={() => replyMutation.mutate(replyMessage)}
                           disabled={!replyMessage.trim() || replyMutation.isPending}
-                          className="bg-[#1C7BB1] hover:bg-[#0A4A6E] self-end"
+                          className="bg-primary hover:bg-primary-900 self-end"
                         >
                           <Send className="h-4 w-4" />
                         </Button>
@@ -341,7 +341,7 @@ export default function SupportPage() {
                     )}
 
                     {ticketDetail.status === "resolved" && (
-                      <div className="mt-4 p-3 bg-green-50 rounded-lg flex items-center gap-2 text-green-700 text-sm">
+                      <div className="mt-4 p-3 bg-success/10 rounded-lg flex items-center gap-2 text-success text-sm">
                         <CheckCircle className="h-4 w-4" />
                         {language === "es" ? "Este ticket ha sido resuelto" : "This ticket has been resolved"}
                       </div>

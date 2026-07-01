@@ -19,7 +19,7 @@ export default function TutorAvailabilityManager({ showBackButton, className }: 
     <div className={className}>
       {/* Title */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-[#0A4A6E]">
+        <h2 className="text-xl font-bold text-foreground">
           {isEs ? "Mi Disponibilidad" : "My Availability"}
         </h2>
         {showBackButton && (
@@ -30,14 +30,14 @@ export default function TutorAvailabilityManager({ showBackButton, className }: 
       </div>
 
       {/* Tab Switcher */}
-      <div className="flex gap-1 mb-6 bg-white rounded-xl p-1 shadow-sm border border-gray-100">
+      <div className="flex gap-1 mb-6 bg-card rounded-xl p-1 shadow-sm border border-border">
         <Button
           variant="ghost"
           size="sm"
           className={`flex-1 rounded-lg transition-all ${
             activeTab === "schedule"
-              ? "bg-[#1C7BB1] text-white hover:bg-[#0A4A6E] shadow-sm"
-              : "text-[#0A4A6E]/60 hover:text-[#0A4A6E] hover:bg-gray-50"
+              ? "bg-primary text-primary-foreground hover:bg-primary-900 shadow-sm"
+              : "text-foreground/60 hover:text-foreground hover:bg-muted/40"
           }`}
           onClick={() => setActiveTab("schedule")}
         >
@@ -49,8 +49,8 @@ export default function TutorAvailabilityManager({ showBackButton, className }: 
           size="sm"
           className={`flex-1 rounded-lg transition-all ${
             activeTab === "calendar"
-              ? "bg-[#1C7BB1] text-white hover:bg-[#0A4A6E] shadow-sm"
-              : "text-[#0A4A6E]/60 hover:text-[#0A4A6E] hover:bg-gray-50"
+              ? "bg-primary text-primary-foreground hover:bg-primary-900 shadow-sm"
+              : "text-foreground/60 hover:text-foreground hover:bg-muted/40"
           }`}
           onClick={() => setActiveTab("calendar")}
         >

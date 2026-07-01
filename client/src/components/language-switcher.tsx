@@ -24,7 +24,7 @@ export default function LanguageSwitcher() {
         <Button
           variant="ghost"
           size="sm"
-          className="flex items-center gap-2 text-gray-600 hover:text-[#1C7BB1] transition-colors px-3 py-2"
+          className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors px-3 py-2"
         >
           <Globe className="w-4 h-4" />
           <span className="text-lg">{currentLanguage?.flag}</span>
@@ -43,7 +43,7 @@ export default function LanguageSwitcher() {
             <span className="text-lg">{lang.flag}</span>
             <span className="font-medium">{lang.name}</span>
             {language === lang.code && (
-              <Check className="w-4 h-4 ml-auto text-[#1C7BB1]" />
+              <Check className="w-4 h-4 ml-auto text-primary" />
             )}
           </DropdownMenuItem>
         ))}

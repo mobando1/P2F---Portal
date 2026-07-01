@@ -55,12 +55,12 @@ export default function AssignmentCard({ assignment, onClick }: AssignmentCardPr
 
   return (
     <Card
-      className={`cursor-pointer transition-shadow hover:shadow-md ${isOverdue ? "border-red-200" : ""}`}
+      className={`cursor-pointer transition-shadow hover:shadow-md ${isOverdue ? "border-destructive/30" : ""}`}
       onClick={onClick}
     >
       <CardContent className="flex items-center gap-3 py-3 px-4">
-        <div className={`p-2 rounded-lg ${isOverdue ? "bg-red-100" : "bg-gray-100"}`}>
-          <Icon size={18} className={isOverdue ? "text-red-600" : "text-gray-600"} />
+        <div className={`p-2 rounded-lg ${isOverdue ? "bg-destructive/15" : "bg-muted"}`}>
+          <Icon size={18} className={isOverdue ? "text-destructive" : "text-muted-foreground"} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm truncate">{title}</p>
@@ -70,7 +70,7 @@ export default function AssignmentCard({ assignment, onClick }: AssignmentCardPr
             {assignment.dueDate && (
               <>
                 <Clock size={12} />
-                <span className={isOverdue ? "text-red-500 font-medium" : ""}>
+                <span className={isOverdue ? "text-destructive font-medium" : ""}>
                   {formatDate(assignment.dueDate)}
                 </span>
               </>

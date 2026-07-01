@@ -44,7 +44,7 @@ export default function NewsletterSignup({ className = "", variant = "default" }
 
   if (done) {
     return (
-      <div className={`flex items-center gap-2 text-green-600 text-sm ${className}`}>
+      <div className={`flex items-center gap-2 text-success text-sm ${className}`}>
         <Mail className="h-4 w-4" />
         {isEs ? "¡Gracias! Estás suscrito." : "Thanks! You're subscribed."}
       </div>

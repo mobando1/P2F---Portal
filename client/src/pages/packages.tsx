@@ -224,14 +224,14 @@ export default function PackagesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA]">
+    <div className="min-h-screen bg-background">
       <Header />
 
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-[#0A4A6E] via-[#1C7BB1] to-[#0A4A6E] relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-[#F59E1C] rounded-full blur-3xl" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-card rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-accent rounded-full blur-3xl" />
         </div>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
           <motion.div
@@ -265,7 +265,7 @@ export default function PackagesPage() {
             {/* Social proof */}
             <div className="mt-6 flex items-center justify-center gap-1.5">
               {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} className="w-5 h-5 text-[#F59E1C] fill-[#F59E1C]" />
+                <Star key={star} className="w-5 h-5 text-accent fill-[#F59E1C]" />
               ))}
               <span className="ml-2 text-white/90 text-sm font-medium">
                 4.9/5 — 5,000+ {language === 'es' ? 'estudiantes' : 'students'}
@@ -278,13 +278,13 @@ export default function PackagesPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20 pb-16">
         {/* Tab Toggle */}
         <div className="flex justify-center mb-10">
-          <div className="inline-flex items-center bg-white rounded-full p-1.5 shadow-lg border border-gray-100">
+          <div className="inline-flex items-center bg-card rounded-full p-1.5 shadow-lg border border-border">
             <button
               onClick={() => setActiveTab("subscriptions")}
               className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
                 activeTab === "subscriptions"
-                  ? "bg-[#0A4A6E] text-white shadow-md"
-                  : "text-[#0A4A6E]/60 hover:text-[#0A4A6E]"
+                  ? "bg-primary-900 text-white shadow-md"
+                  : "text-foreground/60 hover:text-foreground"
               }`}
             >
               {language === 'es' ? 'Planes Mensuales' : 'Monthly Plans'}
@@ -293,8 +293,8 @@ export default function PackagesPage() {
               onClick={() => setActiveTab("packages")}
               className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
                 activeTab === "packages"
-                  ? "bg-[#0A4A6E] text-white shadow-md"
-                  : "text-[#0A4A6E]/60 hover:text-[#0A4A6E]"
+                  ? "bg-primary-900 text-white shadow-md"
+                  : "text-foreground/60 hover:text-foreground"
               }`}
             >
               {language === 'es' ? 'Paquetes de Clases' : 'Class Packages'}
@@ -321,7 +321,7 @@ export default function PackagesPage() {
                 <Card className={`relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow ${
                   plan.popular
                     ? 'ring-2 ring-[#F59E1C] shadow-xl'
-                    : 'border border-gray-100'
+                    : 'border border-border'
                 }`}>
                   {/* Popular ribbon */}
                   {plan.popular && (
@@ -332,26 +332,26 @@ export default function PackagesPage() {
                   <CardContent className={`p-8 ${plan.popular ? '' : 'pt-10'}`}>
                     {/* Plan name */}
                     <div className="text-center mb-6">
-                      <h3 className="text-lg font-bold text-[#0A4A6E] mb-1">{plan.name}</h3>
-                      <p className="text-sm text-[#0A4A6E]/50">
+                      <h3 className="text-lg font-bold text-foreground mb-1">{plan.name}</h3>
+                      <p className="text-sm text-foreground/50">
                         {plan.classesIncluded} {language === 'es' ? 'clases/mes' : 'classes/mo'}
                       </p>
                     </div>
 
                     {/* Price */}
                     <div className="text-center mb-6">
-                      <p className="text-4xl font-extrabold text-[#0A4A6E]">
+                      <p className="text-4xl font-extrabold text-foreground">
                         {formatPrice(plan.price)}
                       </p>
-                      <p className="text-sm text-[#0A4A6E]/50 mt-1">
+                      <p className="text-sm text-foreground/50 mt-1">
                         {language === 'es' ? 'por mes' : 'per month'}
                       </p>
                       <div className="flex items-center justify-center gap-2 mt-3">
-                        <span className="text-xs text-[#0A4A6E]/40">
+                        <span className="text-xs text-foreground/40">
                           {formatPrice(plan.price / (plan.classesIncluded || 1))} {language === 'es' ? '/ clase' : '/ class'}
                         </span>
                         {plan.discountPercent > 0 && (
-                          <Badge className="bg-[#F59E1C]/10 text-[#F59E1C] border-0 text-xs font-bold hover:bg-[#F59E1C]/10">
+                          <Badge className="bg-accent/10 text-accent border-0 text-xs font-bold hover:bg-accent/10">
                             -{plan.discountPercent}%
                           </Badge>
                         )}
@@ -359,16 +359,16 @@ export default function PackagesPage() {
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-gray-100 mb-6" />
+                    <div className="border-t border-border mb-6" />
 
                     {/* Features */}
                     <div className="space-y-3 mb-8">
                       {plan.features.map((feature, index) => (
                         <div key={index} className="flex items-start gap-3">
-                          <div className="w-5 h-5 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Check className="w-3 h-3 text-[#1C7BB1]" />
+                          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-primary" />
                           </div>
-                          <span className="text-sm text-[#0A4A6E]/70">{feature}</span>
+                          <span className="text-sm text-foreground/70">{feature}</span>
                         </div>
                       ))}
                     </div>
@@ -377,8 +377,8 @@ export default function PackagesPage() {
                     <Button
                       className={`w-full h-12 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all ${
                         plan.popular
-                          ? 'bg-[#F59E1C] hover:bg-[#e08a0e] text-white shadow-lg shadow-[#F59E1C]/25'
-                          : 'bg-[#0A4A6E] hover:bg-[#1C7BB1] text-white'
+                          ? 'bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-[#F59E1C]/25'
+                          : 'bg-primary-900 hover:bg-primary text-primary-foreground'
                       }`}
                       onClick={() => handleSubscriptionPurchase(plan)}
                       disabled={isProcessing}
@@ -423,8 +423,8 @@ export default function PackagesPage() {
               >
                 <Card className={`relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow ${
                   pkg.popular
-                    ? 'ring-2 ring-[#1C7BB1] shadow-xl'
-                    : 'border border-gray-100'
+                    ? 'ring-2 ring-primary shadow-xl'
+                    : 'border border-border'
                 }`}>
                   {pkg.popular && (
                     <div className="bg-gradient-to-r from-[#1C7BB1] to-[#0A4A6E] text-white text-center py-2 text-sm font-bold tracking-wide">
@@ -436,25 +436,25 @@ export default function PackagesPage() {
                     <div className="text-center mb-6">
                       <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-3 ${
                         pkg.popular
-                          ? 'bg-[#1C7BB1]/10'
-                          : 'bg-[#EAF4FA]'
+                          ? 'bg-primary/10'
+                          : 'bg-muted'
                       }`}>
-                        <span className="text-2xl font-extrabold text-[#1C7BB1]">{pkg.classCount}</span>
+                        <span className="text-2xl font-extrabold text-primary">{pkg.classCount}</span>
                       </div>
-                      <h3 className="text-lg font-bold text-[#0A4A6E]">{pkg.name}</h3>
+                      <h3 className="text-lg font-bold text-foreground">{pkg.name}</h3>
                     </div>
 
                     {/* Price */}
                     <div className="text-center mb-6">
-                      <p className="text-4xl font-extrabold text-[#0A4A6E]">
+                      <p className="text-4xl font-extrabold text-foreground">
                         {formatPrice(pkg.price)}
                       </p>
                       <div className="flex items-center justify-center gap-2 mt-3">
-                        <span className="text-xs text-[#0A4A6E]/40">
+                        <span className="text-xs text-foreground/40">
                           {formatPrice(pkg.perClassPrice)} {language === 'es' ? '/ clase' : '/ class'}
                         </span>
                         {pkg.discountPercent > 0 && (
-                          <Badge className="bg-[#F59E1C]/10 text-[#F59E1C] border-0 text-xs font-bold hover:bg-[#F59E1C]/10">
+                          <Badge className="bg-accent/10 text-accent border-0 text-xs font-bold hover:bg-accent/10">
                             -{pkg.discountPercent}%
                           </Badge>
                         )}
@@ -462,39 +462,39 @@ export default function PackagesPage() {
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-gray-100 mb-6" />
+                    <div className="border-t border-border mb-6" />
 
                     {/* Features */}
                     <div className="space-y-3 mb-8">
                       <div className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-3 h-3 text-[#1C7BB1]" />
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-primary" />
                         </div>
-                        <span className="text-sm text-[#0A4A6E]/70">
+                        <span className="text-sm text-foreground/70">
                           {pkg.classCount} {language === 'es' ? 'clases individuales (60 min)' : 'individual classes (60 min)'}
                         </span>
                       </div>
                       <div className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-3 h-3 text-[#1C7BB1]" />
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-primary" />
                         </div>
-                        <span className="text-sm text-[#0A4A6E]/70">
+                        <span className="text-sm text-foreground/70">
                           {language === 'es' ? 'Válido por 6 meses' : 'Valid for 6 months'}
                         </span>
                       </div>
                       <div className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-3 h-3 text-[#1C7BB1]" />
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-primary" />
                         </div>
-                        <span className="text-sm text-[#0A4A6E]/70">
+                        <span className="text-sm text-foreground/70">
                           {language === 'es' ? 'Horarios flexibles' : 'Flexible schedules'}
                         </span>
                       </div>
                       <div className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-3 h-3 text-[#1C7BB1]" />
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-primary" />
                         </div>
-                        <span className="text-sm text-[#0A4A6E]/70">
+                        <span className="text-sm text-foreground/70">
                           {language === 'es' ? 'Sin expiración mensual' : 'No monthly expiration'}
                         </span>
                       </div>
@@ -504,8 +504,8 @@ export default function PackagesPage() {
                     <Button
                       className={`w-full h-12 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all ${
                         pkg.popular
-                          ? 'bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white shadow-lg shadow-[#1C7BB1]/25'
-                          : 'bg-[#0A4A6E] hover:bg-[#1C7BB1] text-white'
+                          ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-[#1C7BB1]/25'
+                          : 'bg-primary-900 hover:bg-primary text-primary-foreground'
                       }`}
                       onClick={() => handlePackagePurchase(pkg)}
                       disabled={isProcessing}
@@ -536,20 +536,20 @@ export default function PackagesPage() {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="mt-16"
         >
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-            <h2 className="text-2xl font-bold text-[#0A4A6E] text-center mb-8">
+          <div className="bg-card rounded-2xl shadow-lg border border-border p-8">
+            <h2 className="text-2xl font-bold text-foreground text-center mb-8">
               {language === 'es' ? '¿Por qué elegir Passport2Fluency?' : 'Why choose Passport2Fluency?'}
             </h2>
             <div className="grid md:grid-cols-3 gap-8">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0">
-                  <Users className="w-6 h-6 text-[#1C7BB1]" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Users className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#0A4A6E] mb-1">
+                  <h3 className="font-semibold text-foreground mb-1">
                     {language === 'es' ? 'Profesores Nativos' : 'Native Teachers'}
                   </h3>
-                  <p className="text-sm text-[#0A4A6E]/60">
+                  <p className="text-sm text-foreground/60">
                     {language === 'es'
                       ? 'Certificados y con experiencia comprobada'
                       : 'Certified with proven experience'}
@@ -557,14 +557,14 @@ export default function PackagesPage() {
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#F59E1C]/10 flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-6 h-6 text-[#F59E1C]" />
+                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-6 h-6 text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#0A4A6E] mb-1">
+                  <h3 className="font-semibold text-foreground mb-1">
                     {language === 'es' ? 'Garantía 30 Días' : '30-Day Guarantee'}
                   </h3>
-                  <p className="text-sm text-[#0A4A6E]/60">
+                  <p className="text-sm text-foreground/60">
                     {language === 'es'
                       ? 'Si no estás satisfecho, te devolvemos tu dinero'
                       : 'Not satisfied? We refund your money'}
@@ -572,14 +572,14 @@ export default function PackagesPage() {
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0">
-                  <Zap className="w-6 h-6 text-[#1C7BB1]" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#0A4A6E] mb-1">
+                  <h3 className="font-semibold text-foreground mb-1">
                     {language === 'es' ? 'Horarios Flexibles' : 'Flexible Schedules'}
                   </h3>
-                  <p className="text-sm text-[#0A4A6E]/60">
+                  <p className="text-sm text-foreground/60">
                     {language === 'es'
                       ? 'Reserva clases 24/7, adapta a tu vida'
                       : 'Book classes 24/7, adapt to your life'}
@@ -597,19 +597,19 @@ export default function PackagesPage() {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="mt-8 text-center"
         >
-          <div className="inline-flex flex-wrap items-center justify-center gap-6 px-8 py-4 bg-[#EAF4FA] rounded-full">
-            <div className="flex items-center gap-2 text-sm text-[#0A4A6E]">
-              <Shield className="w-4 h-4 text-[#1C7BB1]" />
+          <div className="inline-flex flex-wrap items-center justify-center gap-6 px-8 py-4 bg-muted rounded-full">
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <Shield className="w-4 h-4 text-primary" />
               <span>{language === 'es' ? 'Garantía de 30 días' : '30-day guarantee'}</span>
             </div>
-            <div className="w-px h-4 bg-[#1C7BB1]/20 hidden sm:block" />
-            <div className="flex items-center gap-2 text-sm text-[#0A4A6E]">
-              <Check className="w-4 h-4 text-[#1C7BB1]" />
+            <div className="w-px h-4 bg-primary/20 hidden sm:block" />
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <Check className="w-4 h-4 text-primary" />
               <span>{language === 'es' ? 'Cancela cuando quieras' : 'Cancel anytime'}</span>
             </div>
-            <div className="w-px h-4 bg-[#1C7BB1]/20 hidden sm:block" />
-            <div className="flex items-center gap-2 text-sm text-[#0A4A6E]">
-              <Clock className="w-4 h-4 text-[#1C7BB1]" />
+            <div className="w-px h-4 bg-primary/20 hidden sm:block" />
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <Clock className="w-4 h-4 text-primary" />
               <span>{language === 'es' ? 'Soporte 24/7' : '24/7 support'}</span>
             </div>
           </div>

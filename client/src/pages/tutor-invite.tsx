@@ -58,11 +58,11 @@ export default function TutorInvitePage() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-4 text-red-400" size={48} />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">{isEs ? "Link inválido" : "Invalid link"}</h2>
-          <p className="text-gray-500">{isEs ? "Este link de invitación no es válido." : "This invite link is not valid."}</p>
+          <h2 className="text-xl font-bold text-foreground mb-2">{isEs ? "Link inválido" : "Invalid link"}</h2>
+          <p className="text-muted-foreground">{isEs ? "Este link de invitación no es válido." : "This invite link is not valid."}</p>
         </div>
       </div>
     );
@@ -70,19 +70,19 @@ export default function TutorInvitePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center">
-        <Loader2 className="animate-spin h-8 w-8 text-[#1C7BB1]" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
       </div>
     );
   }
 
   if (isError || !inviteData) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
           <AlertCircle className="mx-auto mb-4 text-red-400" size={48} />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">{isEs ? "Link inválido o expirado" : "Invalid or expired link"}</h2>
-          <p className="text-gray-500 text-sm">
+          <h2 className="text-xl font-bold text-foreground mb-2">{isEs ? "Link inválido o expirado" : "Invalid or expired link"}</h2>
+          <p className="text-muted-foreground text-sm">
             {isEs ? "Este link de invitación no es válido o ya expiró. Contacta al administrador para obtener un nuevo link." : "This invite link is invalid or expired. Contact the administrator for a new link."}
           </p>
         </div>
@@ -92,43 +92,43 @@ export default function TutorInvitePage() {
 
   if (acceptMutation.isSuccess) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
           <CheckCircle className="mx-auto mb-4 text-green-500" size={56} />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">{isEs ? "¡Cuenta activada!" : "Account activated!"}</h2>
-          <p className="text-gray-500">{isEs ? "Redirigiendo a tu panel..." : "Redirecting to your dashboard..."}</p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">{isEs ? "¡Cuenta activada!" : "Account activated!"}</h2>
+          <p className="text-muted-foreground">{isEs ? "Redirigiendo a tu panel..." : "Redirecting to your dashboard..."}</p>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 w-full max-w-md"
+        className="bg-card rounded-2xl shadow-lg border border-border p-8 w-full max-w-md"
       >
         {/* Logo / Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#EAF4FA] mb-4">
-            <Lock size={28} className="text-[#1C7BB1]" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+            <Lock size={28} className="text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-[#0A4A6E]">{isEs ? "Activa tu cuenta" : "Activate your account"}</h1>
-          <p className="text-gray-500 text-sm mt-1">Passport2Fluency</p>
+          <h1 className="text-2xl font-bold text-foreground">{isEs ? "Activa tu cuenta" : "Activate your account"}</h1>
+          <p className="text-muted-foreground text-sm mt-1">Passport2Fluency</p>
         </div>
 
         {/* Greeting */}
-        <div className="bg-[#EAF4FA] rounded-xl p-4 mb-6">
-          <p className="text-[#0A4A6E] font-medium">{isEs ? "Hola" : "Hi"}, {inviteData.name} 👋</p>
-          <p className="text-sm text-[#1C7BB1] mt-0.5">{inviteData.email}</p>
+        <div className="bg-muted rounded-xl p-4 mb-6">
+          <p className="text-foreground font-medium">{isEs ? "Hola" : "Hi"}, {inviteData.name} 👋</p>
+          <p className="text-sm text-primary mt-0.5">{inviteData.email}</p>
         </div>
 
-        <p className="text-sm text-gray-600 mb-6">
+        <p className="text-sm text-muted-foreground mb-6">
           {isEs ? "El equipo de Passport2Fluency te ha invitado como profesor. Crea tu contraseña para activar tu cuenta." : "The Passport2Fluency team has invited you as a tutor. Create your password to activate your account."}
         </p>
 
@@ -157,17 +157,17 @@ export default function TutorInvitePage() {
           </div>
 
           {clientError && (
-            <p className="text-sm text-red-600">{clientError}</p>
+            <p className="text-sm text-destructive">{clientError}</p>
           )}
           {acceptMutation.isError && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-destructive">
               {(acceptMutation.error as any)?.message || (isEs ? "Error al activar la cuenta. Intenta de nuevo." : "Failed to activate account. Please try again.")}
             </p>
           )}
 
           <Button
             type="submit"
-            className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+            className="w-full bg-primary hover:bg-primary-900"
             disabled={acceptMutation.isPending}
           >
             {acceptMutation.isPending ? (

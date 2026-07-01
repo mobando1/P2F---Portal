@@ -17,7 +17,7 @@ const modes: { id: Mode; icon: typeof MessageSquare; labelEs: string; labelEn: s
 
 export function ModeSelector({ mode, onChange, language }: ModeSelectorProps) {
   return (
-    <div className="relative flex gap-0.5 p-1 bg-gray-100/80 rounded-xl">
+    <div className="relative flex gap-0.5 p-1 bg-muted/80 rounded-xl">
       {modes.map((m) => {
         const Icon = m.icon;
         const isActive = mode === m.id;
@@ -30,12 +30,12 @@ export function ModeSelector({ mode, onChange, language }: ModeSelectorProps) {
             {isActive && (
               <motion.div
                 layoutId="mode-pill"
-                className="absolute inset-0 bg-white rounded-lg shadow-sm"
+                className="absolute inset-0 bg-card rounded-lg shadow-sm"
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
               />
             )}
             <span className={`relative flex items-center gap-1.5 ${
-              isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
+              isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
             }`}>
               <Icon className="w-3.5 h-3.5" />
               <span>{language === "es" ? m.labelEs : m.labelEn}</span>

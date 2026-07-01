@@ -95,7 +95,7 @@ export function VoiceInput({ onTranscript, language, disabled }: VoiceInputProps
         className={`p-2.5 rounded-xl transition-all ${
           isListening
             ? "bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-300/40"
-            : "bg-gray-100 text-gray-500 hover:bg-blue-50 hover:text-blue-600"
+            : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary"
         } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
       >
         {isListening ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}

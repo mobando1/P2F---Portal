@@ -76,25 +76,25 @@ export function AttendanceConfirmationBanner() {
           ? (isEs ? "Estudiante" : "Student")
           : (isEs ? "Tutor" : "Tutor");
         return (
-          <Card key={item.id} className="border-0 shadow-md bg-gradient-to-r from-[#F59E1C]/15 to-[#1C7BB1]/10 border-l-4 border-l-[#F59E1C]">
+          <Card key={item.id} className="border-0 shadow-md bg-gradient-to-r from-[#F59E1C]/15 to-[#1C7BB1]/10 border border-accent/30">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start gap-3 mb-3">
-                <div className="p-2 bg-[#F59E1C]/20 rounded-lg flex-shrink-0">
-                  <AlertCircle className="h-5 w-5 text-[#F59E1C]" />
+                <div className="p-2 bg-accent/20 rounded-lg flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-accent" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-[#0A4A6E] text-sm sm:text-base">{question}</h3>
-                  <p className="text-[#0A4A6E]/70 text-xs sm:text-sm mt-1">
+                  <h3 className="font-bold text-foreground text-sm sm:text-base">{question}</h3>
+                  <p className="text-foreground/70 text-xs sm:text-sm mt-1">
                     {counterpartLabel}: <span className="font-semibold">{item.counterpartName}</span>
                   </p>
-                  <p className="text-[#0A4A6E]/60 text-xs mt-0.5">{formatWhen(item.scheduledAt)}</p>
+                  <p className="text-foreground/60 text-xs mt-0.5">{formatWhen(item.scheduledAt)}</p>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   onClick={() => confirmMutation.mutate({ classId: item.id, attended: true })}
                   disabled={confirmMutation.isPending}
-                  className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white flex-1"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground flex-1"
                 >
                   <Check className="w-4 h-4 mr-2" />
                   {yesLabel}
@@ -103,7 +103,7 @@ export function AttendanceConfirmationBanner() {
                   onClick={() => confirmMutation.mutate({ classId: item.id, attended: false })}
                   disabled={confirmMutation.isPending}
                   variant="outline"
-                  className="border-[#0A4A6E]/30 text-[#0A4A6E] hover:bg-[#0A4A6E]/10 flex-1"
+                  className="border-primary-900/30 text-foreground hover:bg-primary-900/10 flex-1"
                 >
                   <X className="w-4 h-4 mr-2" />
                   {noLabel}

@@ -135,8 +135,8 @@ export default function MessagesPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
-            <MessageCircle className="h-7 w-7 text-[#1C7BB1]" />
-            <h1 className="text-3xl font-bold text-[#0A4A6E]">
+            <MessageCircle className="h-7 w-7 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">
               {language === "es" ? "Mensajes" : "Messages"}
             </h1>
           </div>
@@ -149,15 +149,15 @@ export default function MessagesPage() {
               <CardContent className="p-0">
                 {isLoading ? (
                   <div className="p-8 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C7BB1]" />
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
                   </div>
                 ) : !conversations || conversations.length === 0 ? (
                   <div className="p-8 text-center">
-                    <MessageCircle className="mx-auto h-12 w-12 text-[#1C7BB1]/30 mb-4" />
-                    <p className="text-[#0A4A6E]/50 text-sm">
+                    <MessageCircle className="mx-auto h-12 w-12 text-primary/30 mb-4" />
+                    <p className="text-foreground/50 text-sm">
                       {language === "es" ? "Sin conversaciones aun" : "No conversations yet"}
                     </p>
-                    <p className="text-[#0A4A6E]/30 text-xs mt-1">
+                    <p className="text-foreground/30 text-xs mt-1">
                       {language === "es"
                         ? "Envia un mensaje desde el perfil de un tutor"
                         : "Send a message from a tutor's profile"}
@@ -169,34 +169,34 @@ export default function MessagesPage() {
                       <button
                         key={conv.id}
                         onClick={() => setSelectedConvId(conv.id)}
-                        className={`w-full p-4 text-left hover:bg-[#EAF4FA]/50 transition-colors ${
-                          selectedConvId === conv.id ? "bg-[#EAF4FA]" : ""
+                        className={`w-full p-4 text-left hover:bg-muted/50 transition-colors ${
+                          selectedConvId === conv.id ? "bg-muted" : ""
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                             {conv.participant.avatar ? (
                               <img src={conv.participant.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                             ) : (
-                              <UserCircle className="h-6 w-6 text-[#1C7BB1]" />
+                              <UserCircle className="h-6 w-6 text-primary" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <h4 className="text-sm font-semibold text-[#0A4A6E] truncate">{conv.participant.name}</h4>
+                              <h4 className="text-sm font-semibold text-foreground truncate">{conv.participant.name}</h4>
                               <div className="flex items-center gap-1.5 flex-shrink-0">
                                 {conv.lastMessageAt && (
-                                  <span className="text-[10px] text-[#0A4A6E]/40">{formatRelativeTime(conv.lastMessageAt)}</span>
+                                  <span className="text-[10px] text-foreground/40">{formatRelativeTime(conv.lastMessageAt)}</span>
                                 )}
                                 {conv.unreadCount > 0 && (
-                                  <Badge className="bg-[#1C7BB1] text-white text-[10px] h-5 min-w-5 flex items-center justify-center">
+                                  <Badge className="bg-primary text-primary-foreground text-[10px] h-5 min-w-5 flex items-center justify-center">
                                     {conv.unreadCount}
                                   </Badge>
                                 )}
                               </div>
                             </div>
                             {conv.lastMessage && (
-                              <p className="text-xs text-[#0A4A6E]/50 truncate mt-0.5">
+                              <p className="text-xs text-foreground/50 truncate mt-0.5">
                                 {conv.lastMessage.senderId === user.id ? (language === "es" ? "Tu: " : "You: ") : ""}
                                 {conv.lastMessage.message}
                               </p>
@@ -217,8 +217,8 @@ export default function MessagesPage() {
               {!selectedConvId ? (
                 <CardContent className="flex-1 flex items-center justify-center p-8">
                   <div className="text-center">
-                    <MessageCircle className="mx-auto h-16 w-16 text-[#1C7BB1]/20 mb-4" />
-                    <p className="text-[#0A4A6E]/40">
+                    <MessageCircle className="mx-auto h-16 w-16 text-primary/20 mb-4" />
+                    <p className="text-foreground/40">
                       {language === "es" ? "Selecciona una conversacion" : "Select a conversation"}
                     </p>
                   </div>
@@ -226,17 +226,17 @@ export default function MessagesPage() {
               ) : (
                 <>
                   {/* Chat Header */}
-                  <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center">
+                  <div className="p-4 border-b border-border flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                       {selectedConv?.participant.avatar ? (
                         <img src={selectedConv.participant.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                       ) : (
-                        <UserCircle className="h-5 w-5 text-[#1C7BB1]" />
+                        <UserCircle className="h-5 w-5 text-primary" />
                       )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-[#0A4A6E] text-sm">{selectedConv?.participant.name}</h3>
-                      <p className="text-[10px] text-[#0A4A6E]/50">
+                      <h3 className="font-semibold text-foreground text-sm">{selectedConv?.participant.name}</h3>
+                      <p className="text-[10px] text-foreground/50">
                         {selectedConv?.participant.userType === "tutor"
                           ? (language === "es" ? "Tutor" : "Tutor")
                           : (language === "es" ? "Estudiante" : "Student")}
@@ -252,11 +252,11 @@ export default function MessagesPage() {
                         <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                           <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
                             isMe
-                              ? "bg-[#1C7BB1] text-white rounded-br-md"
-                              : "bg-gray-100 text-[#0A4A6E] rounded-bl-md"
+                              ? "bg-primary text-primary-foreground rounded-br-md"
+                              : "bg-muted text-foreground rounded-bl-md"
                           }`}>
                             <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-                            <span className={`text-[10px] mt-1 block ${isMe ? "text-white/60" : "text-gray-400"}`}>
+                            <span className={`text-[10px] mt-1 block ${isMe ? "text-white/60" : "text-muted-foreground"}`}>
                               {new Date(msg.createdAt).toLocaleTimeString(language === "es" ? "es-ES" : "en-US", {
                                 hour: "numeric", minute: "2-digit",
                               })}
@@ -269,7 +269,7 @@ export default function MessagesPage() {
                   </div>
 
                   {/* Input */}
-                  <div className="p-4 border-t border-gray-100">
+                  <div className="p-4 border-t border-border">
                     <div className="flex gap-2">
                       <Textarea
                         value={newMessage}
@@ -287,7 +287,7 @@ export default function MessagesPage() {
                       <Button
                         onClick={() => { if (newMessage.trim()) sendMutation.mutate(newMessage); }}
                         disabled={!newMessage.trim() || sendMutation.isPending}
-                        className="bg-[#1C7BB1] hover:bg-[#0A4A6E] self-end"
+                        className="bg-primary hover:bg-primary-900 self-end"
                       >
                         <Send className="h-4 w-4" />
                       </Button>

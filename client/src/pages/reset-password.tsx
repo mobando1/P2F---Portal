@@ -56,10 +56,10 @@ export default function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-4 text-red-400" size={48} />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">{isEs ? "Link inválido" : "Invalid link"}</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">{isEs ? "Link inválido" : "Invalid link"}</h2>
           <Link href="/forgot-password">
             <Button variant="outline" className="mt-4">{isEs ? "Solicitar nuevo enlace" : "Request new link"}</Button>
           </Link>
@@ -70,21 +70,21 @@ export default function ResetPasswordPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center">
-        <Loader2 className="animate-spin h-8 w-8 text-[#1C7BB1]" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
       </div>
     );
   }
 
   if (isError || !tokenData) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
           <AlertCircle className="mx-auto mb-4 text-red-400" size={48} />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
+          <h2 className="text-xl font-bold text-foreground mb-2">
             {isEs ? "Enlace inválido o expirado" : "Invalid or expired link"}
           </h2>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             {isEs ? "Solicita un nuevo enlace de recuperación." : "Please request a new reset link."}
           </p>
           <Link href="/forgot-password">
@@ -97,17 +97,17 @@ export default function ResetPasswordPage() {
 
   if (mutation.isSuccess) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
           <CheckCircle className="mx-auto mb-4 text-green-500" size={56} />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
             {isEs ? "Contraseña actualizada" : "Password updated"}
           </h2>
-          <p className="text-gray-500 mb-6">
+          <p className="text-muted-foreground mb-6">
             {isEs ? "Ya puedes iniciar sesión con tu nueva contraseña." : "You can now log in with your new password."}
           </p>
           <Link href="/login">
-            <Button className="bg-[#1C7BB1] hover:bg-[#0A4A6E]">
+            <Button className="bg-primary hover:bg-primary-900">
               {isEs ? "Ir a iniciar sesión" : "Go to login"}
             </Button>
           </Link>
@@ -117,20 +117,20 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 w-full max-w-md"
+        className="bg-card rounded-2xl shadow-lg border border-border p-8 w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#EAF4FA] mb-4">
-            <Lock size={28} className="text-[#1C7BB1]" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+            <Lock size={28} className="text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-[#0A4A6E]">
+          <h1 className="text-2xl font-bold text-foreground">
             {isEs ? "Nueva contraseña" : "New password"}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">{tokenData.email}</p>
+          <p className="text-sm text-muted-foreground mt-1">{tokenData.email}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -157,16 +157,16 @@ export default function ResetPasswordPage() {
             />
           </div>
 
-          {clientError && <p className="text-sm text-red-600">{clientError}</p>}
+          {clientError && <p className="text-sm text-destructive">{clientError}</p>}
           {mutation.isError && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-destructive">
               {(mutation.error as any)?.message || (isEs ? "Error al restablecer. Intenta de nuevo." : "Reset failed. Try again.")}
             </p>
           )}
 
           <Button
             type="submit"
-            className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+            className="w-full bg-primary hover:bg-primary-900"
             disabled={mutation.isPending}
           >
             {mutation.isPending ? (
@@ -178,7 +178,7 @@ export default function ResetPasswordPage() {
         </form>
 
         <div className="mt-6 text-center">
-          <Link href="/login" className="text-sm text-[#1C7BB1] hover:text-[#0A4A6E]">
+          <Link href="/login" className="text-sm text-primary hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5 inline mr-1" />
             {isEs ? "Volver al inicio de sesión" : "Back to login"}
           </Link>

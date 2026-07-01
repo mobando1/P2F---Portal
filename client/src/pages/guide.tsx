@@ -450,24 +450,24 @@ function GuideCard({ section, index, language }: { section: GuideSection; index:
     <motion.div variants={fadeInUp}>
       <Card
         className={`border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer ${
-          expanded ? "ring-1 ring-[#1C7BB1]/20" : ""
+          expanded ? "ring-1 ring-primary/20" : ""
         }`}
         onClick={() => setExpanded(!expanded)}
       >
         <CardContent className="p-0">
           <div className="flex items-center justify-between p-5">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-[#1C7BB1]/10">
-                <Icon className="h-5 w-5 text-[#1C7BB1]" />
+              <div className="p-2.5 rounded-lg bg-primary/10">
+                <Icon className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold text-[#0A4A6E]">
+              <h3 className="text-lg font-semibold text-foreground">
                 {language === "es" ? section.titleEs : section.titleEn}
               </h3>
             </div>
             {expanded ? (
-              <ChevronUp className="h-5 w-5 text-[#0A4A6E]/40" />
+              <ChevronUp className="h-5 w-5 text-foreground/40" />
             ) : (
-              <ChevronDown className="h-5 w-5 text-[#0A4A6E]/40" />
+              <ChevronDown className="h-5 w-5 text-foreground/40" />
             )}
           </div>
 
@@ -476,10 +476,10 @@ function GuideCard({ section, index, language }: { section: GuideSection; index:
               <ol className="space-y-3">
                 {section.steps.map((step, i) => (
                   <li key={i} className="flex gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#F59E1C]/15 text-[#F59E1C] text-xs font-bold flex items-center justify-center mt-0.5">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center mt-0.5">
                       {i + 1}
                     </span>
-                    <p className="text-sm text-[#0A4A6E]/80 leading-relaxed">
+                    <p className="text-sm text-foreground/80 leading-relaxed">
                       {language === "es" ? step.es : step.en}
                     </p>
                   </li>
@@ -487,11 +487,11 @@ function GuideCard({ section, index, language }: { section: GuideSection; index:
               </ol>
 
               {(section.tipEs || section.tipEn) && (
-                <div className="mt-4 p-3 rounded-lg bg-[#EAF4FA] border border-[#1C7BB1]/10">
-                  <p className="text-xs font-semibold text-[#1C7BB1] mb-1">
+                <div className="mt-4 p-3 rounded-lg bg-muted border border-primary/10">
+                  <p className="text-xs font-semibold text-primary mb-1">
                     {language === "es" ? "Consejo" : "Tip"}
                   </p>
-                  <p className="text-sm text-[#0A4A6E]/70">
+                  <p className="text-sm text-foreground/70">
                     {language === "es" ? section.tipEs : section.tipEn}
                   </p>
                 </div>
@@ -532,12 +532,12 @@ export default function GuidePage() {
           className="mb-8"
         >
           <div className="flex items-center gap-3 mb-2">
-            <BookOpen className="h-7 w-7 text-[#1C7BB1]" />
-            <h1 className="text-3xl font-bold text-[#0A4A6E]">
+            <BookOpen className="h-7 w-7 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">
               {language === "es" ? "Guia de Uso" : "User Guide"}
             </h1>
           </div>
-          <p className="text-[#0A4A6E]/70">
+          <p className="text-foreground/70">
             {language === "es"
               ? "Aprende como aprovechar al maximo la plataforma Passport2Fluency."
               : "Learn how to get the most out of the Passport2Fluency platform."}
@@ -548,7 +548,7 @@ export default function GuidePage() {
         <div className="flex gap-2 mb-8">
           <Button
             variant={activeTab === "student" ? "default" : "outline"}
-            className={activeTab === "student" ? "bg-[#1C7BB1] hover:bg-[#0A4A6E]" : "text-[#0A4A6E]"}
+            className={activeTab === "student" ? "bg-primary hover:bg-primary-900" : "text-foreground"}
             onClick={() => setActiveTab("student")}
           >
             <GraduationCap className="h-4 w-4 mr-2" />
@@ -556,7 +556,7 @@ export default function GuidePage() {
           </Button>
           <Button
             variant={activeTab === "tutor" ? "default" : "outline"}
-            className={activeTab === "tutor" ? "bg-[#1C7BB1] hover:bg-[#0A4A6E]" : "text-[#0A4A6E]"}
+            className={activeTab === "tutor" ? "bg-primary hover:bg-primary-900" : "text-foreground"}
             onClick={() => setActiveTab("tutor")}
           >
             <Users className="h-4 w-4 mr-2" />
@@ -598,7 +598,7 @@ export default function GuidePage() {
               <Button
                 variant="secondary"
                 onClick={() => setLocation("/support")}
-                className="bg-white text-[#0A4A6E] hover:bg-white/90"
+                className="bg-card text-foreground hover:bg-white/90"
               >
                 <LifeBuoy className="h-4 w-4 mr-2" />
                 {language === "es" ? "Contactar Soporte" : "Contact Support"}

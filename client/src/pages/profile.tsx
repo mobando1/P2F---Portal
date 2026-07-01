@@ -117,15 +117,15 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EAF4FA]">
+    <div className="min-h-screen bg-muted">
       <Header />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#0A4A6E]">
+          <h1 className="text-3xl font-bold text-foreground">
             {language === "es" ? "Mi Perfil" : "My Profile"}
           </h1>
-          <p className="text-[#0A4A6E]/70 mt-1">
+          <p className="text-foreground/70 mt-1">
             {language === "es"
               ? "Gestiona tu informacion personal"
               : "Manage your personal information"}
@@ -136,50 +136,50 @@ export default function ProfilePage() {
           {/* User Info Card */}
           <Card className="md:col-span-1">
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] text-lg">
+              <CardTitle className="text-foreground text-lg">
                 {language === "es" ? "Informacion General" : "General Info"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-center mb-4">
-                <div className="w-20 h-20 rounded-full bg-[#1C7BB1] flex items-center justify-center text-white text-2xl font-bold">
+                <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold">
                   {user.firstName.charAt(0)}{user.lastName.charAt(0)}
                 </div>
               </div>
               <div className="text-center mb-4">
-                <p className="text-lg font-semibold text-[#0A4A6E]">
+                <p className="text-lg font-semibold text-foreground">
                   {fullUser?.firstName || user.firstName} {fullUser?.lastName || user.lastName}
                 </p>
-                <p className="text-sm text-gray-500">{fullUser?.email || user.email}</p>
+                <p className="text-sm text-muted-foreground">{fullUser?.email || user.email}</p>
               </div>
 
               <div className="space-y-3 pt-4 border-t">
                 <div className="flex items-center gap-3 text-sm">
-                  <GraduationCap className="w-4 h-4 text-[#1C7BB1]" />
-                  <span className="text-gray-600">
+                  <GraduationCap className="w-4 h-4 text-primary" />
+                  <span className="text-muted-foreground">
                     {language === "es" ? "Nivel:" : "Level:"}
                   </span>
-                  <Badge variant="secondary" className="bg-[#1C7BB1]/10 text-[#1C7BB1]">
+                  <Badge variant="secondary" className="bg-primary/10 text-primary">
                     {fullUser?.level || user.level}
                   </Badge>
                 </div>
 
                 <div className="flex items-center gap-3 text-sm">
-                  <CreditCard className="w-4 h-4 text-[#F59E1C]" />
-                  <span className="text-gray-600">
+                  <CreditCard className="w-4 h-4 text-accent" />
+                  <span className="text-muted-foreground">
                     {language === "es" ? "Creditos:" : "Credits:"}
                   </span>
-                  <span className="font-medium text-[#0A4A6E]">
+                  <span className="font-medium text-foreground">
                     {fullUser?.classCredits ?? 0} {language === "es" ? "clases" : "classes"}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3 text-sm">
-                  <Calendar className="w-4 h-4 text-[#1C7BB1]" />
-                  <span className="text-gray-600">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <span className="text-muted-foreground">
                     {language === "es" ? "Miembro desde:" : "Member since:"}
                   </span>
-                  <span className="font-medium text-[#0A4A6E] text-xs">
+                  <span className="font-medium text-foreground text-xs">
                     {formatDate(fullUser?.createdAt)}
                   </span>
                 </div>
@@ -190,7 +190,7 @@ export default function ProfilePage() {
           {/* Edit Profile Form */}
           <Card className="md:col-span-2">
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] text-lg flex items-center gap-2">
+              <CardTitle className="text-foreground text-lg flex items-center gap-2">
                 <User className="w-5 h-5" />
                 {language === "es" ? "Editar Perfil" : "Edit Profile"}
               </CardTitle>
@@ -199,7 +199,7 @@ export default function ProfilePage() {
               <form onSubmit={handleSave} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-[#0A4A6E]">
+                    <Label htmlFor="firstName" className="text-foreground">
                       {t.firstName}
                     </Label>
                     <Input
@@ -207,11 +207,11 @@ export default function ProfilePage() {
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleInputChange}
-                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20"
+                      className="border-primary/20 focus:border-primary focus:ring-primary/20"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-[#0A4A6E]">
+                    <Label htmlFor="lastName" className="text-foreground">
                       {t.lastName}
                     </Label>
                     <Input
@@ -219,25 +219,25 @@ export default function ProfilePage() {
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleInputChange}
-                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20"
+                      className="border-primary/20 focus:border-primary focus:ring-primary/20"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-[#0A4A6E]">
+                  <Label htmlFor="email" className="text-foreground">
                     {t.email}
                   </Label>
                   <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-gray-400" />
+                    <Mail className="w-4 h-4 text-muted-foreground" />
                     <Input
                       id="email"
                       value={fullUser?.email || user.email}
                       disabled
-                      className="bg-gray-50 text-gray-500"
+                      className="bg-muted/40 text-muted-foreground"
                     />
                   </div>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     {language === "es"
                       ? "El correo no puede ser modificado."
                       : "Email cannot be changed."}
@@ -245,18 +245,18 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-[#0A4A6E]">
+                  <Label htmlFor="phone" className="text-foreground">
                     {language === "es" ? "Telefono" : "Phone"}
                   </Label>
                   <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-gray-400" />
+                    <Phone className="w-4 h-4 text-muted-foreground" />
                     <Input
                       id="phone"
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
                       placeholder="+1 (555) 123-4567"
-                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] focus:ring-[#1C7BB1]/20"
+                      className="border-primary/20 focus:border-primary focus:ring-primary/20"
                     />
                   </div>
                 </div>
@@ -264,7 +264,7 @@ export default function ProfilePage() {
                 <Button
                   type="submit"
                   disabled={isSaving}
-                  className="bg-[#1C7BB1] hover:bg-[#1C7BB1]/90 text-white"
+                  className="bg-primary hover:bg-primary/90 text-white"
                 >
                   {isSaving ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

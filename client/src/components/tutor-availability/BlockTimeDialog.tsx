@@ -139,14 +139,14 @@ export default function BlockTimeDialog({ open, onClose, prefillDate, prefillTim
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-[#0A4A6E]">
-            <Ban className="h-5 w-5 text-red-500" />
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <Ban className="h-5 w-5 text-destructive" />
             {isEs ? "Bloquear Horario" : "Block Time"}
           </DialogTitle>
         </DialogHeader>
 
         {/* Mode selector */}
-        <div className="grid grid-cols-3 gap-1 p-1 bg-gray-100 rounded-lg">
+        <div className="grid grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
           {[
             { key: "full_day" as BlockMode, icon: Calendar, labelEs: "Día completo", labelEn: "Full Day" },
             { key: "time_range" as BlockMode, icon: Clock, labelEs: "Rango", labelEn: "Time Range" },
@@ -156,8 +156,8 @@ export default function BlockTimeDialog({ open, onClose, prefillDate, prefillTim
               key={opt.key}
               className={`flex items-center justify-center gap-1 py-2 px-1 rounded-md text-xs font-medium transition-colors ${
                 mode === opt.key
-                  ? "bg-white text-[#0A4A6E] shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setMode(opt.key)}
             >

@@ -103,11 +103,11 @@ export default function EnhancedCalendar({ remainingClasses, tutors, onBookClass
   return (
     <>
       <Card>
-        <CardHeader className="border-b border-gray-200">
+        <CardHeader className="border-b border-border">
           <div className="flex justify-between items-center">
             <CardTitle>Book Your Classes</CardTitle>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Classes remaining:</span>
+              <span className="text-sm text-muted-foreground">Classes remaining:</span>
               <span className="px-2 py-1 bg-primary text-primary-foreground text-sm rounded-full font-medium">
                 {remainingClasses}
               </span>
@@ -116,7 +116,7 @@ export default function EnhancedCalendar({ remainingClasses, tutors, onBookClass
         </CardHeader>
         <CardContent className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-medium text-gray-900">{monthName}</h3>
+            <h3 className="text-lg font-medium text-foreground">{monthName}</h3>
             <div className="flex space-x-2">
               <Button
                 variant="outline"
@@ -139,7 +139,7 @@ export default function EnhancedCalendar({ remainingClasses, tutors, onBookClass
 
           <div className="grid grid-cols-7 gap-1 mb-4">
             {weekDays.map((day) => (
-              <div key={day} className="p-3 text-center text-sm font-medium text-gray-500">
+              <div key={day} className="p-3 text-center text-sm font-medium text-muted-foreground">
                 {day}
               </div>
             ))}
@@ -168,15 +168,15 @@ export default function EnhancedCalendar({ remainingClasses, tutors, onBookClass
           <div className="flex justify-center space-x-6 mt-6 text-sm">
             <div className="flex items-center">
               <div className="w-3 h-3 bg-primary rounded mr-2"></div>
-              <span className="text-gray-600">Today</span>
+              <span className="text-muted-foreground">Today</span>
             </div>
             <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded mr-2"></div>
-              <span className="text-gray-600">Available</span>
+              <div className="w-3 h-3 bg-success/100 rounded mr-2"></div>
+              <span className="text-muted-foreground">Available</span>
             </div>
             <div className="flex items-center">
               <div className="w-3 h-3 bg-gray-300 rounded mr-2"></div>
-              <span className="text-gray-600">Past</span>
+              <span className="text-muted-foreground">Past</span>
             </div>
           </div>
         </CardContent>
@@ -189,10 +189,10 @@ export default function EnhancedCalendar({ remainingClasses, tutors, onBookClass
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
+              <label className="text-sm font-medium text-foreground mb-2 block">
                 Selected Date
               </label>
-              <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="p-3 bg-muted/40 rounded-lg">
                 {selectedDate?.toLocaleDateString('en-US', { 
                   weekday: 'long', 
                   year: 'numeric', 
@@ -203,7 +203,7 @@ export default function EnhancedCalendar({ remainingClasses, tutors, onBookClass
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
+              <label className="text-sm font-medium text-foreground mb-2 block">
                 Select Tutor
               </label>
               <Select value={selectedTutor} onValueChange={setSelectedTutor}>
@@ -224,7 +224,7 @@ export default function EnhancedCalendar({ remainingClasses, tutors, onBookClass
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
+              <label className="text-sm font-medium text-foreground mb-2 block">
                 Select Time
               </label>
               <Select value={selectedTime} onValueChange={setSelectedTime}>

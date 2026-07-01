@@ -44,7 +44,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center">
-          <h1 className="text-2xl font-bold mb-2 text-[#0A4A6E]">
+          <h1 className="text-2xl font-bold mb-2 text-foreground">
             Algo salió mal
           </h1>
           <p className="text-muted-foreground mb-6 max-w-md">
@@ -54,7 +54,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
             <Button onClick={this.handleReload} variant="outline">
               Recargar página
             </Button>
-            <Button onClick={this.handleGoToLogin} className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white">
+            <Button onClick={this.handleGoToLogin} className="bg-primary hover:bg-primary/90 text-primary-foreground">
               Ir a iniciar sesión
             </Button>
           </div>

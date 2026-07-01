@@ -99,18 +99,18 @@ export default function RescheduleDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[#0A4A6E]">
+          <DialogTitle className="text-foreground">
             {isEs ? "Reagendar Clase" : "Reschedule Class"}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Current date info */}
-          <div className="bg-[#EAF4FA] p-3 rounded-lg text-sm">
-            <p className="text-[#0A4A6E]">
+          <div className="bg-muted p-3 rounded-lg text-sm">
+            <p className="text-foreground">
               <strong>{isEs ? "Profesor:" : "Tutor:"}</strong> {tutorName}
             </p>
-            <p className="text-[#0A4A6E]/70">
+            <p className="text-foreground/70">
               <strong>{isEs ? "Fecha actual:" : "Current date:"}</strong>{" "}
               {new Date(currentDate).toLocaleDateString(isEs ? "es-ES" : "en-US", {
                 weekday: "long",
@@ -124,7 +124,7 @@ export default function RescheduleDialog({
 
           {/* Date picker */}
           <div>
-            <Label className="text-sm text-[#0A4A6E] flex items-center gap-2">
+            <Label className="text-sm text-foreground flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               {isEs ? "Nueva Fecha" : "New Date"}
             </Label>
@@ -143,17 +143,17 @@ export default function RescheduleDialog({
           {/* Time slots */}
           {selectedDate && (
             <div>
-              <Label className="text-sm text-[#0A4A6E] flex items-center gap-2 mb-2">
+              <Label className="text-sm text-foreground flex items-center gap-2 mb-2">
                 <Clock className="h-4 w-4" />
                 {isEs ? "Horarios Disponibles" : "Available Times"}
               </Label>
 
               {slotsLoading ? (
                 <div className="flex items-center justify-center py-6">
-                  <Loader2 className="h-5 w-5 animate-spin text-[#1C7BB1]" />
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
                 </div>
               ) : availableSlots.length === 0 ? (
-                <p className="text-sm text-gray-400 py-4 text-center">
+                <p className="text-sm text-muted-foreground py-4 text-center">
                   {isEs ? "No hay horarios disponibles para esta fecha" : "No available times for this date"}
                 </p>
               ) : (
@@ -165,8 +165,8 @@ export default function RescheduleDialog({
                       size="sm"
                       className={
                         selectedSlot === slot.startTime
-                          ? "bg-[#1C7BB1] text-white"
-                          : "border-[#1C7BB1]/30 text-[#0A4A6E] hover:bg-[#EAF4FA]"
+                          ? "bg-primary text-primary-foreground"
+                          : "border-primary/30 text-foreground hover:bg-muted"
                       }
                       onClick={() => setSelectedSlot(slot.startTime)}
                     >
@@ -188,7 +188,7 @@ export default function RescheduleDialog({
               {isEs ? "Cancelar" : "Cancel"}
             </Button>
             <Button
-              className="flex-1 bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={!selectedDate || !selectedSlot || rescheduleMutation.isPending}
               onClick={() => rescheduleMutation.mutate()}
             >

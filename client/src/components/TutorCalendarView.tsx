@@ -70,9 +70,9 @@ export default function TutorCalendarView({ classes, onCompleteClass }: Props) {
     : [];
 
   const statusConfig: Record<string, { icon: typeof CheckCircle; color: string; bg: string; label: string }> = {
-    scheduled: { icon: Clock, color: "text-[#1C7BB1]", bg: "bg-[#1C7BB1]", label: isEs ? "Programada" : "Scheduled" },
-    completed: { icon: CheckCircle, color: "text-green-600", bg: "bg-green-500", label: isEs ? "Completada" : "Completed" },
-    cancelled: { icon: XCircle, color: "text-gray-400", bg: "bg-gray-400", label: isEs ? "Cancelada" : "Cancelled" },
+    scheduled: { icon: Clock, color: "text-primary", bg: "bg-primary", label: isEs ? "Programada" : "Scheduled" },
+    completed: { icon: CheckCircle, color: "text-success", bg: "bg-success/100", label: isEs ? "Completada" : "Completed" },
+    cancelled: { icon: XCircle, color: "text-muted-foreground", bg: "bg-gray-400", label: isEs ? "Cancelada" : "Cancelled" },
   };
 
   return (
@@ -83,7 +83,7 @@ export default function TutorCalendarView({ classes, onCompleteClass }: Props) {
           <Button variant="ghost" size="sm" onClick={prevMonth}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h3 className="text-base font-semibold text-[#0A4A6E]">
+          <h3 className="text-base font-semibold text-foreground">
             {monthNames[month]} {year}
           </h3>
           <Button variant="ghost" size="sm" onClick={nextMonth}>
@@ -94,7 +94,7 @@ export default function TutorCalendarView({ classes, onCompleteClass }: Props) {
         {/* Day Names */}
         <div className="grid grid-cols-7 gap-1 mb-1">
           {dayNames.map(d => (
-            <div key={d} className="text-center text-[10px] font-medium text-[#0A4A6E]/50 py-1">{d}</div>
+            <div key={d} className="text-center text-[10px] font-medium text-foreground/50 py-1">{d}</div>
           ))}
         </div>
 
@@ -121,17 +121,17 @@ export default function TutorCalendarView({ classes, onCompleteClass }: Props) {
                 onClick={() => setSelectedDate(dateStr)}
                 className={`h-10 rounded-lg flex flex-col items-center justify-center relative transition-all ${
                   isSelected
-                    ? "bg-[#1C7BB1] text-white"
+                    ? "bg-primary text-primary-foreground"
                     : isToday
-                    ? "bg-[#EAF4FA] text-[#0A4A6E] font-bold"
-                    : "hover:bg-gray-50 text-[#0A4A6E]"
+                    ? "bg-muted text-foreground font-bold"
+                    : "hover:bg-muted/40 text-foreground"
                 }`}
               >
                 <span className="text-xs">{day}</span>
                 {dayClasses.length > 0 && (
                   <div className="flex gap-0.5 mt-0.5">
-                    {hasScheduled && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : "bg-[#1C7BB1]"}`} />}
-                    {hasCompleted && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white/60" : "bg-green-500"}`} />}
+                    {hasScheduled && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-card" : "bg-primary"}`} />}
+                    {hasCompleted && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white/60" : "bg-success/100"}`} />}
                   </div>
                 )}
               </button>
@@ -141,13 +141,13 @@ export default function TutorCalendarView({ classes, onCompleteClass }: Props) {
 
         {/* Selected Day Detail */}
         {selectedDate && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <p className="text-xs font-medium text-[#0A4A6E]/60 mb-2">
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-xs font-medium text-foreground/60 mb-2">
               {new Date(selectedDate + "T12:00:00").toLocaleDateString(isEs ? "es-ES" : "en-US", { weekday: "long", month: "long", day: "numeric" })}
             </p>
 
             {selectedClasses.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-3">
+              <p className="text-xs text-muted-foreground text-center py-3">
                 {isEs ? "Sin clases este día" : "No classes this day"}
               </p>
             ) : (
@@ -158,12 +158,12 @@ export default function TutorCalendarView({ classes, onCompleteClass }: Props) {
                   const time = new Date(c.scheduledAt).toLocaleTimeString(isEs ? "es-ES" : "en-US", { hour: "numeric", minute: "2-digit" });
 
                   return (
-                    <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50">
+                    <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/40">
                       <div className={`w-1 h-8 rounded-full ${config.bg} flex-shrink-0`} />
                       <StatusIcon className={`h-3.5 w-3.5 ${config.color} flex-shrink-0`} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-[#0A4A6E] truncate">{c.studentName || c.title}</p>
-                        <p className="text-[10px] text-gray-500">{time} · {c.duration} min</p>
+                        <p className="text-xs font-medium text-foreground truncate">{c.studentName || c.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{time} · {c.duration} min</p>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
                         {c.meetingLink && c.status === "scheduled" && (
@@ -177,7 +177,7 @@ export default function TutorCalendarView({ classes, onCompleteClass }: Props) {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-6 text-[10px] text-green-600 border-green-200 px-2"
+                            className="h-6 text-[10px] text-success border-success/30 px-2"
                             onClick={() => onCompleteClass(c.id, c.studentName || "Student")}
                           >
                             <CheckCircle className="h-3 w-3" />

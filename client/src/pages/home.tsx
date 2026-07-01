@@ -105,7 +105,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EAF4FA]">
+    <div className="min-h-screen bg-muted">
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero */}
@@ -115,23 +115,23 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <Badge className="bg-[#F59E1C]/10 text-[#F59E1C] border-0 px-4 py-1.5 text-sm font-semibold mb-4 inline-flex">
+          <Badge className="bg-accent/10 text-accent border-0 px-4 py-1.5 text-sm font-semibold mb-4 inline-flex">
             {isEs ? "Tu primera clase es GRATIS" : "Your first class is FREE"}
           </Badge>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#0A4A6E] mb-4">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
             {isEs
               ? `${user?.firstName ? `Hola, ${user.firstName}!` : "Bienvenido!"} Elige tu camino`
               : `${user?.firstName ? `Hi, ${user.firstName}!` : "Welcome!"} Choose your path`}
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-4">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-4">
             {isEs
               ? "Selecciona una categoria y encuentra al profesor perfecto para ti."
               : "Select a category and find your perfect tutor."}
           </p>
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 fill-[#F59E1C] text-[#F59E1C]" />
-              <span className="font-semibold text-[#0A4A6E]">4.9</span>
+              <Star className="w-4 h-4 fill-[#F59E1C] text-accent" />
+              <span className="font-semibold text-foreground">4.9</span>
             </div>
             <span>·</span>
             <span>{isEs ? "500+ clases completadas" : "500+ classes completed"}</span>
@@ -178,10 +178,10 @@ export default function HomePage() {
                         >
                           {isEs ? cat.badgeLabelEs : cat.badgeLabelEn}
                         </Badge>
-                        <h3 className="text-base font-bold text-[#0A4A6E] mb-2 leading-tight">
+                        <h3 className="text-base font-bold text-foreground mb-2 leading-tight">
                           {isEs ? cat.labelEs : cat.labelEn}
                         </h3>
-                        <p className="text-sm text-gray-500 leading-relaxed mb-4 line-clamp-2">
+                        <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-2">
                           {isEs ? cat.descEs : cat.descEn}
                         </p>
                         <Button
@@ -213,10 +213,10 @@ export default function HomePage() {
               whileHover={{ y: -3, boxShadow: "0 16px 48px rgba(245, 158, 28, 0.2)" }}
               className="bg-gradient-to-r from-[#0A4A6E] via-[#1C7BB1] to-[#0A4A6E] rounded-2xl p-8 text-white cursor-pointer relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#F59E1C]/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
               <div className="relative flex flex-col md:flex-row items-center gap-6">
                 <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-8 h-8 text-[#F59E1C]" />
+                  <Sparkles className="w-8 h-8 text-accent" />
                 </div>
                 <div className="flex-1 text-center md:text-left">
                   <h3 className="text-xl font-bold mb-1">
@@ -228,7 +228,7 @@ export default function HomePage() {
                       : "Practice conversation, pronunciation, and grammar with your 24/7 AI buddy. Complement your classes with real tutors."}
                   </p>
                 </div>
-                <Button className="bg-[#F59E1C] hover:bg-[#e08a0e] text-white flex-shrink-0">
+                <Button className="bg-accent text-accent-foreground hover:bg-accent/90 flex-shrink-0">
                   {isEs ? "Probar Gratis" : "Try Free"} →
                 </Button>
               </div>
@@ -238,10 +238,10 @@ export default function HomePage() {
 
         {/* How It Works */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-[#0A4A6E] mb-2">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
             {isEs ? "Como Funciona" : "How It Works"}
           </h2>
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             {isEs ? "3 pasos simples para comenzar" : "3 simple steps to get started"}
           </p>
         </div>
@@ -259,17 +259,17 @@ export default function HomePage() {
               <motion.div key={i} variants={scaleIn} className="text-center">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center"
+                  className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center"
                 >
-                  <Icon className="w-8 h-8 text-[#1C7BB1]" />
+                  <Icon className="w-8 h-8 text-primary" />
                 </motion.div>
-                <div className="text-sm font-semibold text-[#F59E1C] mb-1">
+                <div className="text-sm font-semibold text-accent mb-1">
                   {isEs ? `Paso ${i + 1}` : `Step ${i + 1}`}
                 </div>
-                <h3 className="text-lg font-bold text-[#0A4A6E] mb-2">
+                <h3 className="text-lg font-bold text-foreground mb-2">
                   {isEs ? step.labelEs : step.labelEn}
                 </h3>
-                <p className="text-gray-500 text-sm">
+                <p className="text-muted-foreground text-sm">
                   {isEs ? step.descEs : step.descEn}
                 </p>
               </motion.div>

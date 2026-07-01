@@ -213,7 +213,7 @@ export default function AdminCalendar() {
                     <button
                       key={day.toISOString()}
                       onClick={() => setSelectedDay(day)}
-                      className={`bg-white min-h-[80px] p-1 text-left transition-colors hover:bg-primary/10 ${
+                      className={`bg-card min-h-[80px] p-1 text-left transition-colors hover:bg-primary/10 ${
                         !isCurrentMonth ? "opacity-40" : ""
                       } ${isSelected ? "ring-2 ring-primary ring-inset" : ""}`}
                     >

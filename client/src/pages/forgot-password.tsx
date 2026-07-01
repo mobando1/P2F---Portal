@@ -28,29 +28,29 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 w-full max-w-md"
+        className="bg-card rounded-2xl shadow-lg border border-border p-8 w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#EAF4FA] mb-4">
-            <Mail size={28} className="text-[#1C7BB1]" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+            <Mail size={28} className="text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-[#0A4A6E]">
+          <h1 className="text-2xl font-bold text-foreground">
             {isEs ? "Recuperar contraseña" : "Reset password"}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Passport2Fluency</p>
+          <p className="text-sm text-muted-foreground mt-1">Passport2Fluency</p>
         </div>
 
         {mutation.isSuccess ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
             <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
-            <h2 className="text-lg font-semibold text-[#0A4A6E] mb-2">
+            <h2 className="text-lg font-semibold text-foreground mb-2">
               {isEs ? "Correo enviado" : "Email sent"}
             </h2>
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               {isEs
                 ? "Si existe una cuenta con ese correo, recibirás un enlace para restablecer tu contraseña."
                 : "If an account exists with that email, you'll receive a link to reset your password."}
@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
           </motion.div>
         ) : (
           <>
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               {isEs
                 ? "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña."
                 : "Enter your email and we'll send you a link to reset your password."}
@@ -85,14 +85,14 @@ export default function ForgotPasswordPage() {
               </div>
 
               {mutation.isError && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-destructive">
                   {isEs ? "Error al enviar. Intenta de nuevo." : "Failed to send. Please try again."}
                 </p>
               )}
 
               <Button
                 type="submit"
-                className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+                className="w-full bg-primary hover:bg-primary-900"
                 disabled={mutation.isPending}
               >
                 {mutation.isPending ? (
@@ -104,7 +104,7 @@ export default function ForgotPasswordPage() {
             </form>
 
             <div className="mt-6 text-center">
-              <Link href="/login" className="text-sm text-[#1C7BB1] hover:text-[#0A4A6E]">
+              <Link href="/login" className="text-sm text-primary hover:text-foreground">
                 <ArrowLeft className="h-3.5 w-3.5 inline mr-1" />
                 {isEs ? "Volver al inicio de sesión" : "Back to login"}
               </Link>

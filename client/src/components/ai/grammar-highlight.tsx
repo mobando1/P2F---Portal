@@ -68,19 +68,19 @@ export function GrammarHighlight({ content, corrections, onSaveCorrection, onSav
       <p className="whitespace-pre-wrap">{cleanContent.trim()}</p>
 
       {corrections.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
-          <p className="text-xs font-semibold text-[#1C7BB1] uppercase tracking-wide">Corrections</p>
+        <div className="mt-3 pt-3 border-t border-border space-y-2">
+          <p className="text-xs font-semibold text-primary">Corrections</p>
           {corrections.map((correction, idx) => (
             <div
               key={idx}
               className="flex flex-wrap items-center gap-2 text-xs cursor-pointer group"
               onClick={() => setActiveCorrection(activeCorrection === idx ? null : idx)}
             >
-              <span className="line-through text-red-400 bg-red-50 px-1.5 py-0.5 rounded">
+              <span className="line-through text-red-400 bg-destructive/10 px-1.5 py-0.5 rounded">
                 {correction.original}
               </span>
-              <span className="text-gray-400">→</span>
-              <span className="text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-medium">
+              <span className="text-muted-foreground">→</span>
+              <span className="text-success bg-success/10 px-1.5 py-0.5 rounded font-medium">
                 {correction.corrected}
               </span>
               {onSaveCorrection && (
@@ -93,7 +93,7 @@ export function GrammarHighlight({ content, corrections, onSaveCorrection, onSav
                   className={`p-1 rounded transition-colors ${
                     savedIndices.has(idx)
                       ? "text-green-500"
-                      : "text-gray-300 hover:text-blue-500 hover:bg-blue-50 opacity-0 group-hover:opacity-100"
+                      : "text-muted-foreground hover:text-blue-500 hover:bg-primary/10 opacity-0 group-hover:opacity-100"
                   }`}
                   title={savedIndices.has(idx) ? "Saved" : "Save correction"}
                 >
@@ -105,7 +105,7 @@ export function GrammarHighlight({ content, corrections, onSaveCorrection, onSav
                 </button>
               )}
               {activeCorrection === idx && correction.explanation && (
-                <p className="w-full text-gray-500 text-xs mt-1 pl-2 border-l-2 border-[#1C7BB1]/30">
+                <p className="w-full text-muted-foreground text-xs mt-1 pl-2 border-l-2 border-primary/30">
                   {correction.explanation}
                 </p>
               )}
@@ -116,23 +116,23 @@ export function GrammarHighlight({ content, corrections, onSaveCorrection, onSav
 
       {/* Vocabulary section */}
       {vocabItems.length > 0 && onSaveVocab && (
-        <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
-          <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide flex items-center gap-1">
+        <div className="mt-3 pt-3 border-t border-border space-y-1.5">
+          <p className="text-xs font-semibold text-warning-foreground flex items-center gap-1">
             <BookA className="w-3 h-3" />
             Vocabulario
           </p>
           {vocabItems.map((item, idx) => (
             <div key={idx} className="flex items-center gap-2 text-xs group">
-              <span className="font-medium text-gray-700 bg-amber-50 px-1.5 py-0.5 rounded">{item.word}</span>
-              <span className="text-gray-400">=</span>
-              <span className="text-gray-500">{item.translation}</span>
+              <span className="font-medium text-foreground bg-warning/15 px-1.5 py-0.5 rounded">{item.word}</span>
+              <span className="text-muted-foreground">=</span>
+              <span className="text-muted-foreground">{item.translation}</span>
               <button
                 onClick={() => handleSaveVocab(item)}
                 disabled={savedVocab.has(item.word)}
                 className={`p-1 rounded transition-colors ${
                   savedVocab.has(item.word)
                     ? "text-green-500"
-                    : "text-gray-300 hover:text-amber-500 hover:bg-amber-50 opacity-0 group-hover:opacity-100"
+                    : "text-muted-foreground hover:text-amber-500 hover:bg-warning/15 opacity-0 group-hover:opacity-100"
                 }`}
                 title={savedVocab.has(item.word) ? "Guardado" : "Guardar palabra"}
               >

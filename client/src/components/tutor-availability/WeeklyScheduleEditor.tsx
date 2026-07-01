@@ -191,7 +191,7 @@ export default function WeeklyScheduleEditor() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="animate-spin h-8 w-8 text-[#1C7BB1]" />
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
       </div>
     );
   }
@@ -201,10 +201,10 @@ export default function WeeklyScheduleEditor() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-[#0A4A6E]">
+          <h3 className="text-lg font-semibold text-foreground">
             {isEs ? "Horario Semanal" : "Weekly Schedule"}
           </h3>
-          <p className="text-xs text-[#0A4A6E]/60">
+          <p className="text-xs text-foreground/60">
             {isEs
               ? "Define tu disponibilidad recurrente. Arrastra para seleccionar múltiples horarios."
               : "Set your recurring availability. Drag to select multiple slots."}
@@ -223,7 +223,7 @@ export default function WeeklyScheduleEditor() {
           <Button
             variant="outline"
             size="sm"
-            className="text-xs text-red-500 border-red-200 hover:bg-red-50"
+            className="text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
             onClick={() => applyPreset("clear")}
           >
             <RotateCcw className="h-3.5 w-3.5 mr-1" />
@@ -238,17 +238,17 @@ export default function WeeklyScheduleEditor() {
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                <th className="w-14 p-2 text-right border-b border-gray-100">
-                  <Clock className="h-3 w-3 inline text-gray-400" />
+                <th className="w-14 p-2 text-right border-b border-border">
+                  <Clock className="h-3 w-3 inline text-muted-foreground" />
                 </th>
                 {DAY_ORDER.map(dow => {
                   const count = daySummary.get(dow) || 0;
                   const hours = (count * 30 / 60).toFixed(1);
                   return (
-                    <th key={dow} className="p-2 text-center border-b border-gray-100">
-                      <p className="text-xs font-semibold text-[#0A4A6E]">{dayNames[dow]}</p>
+                    <th key={dow} className="p-2 text-center border-b border-border">
+                      <p className="text-xs font-semibold text-foreground">{dayNames[dow]}</p>
                       {count > 0 && (
-                        <p className="text-[9px] text-green-600">{hours}h</p>
+                        <p className="text-[9px] text-success">{hours}h</p>
                       )}
                     </th>
                   );
@@ -257,10 +257,10 @@ export default function WeeklyScheduleEditor() {
             </thead>
             <tbody>
               {timeSlots.map((time, idx) => (
-                <tr key={time} className={idx % 2 === 0 ? "" : "bg-gray-50/30"}>
+                <tr key={time} className={idx % 2 === 0 ? "" : "bg-muted/40/30"}>
                   <td className="p-0 pr-2 text-right">
                     {idx % 2 === 0 && (
-                      <span className="text-[10px] text-gray-400">{time}</span>
+                      <span className="text-[10px] text-muted-foreground">{time}</span>
                     )}
                   </td>
                   {DAY_ORDER.map(dow => {
@@ -271,7 +271,7 @@ export default function WeeklyScheduleEditor() {
                           className={`h-5 rounded-sm cursor-pointer transition-colors touch-none ${
                             active
                               ? "bg-green-200 border border-green-300 hover:bg-green-300"
-                              : "bg-white border border-gray-100 hover:bg-gray-100"
+                              : "bg-card border border-border hover:bg-muted"
                           }`}
                           onPointerDown={(e) => { e.preventDefault(); onPointerDown(dow, time); }}
                           onPointerEnter={() => onPointerEnter(dow, time)}
@@ -300,14 +300,14 @@ export default function WeeklyScheduleEditor() {
                 onClick={() => setExpandedDay(isExpanded ? null : dow)}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-[#0A4A6E]">{dayFull[dow]}</span>
+                  <span className="text-sm font-medium text-foreground">{dayFull[dow]}</span>
                   {count > 0 && (
-                    <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                    <span className="text-[10px] bg-success/15 text-success px-1.5 py-0.5 rounded-full">
                       {hours}h
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-gray-400">{isExpanded ? "▲" : "▼"}</span>
+                <span className="text-xs text-muted-foreground">{isExpanded ? "▲" : "▼"}</span>
               </button>
               {isExpanded && (
                 <div className="px-3 pb-3 grid grid-cols-4 gap-1">
@@ -318,8 +318,8 @@ export default function WeeklyScheduleEditor() {
                         key={time}
                         className={`py-1.5 rounded text-xs font-medium transition-colors ${
                           active
-                            ? "bg-green-200 text-green-800 border border-green-300"
-                            : "bg-gray-50 text-gray-400 border border-gray-100"
+                            ? "bg-green-200 text-success border border-green-300"
+                            : "bg-muted/40 text-muted-foreground border border-border"
                         }`}
                         onClick={() => toggleCell(dow, time, !active)}
                       >

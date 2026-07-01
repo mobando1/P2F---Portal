@@ -58,7 +58,7 @@ export default function PlacementTestPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F8F9FA" }}>
-        <Loader2 className="animate-spin h-8 w-8 text-[#1C7BB1]" />
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
       </div>
     );
   }
@@ -139,7 +139,7 @@ export default function PlacementTestPage() {
 
               <Button
                 onClick={() => navigate("/learning-path")}
-                className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 size="lg"
               >
                 {language === "es" ? "Comenzar mi camino" : "Start my learning path"}
@@ -191,8 +191,8 @@ export default function PlacementTestPage() {
       >
         {/* Header */}
         <div className="text-center mb-6">
-          <GraduationCap className="h-10 w-10 mx-auto text-[#1C7BB1] mb-2" />
-          <h1 className="text-2xl font-bold text-[#0A4A6E]">
+          <GraduationCap className="h-10 w-10 mx-auto text-primary mb-2" />
+          <h1 className="text-2xl font-bold text-foreground">
             {language === "es" ? "Test de Colocación" : "Placement Test"}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
@@ -224,7 +224,7 @@ export default function PlacementTestPage() {
                 exit={{ opacity: 0, x: -30 }}
                 transition={{ duration: 0.2 }}
               >
-                <h2 className="text-lg font-semibold mb-6 text-[#0A4A6E]">
+                <h2 className="text-lg font-semibold mb-6 text-foreground">
                   {language === "es" ? currentQuestion.questionEs : currentQuestion.question}
                 </h2>
 
@@ -235,14 +235,14 @@ export default function PlacementTestPage() {
                       onClick={() => handleSelect(idx)}
                       className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
                         selectedAnswer === idx
-                          ? "border-[#1C7BB1] bg-[#EAF4FA] text-[#0A4A6E] font-medium"
-                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                          ? "border-primary bg-muted text-foreground font-medium"
+                          : "border-border hover:border-border hover:bg-muted/40"
                       }`}
                     >
                       <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-medium mr-3 ${
                         selectedAnswer === idx
-                          ? "bg-[#1C7BB1] text-white"
-                          : "bg-gray-100 text-gray-500"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
                       }`}>
                         {String.fromCharCode(65 + idx)}
                       </span>
@@ -270,7 +270,7 @@ export default function PlacementTestPage() {
             <Button
               onClick={handleSubmit}
               disabled={answeredCount < totalQuestions || submitMutation.isPending}
-              className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {submitMutation.isPending ? (
                 <Loader2 className="animate-spin h-4 w-4 mr-2" />
@@ -283,7 +283,7 @@ export default function PlacementTestPage() {
             <Button
               onClick={handleNext}
               disabled={selectedAnswer === undefined}
-              className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {language === "es" ? "Siguiente" : "Next"}
               <ChevronRight className="h-4 w-4 ml-1" />

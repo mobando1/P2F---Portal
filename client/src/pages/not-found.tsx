@@ -9,7 +9,7 @@ export default function NotFound() {
   const isEs = language === "es";
 
   return (
-    <div className="min-h-screen bg-[#EAF4FA] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-muted flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -32,7 +32,7 @@ export default function NotFound() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-2xl font-bold text-[#0A4A6E] mb-3"
+          className="text-2xl font-bold text-foreground mb-3"
         >
           {isEs ? "Página no encontrada" : "Page not found"}
         </motion.h1>
@@ -41,7 +41,7 @@ export default function NotFound() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="text-[#0A4A6E]/60 mb-8"
+          className="text-foreground/60 mb-8"
         >
           {isEs
             ? "Parece que esta página se perdió en la traducción."
@@ -55,14 +55,14 @@ export default function NotFound() {
           className="flex flex-col sm:flex-row gap-3 justify-center"
         >
           <Link href="/">
-            <Button className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <Home className="mr-2 h-4 w-4" />
               {isEs ? "Ir al Inicio" : "Go Home"}
             </Button>
           </Link>
           <Button
             variant="outline"
-            className="border-[#1C7BB1]/30 text-[#1C7BB1] hover:bg-[#1C7BB1]/5"
+            className="border-primary/30 text-primary hover:bg-primary/5"
             onClick={() => window.history.back()}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />

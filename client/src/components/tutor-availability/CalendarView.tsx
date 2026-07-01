@@ -132,10 +132,10 @@ export default function CalendarView() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-[#0A4A6E]">
+          <h3 className="text-lg font-semibold text-foreground">
             {isEs ? "Calendario" : "Calendar"}
           </h3>
-          <p className="text-xs text-[#0A4A6E]/60">
+          <p className="text-xs text-foreground/60">
             {isEs
               ? "Ve tu semana y bloquea horarios específicos. Toca un bloqueo rojo para eliminarlo."
               : "View your week and block specific times. Tap a red block to remove it."}
@@ -144,7 +144,7 @@ export default function CalendarView() {
         <Button
           size="sm"
           variant="outline"
-          className="text-red-600 border-red-200 hover:bg-red-50"
+          className="text-destructive border-destructive/30 hover:bg-destructive/10"
           onClick={() => setBlockDialog({ open: true })}
         >
           <Ban className="h-3.5 w-3.5 mr-1" />
@@ -158,8 +158,8 @@ export default function CalendarView() {
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-[#1C7BB1]" />
-          <span className="text-sm font-medium text-[#0A4A6E]">
+          <Calendar className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium text-foreground">
             {weekData ? (() => {
               const start = new Date(weekData.weekStart + "T12:00:00");
               const end = new Date(start);
@@ -169,7 +169,7 @@ export default function CalendarView() {
           </span>
           {weekOffset !== 0 && (
             <Button
-              variant="ghost" size="sm" className="text-xs text-[#1C7BB1]"
+              variant="ghost" size="sm" className="text-xs text-primary"
               onClick={() => { setWeekOffset(0); setSelectedDay(""); }}
             >
               {isEs ? "Hoy" : "Today"}
@@ -183,20 +183,20 @@ export default function CalendarView() {
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 mb-4 text-xs">
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-100 border border-green-300" /> {isEs ? "Disponible" : "Available"}</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#1C7BB1]" /> {isEs ? "Clase" : "Booked"}</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-100 border border-red-300" /> {isEs ? "Bloqueado" : "Blocked"}</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-white border border-gray-200" /> {isEs ? "No disponible" : "Not available"}</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-success/15 border border-green-300" /> {isEs ? "Disponible" : "Available"}</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary" /> {isEs ? "Clase" : "Booked"}</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-destructive/15 border border-red-300" /> {isEs ? "Bloqueado" : "Blocked"}</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-card border border-border" /> {isEs ? "No disponible" : "Not available"}</span>
       </div>
 
       {/* Content */}
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="animate-spin h-8 w-8 text-[#1C7BB1]" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>
       ) : isError ? (
         <Card className="border-0 shadow-sm">
           <CardContent className="p-8 text-center">
             <AlertTriangle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-            <p className="text-sm text-[#0A4A6E]/70 mb-3">
+            <p className="text-sm text-foreground/70 mb-3">
               {isEs ? "No se pudo cargar el calendario." : "Could not load calendar."}
             </p>
             <Button size="sm" variant="outline" onClick={() => refetch()}>
@@ -213,19 +213,19 @@ export default function CalendarView() {
               <table className="w-full border-collapse min-w-[600px]">
                 <thead>
                   <tr>
-                    <th className="w-14 p-2 text-right border-b border-gray-100">
-                      <Clock className="h-3 w-3 inline text-gray-400" />
+                    <th className="w-14 p-2 text-right border-b border-border">
+                      <Clock className="h-3 w-3 inline text-muted-foreground" />
                     </th>
                     {DAY_ORDER.map(dow => {
                       const dayData = weekData.days.find(d => d.dayOfWeek === dow);
                       const isToday = dayData?.date === today;
                       return (
-                        <th key={dow} className={`p-2 text-center border-b border-gray-100 ${isToday ? "bg-[#EAF4FA]" : ""}`}>
-                          <p className={`text-xs font-semibold ${isToday ? "text-[#1C7BB1]" : "text-[#0A4A6E]"}`}>
+                        <th key={dow} className={`p-2 text-center border-b border-border ${isToday ? "bg-muted" : ""}`}>
+                          <p className={`text-xs font-semibold ${isToday ? "text-primary" : "text-foreground"}`}>
                             {dayNames[dow]}
                           </p>
                           {dayData && (
-                            <p className={`text-[10px] ${isToday ? "text-[#1C7BB1]" : "text-gray-400"}`}>
+                            <p className={`text-[10px] ${isToday ? "text-primary" : "text-muted-foreground"}`}>
                               {new Date(dayData.date + "T12:00:00").getDate()}
                             </p>
                           )}
@@ -236,9 +236,9 @@ export default function CalendarView() {
                 </thead>
                 <tbody>
                   {timeSlots.map((time, idx) => (
-                    <tr key={time} className={idx % 2 === 0 ? "" : "bg-gray-50/30"}>
+                    <tr key={time} className={idx % 2 === 0 ? "" : "bg-muted/40/30"}>
                       <td className="p-0 pr-2 text-right">
-                        {idx % 2 === 0 && <span className="text-[10px] text-gray-400">{time}</span>}
+                        {idx % 2 === 0 && <span className="text-[10px] text-muted-foreground">{time}</span>}
                       </td>
                       {DAY_ORDER.map(dow => {
                         const dayData = weekData.days.find(d => d.dayOfWeek === dow);
@@ -249,17 +249,17 @@ export default function CalendarView() {
                         let cellClass = "h-5 rounded-sm transition-all text-[7px] flex items-center justify-center ";
 
                         if (slot.booked) {
-                          cellClass += "bg-[#1C7BB1] text-white cursor-default";
+                          cellClass += "bg-primary text-primary-foreground cursor-default";
                         } else if (slot.blocked) {
-                          cellClass += "bg-red-100 border border-red-200 text-red-400 cursor-pointer hover:bg-red-200";
+                          cellClass += "bg-destructive/15 border border-destructive/30 text-red-400 cursor-pointer hover:bg-red-200";
                         } else if (slot.available) {
-                          cellClass += "bg-green-100 border border-green-200 cursor-pointer hover:bg-yellow-50 hover:border-yellow-300";
+                          cellClass += "bg-success/15 border border-success/30 cursor-pointer hover:bg-warning/15 hover:border-yellow-300";
                         } else {
-                          cellClass += "bg-white border border-gray-100 cursor-pointer hover:bg-yellow-50 hover:border-yellow-300";
+                          cellClass += "bg-card border border-border cursor-pointer hover:bg-warning/15 hover:border-yellow-300";
                         }
 
                         if (isToday && !slot.booked && !slot.blocked) {
-                          cellClass += " ring-1 ring-[#1C7BB1]/20";
+                          cellClass += " ring-1 ring-primary/20";
                         }
 
                         return (
@@ -317,24 +317,24 @@ export default function CalendarView() {
                   // Skip slots outside 8-20 range
                   if (slot.hour < START_HOUR || slot.hour >= END_HOUR) return null;
 
-                  let bg = "bg-white border-gray-100";
-                  let textColor = "text-gray-400";
+                  let bg = "bg-card border-border";
+                  let textColor = "text-muted-foreground";
                   let label = isEs ? "No disponible" : "Not available";
                   let icon = null;
 
                   if (slot.booked) {
-                    bg = "bg-[#1C7BB1]/10 border-[#1C7BB1]/30";
-                    textColor = "text-[#1C7BB1]";
+                    bg = "bg-primary/10 border-primary/30";
+                    textColor = "text-primary";
                     label = slot.classInfo || (isEs ? "Clase" : "Class");
-                    icon = <User className="h-3.5 w-3.5 text-[#1C7BB1]" />;
+                    icon = <User className="h-3.5 w-3.5 text-primary" />;
                   } else if (slot.blocked) {
-                    bg = "bg-red-50 border-red-200";
-                    textColor = "text-red-500";
+                    bg = "bg-destructive/10 border-destructive/30";
+                    textColor = "text-destructive";
                     label = slot.blockReason || (isEs ? "Bloqueado" : "Blocked");
                     icon = <Ban className="h-3.5 w-3.5 text-red-400" />;
                   } else if (slot.available) {
-                    bg = "bg-green-50 border-green-200";
-                    textColor = "text-green-700";
+                    bg = "bg-success/10 border-success/30";
+                    textColor = "text-success";
                     label = isEs ? "Disponible" : "Available";
                   }
 
@@ -348,7 +348,7 @@ export default function CalendarView() {
                       disabled={slot.booked}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono text-[#0A4A6E] w-12">{time}</span>
+                        <span className="text-xs font-mono text-foreground w-12">{time}</span>
                         <span className={`text-xs ${textColor}`}>{label}</span>
                       </div>
                       {icon}

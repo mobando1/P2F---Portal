@@ -30,9 +30,9 @@ export default function CurrencySwitcher() {
             <span className="flex items-center gap-2">
               <span>{c.flag}</span>
               <span className="text-sm">{c.code}</span>
-              <span className="text-xs text-gray-400">{c.symbol}</span>
+              <span className="text-xs text-muted-foreground">{c.symbol}</span>
             </span>
-            {currency === c.code && <Check className="h-3.5 w-3.5 text-[#1C7BB1]" />}
+            {currency === c.code && <Check className="h-3.5 w-3.5 text-primary" />}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

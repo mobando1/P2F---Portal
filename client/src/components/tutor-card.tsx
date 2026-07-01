@@ -26,7 +26,7 @@ export default function TutorCard({ tutor, onBook }: TutorCardProps) {
         className={`w-3 h-3 ${
           i < Math.floor(rating) 
             ? 'text-yellow-400 fill-current' 
-            : 'text-gray-300'
+            : 'text-muted-foreground'
         }`}
       />
     ));
@@ -44,14 +44,14 @@ export default function TutorCard({ tutor, onBook }: TutorCardProps) {
           </Avatar>
           
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900">{tutor.name}</h3>
-            <p className="text-sm text-gray-600">{tutor.specialization}</p>
+            <h3 className="font-semibold text-foreground">{tutor.name}</h3>
+            <p className="text-sm text-muted-foreground">{tutor.specialization}</p>
             
             <div className="flex items-center mt-2">
               <div className="flex">
                 {renderStars(parseFloat(tutor.rating || "5"))}
               </div>
-              <span className="text-sm text-gray-600 ml-2">
+              <span className="text-sm text-muted-foreground ml-2">
                 {tutor.rating} ({tutor.reviewCount} reviews)
               </span>
             </div>

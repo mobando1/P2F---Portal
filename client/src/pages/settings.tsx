@@ -300,7 +300,7 @@ export default function SettingsPage() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] text-lg flex items-center gap-2">
+              <CardTitle className="text-foreground text-lg flex items-center gap-2">
                 <User className="w-5 h-5" />
                 {isEs ? "Informacion de Cuenta" : "Account Information"}
               </CardTitle>
@@ -312,14 +312,14 @@ export default function SettingsPage() {
               {/* Profile Image */}
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-20 h-20 rounded-full overflow-hidden bg-[#1C7BB1] flex items-center justify-center text-white text-2xl font-bold">
+                  <div className="w-20 h-20 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white text-2xl font-bold">
                     {(avatarPreview || user.avatar) ? (
                       <img src={avatarPreview || user.avatar} alt="" className="w-full h-full object-cover" />
                     ) : (
                       `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`
                     )}
                   </div>
-                  <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#F59E1C] rounded-full flex items-center justify-center shadow-md cursor-pointer hover:bg-[#e08c10] transition-colors">
+                  <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-accent rounded-full flex items-center justify-center shadow-md cursor-pointer hover:bg-[#e08c10] transition-colors">
                     {avatarUploading ? (
                       <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
                     ) : (
@@ -335,55 +335,55 @@ export default function SettingsPage() {
                   </label>
                 </div>
                 <div>
-                  <p className="font-semibold text-[#0A4A6E]">{user.firstName} {user.lastName}</p>
-                  <p className="text-sm text-gray-500">{user.email}</p>
+                  <p className="font-semibold text-foreground">{user.firstName} {user.lastName}</p>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[#0A4A6E]">{isEs ? "Nombre" : "First Name"}</Label>
+                  <Label className="text-foreground">{isEs ? "Nombre" : "First Name"}</Label>
                   <Input
                     value={firstName}
                     onChange={e => setFirstName(e.target.value)}
-                    className="border-[#1C7BB1]/20 focus:border-[#1C7BB1]"
+                    className="border-primary/20 focus:border-primary"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[#0A4A6E]">{isEs ? "Apellido" : "Last Name"}</Label>
+                  <Label className="text-foreground">{isEs ? "Apellido" : "Last Name"}</Label>
                   <Input
                     value={lastName}
                     onChange={e => setLastName(e.target.value)}
-                    className="border-[#1C7BB1]/20 focus:border-[#1C7BB1]"
+                    className="border-primary/20 focus:border-primary"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[#0A4A6E]">Email</Label>
-                <Input value={user.email} disabled className="bg-gray-50" />
-                <p className="text-xs text-gray-400">
+                <Label className="text-foreground">Email</Label>
+                <Input value={user.email} disabled className="bg-muted/40" />
+                <p className="text-xs text-muted-foreground">
                   {isEs ? "El email no se puede cambiar" : "Email cannot be changed"}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[#0A4A6E]">{isEs ? "Telefono" : "Phone"}</Label>
+                <Label className="text-foreground">{isEs ? "Telefono" : "Phone"}</Label>
                 <Input
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   placeholder="+1 (555) 123-4567"
-                  className="border-[#1C7BB1]/20 focus:border-[#1C7BB1]"
+                  className="border-primary/20 focus:border-primary"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[#0A4A6E]">{isEs ? "Zona Horaria" : "Timezone"}</Label>
+                <Label className="text-foreground">{isEs ? "Zona Horaria" : "Timezone"}</Label>
                 <Select value={selectedTimezone} onValueChange={val => {
                   setSelectedTimezone(val);
                   updateSettingsMutation.mutate({ timezone: val } as any);
                 }}>
-                  <SelectTrigger className="border-[#1C7BB1]/20">
+                  <SelectTrigger className="border-primary/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -397,7 +397,7 @@ export default function SettingsPage() {
               <Button
                 onClick={() => updateProfileMutation.mutate({ firstName, lastName, phone })}
                 disabled={updateProfileMutation.isPending}
-                className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {updateProfileMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {isEs ? "Guardar Cambios" : "Save Changes"}
@@ -410,7 +410,7 @@ export default function SettingsPage() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] text-lg flex items-center gap-2">
+              <CardTitle className="text-foreground text-lg flex items-center gap-2">
                 <Lock className="w-5 h-5" />
                 {isEs ? "Seguridad" : "Security"}
               </CardTitle>
@@ -421,19 +421,19 @@ export default function SettingsPage() {
             <CardContent>
               <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-md">
                 <div className="space-y-2">
-                  <Label className="text-[#0A4A6E]">{isEs ? "Contrasena Actual" : "Current Password"}</Label>
+                  <Label className="text-foreground">{isEs ? "Contrasena Actual" : "Current Password"}</Label>
                   <div className="relative">
                     <Input
                       type={showCurrentPw ? "text" : "password"}
                       value={passwordData.currentPassword}
                       onChange={e => setPasswordData(p => ({ ...p, currentPassword: e.target.value }))}
                       required
-                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] pr-10"
+                      className="border-primary/20 focus:border-primary pr-10"
                     />
                     <button
                       type="button"
                       onClick={() => setShowCurrentPw(!showCurrentPw)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                     >
                       {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -441,7 +441,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[#0A4A6E]">{isEs ? "Nueva Contrasena" : "New Password"}</Label>
+                  <Label className="text-foreground">{isEs ? "Nueva Contrasena" : "New Password"}</Label>
                   <div className="relative">
                     <Input
                       type={showNewPw ? "text" : "password"}
@@ -449,12 +449,12 @@ export default function SettingsPage() {
                       onChange={e => setPasswordData(p => ({ ...p, newPassword: e.target.value }))}
                       required
                       minLength={6}
-                      className="border-[#1C7BB1]/20 focus:border-[#1C7BB1] pr-10"
+                      className="border-primary/20 focus:border-primary pr-10"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPw(!showNewPw)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                     >
                       {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -462,17 +462,17 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[#0A4A6E]">{isEs ? "Confirmar Contrasena" : "Confirm Password"}</Label>
+                  <Label className="text-foreground">{isEs ? "Confirmar Contrasena" : "Confirm Password"}</Label>
                   <PasswordInput
                     value={passwordData.confirmPassword}
                     onChange={e => setPasswordData(p => ({ ...p, confirmPassword: e.target.value }))}
                     required
                     minLength={6}
-                    className="border-[#1C7BB1]/20 focus:border-[#1C7BB1]"
+                    className="border-primary/20 focus:border-primary"
                   />
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Shield className="w-3 h-3" />
                   {isEs ? "Minimo 6 caracteres" : "Minimum 6 characters"}
                 </div>
@@ -480,7 +480,7 @@ export default function SettingsPage() {
                 <Button
                   type="submit"
                   disabled={changePasswordMutation.isPending}
-                  className="bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white"
+                  className="bg-accent hover:bg-accent/90 text-white"
                 >
                   {changePasswordMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   {isEs ? "Cambiar Contrasena" : "Change Password"}
@@ -494,7 +494,7 @@ export default function SettingsPage() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] text-lg flex items-center gap-2">
+              <CardTitle className="text-foreground text-lg flex items-center gap-2">
                 <CreditCard className="w-5 h-5" />
                 {isEs ? "Metodos de Pago" : "Payment Methods"}
               </CardTitle>
@@ -503,19 +503,19 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-[#EAF4FA] rounded-xl p-5">
+              <div className="bg-muted rounded-xl p-5">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-[#1C7BB1]/10 rounded-lg flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-[#1C7BB1]" />
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium text-[#0A4A6E]">Stripe</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="font-medium text-foreground">Stripe</p>
+                    <p className="text-xs text-muted-foreground">
                       {isEs ? "Portal seguro de pagos" : "Secure payment portal"}
                     </p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   {isEs
                     ? "Tus metodos de pago se administran de forma segura a traves de Stripe. Haz clic abajo para agregar, cambiar o eliminar tarjetas."
                     : "Your payment methods are securely managed through Stripe. Click below to add, change, or remove cards."}
@@ -523,7 +523,7 @@ export default function SettingsPage() {
                 <Button
                   onClick={() => stripePortalMutation.mutate()}
                   disabled={stripePortalMutation.isPending}
-                  className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   {stripePortalMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   <ExternalLink className="w-4 h-4 mr-2" />
@@ -538,7 +538,7 @@ export default function SettingsPage() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] text-lg flex items-center gap-2">
+              <CardTitle className="text-foreground text-lg flex items-center gap-2">
                 <Package className="w-5 h-5" />
                 {isEs ? "Suscripcion" : "Subscription"}
               </CardTitle>
@@ -548,26 +548,26 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-5">
               {/* Current Plan */}
-              <div className="bg-gradient-to-r from-[#1C7BB1]/10 to-[#F59E1C]/10 rounded-xl p-5 border border-[#1C7BB1]/20">
+              <div className="bg-gradient-to-r from-[#1C7BB1]/10 to-[#F59E1C]/10 rounded-xl p-5 border border-primary/20">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wider">{isEs ? "Plan Actual" : "Current Plan"}</p>
-                    <p className="text-xl font-bold text-[#0A4A6E] mt-1">
+                    <p className="text-xs text-muted-foregroundr">{isEs ? "Plan Actual" : "Current Plan"}</p>
+                    <p className="text-xl font-bold text-foreground mt-1">
                       {user.userType === "trial" ? (isEs ? "Prueba Gratuita" : "Free Trial") :
                        user.userType === "customer" ? (isEs ? "Cliente Activo" : "Active Customer") :
                        (isEs ? "Lead" : "Lead")}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-500">{isEs ? "Creditos Restantes" : "Remaining Credits"}</p>
-                    <p className="text-2xl font-bold text-[#1C7BB1]">{user.classCredits ?? 0}</p>
+                    <p className="text-xs text-muted-foreground">{isEs ? "Creditos Restantes" : "Remaining Credits"}</p>
+                    <p className="text-2xl font-bold text-primary">{user.classCredits ?? 0}</p>
                   </div>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link href="/packages">
-                  <Button className="bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white flex-1">
+                  <Button className="bg-accent hover:bg-accent/90 text-white flex-1">
                     <Package className="w-4 h-4 mr-2" />
                     {isEs ? "Cambiar Plan" : "Change Plan"}
                   </Button>
@@ -576,7 +576,7 @@ export default function SettingsPage() {
                   variant="outline"
                   onClick={() => stripePortalMutation.mutate()}
                   disabled={stripePortalMutation.isPending}
-                  className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white flex-1"
+                  className="border-primary text-primary hover:bg-primary hover:text-white flex-1"
                 >
                   {stripePortalMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   <ExternalLink className="w-4 h-4 mr-2" />
@@ -591,7 +591,7 @@ export default function SettingsPage() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] text-lg flex items-center gap-2">
+              <CardTitle className="text-foreground text-lg flex items-center gap-2">
                 <Receipt className="w-5 h-5" />
                 {isEs ? "Historial de Pagos" : "Payment History"}
               </CardTitle>
@@ -602,33 +602,33 @@ export default function SettingsPage() {
             <CardContent>
               {historyLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#1C7BB1]" />
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : paymentHistory.length === 0 ? (
                 <div className="text-center py-8">
-                  <Receipt className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                  <p className="text-gray-500">{isEs ? "No hay transacciones aun" : "No transactions yet"}</p>
+                  <Receipt className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground">{isEs ? "No hay transacciones aun" : "No transactions yet"}</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
                   {paymentHistory.map(item => (
                     <div key={item.id} className="py-3 flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-[#0A4A6E]">{item.description || (isEs ? "Compra de clases" : "Class purchase")}</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-sm font-medium text-foreground">{item.description || (isEs ? "Compra de clases" : "Class purchase")}</p>
+                        <p className="text-xs text-muted-foreground">
                           {new Date(item.createdAt).toLocaleDateString(isEs ? "es-ES" : "en-US", {
                             year: "numeric", month: "short", day: "numeric",
                           })}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-[#0A4A6E]">
+                        <p className="text-sm font-semibold text-foreground">
                           ${parseFloat(item.amount).toFixed(2)} {item.currency || "USD"}
                         </p>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          item.status === "completed" ? "bg-green-100 text-green-700" :
-                          item.status === "pending" ? "bg-yellow-100 text-yellow-700" :
-                          "bg-gray-100 text-gray-600"
+                          item.status === "completed" ? "bg-success/15 text-success" :
+                          item.status === "pending" ? "bg-warning/15 text-warning-foreground" :
+                          "bg-muted text-muted-foreground"
                         }`}>
                           {item.status === "completed" ? (isEs ? "Completado" : "Completed") :
                            item.status === "pending" ? (isEs ? "Pendiente" : "Pending") :
@@ -647,7 +647,7 @@ export default function SettingsPage() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] text-lg flex items-center gap-2">
+              <CardTitle className="text-foreground text-lg flex items-center gap-2">
                 <CalendarDays className="w-5 h-5" />
                 {isEs ? "Calendario" : "Calendar"}
               </CardTitle>
@@ -656,14 +656,14 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="bg-[#EAF4FA] rounded-xl p-5">
+              <div className="bg-muted rounded-xl p-5">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                    <CalendarDays className="w-6 h-6 text-[#1C7BB1]" />
+                  <div className="w-12 h-12 bg-card rounded-lg flex items-center justify-center shadow-sm">
+                    <CalendarDays className="w-6 h-6 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-[#0A4A6E]">Google Calendar</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="font-semibold text-foreground">Google Calendar</p>
+                    <p className="text-xs text-muted-foreground">
                       {settings?.calendarConnected
                         ? (isEs ? "Conectado" : "Connected")
                         : (isEs ? "No conectado" : "Not connected")}
@@ -672,7 +672,7 @@ export default function SettingsPage() {
                   <div className={`w-3 h-3 rounded-full ${settings?.calendarConnected ? "bg-green-400" : "bg-gray-300"}`} />
                 </div>
 
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   {isEs
                     ? "Al conectar tu calendario, tus clases reservadas se agregaran automaticamente a Google Calendar."
                     : "By connecting your calendar, your booked classes will be automatically added to Google Calendar."}
@@ -682,8 +682,8 @@ export default function SettingsPage() {
                   onClick={() => updateSettingsMutation.mutate({ calendarConnected: !settings?.calendarConnected } as any)}
                   variant={settings?.calendarConnected ? "outline" : "default"}
                   className={settings?.calendarConnected
-                    ? "border-red-300 text-red-600 hover:bg-red-50"
-                    : "bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+                    ? "border-red-300 text-destructive hover:bg-destructive/10"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
                   }
                 >
                   {settings?.calendarConnected
@@ -699,7 +699,7 @@ export default function SettingsPage() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] text-lg flex items-center gap-2">
+              <CardTitle className="text-foreground text-lg flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5" />
                 {isEs ? "Autoconfirmacion de Clases" : "Lesson Autoconfirmation"}
               </CardTitle>
@@ -711,8 +711,8 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-5">
               {/* Explanation */}
-              <div className="bg-[#EAF4FA] rounded-xl p-4">
-                <p className="text-sm text-[#0A4A6E] leading-relaxed">
+              <div className="bg-muted rounded-xl p-4">
+                <p className="text-sm text-foreground leading-relaxed">
                   {isEs
                     ? "Cuando una clase termina, se confirma automaticamente. Para clases en la plataforma, se confirma 15 minutos despues. Para clases fuera de la plataforma, se confirma 72 horas despues."
                     : "When a class ends, it is automatically confirmed. For in-platform classes, it's confirmed 15 minutes after. For external classes, it's confirmed 72 hours after."}
@@ -728,21 +728,21 @@ export default function SettingsPage() {
                   }}
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                     autoconfirmMode === "self_only"
-                      ? "border-[#1C7BB1] bg-[#1C7BB1]/5"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-border"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      autoconfirmMode === "self_only" ? "border-[#1C7BB1]" : "border-gray-300"
+                      autoconfirmMode === "self_only" ? "border-primary" : "border-border"
                     }`}>
-                      {autoconfirmMode === "self_only" && <div className="w-2.5 h-2.5 rounded-full bg-[#1C7BB1]" />}
+                      {autoconfirmMode === "self_only" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                     </div>
                     <div>
-                      <p className="font-medium text-[#0A4A6E]">
+                      <p className="font-medium text-foreground">
                         {isEs ? "Solo clases programadas por mi" : "Only classes scheduled by me"}
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {isEs
                           ? "Las clases recurrentes no se confirman automaticamente"
                           : "Recurring classes are not auto-confirmed"}
@@ -758,21 +758,21 @@ export default function SettingsPage() {
                   }}
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                     autoconfirmMode === "all"
-                      ? "border-[#1C7BB1] bg-[#1C7BB1]/5"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-border"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      autoconfirmMode === "all" ? "border-[#1C7BB1]" : "border-gray-300"
+                      autoconfirmMode === "all" ? "border-primary" : "border-border"
                     }`}>
-                      {autoconfirmMode === "all" && <div className="w-2.5 h-2.5 rounded-full bg-[#1C7BB1]" />}
+                      {autoconfirmMode === "all" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                     </div>
                     <div>
-                      <p className="font-medium text-[#0A4A6E]">
+                      <p className="font-medium text-foreground">
                         {isEs ? "Autoconfirmar todas las clases" : "Auto-confirm all classes"}
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {isEs
                           ? "Incluye clases recurrentes y programadas por el tutor"
                           : "Includes recurring and tutor-scheduled classes"}
@@ -789,7 +789,7 @@ export default function SettingsPage() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] text-lg flex items-center gap-2">
+              <CardTitle className="text-foreground text-lg flex items-center gap-2">
                 <Bell className="w-5 h-5" />
                 {isEs ? "Notificaciones" : "Notifications"}
               </CardTitle>
@@ -805,10 +805,10 @@ export default function SettingsPage() {
                 { key: "emailMessages" as const, label: isEs ? "Mensajes nuevos" : "New messages", desc: isEs ? "Email cuando recibes un mensaje" : "Email when you receive a message" },
                 { key: "emailAchievements" as const, label: isEs ? "Logros" : "Achievements", desc: isEs ? "Email cuando desbloqueas un logro" : "Email when you unlock an achievement" },
               ].map(item => (
-                <div key={item.key} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                <div key={item.key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
                   <div>
-                    <p className="text-sm font-medium text-[#0A4A6E]">{item.label}</p>
-                    <p className="text-xs text-gray-500">{item.desc}</p>
+                    <p className="text-sm font-medium text-foreground">{item.label}</p>
+                    <p className="text-xs text-muted-foreground">{item.desc}</p>
                   </div>
                   <Switch
                     checked={notifPrefs[item.key]}
@@ -828,7 +828,7 @@ export default function SettingsPage() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E] text-lg flex items-center gap-2">
+              <CardTitle className="text-foreground text-lg flex items-center gap-2">
                 <Globe className="w-5 h-5" />
                 {isEs ? "Idioma y Moneda" : "Language & Currency"}
               </CardTitle>
@@ -840,8 +840,8 @@ export default function SettingsPage() {
               {/* Language */}
               <div className="flex items-center justify-between py-3">
                 <div>
-                  <p className="font-medium text-[#0A4A6E]">{isEs ? "Idioma" : "Language"}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-foreground">{isEs ? "Idioma" : "Language"}</p>
+                  <p className="text-sm text-muted-foreground">
                     {isEs ? "Idioma actual: Espanol" : "Current language: English"}
                   </p>
                 </div>
@@ -850,15 +850,15 @@ export default function SettingsPage() {
 
               {/* Currency */}
               <div>
-                <p className="font-medium text-[#0A4A6E] mb-2">{isEs ? "Moneda" : "Currency"}</p>
-                <p className="text-sm text-gray-500 mb-3">
+                <p className="font-medium text-foreground mb-2">{isEs ? "Moneda" : "Currency"}</p>
+                <p className="text-sm text-muted-foreground mb-3">
                   {isEs ? "Moneda para mostrar precios" : "Currency for displaying prices"}
                 </p>
                 <Select value={currency} onValueChange={val => {
                   setCurrency(val);
                   updateSettingsMutation.mutate({ currency: val } as any);
                 }}>
-                  <SelectTrigger className="border-[#1C7BB1]/20 w-full sm:w-64">
+                  <SelectTrigger className="border-primary/20 w-full sm:w-64">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -876,9 +876,9 @@ export default function SettingsPage() {
 
       case "delete":
         return (
-          <Card className="border-0 shadow-lg border-red-200">
+          <Card className="border-0 shadow-lg border-destructive/30">
             <CardHeader>
-              <CardTitle className="text-red-600 text-lg flex items-center gap-2">
+              <CardTitle className="text-destructive text-lg flex items-center gap-2">
                 <Trash2 className="w-5 h-5" />
                 {isEs ? "Eliminar Cuenta" : "Delete Account"}
               </CardTitle>
@@ -887,10 +887,10 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-red-700 space-y-2">
+                  <AlertTriangle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-destructive space-y-2">
                     <p className="font-medium">
                       {isEs ? "Al eliminar tu cuenta:" : "By deleting your account:"}
                     </p>
@@ -917,7 +917,7 @@ export default function SettingsPage() {
               <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle className="text-red-600 flex items-center gap-2">
+                    <DialogTitle className="text-destructive flex items-center gap-2">
                       <AlertTriangle className="w-5 h-5" />
                       {isEs ? "Confirmar Eliminacion" : "Confirm Deletion"}
                     </DialogTitle>
@@ -962,10 +962,10 @@ export default function SettingsPage() {
       <Header />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-          <h1 className="text-3xl font-bold text-[#0A4A6E]">
+          <h1 className="text-3xl font-bold text-foreground">
             {isEs ? "Configuracion" : "Settings"}
           </h1>
-          <p className="text-[#0A4A6E]/60 mt-1">
+          <p className="text-foreground/60 mt-1">
             {isEs ? "Administra tus preferencias y cuenta" : "Manage your preferences and account"}
           </p>
         </motion.div>
@@ -985,10 +985,10 @@ export default function SettingsPage() {
                         onClick={() => setActiveSection(s.id)}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
                           isActive
-                            ? "bg-[#1C7BB1]/10 text-[#1C7BB1] font-medium"
+                            ? "bg-primary/10 text-primary font-medium"
                             : s.id === "delete"
-                              ? "text-red-500 hover:bg-red-50"
-                              : "text-gray-600 hover:bg-gray-100"
+                              ? "text-destructive hover:bg-destructive/10"
+                              : "text-muted-foreground hover:bg-muted"
                         }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
@@ -1005,7 +1005,7 @@ export default function SettingsPage() {
           <div className="lg:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200"
+              className="w-full flex items-center justify-between px-4 py-3 bg-card rounded-xl shadow-sm border border-border"
             >
               <div className="flex items-center gap-2">
                 {(() => {
@@ -1013,13 +1013,13 @@ export default function SettingsPage() {
                   const Icon = sec?.icon || User;
                   return (
                     <>
-                      <Icon className="w-4 h-4 text-[#1C7BB1]" />
-                      <span className="font-medium text-[#0A4A6E]">{sec?.label}</span>
+                      <Icon className="w-4 h-4 text-primary" />
+                      <span className="font-medium text-foreground">{sec?.label}</span>
                     </>
                   );
                 })()}
               </div>
-              <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${mobileMenuOpen ? "rotate-90" : ""}`} />
+              <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${mobileMenuOpen ? "rotate-90" : ""}`} />
             </button>
             <AnimatePresence>
               {mobileMenuOpen && (
@@ -1029,7 +1029,7 @@ export default function SettingsPage() {
                   exit={{ opacity: 0, height: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-2 bg-white rounded-xl shadow-sm border border-gray-200 divide-y divide-gray-100">
+                  <div className="mt-2 bg-card rounded-xl shadow-sm border border-border divide-y divide-gray-100">
                     {sections.map(s => {
                       const Icon = s.icon;
                       return (
@@ -1041,10 +1041,10 @@ export default function SettingsPage() {
                           }}
                           className={`w-full flex items-center gap-3 px-4 py-3 text-sm ${
                             activeSection === s.id
-                              ? "text-[#1C7BB1] font-medium bg-[#1C7BB1]/5"
+                              ? "text-primary font-medium bg-primary/5"
                               : s.id === "delete"
-                                ? "text-red-500"
-                                : "text-gray-600"
+                                ? "text-destructive"
+                                : "text-muted-foreground"
                           }`}
                         >
                           <Icon className="w-4 h-4" />
@@ -1070,7 +1070,7 @@ export default function SettingsPage() {
               >
                 {settingsLoading ? (
                   <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#1C7BB1]" />
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   </div>
                 ) : (
                   renderSection()

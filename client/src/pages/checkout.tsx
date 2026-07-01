@@ -69,7 +69,7 @@ function PaymentForm({ packageInfo }: { packageInfo: any }) {
       <Button 
         type="submit" 
         disabled={!stripe || !elements || isLoading}
-        className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
       >
         {isLoading ? (
           <>
@@ -143,30 +143,30 @@ export default function CheckoutPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#EAF4FA] flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-[#1C7BB1] border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-muted flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
 
   if (!clientSecret || !packageInfo) {
     return (
-      <div className="min-h-screen bg-[#EAF4FA]">
+      <div className="min-h-screen bg-muted">
         <Header />
         <div className="max-w-4xl mx-auto px-4 py-16 text-center">
           <Card>
             <CardContent className="py-12">
-              <h1 className="text-2xl font-bold text-[#0A4A6E] mb-4">
+              <h1 className="text-2xl font-bold text-foreground mb-4">
                 {language === 'es' ? 'Sesión Expirada' : 'Session Expired'}
               </h1>
-              <p className="text-gray-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 {language === 'es' 
                   ? 'La sesión de pago ha expirado. Por favor, regresa a la página de planes.'
                   : 'The payment session has expired. Please return to the plans page.'
                 }
               </p>
               <Link href="/packages">
-                <Button className="bg-[#1C7BB1] hover:bg-[#0A4A6E]">
+                <Button className="bg-primary hover:bg-primary-900">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   {language === 'es' ? 'Volver a Planes' : 'Back to Plans'}
                 </Button>
@@ -179,13 +179,13 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EAF4FA]">
+    <div className="min-h-screen bg-muted">
       <Header />
       
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-6">
           <Link href="/packages">
-            <Button variant="outline" className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white">
+            <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
               <ArrowLeft className="w-4 h-4 mr-2" />
               {language === 'es' ? 'Volver a Planes' : 'Back to Plans'}
             </Button>
@@ -196,7 +196,7 @@ export default function CheckoutPage() {
           {/* Order Summary */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E]">
+              <CardTitle className="text-foreground">
                 {language === 'es' ? 'Resumen del Pedido' : 'Order Summary'}
               </CardTitle>
             </CardHeader>
@@ -204,16 +204,16 @@ export default function CheckoutPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-[#0A4A6E]">{packageInfo.name}</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="font-semibold text-foreground">{packageInfo.name}</h3>
+                    <p className="text-sm text-muted-foreground">
                       {packageInfo.classCount} {language === 'es' ? 'clases individuales' : 'individual classes'}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       ${packageInfo.perClassPrice} {language === 'es' ? 'por clase' : 'per class'}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-[#1C7BB1]">
+                    <p className="text-2xl font-bold text-primary">
                       ${packageInfo.price}
                     </p>
                   </div>
@@ -221,20 +221,20 @@ export default function CheckoutPage() {
                 
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold text-[#0A4A6E]">
+                    <span className="font-semibold text-foreground">
                       {language === 'es' ? 'Total' : 'Total'}
                     </span>
-                    <span className="text-2xl font-bold text-[#1C7BB1]">
+                    <span className="text-2xl font-bold text-primary">
                       ${packageInfo.price}
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-[#F59E1C]/10 p-4 rounded-lg">
-                  <h4 className="font-semibold text-[#0A4A6E] mb-2">
+                <div className="bg-accent/10 p-4 rounded-lg">
+                  <h4 className="font-semibold text-foreground mb-2">
                     {language === 'es' ? '✓ Lo que obtienes:' : '✓ What you get:'}
                   </h4>
-                  <ul className="text-sm text-[#0A4A6E]/80 space-y-1">
+                  <ul className="text-sm text-foreground/80 space-y-1">
                     <li>• {packageInfo.classCount} {language === 'es' ? 'clases privadas 1-a-1' : 'private 1-on-1 classes'}</li>
                     <li>• {language === 'es' ? 'Válido por 6 meses' : 'Valid for 6 months'}</li>
                     <li>• {language === 'es' ? 'Horarios flexibles' : 'Flexible scheduling'}</li>
@@ -249,7 +249,7 @@ export default function CheckoutPage() {
           {/* Payment Form */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#0A4A6E]">
+              <CardTitle className="text-foreground">
                 <CreditCard className="w-5 h-5 mr-2 inline" />
                 {language === 'es' ? 'Información de Pago' : 'Payment Information'}
               </CardTitle>
@@ -267,8 +267,8 @@ export default function CheckoutPage() {
                 </Elements>
               ) : (
                 <div className="text-center py-8">
-                  <div className="animate-spin w-8 h-8 border-4 border-[#1C7BB1] border-t-transparent rounded-full mx-auto mb-4" />
-                  <p className="text-gray-600">
+                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                  <p className="text-muted-foreground">
                     {language === 'es' 
                       ? 'Preparando formulario de pago...'
                       : 'Preparing payment form...'
@@ -283,7 +283,7 @@ export default function CheckoutPage() {
         {/* Security Notice */}
         <Card className="mt-8">
           <CardContent className="py-6">
-            <div className="text-center text-sm text-gray-600">
+            <div className="text-center text-sm text-muted-foreground">
               <p>
                 {language === 'es' 
                   ? '🔒 Pago seguro procesado por Stripe. Tu información está protegida con encriptación de nivel bancario.'

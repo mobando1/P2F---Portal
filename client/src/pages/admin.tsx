@@ -479,7 +479,7 @@ export default function AdminPage() {
             {/* Modal para añadir profesor */}
             {showAddTutor && (
               <Card className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="bg-card rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                   <h2 className="text-xl font-bold mb-4">Añadir Nuevo Profesor</h2>
 
                   <div className="grid gap-4">
@@ -564,7 +564,7 @@ export default function AdminPage() {
                                 const arr = isSelected ? selected.filter(s => s !== spec) : [...selected, spec];
                                 setNewTutor({...newTutor, specialization: arr.join(", ")});
                               }}
-                              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-foreground border-border hover:border-primary'}`}
+                              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${isSelected ? 'bg-primary text-white border-primary' : 'bg-card text-foreground border-border hover:border-primary'}`}
                             >
                               {spec}
                             </button>
@@ -649,7 +649,7 @@ export default function AdminPage() {
                         <div className="space-y-2">
                           <p className="text-xs text-muted-foreground">Copia este link y envíaselo al profesor:</p>
                           <div className="flex gap-2">
-                            <code className="flex-1 text-xs bg-white border rounded px-2 py-1 truncate text-foreground">
+                            <code className="flex-1 text-xs bg-card border rounded px-2 py-1 truncate text-foreground">
                               {window.location.origin}{inviteUrl}
                             </code>
                             <Button
@@ -710,7 +710,7 @@ export default function AdminPage() {
             {/* Modal para editar profesor */}
             {editingTutor && (
               <Card className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="bg-card rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                   <h2 className="text-xl font-bold mb-4">{isEs ? 'Editar Profesor' : 'Edit Tutor'}: {editingTutor.name}</h2>
 
                   <div className="grid gap-4">
@@ -787,7 +787,7 @@ export default function AdminPage() {
                                 const arr = isSelected ? selected.filter((s: string) => s !== spec) : [...selected, spec];
                                 setEditingTutor({...editingTutor, specialization: arr.join(", ")});
                               }}
-                              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-foreground border-border hover:border-primary'}`}
+                              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${isSelected ? 'bg-primary text-white border-primary' : 'bg-card text-foreground border-border hover:border-primary'}`}
                             >
                               {spec}
                             </button>
@@ -1725,7 +1725,7 @@ export default function AdminPage() {
                     {/* Refund Confirmation Dialog */}
                     {refundTarget && (
                       <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => setRefundTarget(null)}>
-                        <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
+                        <div className="bg-card rounded-lg p-6 max-w-md mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
                           <h3 className="text-lg font-bold mb-2">{isEs ? 'Confirmar Reembolso' : 'Confirm Refund'}</h3>
                           <p className="text-sm text-muted-foreground mb-4">
                             {isEs

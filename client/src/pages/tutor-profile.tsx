@@ -93,7 +93,7 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange, 
   const dayLabels = isEs ? DAY_NAMES_ES : DAY_NAMES_EN;
 
   if (isLoading) {
-    return <div className="flex justify-center py-12"><Loader2 className="animate-spin h-6 w-6 text-[#1C7BB1]" /></div>;
+    return <div className="flex justify-center py-12"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>;
   }
 
   const hasAnySlots = data?.days.some(d => d.slots.length > 0);
@@ -101,9 +101,9 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange, 
   if (!data || !hasAnySlots) {
     return (
       <div className="text-center py-10">
-        <Clock className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p className="text-sm text-gray-500">{isEs ? "No hay horarios disponibles esta semana" : "No available times this week"}</p>
-        <button onClick={() => onWeekChange(1)} className="mt-3 text-sm text-[#1C7BB1] hover:underline font-medium">
+        <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+        <p className="text-sm text-muted-foreground">{isEs ? "No hay horarios disponibles esta semana" : "No available times this week"}</p>
+        <button onClick={() => onWeekChange(1)} className="mt-3 text-sm text-primary hover:underline font-medium">
           {isEs ? "Ver siguiente semana →" : "See next week →"}
         </button>
       </div>
@@ -120,12 +120,12 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange, 
     <div>
       {/* Week Navigation */}
       <div className="flex items-center justify-between mb-5">
-        <button onClick={() => onWeekChange(-1)} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-          <ChevronLeft className="h-5 w-5 text-[#0A4A6E]" />
+        <button onClick={() => onWeekChange(-1)} className="p-2 rounded-full hover:bg-muted transition-colors">
+          <ChevronLeft className="h-5 w-5 text-foreground" />
         </button>
-        <span className="text-base font-semibold text-[#0A4A6E]">{weekLabel}</span>
-        <button onClick={() => onWeekChange(1)} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-          <ChevronRight className="h-5 w-5 text-[#0A4A6E]" />
+        <span className="text-base font-semibold text-foreground">{weekLabel}</span>
+        <button onClick={() => onWeekChange(1)} className="p-2 rounded-full hover:bg-muted transition-colors">
+          <ChevronRight className="h-5 w-5 text-foreground" />
         </button>
       </div>
 
@@ -141,11 +141,11 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange, 
           return (
             <div key={dow} className="flex flex-col items-center">
               {/* Day Header */}
-              <div className={`text-center mb-2 pb-2 w-full border-b-2 ${isToday ? "border-[#1C7BB1]" : "border-transparent"}`}>
-                <p className={`text-xs font-semibold ${isToday ? "text-[#1C7BB1]" : "text-[#0A4A6E]"}`}>
+              <div className={`text-center mb-2 pb-2 w-full border-b-2 ${isToday ? "border-primary" : "border-transparent"}`}>
+                <p className={`text-xs font-semibold ${isToday ? "text-primary" : "text-foreground"}`}>
                   {dayLabels[idx]}
                 </p>
-                <p className={`text-sm font-bold ${isToday ? "text-[#1C7BB1]" : "text-[#0A4A6E]/70"}`}>
+                <p className={`text-sm font-bold ${isToday ? "text-primary" : "text-foreground/70"}`}>
                   {dateNum}
                 </p>
               </div>
@@ -161,8 +161,8 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange, 
                         onClick={() => onSlotSelect(dayData!.date, slot.start)}
                         className={`w-full py-2 rounded-full border text-xs font-medium transition-all active:scale-95 ${
                           isSelected
-                            ? "bg-[#1C7BB1] text-white border-[#1C7BB1] shadow-md"
-                            : "border-[#1C7BB1]/25 bg-white text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white hover:border-[#1C7BB1]"
+                            ? "bg-primary text-primary-foreground border-primary shadow-md"
+                            : "border-primary/25 bg-card text-primary hover:bg-primary hover:text-white hover:border-primary"
                         }`}
                       >
                         {slot.start}
@@ -170,7 +170,7 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange, 
                     );
                   })
                 ) : (
-                  <p className="text-center text-gray-300 text-xs py-3">—</p>
+                  <p className="text-center text-muted-foreground text-xs py-3">—</p>
                 )}
               </div>
             </div>
@@ -179,7 +179,7 @@ function WeeklyGridView({ tutorId, weekStart, isEs, onSlotSelect, onWeekChange, 
       </div>
 
       {/* Timezone */}
-      <p className="text-[10px] text-gray-400 mt-4 text-center">
+      <p className="text-[10px] text-muted-foreground mt-4 text-center">
         {isEs ? "En tu zona horaria local" : "In your local timezone"}
       </p>
     </div>
@@ -288,13 +288,13 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
 
   return (
     <Card className="p-5 md:p-6">
-      <h3 className="text-lg font-bold text-[#0A4A6E] mb-4">
+      <h3 className="text-lg font-bold text-foreground mb-4">
         {isEs ? "Reservar Clase" : "Book a Class"}
       </h3>
 
       {canBookTrial && (
-        <div className="bg-[#F59E1C]/10 border border-[#F59E1C]/30 rounded-lg p-2.5 mb-4">
-          <p className="text-xs font-medium text-[#0A4A6E]">
+        <div className="bg-accent/10 border border-accent/30 rounded-lg p-2.5 mb-4">
+          <p className="text-xs font-medium text-foreground">
             {isEs ? "Tu primera clase de 50 min es GRATIS" : "Your first 50-min class is FREE"}
           </p>
         </div>
@@ -326,16 +326,16 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4 pt-4 border-t border-gray-100 space-y-3"
+          className="mt-4 pt-4 border-t border-border space-y-3"
         >
           {/* Summary */}
-          <div className="bg-[#EAF4FA] rounded-lg p-3">
-            <p className="text-xs text-gray-500 mb-1">{isEs ? "Resumen" : "Summary"}</p>
-            <p className="text-sm font-semibold text-[#0A4A6E]">
+          <div className="bg-muted rounded-lg p-3">
+            <p className="text-xs text-muted-foreground mb-1">{isEs ? "Resumen" : "Summary"}</p>
+            <p className="text-sm font-semibold text-foreground">
               {new Date(selectedDate + "T12:00:00").toLocaleDateString(isEs ? "es" : "en", { weekday: "short", month: "short", day: "numeric" })}
               {" "}{isEs ? "a las" : "at"} {selectedSlot}
             </p>
-            <p className="text-xs text-gray-500">{canBookTrial ? "50 min" : "60 min"} - {tutorName}</p>
+            <p className="text-xs text-muted-foreground">{canBookTrial ? "50 min" : "60 min"} - {tutorName}</p>
           </div>
 
           {/* Recurring option (only for paid, not trial) */}
@@ -346,7 +346,7 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
                   checked={isRecurring}
                   onCheckedChange={(checked) => setIsRecurring(checked === true)}
                 />
-                <span className="text-xs font-medium text-[#0A4A6E] flex items-center gap-1">
+                <span className="text-xs font-medium text-foreground flex items-center gap-1">
                   <Repeat className="w-3 h-3" />
                   {isEs ? "Repetir cada semana" : "Repeat weekly"}
                 </span>
@@ -360,8 +360,8 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
                       onClick={() => setRecurringWeeks(w)}
                       className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
                         recurringWeeks === w
-                          ? "bg-[#1C7BB1] text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted"
                       }`}
                     >
                       {w} {isEs ? "sem" : "wks"}
@@ -375,12 +375,12 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
           {/* Book Button */}
           {user ? (
             !hasCredits ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center space-y-2">
-                <p className="text-sm font-medium text-red-700">
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-center space-y-2">
+                <p className="text-sm font-medium text-destructive">
                   {isEs ? "No tienes créditos de clase disponibles" : "No class credits available"}
                 </p>
                 <Link href="/packages">
-                  <Button variant="outline" className="text-xs border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#EAF4FA]">
+                  <Button variant="outline" className="text-xs border-primary text-primary hover:bg-muted">
                     {isEs ? "Comprar clases" : "Buy classes"}
                   </Button>
                 </Link>
@@ -390,8 +390,8 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
               <Button
                 className={`w-full font-semibold py-5 text-white shadow-lg ${
                   canBookTrial
-                    ? "bg-[#F59E1C] hover:bg-[#e08a0e] shadow-[#F59E1C]/20"
-                    : "bg-[#1C7BB1] hover:bg-[#0A4A6E] shadow-[#1C7BB1]/20"
+                    ? "bg-accent hover:bg-accent/90 shadow-[#F59E1C]/20"
+                    : "bg-primary hover:bg-primary-900 shadow-[#1C7BB1]/20"
                 }`}
                 disabled={isAnyPending}
                 onClick={handleBook}
@@ -407,8 +407,8 @@ function TutorBookingCalendar({ tutorId, tutorName, tutorAvatar, isEs }: { tutor
             </motion.div>
             )
           ) : (
-            <p className="text-center text-xs text-gray-400">
-              <Link href="/login" className="text-[#1C7BB1] underline">
+            <p className="text-center text-xs text-muted-foreground">
+              <Link href="/login" className="text-primary underline">
                 {isEs ? "Inicia sesion" : "Log in"}
               </Link>
               {" "}{isEs ? "para reservar" : "to book"}
@@ -479,10 +479,10 @@ export default function TutorProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#EAF4FA]">
+      <div className="min-h-screen bg-muted">
         <Header />
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C7BB1]" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       </div>
     );
@@ -490,14 +490,14 @@ export default function TutorProfilePage() {
 
   if (!tutor) {
     return (
-      <div className="min-h-screen bg-[#EAF4FA]">
+      <div className="min-h-screen bg-muted">
         <Header />
         <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-          <h2 className="text-2xl font-bold text-gray-700">
+          <h2 className="text-2xl font-bold text-foreground">
             {isEs ? "Profesor no encontrado" : "Tutor not found"}
           </h2>
           <Link href="/tutors">
-            <Button className="mt-4 bg-[#1C7BB1]">
+            <Button className="mt-4 bg-primary">
               {isEs ? "Volver a Profesores" : "Back to Tutors"}
             </Button>
           </Link>
@@ -507,12 +507,12 @@ export default function TutorProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EAF4FA]">
+    <div className="min-h-screen bg-muted">
       <Header />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back link */}
         <Link href="/tutors">
-          <Button variant="ghost" className="mb-6 text-[#1C7BB1] hover:text-[#0A4A6E] -ml-2">
+          <Button variant="ghost" className="mb-6 text-primary hover:text-foreground -ml-2">
             <ArrowLeft className="w-4 h-4 mr-2" />
             {isEs ? "Volver a Profesores" : "Back to Tutors"}
           </Button>
@@ -522,21 +522,21 @@ export default function TutorProfilePage() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <Card className="p-6">
             <div className="flex flex-col sm:flex-row gap-6">
-              <div className="w-32 h-32 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
+              <div className="w-32 h-32 rounded-xl overflow-hidden bg-muted flex-shrink-0">
                 {tutor.avatar ? (
                   <img src={tutor.avatar} alt={tutor.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-[#1C7BB1] flex items-center justify-center text-white text-3xl font-bold">
+                  <div className="w-full h-full bg-primary flex items-center justify-center text-white text-3xl font-bold">
                     {tutor.name.split(" ").map(n => n[0]).join("")}
                   </div>
                 )}
               </div>
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-[#0A4A6E]">{tutor.name}</h1>
-                <p className="text-[#1C7BB1] font-medium mt-1">{isEs && tutor.specializationEs ? tutor.specializationEs : tutor.specialization}</p>
-                <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-600">
+                <h1 className="text-2xl font-bold text-foreground">{tutor.name}</h1>
+                <p className="text-primary font-medium mt-1">{isEs && tutor.specializationEs ? tutor.specializationEs : tutor.specialization}</p>
+                <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-[#F59E1C] text-[#F59E1C]" />
+                    <Star className="w-4 h-4 fill-[#F59E1C] text-accent" />
                     <span className="font-semibold">{tutor.rating}</span>
                     <span>({tutor.reviewCount} {isEs ? "resenas" : "reviews"})</span>
                   </div>
@@ -556,7 +556,7 @@ export default function TutorProfilePage() {
                 {tutor.languages && tutor.languages.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-3">
                     {tutor.languages.map(lang => (
-                      <span key={lang} className="px-2 py-1 bg-[#EAF4FA] text-[#1C7BB1] rounded-full text-xs font-medium">
+                      <span key={lang} className="px-2 py-1 bg-muted text-primary rounded-full text-xs font-medium">
                         {lang}
                       </span>
                     ))}
@@ -568,7 +568,7 @@ export default function TutorProfilePage() {
                       onClick={() => startConversationMutation.mutate()}
                       disabled={startConversationMutation.isPending || !tutor.userId}
                       variant="outline"
-                      className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white"
+                      className="border-primary text-primary hover:bg-primary hover:text-white"
                     >
                       {startConversationMutation.isPending ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -604,10 +604,10 @@ export default function TutorProfilePage() {
             {/* About */}
             <motion.div variants={fadeInUp}>
               <Card className="p-6">
-                <h2 className="text-xl font-bold text-[#0A4A6E] mb-3">
+                <h2 className="text-xl font-bold text-foreground mb-3">
                   {isEs ? "Sobre mi" : "About Me"}
                 </h2>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{isEs && tutor.bioEs ? tutor.bioEs : tutor.bio}</p>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{isEs && tutor.bioEs ? tutor.bioEs : tutor.bio}</p>
               </Card>
             </motion.div>
 
@@ -615,14 +615,14 @@ export default function TutorProfilePage() {
             {tutor.certifications && tutor.certifications.length > 0 && (
               <motion.div variants={fadeInUp}>
                 <Card className="p-6">
-                  <h2 className="text-xl font-bold text-[#0A4A6E] mb-3">
+                  <h2 className="text-xl font-bold text-foreground mb-3">
                     {isEs ? "Certificaciones" : "Certifications"}
                   </h2>
                   <div className="flex flex-wrap gap-3">
                     {tutor.certifications.map(cert => (
-                      <div key={cert} className="flex items-center gap-2 px-3 py-2 bg-[#F59E1C]/10 rounded-lg">
-                        <Award className="w-4 h-4 text-[#F59E1C]" />
-                        <span className="text-sm font-medium text-[#0A4A6E]">{cert}</span>
+                      <div key={cert} className="flex items-center gap-2 px-3 py-2 bg-accent/10 rounded-lg">
+                        <Award className="w-4 h-4 text-accent" />
+                        <span className="text-sm font-medium text-foreground">{cert}</span>
                       </div>
                     ))}
                   </div>
@@ -634,18 +634,18 @@ export default function TutorProfilePage() {
             <motion.div variants={fadeInUp}>
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-[#0A4A6E]">
+                  <h2 className="text-xl font-bold text-foreground">
                     {isEs ? "Resenas de Estudiantes" : "Student Reviews"} ({reviews.length})
                   </h2>
                   <div className="flex items-center gap-3">
                     {reviews.length > 0 && (
                       <div className="flex items-center gap-1.5">
-                        <Star className="w-5 h-5 fill-[#F59E1C] text-[#F59E1C]" />
-                        <span className="text-lg font-bold text-[#0A4A6E]">{tutor.rating}</span>
+                        <Star className="w-5 h-5 fill-[#F59E1C] text-accent" />
+                        <span className="text-lg font-bold text-foreground">{tutor.rating}</span>
                       </div>
                     )}
                     {canReview && (
-                      <Button size="sm" className="bg-[#F59E1C] hover:bg-[#e08a0e]" onClick={() => setShowReviewModal(true)}>
+                      <Button size="sm" className="bg-accent hover:bg-accent/90" onClick={() => setShowReviewModal(true)}>
                         <Star className="h-3.5 w-3.5 mr-1" />
                         {isEs ? "Dejar Reseña" : "Leave Review"}
                       </Button>
@@ -653,7 +653,7 @@ export default function TutorProfilePage() {
                   </div>
                 </div>
                 {reviews.length === 0 ? (
-                  <p className="text-gray-500">
+                  <p className="text-muted-foreground">
                     {isEs ? "Aun no hay resenas" : "No reviews yet"}
                   </p>
                 ) : (
@@ -682,15 +682,15 @@ export default function TutorProfilePage() {
                           key={review.id}
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
-                          className="border-b border-gray-100 pb-5 last:border-0"
+                          className="border-b border-border pb-5 last:border-0"
                         >
                           <div className="flex items-start gap-3">
                             {/* Reviewer Avatar */}
-                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0">
                               {review.userAvatar ? (
                                 <img src={review.userAvatar} alt={review.userName} className="w-full h-full object-cover" />
                               ) : (
-                                <div className="w-full h-full bg-[#1C7BB1] flex items-center justify-center text-white text-sm font-bold">
+                                <div className="w-full h-full bg-primary flex items-center justify-center text-white text-sm font-bold">
                                   {review.userName.charAt(0)}
                                 </div>
                               )}
@@ -698,20 +698,20 @@ export default function TutorProfilePage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-semibold text-[#0A4A6E]">{review.userName}</span>
+                                  <span className="text-sm font-semibold text-foreground">{review.userName}</span>
                                   <div className="flex">
                                     {Array.from({ length: 5 }).map((_, i) => (
                                       <Star
                                         key={i}
-                                        className={`w-3.5 h-3.5 ${i < review.rating ? "fill-[#F59E1C] text-[#F59E1C]" : "text-gray-200"}`}
+                                        className={`w-3.5 h-3.5 ${i < review.rating ? "fill-[#F59E1C] text-accent" : "text-gray-200"}`}
                                       />
                                     ))}
                                   </div>
                                 </div>
-                                <span className="text-xs text-gray-400">{timeAgo}</span>
+                                <span className="text-xs text-muted-foreground">{timeAgo}</span>
                               </div>
                               {review.comment && (
-                                <p className="text-gray-600 text-sm mt-1.5 leading-relaxed">{review.comment}</p>
+                                <p className="text-muted-foreground text-sm mt-1.5 leading-relaxed">{review.comment}</p>
                               )}
                             </div>
                           </div>
@@ -733,13 +733,13 @@ export default function TutorProfilePage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl"
+            className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold text-[#0A4A6E] mb-1">
+            <h3 className="text-lg font-bold text-foreground mb-1">
               {isEs ? "Dejar una reseña" : "Leave a review"}
             </h3>
-            <p className="text-sm text-gray-500 mb-4">{tutor.name}</p>
+            <p className="text-sm text-muted-foreground mb-4">{tutor.name}</p>
 
             {/* Star rating */}
             <div className="flex gap-1 mb-4">
@@ -750,7 +750,7 @@ export default function TutorProfilePage() {
                   className="p-0.5"
                 >
                   <Star className={`w-8 h-8 transition-colors ${
-                    star <= reviewRating ? "fill-[#F59E1C] text-[#F59E1C]" : "text-gray-300"
+                    star <= reviewRating ? "fill-[#F59E1C] text-accent" : "text-muted-foreground"
                   }`} />
                 </button>
               ))}
@@ -758,7 +758,7 @@ export default function TutorProfilePage() {
 
             {/* Comment */}
             <textarea
-              className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1C7BB1]/20 focus:border-[#1C7BB1]"
+              className="w-full border border-border rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               rows={3}
               placeholder={isEs ? "Cuéntanos sobre tu experiencia (opcional)" : "Tell us about your experience (optional)"}
               value={reviewComment}
@@ -766,7 +766,7 @@ export default function TutorProfilePage() {
             />
 
             {submitReviewMutation.isError && (
-              <p className="text-sm text-red-600 mt-2">
+              <p className="text-sm text-destructive mt-2">
                 {(submitReviewMutation.error as any)?.message?.includes("already")
                   ? (isEs ? "Ya dejaste una reseña para este tutor." : "You already reviewed this tutor.")
                   : (isEs ? "Error al enviar. Intenta de nuevo." : "Failed to submit. Try again.")}
@@ -778,7 +778,7 @@ export default function TutorProfilePage() {
                 {isEs ? "Cancelar" : "Cancel"}
               </Button>
               <Button
-                className="flex-1 bg-[#F59E1C] hover:bg-[#e08a0e]"
+                className="flex-1 bg-accent hover:bg-accent/90"
                 onClick={() => submitReviewMutation.mutate()}
                 disabled={submitReviewMutation.isPending}
               >

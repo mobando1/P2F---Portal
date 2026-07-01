@@ -107,10 +107,10 @@ export default function TutorAIAssistant() {
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-[#0A4A6E]">
+              <h1 className="text-lg font-bold text-foreground">
                 {isEs ? "Asistente de Enseñanza" : "Teaching Assistant"}
               </h1>
-              <p className="text-xs text-[#0A4A6E]/60">
+              <p className="text-xs text-foreground/60">
                 {isEs ? "Tu copiloto para preparar clases y mejorar como profesor" : "Your copilot for class prep and teaching improvement"}
               </p>
             </div>
@@ -122,10 +122,10 @@ export default function TutorAIAssistant() {
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-8">
-                <div className="w-16 h-16 rounded-full bg-[#EAF4FA] flex items-center justify-center mb-4">
-                  <Bot className="w-8 h-8 text-[#1C7BB1]" />
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Bot className="w-8 h-8 text-primary" />
                 </div>
-                <p className="text-sm text-[#0A4A6E]/60 text-center mb-6 max-w-sm">
+                <p className="text-sm text-foreground/60 text-center mb-6 max-w-sm">
                   {isEs
                     ? "Pregúntame sobre preparación de clases, metodologías, actividades o cualquier duda sobre la plataforma."
                     : "Ask me about class preparation, methodologies, activities, or any platform questions."}
@@ -135,10 +135,10 @@ export default function TutorAIAssistant() {
                     <button
                       key={i}
                       onClick={() => handleQuickPrompt(prompt.text)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg border border-[#1C7BB1]/15 hover:bg-[#EAF4FA]/50 transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-3 rounded-lg border border-primary/15 hover:bg-muted/50 transition-colors text-left"
                     >
-                      <prompt.icon className="w-4 h-4 text-[#1C7BB1] flex-shrink-0" />
-                      <span className="text-sm text-[#0A4A6E]">{prompt.text}</span>
+                      <prompt.icon className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span className="text-sm text-foreground">{prompt.text}</span>
                     </button>
                   ))}
                 </div>
@@ -159,14 +159,14 @@ export default function TutorAIAssistant() {
                     )}
                     <div className={`max-w-[80%] rounded-xl px-4 py-2.5 ${
                       msg.role === "user"
-                        ? "bg-[#1C7BB1] text-white"
-                        : "bg-white border border-gray-100 text-[#0A4A6E]"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card border border-border text-foreground"
                     }`}>
                       <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                     </div>
                     {msg.role === "user" && (
-                      <div className="w-7 h-7 rounded-lg bg-[#F59E1C]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <User className="w-3.5 h-3.5 text-[#F59E1C]" />
+                      <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <User className="w-3.5 h-3.5 text-accent" />
                       </div>
                     )}
                   </motion.div>
@@ -176,8 +176,8 @@ export default function TutorAIAssistant() {
                     <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#1C7BB1] to-[#0A4A6E] flex items-center justify-center flex-shrink-0">
                       <Bot className="w-3.5 h-3.5 text-white" />
                     </div>
-                    <div className="bg-white border border-gray-100 rounded-xl px-4 py-2.5">
-                      <Loader2 className="w-4 h-4 animate-spin text-[#1C7BB1]" />
+                    <div className="bg-card border border-border rounded-xl px-4 py-2.5">
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
                     </div>
                   </div>
                 )}
@@ -187,7 +187,7 @@ export default function TutorAIAssistant() {
           </CardContent>
 
           {/* Input */}
-          <div className="p-3 border-t border-gray-100 bg-white">
+          <div className="p-3 border-t border-border bg-card">
             <div className="flex gap-2">
               <Textarea
                 value={input}
@@ -204,7 +204,7 @@ export default function TutorAIAssistant() {
               <Button
                 onClick={handleSend}
                 disabled={!input.trim() || sendMutation.isPending}
-                className="bg-[#1C7BB1] hover:bg-[#0A4A6E] h-[44px] w-[44px] flex-shrink-0"
+                className="bg-primary hover:bg-primary-900 h-[44px] w-[44px] flex-shrink-0"
                 size="icon"
               >
                 <Send className="w-4 h-4" />

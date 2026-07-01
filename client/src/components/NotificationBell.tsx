@@ -88,9 +88,9 @@ export default function NotificationBell() {
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative p-2" aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : "Notifications"}>
-          <Bell className="h-5 w-5 text-gray-600" />
+          <Bell className="h-5 w-5 text-muted-foreground" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+            <span className="absolute -top-0.5 -right-0.5 bg-destructive/100 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
@@ -98,14 +98,14 @@ export default function NotificationBell() {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end" forceMount>
         <div className="flex items-center justify-between px-3 py-2">
-          <h3 className="font-semibold text-sm text-[#0A4A6E]">
+          <h3 className="font-semibold text-sm text-foreground">
             {language === "es" ? "Notificaciones" : "Notifications"}
           </h3>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs text-[#1C7BB1] h-auto p-1"
+              className="text-xs text-primary h-auto p-1"
               onClick={() => markAllReadMutation.mutate()}
             >
               <CheckCheck className="h-3 w-3 mr-1" />
@@ -115,7 +115,7 @@ export default function NotificationBell() {
         </div>
         <DropdownMenuSeparator />
         {items.length === 0 ? (
-          <div className="px-3 py-6 text-center text-sm text-gray-400">
+          <div className="px-3 py-6 text-center text-sm text-muted-foreground">
             {language === "es" ? "Sin notificaciones" : "No notifications"}
           </div>
         ) : (
@@ -123,20 +123,20 @@ export default function NotificationBell() {
             {items.slice(0, 15).map((n) => (
               <DropdownMenuItem
                 key={n.id}
-                className={`px-3 py-2 cursor-pointer ${!n.isRead ? "bg-[#EAF4FA]/50" : ""}`}
+                className={`px-3 py-2 cursor-pointer ${!n.isRead ? "bg-muted/50" : ""}`}
                 onClick={() => handleClick(n)}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    {!n.isRead && <div className="w-2 h-2 rounded-full bg-[#1C7BB1] flex-shrink-0" />}
-                    <p className={`text-sm truncate ${!n.isRead ? "font-semibold text-[#0A4A6E]" : "text-gray-600"}`}>
+                    {!n.isRead && <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />}
+                    <p className={`text-sm truncate ${!n.isRead ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                       {n.title}
                     </p>
-                    <span className="text-[10px] text-gray-400 flex-shrink-0 ml-auto">
+                    <span className="text-[10px] text-muted-foreground flex-shrink-0 ml-auto">
                       {timeAgo(n.createdAt)}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
                 </div>
               </DropdownMenuItem>
             ))}

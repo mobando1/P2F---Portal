@@ -140,7 +140,7 @@ function FlagRow({ flag, isEs, onUpdate, onDelete }: {
   };
 
   return (
-    <div className="border rounded-lg p-4 bg-white">
+    <div className="border rounded-lg p-4 bg-card">
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex-1 min-w-0">
           <h4 className="font-bold text-primary-900 font-mono text-sm">{flag.key}</h4>

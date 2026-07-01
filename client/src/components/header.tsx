@@ -73,12 +73,12 @@ export default function Header() {
   const navLinks = primaryLinks;
 
   const moreLinks = isTutorOnly ? [
-    { href: "/tutor-portal/assistant", label: language === 'es' ? 'Asistente IA' : 'AI Assistant', icon: Sparkles, iconColor: "text-[#F59E1C]" },
+    { href: "/tutor-portal/assistant", label: language === 'es' ? 'Asistente IA' : 'AI Assistant', icon: Sparkles, iconColor: "text-accent" },
     { href: "/settings", label: language === 'es' ? 'Configuración' : 'Settings', icon: Settings, iconColor: "" },
     { href: "/support", label: language === 'es' ? 'Soporte' : 'Support', icon: LifeBuoy, iconColor: "" },
   ] : [
-    { href: "/ai-practice", label: 'Practice Partner', icon: Sparkles, iconColor: "text-[#F59E1C]" },
-    { href: "/learning-path", label: language === 'es' ? 'Mi Camino' : 'My Path', icon: GraduationCap, iconColor: "text-[#1C7BB1]" },
+    { href: "/ai-practice", label: 'Practice Partner', icon: Sparkles, iconColor: "text-accent" },
+    { href: "/learning-path", label: language === 'es' ? 'Mi Camino' : 'My Path', icon: GraduationCap, iconColor: "text-primary" },
     { href: "/packages", label: language === 'es' ? 'Planes' : 'Plans', icon: CreditCard, iconColor: "" },
     { href: "/settings", label: language === 'es' ? 'Configuración' : 'Settings', icon: Settings, iconColor: "" },
     { href: "/support", label: language === 'es' ? 'Soporte' : 'Support', icon: LifeBuoy, iconColor: "" },
@@ -88,8 +88,8 @@ export default function Header() {
     <header
       className={`sticky top-0 z-50 border-b transition-all duration-300 ${
         scrolled
-          ? "bg-white/80 backdrop-blur-lg border-gray-200/50 shadow-sm"
-          : "bg-white border-gray-200 shadow-sm"
+          ? "bg-white/80 backdrop-blur-lg border-border/50 shadow-sm"
+          : "bg-card border-border shadow-sm"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -135,7 +135,7 @@ export default function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium text-sm"
+                  className="text-muted-foreground hover:text-primary transition-colors font-medium text-sm"
                 >
                   {link.label}
                 </Link>
@@ -158,7 +158,7 @@ export default function Header() {
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-1 text-gray-600 hover:text-[#1C7BB1] transition-colors font-medium text-sm">
+                  <button className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors font-medium text-sm">
                     {language === 'es' ? 'Más' : 'More'}
                     <ChevronDown className="w-3.5 h-3.5" />
                   </button>
@@ -184,9 +184,9 @@ export default function Header() {
             {user && (
               <Link href="/messages">
                 <Button variant="ghost" size="sm" className="relative h-8 w-8 p-0" aria-label={unreadMessages > 0 ? `${unreadMessages} unread messages` : "Messages"}>
-                  <MessageCircle className="h-4 w-4 text-gray-600" />
+                  <MessageCircle className="h-4 w-4 text-muted-foreground" />
                   {unreadMessages > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full bg-[#1C7BB1] text-white text-[10px] flex items-center justify-center px-1">
+                    <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center px-1">
                       {unreadMessages}
                     </span>
                   )}
@@ -227,13 +227,13 @@ export default function Header() {
                       <>
                         <Link href="/learning-path">
                           <DropdownMenuItem className="cursor-pointer">
-                            <GraduationCap className="mr-2 h-4 w-4 text-[#1C7BB1]" />
+                            <GraduationCap className="mr-2 h-4 w-4 text-primary" />
                             {language === 'es' ? 'Mi Camino' : 'My Path'}
                           </DropdownMenuItem>
                         </Link>
                         <Link href="/ai-practice">
                           <DropdownMenuItem className="cursor-pointer">
-                            <Sparkles className="mr-2 h-4 w-4 text-[#F59E1C]" />
+                            <Sparkles className="mr-2 h-4 w-4 text-accent" />
                             Practice Partner
                           </DropdownMenuItem>
                         </Link>
@@ -249,7 +249,7 @@ export default function Header() {
                       <>
                         <Link href="/tutor-portal/assistant">
                           <DropdownMenuItem className="cursor-pointer">
-                            <Sparkles className="mr-2 h-4 w-4 text-[#F59E1C]" />
+                            <Sparkles className="mr-2 h-4 w-4 text-accent" />
                             {language === 'es' ? 'Asistente IA' : 'AI Assistant'}
                           </DropdownMenuItem>
                         </Link>
@@ -275,26 +275,26 @@ export default function Header() {
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                       <LogOut className="mr-2 h-4 w-4" />
                       {t.logout}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <div className="text-sm">
-                  <p className="font-medium text-gray-900">{user.firstName} {user.lastName}</p>
-                  <p className="text-gray-500">Level {user.level}</p>
+                  <p className="font-medium text-foreground">{user.firstName} {user.lastName}</p>
+                  <p className="text-muted-foreground">Level {user.level}</p>
                 </div>
               </div>
             ) : (
               <div className="hidden md:flex items-center space-x-4">
                 <Link href="/login">
-                  <Button variant="outline" className="border-[#1C7BB1] text-[#1C7BB1] hover:bg-[#1C7BB1] hover:text-white transition-all">
+                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white transition-all">
                     {t.login}
                   </Button>
                 </Link>
                 <Link href="/login">
-                  <Button className="bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white shadow-md shadow-[#F59E1C]/20 transition-all">
+                  <Button className="bg-accent hover:bg-accent/90 text-white shadow-md shadow-[#F59E1C]/20 transition-all">
                     {t.signup}
                   </Button>
                 </Link>
@@ -305,7 +305,7 @@ export default function Header() {
             <Sheet>
               <SheetTrigger asChild>
                 <button className="md:hidden p-2">
-                  <Menu className="w-6 h-6 text-gray-600" />
+                  <Menu className="w-6 h-6 text-muted-foreground" />
                 </button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[280px] sm:w-[350px]">
@@ -328,20 +328,20 @@ export default function Header() {
                   <nav className="flex flex-col gap-4">
                     {navLinks.map((link) => (
                       <SheetClose asChild key={link.href}>
-                        <Link href={link.href} className="text-gray-700 hover:text-[#1C7BB1] font-medium text-lg flex items-center gap-2">
-                          {link.href === "/ai-practice" && <Sparkles className="w-4 h-4 text-[#F59E1C]" />}
-                          {link.href === "/tutor-portal" && <GraduationCap className="w-4 h-4 text-[#1C7BB1]" />}
+                        <Link href={link.href} className="text-foreground hover:text-primary font-medium text-lg flex items-center gap-2">
+                          {link.href === "/ai-practice" && <Sparkles className="w-4 h-4 text-accent" />}
+                          {link.href === "/tutor-portal" && <GraduationCap className="w-4 h-4 text-primary" />}
                           {link.label}
                         </Link>
                       </SheetClose>
                     ))}
                     {user && (
                       <SheetClose asChild>
-                        <Link href="/messages" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-lg flex items-center gap-2">
-                          <MessageCircle className="w-4 h-4 text-[#1C7BB1]" />
+                        <Link href="/messages" className="text-foreground hover:text-primary font-medium text-lg flex items-center gap-2">
+                          <MessageCircle className="w-4 h-4 text-primary" />
                           {language === 'es' ? 'Mensajes' : 'Messages'}
                           {unreadMessages > 0 && (
-                            <span className="text-xs bg-[#1C7BB1] text-white px-1.5 py-0.5 rounded-full">{unreadMessages}</span>
+                            <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">{unreadMessages}</span>
                           )}
                         </Link>
                       </SheetClose>
@@ -353,19 +353,19 @@ export default function Header() {
                       {!isTutorOnly && (
                         <>
                           <SheetClose asChild>
-                            <Link href="/learning-path" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
-                              <GraduationCap className="w-4 h-4 text-[#1C7BB1]" />
+                            <Link href="/learning-path" className="text-foreground hover:text-primary font-medium text-base flex items-center gap-2">
+                              <GraduationCap className="w-4 h-4 text-primary" />
                               {language === 'es' ? 'Mi Camino' : 'My Path'}
                             </Link>
                           </SheetClose>
                           <SheetClose asChild>
-                            <Link href="/ai-practice" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
-                              <Sparkles className="w-4 h-4 text-[#F59E1C]" />
+                            <Link href="/ai-practice" className="text-foreground hover:text-primary font-medium text-base flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-accent" />
                               Practice Partner
                             </Link>
                           </SheetClose>
                           <SheetClose asChild>
-                            <Link href="/packages" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
+                            <Link href="/packages" className="text-foreground hover:text-primary font-medium text-base flex items-center gap-2">
                               <CreditCard className="w-4 h-4" />
                               {language === 'es' ? 'Planes' : 'Plans'}
                             </Link>
@@ -374,26 +374,26 @@ export default function Header() {
                       )}
                       {isTutorOnly && (
                         <SheetClose asChild>
-                          <Link href="/tutor-portal/assistant" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-[#F59E1C]" />
+                          <Link href="/tutor-portal/assistant" className="text-foreground hover:text-primary font-medium text-base flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-accent" />
                             {language === 'es' ? 'Asistente IA' : 'AI Assistant'}
                           </Link>
                         </SheetClose>
                       )}
                       <SheetClose asChild>
-                        <Link href="/profile" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
+                        <Link href="/profile" className="text-foreground hover:text-primary font-medium text-base flex items-center gap-2">
                           <User className="w-4 h-4" />
                           {language === 'es' ? 'Mi Perfil' : 'My Profile'}
                         </Link>
                       </SheetClose>
                       <SheetClose asChild>
-                        <Link href="/settings" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
+                        <Link href="/settings" className="text-foreground hover:text-primary font-medium text-base flex items-center gap-2">
                           <Settings className="w-4 h-4" />
                           {language === 'es' ? 'Configuración' : 'Settings'}
                         </Link>
                       </SheetClose>
                       <SheetClose asChild>
-                        <Link href="/support" className="text-gray-700 hover:text-[#1C7BB1] font-medium text-base flex items-center gap-2">
+                        <Link href="/support" className="text-foreground hover:text-primary font-medium text-base flex items-center gap-2">
                           <LifeBuoy className="w-4 h-4" />
                           {language === 'es' ? 'Soporte' : 'Support'}
                         </Link>
@@ -403,7 +403,7 @@ export default function Header() {
 
                   <div className="pt-4 border-t">
                     {user ? (
-                      <Button variant="outline" className="w-full text-red-600 border-red-200" onClick={handleLogout}>
+                      <Button variant="outline" className="w-full text-destructive border-destructive/30" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         {t.logout}
                       </Button>
@@ -411,14 +411,14 @@ export default function Header() {
                       <div className="flex flex-col gap-2">
                         <SheetClose asChild>
                           <Link href="/login">
-                            <Button variant="outline" className="w-full border-[#1C7BB1] text-[#1C7BB1]">
+                            <Button variant="outline" className="w-full border-primary text-primary">
                               {t.login}
                             </Button>
                           </Link>
                         </SheetClose>
                         <SheetClose asChild>
                           <Link href="/login">
-                            <Button className="w-full bg-[#F59E1C] hover:bg-[#F59E1C]/90 text-white">
+                            <Button className="w-full bg-accent hover:bg-accent/90 text-white">
                               {t.signup}
                             </Button>
                           </Link>

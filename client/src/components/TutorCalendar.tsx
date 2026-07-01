@@ -112,7 +112,7 @@ export function TutorCalendar({ tutorId, tutorName, userId, onBookingSuccess }: 
     return (
       <Card className="w-full max-w-2xl">
         <CardContent className="p-6">
-          <div className="flex items-center justify-center text-red-500">
+          <div className="flex items-center justify-center text-destructive">
             <AlertCircle className="w-5 h-5 mr-2" />
             <span>Error cargando disponibilidad</span>
           </div>
@@ -124,7 +124,7 @@ export function TutorCalendar({ tutorId, tutorName, userId, onBookingSuccess }: 
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
-        <CardTitle className="flex items-center text-[#0A4A6E]">
+        <CardTitle className="flex items-center text-foreground">
           <Calendar className="w-5 h-5 mr-2" />
           Reservar clase con {tutorName}
         </CardTitle>
@@ -132,7 +132,7 @@ export function TutorCalendar({ tutorId, tutorName, userId, onBookingSuccess }: 
       <CardContent className="p-6">
         {/* Selector de fecha */}
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-[#0A4A6E] mb-3">Selecciona una fecha</h3>
+          <h3 className="text-sm font-medium text-foreground mb-3">Selecciona una fecha</h3>
           <div className="grid grid-cols-7 gap-2">
             {getNextSevenDays().map((day) => (
               <Button
@@ -140,8 +140,8 @@ export function TutorCalendar({ tutorId, tutorName, userId, onBookingSuccess }: 
                 variant={selectedDate === day.date ? "default" : "outline"}
                 className={`p-2 text-xs h-auto flex flex-col ${
                   selectedDate === day.date 
-                    ? 'bg-[#1C7BB1] text-white' 
-                    : 'hover:bg-[#1C7BB1]/10'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-primary/10'
                 }`}
                 onClick={() => {
                   setSelectedDate(day.date);
@@ -156,12 +156,12 @@ export function TutorCalendar({ tutorId, tutorName, userId, onBookingSuccess }: 
 
         {/* Slots de tiempo */}
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-[#0A4A6E] mb-3">Horarios disponibles</h3>
+          <h3 className="text-sm font-medium text-foreground mb-3">Horarios disponibles</h3>
           
           {isLoading ? (
             <div className="grid grid-cols-3 gap-2">
               {[...Array(9)].map((_, i) => (
-                <div key={i} className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                <div key={i} className="h-10 bg-muted rounded animate-pulse"></div>
               ))}
             </div>
           ) : availability && availability.length > 0 ? (
@@ -174,8 +174,8 @@ export function TutorCalendar({ tutorId, tutorName, userId, onBookingSuccess }: 
                     !slot.available 
                       ? 'opacity-50 cursor-not-allowed' 
                       : selectedSlot?.start === slot.start
-                        ? 'bg-[#1C7BB1] text-white'
-                        : 'hover:bg-[#1C7BB1]/10'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-primary/10'
                   }`}
                   disabled={!slot.available}
                   onClick={() => setSelectedSlot(slot)}
@@ -186,8 +186,8 @@ export function TutorCalendar({ tutorId, tutorName, userId, onBookingSuccess }: 
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+            <div className="text-center py-8 text-muted-foreground">
+              <Calendar className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
               <p>No hay horarios disponibles para esta fecha</p>
             </div>
           )}
@@ -195,17 +195,17 @@ export function TutorCalendar({ tutorId, tutorName, userId, onBookingSuccess }: 
 
         {/* Información del slot seleccionado */}
         {selectedSlot && (
-          <div className="mb-6 p-4 bg-[#EAF4FA] rounded-lg border border-[#1C7BB1]/20">
+          <div className="mb-6 p-4 bg-muted rounded-lg border border-primary/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <User className="w-4 h-4 mr-2 text-[#1C7BB1]" />
-                <span className="font-medium text-[#0A4A6E]">{tutorName}</span>
+                <User className="w-4 h-4 mr-2 text-primary" />
+                <span className="font-medium text-foreground">{tutorName}</span>
               </div>
-              <Badge variant="secondary" className="bg-[#1C7BB1]/10 text-[#1C7BB1]">
+              <Badge variant="secondary" className="bg-primary/10 text-primary">
                 {formatTime(selectedSlot.start)} - {formatTime(selectedSlot.end)}
               </Badge>
             </div>
-            <p className="text-sm text-[#0A4A6E]/70 mt-2">
+            <p className="text-sm text-foreground/70 mt-2">
               Fecha: {new Date(selectedDate).toLocaleDateString('es-ES', { 
                 weekday: 'long', 
                 year: 'numeric',
@@ -236,7 +236,7 @@ export function TutorCalendar({ tutorId, tutorName, userId, onBookingSuccess }: 
         </Button>
 
         {/* Nota informativa */}
-        <p className="text-xs text-[#0A4A6E]/60 mt-4 text-center">
+        <p className="text-xs text-foreground/60 mt-4 text-center">
           Las clases se pueden cancelar hasta 24 horas antes sin penalización
         </p>
       </CardContent>
