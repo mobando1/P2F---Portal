@@ -145,9 +145,9 @@ export default function TutorPaymentsTab() {
 
   const statusBadge = (status: string) => {
     const map: Record<string, { label: string; color: string }> = {
-      pending: { label: isEs ? "Pendiente" : "Pending", color: "bg-amber-100 text-amber-700" },
-      paid: { label: isEs ? "Pagado" : "Paid", color: "bg-green-100 text-green-700" },
-      cancelled: { label: isEs ? "Cancelado" : "Cancelled", color: "bg-red-100 text-red-700" },
+      pending: { label: isEs ? "Pendiente" : "Pending", color: "bg-warning/15 text-warning-foreground" },
+      paid: { label: isEs ? "Pagado" : "Paid", color: "bg-success/15 text-success" },
+      cancelled: { label: isEs ? "Cancelado" : "Cancelled", color: "bg-destructive/15 text-destructive" },
     };
     const s = map[status] || map.pending;
     return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${s.color}`}>{s.label}</span>;
@@ -160,7 +160,7 @@ export default function TutorPaymentsTab() {
         <Button
           variant={view === "pending" ? "default" : "outline"}
           size="sm"
-          className={view === "pending" ? "bg-[#1C7BB1] hover:bg-[#0A4A6E]" : ""}
+          className={view === "pending" ? "bg-primary hover:bg-primary-900" : ""}
           onClick={() => setView("pending")}
         >
           <AlertCircle className="h-4 w-4 mr-1.5" />
@@ -169,7 +169,7 @@ export default function TutorPaymentsTab() {
         <Button
           variant={view === "history" ? "default" : "outline"}
           size="sm"
-          className={view === "history" ? "bg-[#1C7BB1] hover:bg-[#0A4A6E]" : ""}
+          className={view === "history" ? "bg-primary hover:bg-primary-900" : ""}
           onClick={() => setView("history")}
         >
           <FileText className="h-4 w-4 mr-1.5" />
@@ -181,43 +181,43 @@ export default function TutorPaymentsTab() {
       {view === "pending" && (
         <Card className="border-0 shadow-sm">
           <CardContent className="p-4 md:p-6">
-            <h2 className="text-base font-semibold text-[#0A4A6E] mb-4">
+            <h2 className="text-base font-semibold text-primary-900 mb-4">
               {isEs ? "Liquidación Pendiente" : "Pending Liquidation"}
             </h2>
             {pendingLoading ? (
-              <div className="flex justify-center py-8"><Loader2 className="animate-spin h-6 w-6 text-[#1C7BB1]" /></div>
+              <div className="flex justify-center py-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
             ) : !pending || pending.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <CheckCircle className="w-10 h-10 text-green-400 mx-auto mb-2" />
                 <p className="text-sm">{isEs ? "Todos los tutores están al día" : "All tutors are paid up"}</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {pending.map(p => (
-                  <div key={p.tutorId} className="flex items-center gap-4 p-4 rounded-lg border border-gray-100 hover:bg-gray-50">
-                    <div className="w-10 h-10 rounded-full bg-[#F59E1C]/10 flex items-center justify-center flex-shrink-0">
-                      <DollarSign className="h-5 w-5 text-[#F59E1C]" />
+                  <div key={p.tutorId} className="flex items-center gap-4 p-4 rounded-lg border border-border hover:bg-muted/40">
+                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <DollarSign className="h-5 w-5 text-accent" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-[#0A4A6E]">{p.tutorName}</h4>
-                      <p className="text-xs text-gray-500">{p.tutorEmail}</p>
+                      <h4 className="text-sm font-medium text-primary-900">{p.tutorName}</h4>
+                      <p className="text-xs text-muted-foreground">{p.tutorEmail}</p>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-gray-600 flex-shrink-0 hidden sm:flex">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground flex-shrink-0 hidden sm:flex">
                       <div className="text-center">
-                        <p className="font-bold text-[#0A4A6E]">{p.unpaidClasses}</p>
+                        <p className="font-bold text-primary-900">{p.unpaidClasses}</p>
                         <p>{isEs ? "Clases" : "Classes"}</p>
                       </div>
                       <div className="text-center">
-                        <p className="font-bold text-[#0A4A6E]">{p.unpaidHours}h</p>
+                        <p className="font-bold text-primary-900">{p.unpaidHours}h</p>
                         <p>{isEs ? "Horas" : "Hours"}</p>
                       </div>
                       <div className="text-center">
-                        <p className="font-bold text-[#0A4A6E]">${p.hourlyRate}/h</p>
+                        <p className="font-bold text-primary-900">${p.hourlyRate}/h</p>
                         <p>{isEs ? "Tarifa" : "Rate"}</p>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-lg font-bold text-green-600">${p.amountOwed.toFixed(2)}</p>
+                      <p className="text-lg font-bold text-success">${p.amountOwed.toFixed(2)}</p>
                       <Button
                         size="sm"
                         className="mt-1 bg-green-600 hover:bg-green-700 h-7 text-xs"
@@ -238,34 +238,34 @@ export default function TutorPaymentsTab() {
       {view === "history" && (
         <Card className="border-0 shadow-sm">
           <CardContent className="p-4 md:p-6">
-            <h2 className="text-base font-semibold text-[#0A4A6E] mb-4">
+            <h2 className="text-base font-semibold text-primary-900 mb-4">
               {isEs ? "Historial de Pagos" : "Payment History"}
             </h2>
             {paymentsLoading ? (
-              <div className="flex justify-center py-8"><Loader2 className="animate-spin h-6 w-6 text-[#1C7BB1]" /></div>
+              <div className="flex justify-center py-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
             ) : !payments || payments.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <FileText className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm">{isEs ? "Sin pagos registrados" : "No payments recorded"}</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {payments.map(p => (
-                  <div key={p.id} className="flex items-center gap-4 p-3 rounded-lg border border-gray-100">
-                    <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+                  <div key={p.id} className="flex items-center gap-4 p-3 rounded-lg border border-border">
+                    <div className="w-9 h-9 rounded-full bg-success/15 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-4 w-4 text-success" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#0A4A6E]">
+                      <p className="text-sm font-medium text-primary-900">
                         {isEs ? "Tutor" : "Tutor"} #{p.tutorId} — {p.classesCount} {isEs ? "clases" : "classes"}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {new Date(p.periodStart).toLocaleDateString()} — {new Date(p.periodEnd).toLocaleDateString()}
                         {p.paymentMethod && ` · ${p.paymentMethod}`}
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-[#0A4A6E]">${parseFloat(p.amount).toFixed(2)}</p>
+                      <p className="font-bold text-primary-900">${parseFloat(p.amount).toFixed(2)}</p>
                       {statusBadge(p.status)}
                     </div>
                   </div>
@@ -286,15 +286,15 @@ export default function TutorPaymentsTab() {
           {payModal && (
             <div className="space-y-4 py-2">
               {/* Summary */}
-              <div className="bg-[#EAF4FA] rounded-lg p-3 space-y-1">
-                <p className="font-medium text-[#0A4A6E]">{payModal.tutorName}</p>
-                <p className="text-xs text-[#1C7BB1]">{payModal.tutorEmail}</p>
-                <div className="flex gap-4 mt-2 text-xs text-[#0A4A6E]">
+              <div className="bg-muted rounded-lg p-3 space-y-1">
+                <p className="font-medium text-primary-900">{payModal.tutorName}</p>
+                <p className="text-xs text-primary">{payModal.tutorEmail}</p>
+                <div className="flex gap-4 mt-2 text-xs text-primary-900">
                   <span>{payModal.unpaidClasses} {isEs ? "clases" : "classes"}</span>
                   <span>{payModal.unpaidHours}h</span>
                   <span>${payModal.hourlyRate}/h</span>
                 </div>
-                <p className="text-lg font-bold text-green-600 mt-1">${payModal.amountOwed.toFixed(2)} USD</p>
+                <p className="text-lg font-bold text-success mt-1">${payModal.amountOwed.toFixed(2)} USD</p>
               </div>
 
               <div className="space-y-1.5">
@@ -323,7 +323,7 @@ export default function TutorPaymentsTab() {
               <div className="space-y-1.5">
                 <Label>{isEs ? "Comprobante de pago" : "Payment receipt"}</Label>
                 <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 cursor-pointer hover:bg-gray-50 text-sm text-gray-600 flex-1">
+                  <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border cursor-pointer hover:bg-muted/40 text-sm text-muted-foreground flex-1">
                     <Upload className="h-4 w-4" />
                     {receiptFile ? (isEs ? "Archivo cargado" : "File loaded") : (isEs ? "Subir imagen o PDF" : "Upload image or PDF")}
                     <input type="file" accept="image/*,.pdf" className="hidden" onChange={handleReceiptUpload} />
@@ -332,7 +332,7 @@ export default function TutorPaymentsTab() {
                     <Button variant="outline" size="sm" onClick={() => setReceiptFile(null)}>X</Button>
                   )}
                 </div>
-                <p className="text-[10px] text-gray-400">{isEs ? "Máx 5MB. JPG, PNG o PDF" : "Max 5MB. JPG, PNG or PDF"}</p>
+                <p className="text-[10px] text-muted-foreground">{isEs ? "Máx 5MB. JPG, PNG o PDF" : "Max 5MB. JPG, PNG or PDF"}</p>
               </div>
 
               <div className="space-y-1.5">

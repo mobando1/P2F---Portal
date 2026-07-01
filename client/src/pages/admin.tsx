@@ -365,7 +365,7 @@ export default function AdminPage() {
             <div className="flex gap-4">
               <Button
                 onClick={() => setShowAddTutor(true)}
-                className="bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+                className="bg-primary hover:bg-primary-900"
               >
                 <UserPlus className="w-4 h-4 mr-2" />
                 {isEs ? 'Añadir Profesor' : 'Add Tutor'}
@@ -388,8 +388,8 @@ export default function AdminPage() {
               <CardContent>
                 {isLoading ? (
                   <div className="text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C7BB1]"></div>
-                    <p className="mt-2 text-gray-600">Cargando profesores...</p>
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-2 text-muted-foreground">Cargando profesores...</p>
                   </div>
                 ) : tutors && tutors.length > 0 ? (
                   <div className="grid gap-4">
@@ -401,9 +401,9 @@ export default function AdminPage() {
                           className="w-16 h-16 rounded-full object-cover"
                         />
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">{tutor.name}</h3>
-                          <p className="text-sm text-gray-600">{tutor.specialization}</p>
-                          <p className="text-sm text-gray-500">{tutor.email}</p>
+                          <h3 className="font-semibold text-foreground">{tutor.name}</h3>
+                          <p className="text-sm text-muted-foreground">{tutor.specialization}</p>
+                          <p className="text-sm text-muted-foreground">{tutor.email}</p>
                           <div className="flex items-center gap-2 mt-2">
                             <Badge variant="secondary">${tutor.hourlyRate}/hora</Badge>
                             <Badge variant={tutor.isActive ? "default" : "secondary"}>
@@ -432,12 +432,12 @@ export default function AdminPage() {
                             <span className="text-sm font-medium">{tutor.rating || "5.0"}</span>
                             <span className="ml-1">⭐</span>
                           </div>
-                          <p className="text-xs text-gray-500">{tutor.reviewCount || 0} reseñas</p>
+                          <p className="text-xs text-muted-foreground">{tutor.reviewCount || 0} reseñas</p>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => setEditingTutor(tutor)}
-                            className="text-[#1C7BB1] border-[#1C7BB1]/30 hover:bg-[#1C7BB1]/10"
+                            className="text-primary border-primary/30 hover:bg-primary/10"
                           >
                             <Pencil className="w-3 h-3 mr-1" />
                             {isEs ? 'Editar' : 'Edit'}
@@ -446,7 +446,7 @@ export default function AdminPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-green-700 border-green-300 hover:bg-green-50 text-xs"
+                              className="text-success border-success/30 hover:bg-success/10 text-xs"
                               onClick={async () => {
                                 try {
                                   const res = await apiRequest('POST', `/api/tutors/${tutor.id}/invite`);
@@ -468,9 +468,9 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <p className="text-gray-500">No hay profesores registrados</p>
-                    <p className="text-sm text-gray-400 mt-1">Añade profesores o carga los datos de ejemplo</p>
+                    <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No hay profesores registrados</p>
+                    <p className="text-sm text-muted-foreground mt-1">Añade profesores o carga los datos de ejemplo</p>
                   </div>
                 )}
               </CardContent>
@@ -564,7 +564,7 @@ export default function AdminPage() {
                                 const arr = isSelected ? selected.filter(s => s !== spec) : [...selected, spec];
                                 setNewTutor({...newTutor, specialization: arr.join(", ")});
                               }}
-                              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${isSelected ? 'bg-[#1C7BB1] text-white border-[#1C7BB1]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#1C7BB1]'}`}
+                              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-foreground border-border hover:border-primary'}`}
                             >
                               {spec}
                             </button>
@@ -621,7 +621,7 @@ export default function AdminPage() {
                         {newTutor.profileImage && (
                           <img src={newTutor.profileImage} alt="Preview" className="w-16 h-16 rounded-full object-cover" />
                         )}
-                        <label className="cursor-pointer px-4 py-2 border border-gray-300 rounded-lg text-sm hover:border-[#1C7BB1] transition-colors">
+                        <label className="cursor-pointer px-4 py-2 border border-border rounded-lg text-sm hover:border-primary transition-colors">
                           {newTutor.profileImage ? "Cambiar foto" : "Subir foto"}
                           <input
                             type="file"
@@ -643,13 +643,13 @@ export default function AdminPage() {
 
                   {/* Success state: show invite link option */}
                   {createdTutorId && (
-                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-green-700 font-medium text-sm mb-2">✓ Profesor creado exitosamente</p>
+                    <div className="mt-4 p-4 bg-success/10 border border-success/30 rounded-lg">
+                      <p className="text-success font-medium text-sm mb-2">✓ Profesor creado exitosamente</p>
                       {inviteUrl ? (
                         <div className="space-y-2">
-                          <p className="text-xs text-gray-600">Copia este link y envíaselo al profesor:</p>
+                          <p className="text-xs text-muted-foreground">Copia este link y envíaselo al profesor:</p>
                           <div className="flex gap-2">
-                            <code className="flex-1 text-xs bg-white border rounded px-2 py-1 truncate text-gray-700">
+                            <code className="flex-1 text-xs bg-white border rounded px-2 py-1 truncate text-foreground">
                               {window.location.origin}{inviteUrl}
                             </code>
                             <Button
@@ -668,7 +668,7 @@ export default function AdminPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-green-400 text-green-700 hover:bg-green-100"
+                          className="border-green-400 text-success hover:bg-success/15"
                           onClick={async () => {
                             try {
                               const res = await apiRequest('POST', `/api/tutors/${createdTutorId}/invite`);
@@ -690,7 +690,7 @@ export default function AdminPage() {
                       <Button
                         onClick={handleCreateTutor}
                         disabled={createTutorMutation.isPending}
-                        className="bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+                        className="bg-primary hover:bg-primary-900"
                       >
                         {createTutorMutation.isPending ? "Creando..." : "Crear Profesor"}
                       </Button>
@@ -787,7 +787,7 @@ export default function AdminPage() {
                                 const arr = isSelected ? selected.filter((s: string) => s !== spec) : [...selected, spec];
                                 setEditingTutor({...editingTutor, specialization: arr.join(", ")});
                               }}
-                              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${isSelected ? 'bg-[#1C7BB1] text-white border-[#1C7BB1]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#1C7BB1]'}`}
+                              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-foreground border-border hover:border-primary'}`}
                             >
                               {spec}
                             </button>
@@ -837,7 +837,7 @@ export default function AdminPage() {
                         {(editingTutor.profileImage || editingTutor.avatar) && (
                           <img src={editingTutor.profileImage || editingTutor.avatar} alt="Preview" className="w-16 h-16 rounded-full object-cover" />
                         )}
-                        <label className="cursor-pointer px-4 py-2 border border-gray-300 rounded-lg text-sm hover:border-[#1C7BB1] transition-colors">
+                        <label className="cursor-pointer px-4 py-2 border border-border rounded-lg text-sm hover:border-primary transition-colors">
                           {(editingTutor.profileImage || editingTutor.avatar) ? (isEs ? "Cambiar foto" : "Change photo") : (isEs ? "Subir foto" : "Upload photo")}
                           <input
                             type="file"
@@ -890,7 +890,7 @@ export default function AdminPage() {
                         }
                       })}
                       disabled={updateTutorMutation.isPending}
-                      className="bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+                      className="bg-primary hover:bg-primary-900"
                     >
                       {updateTutorMutation.isPending
                         ? (isEs ? "Guardando..." : "Saving...")
@@ -913,12 +913,12 @@ export default function AdminPage() {
               <Card className="border-0 shadow-md cursor-pointer" onClick={() => setClassFilter('all')}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-[#1C7BB1]/10">
-                      <BookOpen className="h-5 w-5 text-[#1C7BB1]" />
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <BookOpen className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Total</p>
-                      <p className="text-xl font-bold text-gray-900">{classStats.total}</p>
+                      <p className="text-xs text-muted-foreground">Total</p>
+                      <p className="text-xl font-bold text-foreground">{classStats.total}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -926,12 +926,12 @@ export default function AdminPage() {
               <Card className="border-0 shadow-md cursor-pointer" onClick={() => setClassFilter('scheduled')}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-blue-100">
-                      <Clock className="h-5 w-5 text-blue-600" />
+                    <div className="p-2 rounded-lg bg-primary/15">
+                      <Clock className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">{isEs ? 'Programadas' : 'Scheduled'}</p>
-                      <p className="text-xl font-bold text-gray-900">{classStats.scheduled}</p>
+                      <p className="text-xs text-muted-foreground">{isEs ? 'Programadas' : 'Scheduled'}</p>
+                      <p className="text-xl font-bold text-foreground">{classStats.scheduled}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -939,12 +939,12 @@ export default function AdminPage() {
               <Card className="border-0 shadow-md cursor-pointer" onClick={() => setClassFilter('completed')}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div className="p-2 rounded-lg bg-success/15">
+                      <CheckCircle className="h-5 w-5 text-success" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">{isEs ? 'Completadas' : 'Completed'}</p>
-                      <p className="text-xl font-bold text-gray-900">{classStats.completed}</p>
+                      <p className="text-xs text-muted-foreground">{isEs ? 'Completadas' : 'Completed'}</p>
+                      <p className="text-xl font-bold text-foreground">{classStats.completed}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -952,12 +952,12 @@ export default function AdminPage() {
               <Card className="border-0 shadow-md cursor-pointer" onClick={() => setClassFilter('cancelled')}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-red-100">
-                      <XCircle className="h-5 w-5 text-red-600" />
+                    <div className="p-2 rounded-lg bg-destructive/15">
+                      <XCircle className="h-5 w-5 text-destructive" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">{isEs ? 'Canceladas' : 'Cancelled'}</p>
-                      <p className="text-xl font-bold text-gray-900">{classStats.cancelled}</p>
+                      <p className="text-xs text-muted-foreground">{isEs ? 'Canceladas' : 'Cancelled'}</p>
+                      <p className="text-xl font-bold text-foreground">{classStats.cancelled}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -972,7 +972,7 @@ export default function AdminPage() {
                   variant={classFilter === f ? "default" : "outline"}
                   size="sm"
                   onClick={() => setClassFilter(f)}
-                  className={classFilter === f ? "bg-[#1C7BB1]" : ""}
+                  className={classFilter === f ? "bg-primary" : ""}
                 >
                   {f === 'all' ? 'Todas' : f === 'scheduled' ? 'Programadas' : f === 'completed' ? 'Completadas' : 'Canceladas'}
                 </Button>
@@ -987,35 +987,35 @@ export default function AdminPage() {
               <CardContent>
                 {isClassesLoading ? (
                   <div className="text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C7BB1]"></div>
-                    <p className="mt-2 text-gray-600">Cargando clases...</p>
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-2 text-muted-foreground">Cargando clases...</p>
                   </div>
                 ) : filteredClasses.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-100">
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Clase</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Profesor</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Fecha</th>
-                          <th className="hidden sm:table-cell text-center py-3 px-4 text-sm font-medium text-gray-500">Duración</th>
-                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Estado</th>
-                          <th className="hidden sm:table-cell text-center py-3 px-4 text-sm font-medium text-gray-500">Tipo</th>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Clase</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Profesor</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Fecha</th>
+                          <th className="hidden sm:table-cell text-center py-3 px-4 text-sm font-medium text-muted-foreground">Duración</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Estado</th>
+                          <th className="hidden sm:table-cell text-center py-3 px-4 text-sm font-medium text-muted-foreground">Tipo</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredClasses
                           .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())
                           .map((c) => (
-                          <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                          <tr key={c.id} className="border-b border-border hover:bg-muted/40/50">
                             <td className="py-3 px-4">
-                              <p className="font-medium text-gray-900">{c.title}</p>
-                              {c.description && <p className="text-xs text-gray-500 mt-0.5">{c.description}</p>}
+                              <p className="font-medium text-foreground">{c.title}</p>
+                              {c.description && <p className="text-xs text-muted-foreground mt-0.5">{c.description}</p>}
                             </td>
-                            <td className="py-3 px-4 text-sm text-gray-700">
+                            <td className="py-3 px-4 text-sm text-foreground">
                               {getTutorName(c.tutorId)}
                             </td>
-                            <td className="py-3 px-4 text-sm text-gray-600">
+                            <td className="py-3 px-4 text-sm text-muted-foreground">
                               {new Date(c.scheduledAt).toLocaleDateString('es-ES', {
                                 day: 'numeric',
                                 month: 'short',
@@ -1024,7 +1024,7 @@ export default function AdminPage() {
                                 minute: '2-digit',
                               })}
                             </td>
-                            <td className="hidden sm:table-cell text-center py-3 px-4 text-sm text-gray-600">
+                            <td className="hidden sm:table-cell text-center py-3 px-4 text-sm text-muted-foreground">
                               {c.duration} min
                             </td>
                             <td className="text-center py-3 px-4">
@@ -1037,7 +1037,7 @@ export default function AdminPage() {
                               </Badge>
                             </td>
                             <td className="hidden sm:table-cell text-center py-3 px-4">
-                              {c.isTrial && <Badge variant="outline" className="text-[#F59E1C] border-[#F59E1C]">Trial</Badge>}
+                              {c.isTrial && <Badge variant="outline" className="text-accent border-accent">Trial</Badge>}
                             </td>
                           </tr>
                         ))}
@@ -1046,8 +1046,8 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <CalendarDays className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                    <p className="text-gray-500">No hay clases {classFilter !== 'all' ? 'con ese filtro' : 'registradas'}</p>
+                    <CalendarDays className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No hay clases {classFilter !== 'all' ? 'con ese filtro' : 'registradas'}</p>
                   </div>
                 )}
               </CardContent>
@@ -1062,12 +1062,12 @@ export default function AdminPage() {
               <Card className="border-0 shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-lg bg-[#F59E1C]/10">
-                      <MessageCircle className="h-6 w-6 text-[#F59E1C]" />
+                    <div className="p-3 rounded-lg bg-accent/10">
+                      <MessageCircle className="h-6 w-6 text-accent" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">{isEs ? 'Total Mensajes IA' : 'Total AI Messages'}</p>
-                      <p className="text-2xl font-bold text-gray-900">{aiStats?.totalMessages ?? 0}</p>
+                      <p className="text-sm text-muted-foreground">{isEs ? 'Total Mensajes IA' : 'Total AI Messages'}</p>
+                      <p className="text-2xl font-bold text-foreground">{aiStats?.totalMessages ?? 0}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -1075,12 +1075,12 @@ export default function AdminPage() {
               <Card className="border-0 shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-lg bg-[#1C7BB1]/10">
-                      <MessageSquare className="h-6 w-6 text-[#1C7BB1]" />
+                    <div className="p-3 rounded-lg bg-primary/10">
+                      <MessageSquare className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">{isEs ? 'Conversaciones' : 'Conversations'}</p>
-                      <p className="text-2xl font-bold text-gray-900">{aiStats?.totalConversations ?? 0}</p>
+                      <p className="text-sm text-muted-foreground">{isEs ? 'Conversaciones' : 'Conversations'}</p>
+                      <p className="text-2xl font-bold text-foreground">{aiStats?.totalConversations ?? 0}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -1088,12 +1088,12 @@ export default function AdminPage() {
               <Card className="border-0 shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-lg bg-green-100">
-                      <Users className="h-6 w-6 text-green-600" />
+                    <div className="p-3 rounded-lg bg-success/15">
+                      <Users className="h-6 w-6 text-success" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">{isEs ? 'Estudiantes Activos' : 'Active Students'}</p>
-                      <p className="text-2xl font-bold text-gray-900">{aiStats?.activeUsers ?? 0}</p>
+                      <p className="text-sm text-muted-foreground">{isEs ? 'Estudiantes Activos' : 'Active Students'}</p>
+                      <p className="text-2xl font-bold text-foreground">{aiStats?.activeUsers ?? 0}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -1104,52 +1104,52 @@ export default function AdminPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-[#F59E1C]" />
+                  <TrendingUp className="h-5 w-5 text-accent" />
                   {isEs ? 'Práctica IA por Estudiante' : 'AI Practice by Student'}
                 </CardTitle>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {isEs ? 'Ve cuánto practican tus estudiantes con el AI Practice Partner para planificar mejor tus clases' : 'See how much your students practice with the AI Practice Partner to plan your classes better'}
                 </p>
               </CardHeader>
               <CardContent>
                 {isAiStatsLoading ? (
                   <div className="text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#F59E1C]"></div>
-                    <p className="mt-2 text-gray-600">{isEs ? 'Cargando estadísticas...' : 'Loading stats...'}</p>
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+                    <p className="mt-2 text-muted-foreground">{isEs ? 'Cargando estadísticas...' : 'Loading stats...'}</p>
                   </div>
                 ) : aiStats?.userStats && aiStats.userStats.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-100">
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{isEs ? 'Estudiante' : 'Student'}</th>
-                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">{isEs ? 'Conversaciones' : 'Conversations'}</th>
-                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">{isEs ? 'Mensajes' : 'Messages'}</th>
-                          <th className="hidden sm:table-cell text-right py-3 px-4 text-sm font-medium text-gray-500">{isEs ? 'Última Actividad' : 'Last Activity'}</th>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">{isEs ? 'Estudiante' : 'Student'}</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">{isEs ? 'Conversaciones' : 'Conversations'}</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">{isEs ? 'Mensajes' : 'Messages'}</th>
+                          <th className="hidden sm:table-cell text-right py-3 px-4 text-sm font-medium text-muted-foreground">{isEs ? 'Última Actividad' : 'Last Activity'}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {aiStats.userStats
                           .sort((a, b) => b.messageCount - a.messageCount)
                           .map((stat) => (
-                          <tr key={stat.userId} className="border-b border-gray-50 hover:bg-gray-50/50">
+                          <tr key={stat.userId} className="border-b border-border hover:bg-muted/40/50">
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-[#1C7BB1]/10 flex items-center justify-center">
-                                  <span className="text-xs font-bold text-[#1C7BB1]">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <span className="text-xs font-bold text-primary">
                                     {stat.userName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                   </span>
                                 </div>
-                                <span className="font-medium text-gray-900">{stat.userName}</span>
+                                <span className="font-medium text-foreground">{stat.userName}</span>
                               </div>
                             </td>
                             <td className="text-center py-3 px-4">
                               <Badge variant="secondary">{stat.conversationCount}</Badge>
                             </td>
                             <td className="text-center py-3 px-4">
-                              <span className="font-semibold text-[#0A4A6E]">{stat.messageCount}</span>
+                              <span className="font-semibold text-primary-900">{stat.messageCount}</span>
                             </td>
-                            <td className="hidden sm:table-cell text-right py-3 px-4 text-sm text-gray-500">
+                            <td className="hidden sm:table-cell text-right py-3 px-4 text-sm text-muted-foreground">
                               {stat.lastActive
                                 ? new Date(stat.lastActive).toLocaleDateString('es-ES', {
                                     day: 'numeric',
@@ -1166,9 +1166,9 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Sparkles className="mx-auto h-12 w-12 text-[#F59E1C]/40 mb-4" />
-                    <p className="text-gray-500">{isEs ? 'Ningún estudiante ha usado el AI Practice Partner aún' : 'No students have used the AI Practice Partner yet'}</p>
-                    <p className="text-sm text-gray-400 mt-1">{isEs ? 'Las estadísticas aparecerán aquí cuando los estudiantes practiquen' : 'Stats will appear here when students start practicing'}</p>
+                    <Sparkles className="mx-auto h-12 w-12 text-accent/40 mb-4" />
+                    <p className="text-muted-foreground">{isEs ? 'Ningún estudiante ha usado el AI Practice Partner aún' : 'No students have used the AI Practice Partner yet'}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{isEs ? 'Las estadísticas aparecerán aquí cuando los estudiantes practiquen' : 'Stats will appear here when students start practicing'}</p>
                   </div>
                 )}
               </CardContent>
@@ -1191,7 +1191,7 @@ export default function AdminPage() {
                     variant={analyticsView === view ? "default" : "outline"}
                     size="sm"
                     onClick={() => setAnalyticsView(view)}
-                    className={analyticsView === view ? "bg-[#1C7BB1] hover:bg-[#0A4A6E]" : ""}
+                    className={analyticsView === view ? "bg-primary hover:bg-primary-900" : ""}
                   >
                     {view === 'overview' ? (isEs ? 'General' : 'Overview') :
                      view === 'revenue' ? (isEs ? 'Ingresos' : 'Revenue') :
@@ -1247,8 +1247,8 @@ export default function AdminPage() {
 
             {isAnalyticsLoading ? (
               <div className="text-center py-8">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C7BB1]"></div>
-                <p className="mt-2 text-gray-600">{isEs ? 'Cargando analíticas...' : 'Loading analytics...'}</p>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="mt-2 text-muted-foreground">{isEs ? 'Cargando analíticas...' : 'Loading analytics...'}</p>
               </div>
             ) : analytics ? (
               <>
@@ -1258,11 +1258,11 @@ export default function AdminPage() {
                     {/* Summary Cards - 6 columns */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                       {[
-                        { icon: BookOpen, color: '#1C7BB1', bg: 'bg-[#1C7BB1]/10', label: isEs ? 'Total Clases' : 'Total Classes', value: analytics.summary.totalClasses },
-                        { icon: Users, color: '#22c55e', bg: 'bg-green-100', label: isEs ? 'Estudiantes' : 'Students', value: analytics.summary.totalStudents },
-                        { icon: TrendingUp, color: '#F59E1C', bg: 'bg-[#F59E1C]/10', label: isEs ? 'Completadas' : 'Completion', value: `${analytics.summary.completionRate}%` },
-                        { icon: Clock, color: '#1C7BB1', bg: 'bg-[#1C7BB1]/10', label: isEs ? 'Horas' : 'Hours', value: analytics.summary.totalHours },
-                        { icon: DollarSign, color: '#22c55e', bg: 'bg-green-100', label: isEs ? 'Ingresos' : 'Revenue', value: `$${analytics.revenue.totalRevenue.toLocaleString()}` },
+                        { icon: BookOpen, color: 'var(--primary)', bg: 'bg-primary/10', label: isEs ? 'Total Clases' : 'Total Classes', value: analytics.summary.totalClasses },
+                        { icon: Users, color: '#22c55e', bg: 'bg-success/15', label: isEs ? 'Estudiantes' : 'Students', value: analytics.summary.totalStudents },
+                        { icon: TrendingUp, color: 'var(--accent)', bg: 'bg-accent/10', label: isEs ? 'Completadas' : 'Completion', value: `${analytics.summary.completionRate}%` },
+                        { icon: Clock, color: 'var(--primary)', bg: 'bg-primary/10', label: isEs ? 'Horas' : 'Hours', value: analytics.summary.totalHours },
+                        { icon: DollarSign, color: '#22c55e', bg: 'bg-success/15', label: isEs ? 'Ingresos' : 'Revenue', value: `$${analytics.revenue.totalRevenue.toLocaleString()}` },
                         { icon: CreditCard, color: '#8b5cf6', bg: 'bg-purple-100', label: isEs ? 'Suscripciones' : 'Subscriptions', value: analytics.revenue.activeSubscriptions },
                       ].map((card, i) => (
                         <Card key={i} className="border-0 shadow-md">
@@ -1272,8 +1272,8 @@ export default function AdminPage() {
                                 <card.icon className="h-5 w-5" style={{ color: card.color }} />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-[11px] text-gray-500 truncate">{card.label}</p>
-                                <p className="text-lg font-bold text-gray-900 truncate">{card.value}</p>
+                                <p className="text-[11px] text-muted-foreground truncate">{card.label}</p>
+                                <p className="text-lg font-bold text-foreground truncate">{card.value}</p>
                               </div>
                             </div>
                           </CardContent>
@@ -1287,31 +1287,31 @@ export default function AdminPage() {
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-xs text-gray-500">{isEs ? 'Tasa de Retención' : 'Retention Rate'}</p>
-                              <p className="text-3xl font-bold text-[#1C7BB1]">{analytics.retention.retentionRate}%</p>
-                              <p className="text-xs text-gray-400 mt-1">
+                              <p className="text-xs text-muted-foreground">{isEs ? 'Tasa de Retención' : 'Retention Rate'}</p>
+                              <p className="text-3xl font-bold text-primary">{analytics.retention.retentionRate}%</p>
+                              <p className="text-xs text-muted-foreground mt-1">
                                 {isEs ? `${analytics.retention.activeThisMonth} activos este mes · ${analytics.retention.churnedStudents} perdidos` :
                                   `${analytics.retention.activeThisMonth} active this month · ${analytics.retention.churnedStudents} churned`}
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-xs text-gray-500">{isEs ? 'Promedio clases/estudiante' : 'Avg classes/student'}</p>
-                              <p className="text-2xl font-bold text-gray-700">{analytics.retention.avgClassesPerStudent}</p>
+                              <p className="text-xs text-muted-foreground">{isEs ? 'Promedio clases/estudiante' : 'Avg classes/student'}</p>
+                              <p className="text-2xl font-bold text-foreground">{analytics.retention.avgClassesPerStudent}</p>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
 
                       {analytics.capacityAlerts.length > 0 && (
-                        <Card className="border-orange-200 bg-orange-50/50">
+                        <Card className="border-orange-200 bg-warning/15/50">
                           <CardContent className="p-4">
-                            <p className="text-sm font-medium text-orange-700 flex items-center gap-2 mb-2">
+                            <p className="text-sm font-medium text-warning-foreground flex items-center gap-2 mb-2">
                               <AlertTriangle className="h-4 w-4" />
                               {isEs ? 'Alertas de Capacidad' : 'Capacity Alerts'}
                             </p>
                             <div className="space-y-1">
                               {analytics.capacityAlerts.map((alert, i) => (
-                                <div key={i} className="flex items-center gap-2 text-xs text-orange-800">
+                                <div key={i} className="flex items-center gap-2 text-xs text-warning-foreground">
                                   <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
                                   {alert.message}
                                 </div>
@@ -1353,11 +1353,11 @@ export default function AdminPage() {
                               return (
                                 <div key={cat}>
                                   <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-gray-700">{label}</span>
-                                    <span className="font-semibold text-gray-900">{count}</span>
+                                    <span className="text-foreground">{label}</span>
+                                    <span className="font-semibold text-foreground">{count}</span>
                                   </div>
-                                  <div className="w-full bg-gray-100 rounded-full h-2.5">
-                                    <div className="bg-[#1C7BB1] h-2.5 rounded-full" style={{ width: `${(count / maxCount) * 100}%` }} />
+                                  <div className="w-full bg-muted rounded-full h-2.5">
+                                    <div className="bg-primary h-2.5 rounded-full" style={{ width: `${(count / maxCount) * 100}%` }} />
                                   </div>
                                 </div>
                               );
@@ -1372,14 +1372,14 @@ export default function AdminPage() {
                         <CardContent>
                           <div className="grid grid-cols-2 gap-4">
                             {[
-                              { value: analytics.studentActivity.totalActive, label: isEs ? 'Activos' : 'Active', color: 'text-[#1C7BB1]' },
-                              { value: analytics.studentActivity.newThisMonth, label: isEs ? 'Nuevos este mes' : 'New this month', color: 'text-green-600' },
-                              { value: analytics.studentActivity.withCredits, label: isEs ? 'Con créditos' : 'With credits', color: 'text-[#F59E1C]' },
-                              { value: analytics.studentActivity.withoutCredits, label: isEs ? 'Sin créditos' : 'No credits', color: 'text-red-500' },
+                              { value: analytics.studentActivity.totalActive, label: isEs ? 'Activos' : 'Active', color: 'text-primary' },
+                              { value: analytics.studentActivity.newThisMonth, label: isEs ? 'Nuevos este mes' : 'New this month', color: 'text-success' },
+                              { value: analytics.studentActivity.withCredits, label: isEs ? 'Con créditos' : 'With credits', color: 'text-accent' },
+                              { value: analytics.studentActivity.withoutCredits, label: isEs ? 'Sin créditos' : 'No credits', color: 'text-destructive' },
                             ].map((item, i) => (
-                              <div key={i} className="text-center p-3 bg-gray-50 rounded-lg">
+                              <div key={i} className="text-center p-3 bg-muted/40 rounded-lg">
                                 <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
-                                <p className="text-xs text-gray-500">{item.label}</p>
+                                <p className="text-xs text-muted-foreground">{item.label}</p>
                               </div>
                             ))}
                           </div>
@@ -1394,16 +1394,16 @@ export default function AdminPage() {
                             <table className="w-full text-sm">
                               <thead>
                                 <tr className="border-b">
-                                  <th className="text-left py-2 text-gray-500 font-medium">Tutor</th>
-                                  <th className="text-center py-2 text-gray-500 font-medium">Prog.</th>
-                                  <th className="text-center py-2 text-gray-500 font-medium">Comp.</th>
-                                  <th className="text-center py-2 text-gray-500 font-medium">%</th>
+                                  <th className="text-left py-2 text-muted-foreground font-medium">Tutor</th>
+                                  <th className="text-center py-2 text-muted-foreground font-medium">Prog.</th>
+                                  <th className="text-center py-2 text-muted-foreground font-medium">Comp.</th>
+                                  <th className="text-center py-2 text-muted-foreground font-medium">%</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {analytics.tutorActivity.map(t => (
-                                  <tr key={t.tutorId} className="border-b border-gray-50">
-                                    <td className="py-2 font-medium text-gray-900">{t.tutorName.split(' ')[0]}</td>
+                                  <tr key={t.tutorId} className="border-b border-border">
+                                    <td className="py-2 font-medium text-foreground">{t.tutorName.split(' ')[0]}</td>
                                     <td className="text-center py-2">{t.scheduledCount}</td>
                                     <td className="text-center py-2">{t.completedCount}</td>
                                     <td className="text-center py-2">
@@ -1423,21 +1423,21 @@ export default function AdminPage() {
                     {/* Engagement Metrics */}
                     {engagementData && (
                       <div className="space-y-4">
-                        <h3 className="text-base font-semibold text-[#0A4A6E] flex items-center gap-2">
-                          <Sparkles className="h-4 w-4 text-[#F59E1C]" />
+                        <h3 className="text-base font-semibold text-primary-900 flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-accent" />
                           {isEs ? 'Métricas de Engagement' : 'Engagement Metrics'}
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           {[
                             { label: isEs ? 'Usaron IA esta semana' : 'Used AI this week', value: `${engagementData.aiUsageThisWeek}%`, color: 'text-purple-600', bg: 'bg-purple-50' },
-                            { label: isEs ? 'Notas de sesión llenas' : 'Session notes filled', value: `${engagementData.notesFillRate}%`, color: 'text-[#1C7BB1]', bg: 'bg-[#EAF4FA]' },
-                            { label: isEs ? 'Riesgo de abandono' : 'Churn risk', value: engagementData.churnRisk.length, color: 'text-red-500', bg: 'bg-red-50' },
-                            { label: isEs ? 'Tutores con tareas' : 'Tutors with tasks', value: engagementData.assignmentCompletionByTutor.length, color: 'text-green-600', bg: 'bg-green-50' },
+                            { label: isEs ? 'Notas de sesión llenas' : 'Session notes filled', value: `${engagementData.notesFillRate}%`, color: 'text-primary', bg: 'bg-muted' },
+                            { label: isEs ? 'Riesgo de abandono' : 'Churn risk', value: engagementData.churnRisk.length, color: 'text-destructive', bg: 'bg-destructive/10' },
+                            { label: isEs ? 'Tutores con tareas' : 'Tutors with tasks', value: engagementData.assignmentCompletionByTutor.length, color: 'text-success', bg: 'bg-success/10' },
                           ].map((m, i) => (
                             <Card key={i} className="border-0 shadow-sm">
                               <CardContent className={`p-4 ${m.bg} rounded-lg`}>
                                 <p className={`text-2xl font-bold ${m.color}`}>{m.value}</p>
-                                <p className="text-xs text-gray-500 mt-1">{m.label}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{m.label}</p>
                               </CardContent>
                             </Card>
                           ))}
@@ -1449,7 +1449,7 @@ export default function AdminPage() {
                             <Card>
                               <CardHeader className="pb-2">
                                 <CardTitle className="text-sm flex items-center gap-2">
-                                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                                  <AlertTriangle className="h-4 w-4 text-destructive" />
                                   {isEs ? 'Sin actividad +14 días' : 'Inactive 14+ days'}
                                 </CardTitle>
                               </CardHeader>
@@ -1457,11 +1457,11 @@ export default function AdminPage() {
                                 <div className="space-y-2 max-h-48 overflow-y-auto">
                                   {engagementData.churnRisk.map(u => (
                                     <div key={u.id}
-                                      className="flex items-center justify-between text-sm p-2 rounded hover:bg-gray-50 cursor-pointer"
+                                      className="flex items-center justify-between text-sm p-2 rounded hover:bg-muted/40 cursor-pointer"
                                       onClick={() => setSelectedStudentId(u.id)}>
                                       <div>
-                                        <p className="font-medium text-gray-900 text-xs">{u.name}</p>
-                                        <p className="text-[10px] text-gray-400">{u.email}</p>
+                                        <p className="font-medium text-foreground text-xs">{u.name}</p>
+                                        <p className="text-[10px] text-muted-foreground">{u.email}</p>
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <Badge variant="outline" className="text-[10px]">{u.level}</Badge>
@@ -1483,7 +1483,7 @@ export default function AdminPage() {
                             <Card>
                               <CardHeader className="pb-2">
                                 <CardTitle className="text-sm flex items-center gap-2">
-                                  <BookOpen className="h-4 w-4 text-[#1C7BB1]" />
+                                  <BookOpen className="h-4 w-4 text-primary" />
                                   {isEs ? 'Tareas por Tutor' : 'Tasks by Tutor'}
                                 </CardTitle>
                               </CardHeader>
@@ -1491,14 +1491,14 @@ export default function AdminPage() {
                                 <div className="space-y-2">
                                   {engagementData.assignmentCompletionByTutor.map(t => (
                                     <div key={t.tutorId} className="flex items-center gap-3">
-                                      <p className="text-xs font-medium text-gray-700 w-24 truncate">{t.tutorName.split(' ')[0]}</p>
-                                      <div className="flex-1 bg-gray-100 rounded-full h-2">
+                                      <p className="text-xs font-medium text-foreground w-24 truncate">{t.tutorName.split(' ')[0]}</p>
+                                      <div className="flex-1 bg-muted rounded-full h-2">
                                         <div
-                                          className="bg-[#1C7BB1] h-2 rounded-full transition-all"
+                                          className="bg-primary h-2 rounded-full transition-all"
                                           style={{ width: `${t.rate}%` }}
                                         />
                                       </div>
-                                      <span className="text-[10px] text-gray-500 w-16 text-right">
+                                      <span className="text-[10px] text-muted-foreground w-16 text-right">
                                         {t.completed}/{t.total} ({t.rate}%)
                                       </span>
                                     </div>
@@ -1522,10 +1522,10 @@ export default function AdminPage() {
                         <Card className="border-0 shadow-md">
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-2">
-                              <p className="text-xs text-gray-500 font-medium">MRR</p>
-                              <DollarSign className="h-4 w-4 text-green-500" />
+                              <p className="text-xs text-muted-foreground font-medium">MRR</p>
+                              <DollarSign className="h-4 w-4 text-success" />
                             </div>
-                            <p className="text-3xl font-bold text-green-600">${stripeMetrics.mrr.toLocaleString()}</p>
+                            <p className="text-3xl font-bold text-success">${stripeMetrics.mrr.toLocaleString()}</p>
                             {stripeMetrics.mrrTrend.length > 1 && (
                               <ResponsiveContainer width="100%" height={50}>
                                 <AreaChart data={stripeMetrics.mrrTrend}>
@@ -1538,13 +1538,13 @@ export default function AdminPage() {
                         <Card className="border-0 shadow-md">
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-2">
-                              <p className="text-xs text-gray-500 font-medium">{isEs ? 'Tasa de Churn' : 'Churn Rate'}</p>
+                              <p className="text-xs text-muted-foreground font-medium">{isEs ? 'Tasa de Churn' : 'Churn Rate'}</p>
                               <TrendingUp className="h-4 w-4 text-orange-500" />
                             </div>
-                            <p className={`text-3xl font-bold ${stripeMetrics.churnRate > 5 ? 'text-red-600' : stripeMetrics.churnRate > 2 ? 'text-orange-500' : 'text-green-600'}`}>
+                            <p className={`text-3xl font-bold ${stripeMetrics.churnRate > 5 ? 'text-destructive' : stripeMetrics.churnRate > 2 ? 'text-orange-500' : 'text-success'}`}>
                               {stripeMetrics.churnRate}%
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {stripeMetrics.churnCount} {isEs ? 'cancelaciones este mes' : 'cancellations this month'}
                             </p>
                           </CardContent>
@@ -1552,17 +1552,17 @@ export default function AdminPage() {
                         <Card className="border-0 shadow-md">
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-2">
-                              <p className="text-xs text-gray-500 font-medium">{isEs ? 'Pagos Fallidos' : 'Failed Payments'}</p>
-                              <AlertTriangle className="h-4 w-4 text-red-500" />
+                              <p className="text-xs text-muted-foreground font-medium">{isEs ? 'Pagos Fallidos' : 'Failed Payments'}</p>
+                              <AlertTriangle className="h-4 w-4 text-destructive" />
                             </div>
-                            <p className={`text-3xl font-bold ${stripeMetrics.failedPayments > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            <p className={`text-3xl font-bold ${stripeMetrics.failedPayments > 0 ? 'text-destructive' : 'text-success'}`}>
                               {stripeMetrics.failedPayments}
                             </p>
                             {stripeMetrics.atRiskSubscribers.length > 0 && (
                               <div className="mt-2 space-y-1">
-                                <p className="text-xs text-gray-500 font-medium">{isEs ? 'En riesgo:' : 'At risk:'}</p>
+                                <p className="text-xs text-muted-foreground font-medium">{isEs ? 'En riesgo:' : 'At risk:'}</p>
                                 {stripeMetrics.atRiskSubscribers.slice(0, 3).map((sub) => (
-                                  <p key={sub.userId} className="text-xs text-red-500 truncate">{sub.name} - {sub.email}</p>
+                                  <p key={sub.userId} className="text-xs text-destructive truncate">{sub.name} - {sub.email}</p>
                                 ))}
                               </div>
                             )}
@@ -1574,14 +1574,14 @@ export default function AdminPage() {
                     {/* Revenue summary cards */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {[
-                        { label: isEs ? 'Ingresos Totales' : 'Total Revenue', value: `$${analytics.revenue.totalRevenue.toLocaleString()}`, color: 'text-green-600' },
-                        { label: isEs ? 'Promedio/Estudiante' : 'Avg/Student', value: `$${analytics.revenue.avgRevenuePerStudent}`, color: 'text-[#1C7BB1]' },
-                        { label: isEs ? 'Conversión Trial' : 'Trial Conversion', value: `${analytics.revenue.trialConversionRate}%`, color: 'text-[#F59E1C]' },
+                        { label: isEs ? 'Ingresos Totales' : 'Total Revenue', value: `$${analytics.revenue.totalRevenue.toLocaleString()}`, color: 'text-success' },
+                        { label: isEs ? 'Promedio/Estudiante' : 'Avg/Student', value: `$${analytics.revenue.avgRevenuePerStudent}`, color: 'text-primary' },
+                        { label: isEs ? 'Conversión Trial' : 'Trial Conversion', value: `${analytics.revenue.trialConversionRate}%`, color: 'text-accent' },
                         { label: isEs ? 'Suscripciones Activas' : 'Active Subscriptions', value: analytics.revenue.activeSubscriptions, color: 'text-purple-600' },
                       ].map((card, i) => (
                         <Card key={i} className="border-0 shadow-md">
                           <CardContent className="p-4 text-center">
-                            <p className="text-xs text-gray-500 mb-1">{card.label}</p>
+                            <p className="text-xs text-muted-foreground mb-1">{card.label}</p>
                             <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
                           </CardContent>
                         </Card>
@@ -1631,19 +1631,19 @@ export default function AdminPage() {
                             <table className="w-full text-sm">
                               <thead>
                                 <tr className="border-b">
-                                  <th className="text-left py-2 text-gray-500 font-medium">{isEs ? 'Nombre' : 'Name'}</th>
-                                  <th className="text-center py-2 text-gray-500 font-medium">{isEs ? 'Clases' : 'Classes'}</th>
-                                  <th className="text-center py-2 text-gray-500 font-medium">{isEs ? 'Créditos' : 'Credits'}</th>
-                                  <th className="text-right py-2 text-gray-500 font-medium">{isEs ? 'Total Gastado' : 'Total Spent'}</th>
+                                  <th className="text-left py-2 text-muted-foreground font-medium">{isEs ? 'Nombre' : 'Name'}</th>
+                                  <th className="text-center py-2 text-muted-foreground font-medium">{isEs ? 'Clases' : 'Classes'}</th>
+                                  <th className="text-center py-2 text-muted-foreground font-medium">{isEs ? 'Créditos' : 'Credits'}</th>
+                                  <th className="text-right py-2 text-muted-foreground font-medium">{isEs ? 'Total Gastado' : 'Total Spent'}</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {[...studentsList.students].sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 10).map(s => (
-                                  <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedStudentId(s.id)}>
-                                    <td className="py-2 font-medium text-gray-900">{s.name}</td>
+                                  <tr key={s.id} className="border-b border-border hover:bg-muted/40 cursor-pointer" onClick={() => setSelectedStudentId(s.id)}>
+                                    <td className="py-2 font-medium text-foreground">{s.name}</td>
                                     <td className="text-center py-2">{s.completedClasses}/{s.totalClasses}</td>
                                     <td className="text-center py-2">{s.classCredits}</td>
-                                    <td className="text-right py-2 font-semibold text-green-600">${s.totalSpent.toLocaleString()}</td>
+                                    <td className="text-right py-2 font-semibold text-success">${s.totalSpent.toLocaleString()}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -1667,35 +1667,35 @@ export default function AdminPage() {
                             <table className="w-full text-sm">
                               <thead>
                                 <tr className="border-b">
-                                  <th className="text-left py-2 text-gray-500 font-medium">{isEs ? 'Fecha' : 'Date'}</th>
-                                  <th className="text-left py-2 text-gray-500 font-medium">{isEs ? 'Cliente' : 'Customer'}</th>
-                                  <th className="text-right py-2 text-gray-500 font-medium">{isEs ? 'Monto' : 'Amount'}</th>
-                                  <th className="text-center py-2 text-gray-500 font-medium">{isEs ? 'Estado' : 'Status'}</th>
-                                  <th className="hidden sm:table-cell text-center py-2 text-gray-500 font-medium">{isEs ? 'Método' : 'Method'}</th>
-                                  <th className="text-center py-2 text-gray-500 font-medium">{isEs ? 'Acciones' : 'Actions'}</th>
+                                  <th className="text-left py-2 text-muted-foreground font-medium">{isEs ? 'Fecha' : 'Date'}</th>
+                                  <th className="text-left py-2 text-muted-foreground font-medium">{isEs ? 'Cliente' : 'Customer'}</th>
+                                  <th className="text-right py-2 text-muted-foreground font-medium">{isEs ? 'Monto' : 'Amount'}</th>
+                                  <th className="text-center py-2 text-muted-foreground font-medium">{isEs ? 'Estado' : 'Status'}</th>
+                                  <th className="hidden sm:table-cell text-center py-2 text-muted-foreground font-medium">{isEs ? 'Método' : 'Method'}</th>
+                                  <th className="text-center py-2 text-muted-foreground font-medium">{isEs ? 'Acciones' : 'Actions'}</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {transactions.data.map((tx) => (
-                                  <tr key={tx.id} className="border-b border-gray-50 hover:bg-gray-50">
-                                    <td className="py-2 text-xs text-gray-600">{new Date(tx.created).toLocaleDateString()}</td>
+                                  <tr key={tx.id} className="border-b border-border hover:bg-muted/40">
+                                    <td className="py-2 text-xs text-muted-foreground">{new Date(tx.created).toLocaleDateString()}</td>
                                     <td className="py-2 text-xs truncate max-w-[150px]">{tx.customerEmail || '-'}</td>
                                     <td className="py-2 text-right font-semibold">
                                       ${tx.amount.toFixed(2)}
-                                      {tx.refunded && <span className="text-red-500 text-xs ml-1">(-${tx.amountRefunded.toFixed(2)})</span>}
+                                      {tx.refunded && <span className="text-destructive text-xs ml-1">(-${tx.amountRefunded.toFixed(2)})</span>}
                                     </td>
                                     <td className="py-2 text-center">
                                       <Badge variant={tx.status === 'succeeded' ? 'default' : tx.status === 'failed' ? 'destructive' : 'secondary'}
-                                        className={`text-[10px] ${tx.refunded ? 'bg-red-100 text-red-700' : tx.status === 'succeeded' ? 'bg-green-100 text-green-700' : ''}`}>
+                                        className={`text-[10px] ${tx.refunded ? 'bg-destructive/15 text-destructive' : tx.status === 'succeeded' ? 'bg-success/15 text-success' : ''}`}>
                                         {tx.refunded ? (isEs ? 'Reembolsado' : 'Refunded') : tx.status}
                                       </Badge>
                                     </td>
-                                    <td className="hidden sm:table-cell py-2 text-center text-xs text-gray-500">
+                                    <td className="hidden sm:table-cell py-2 text-center text-xs text-muted-foreground">
                                       {tx.cardBrand && tx.cardLast4 ? `${tx.cardBrand} •${tx.cardLast4}` : tx.paymentMethodType}
                                     </td>
                                     <td className="py-2 text-center">
                                       {tx.status === 'succeeded' && !tx.refunded && tx.paymentIntentId && (
-                                        <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
                                           onClick={() => setRefundTarget({ paymentIntentId: tx.paymentIntentId!, amount: tx.amount, customerEmail: tx.customerEmail })}>
                                           {isEs ? 'Reembolsar' : 'Refund'}
                                         </Button>
@@ -1727,13 +1727,13 @@ export default function AdminPage() {
                       <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => setRefundTarget(null)}>
                         <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
                           <h3 className="text-lg font-bold mb-2">{isEs ? 'Confirmar Reembolso' : 'Confirm Refund'}</h3>
-                          <p className="text-sm text-gray-600 mb-4">
+                          <p className="text-sm text-muted-foreground mb-4">
                             {isEs
                               ? `¿Estás seguro de reembolsar $${refundTarget.amount.toFixed(2)} a ${refundTarget.customerEmail}?`
                               : `Are you sure you want to refund $${refundTarget.amount.toFixed(2)} to ${refundTarget.customerEmail}?`
                             }
                           </p>
-                          <p className="text-xs text-red-500 mb-4">
+                          <p className="text-xs text-destructive mb-4">
                             {isEs ? 'Esta acción no se puede deshacer. Los créditos del estudiante serán ajustados.' : 'This action cannot be undone. Student credits will be adjusted.'}
                           </p>
                           <div className="flex gap-3 justify-end">
@@ -1755,7 +1755,7 @@ export default function AdminPage() {
                     {/* Search bar */}
                     <div className="flex gap-4 items-center">
                       <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           placeholder={isEs ? 'Buscar por nombre o email...' : 'Search by name or email...'}
                           value={studentSearch}
@@ -1763,7 +1763,7 @@ export default function AdminPage() {
                           className="pl-9"
                         />
                       </div>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         {sortedStudents.length} {isEs ? 'estudiantes' : 'students'}
                       </p>
                     </div>
@@ -1773,7 +1773,7 @@ export default function AdminPage() {
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr className="border-b bg-gray-50/50">
+                              <tr className="border-b bg-muted/40/50">
                                 {[
                                   { key: 'name', label: isEs ? 'Nombre' : 'Name', align: 'left', responsive: '' },
                                   { key: 'userType', label: isEs ? 'Tipo' : 'Type', align: 'center', responsive: '' },
@@ -1786,7 +1786,7 @@ export default function AdminPage() {
                                 ].map(col => (
                                   <th
                                     key={col.key}
-                                    className={`${col.responsive} py-3 px-3 text-gray-500 font-medium cursor-pointer hover:text-gray-700 text-${col.align}`}
+                                    className={`${col.responsive} py-3 px-3 text-muted-foreground font-medium cursor-pointer hover:text-foreground text-${col.align}`}
                                     onClick={() => {
                                       if (col.key === 'actions') return;
                                       if (studentSortKey === col.key) setStudentSortDir(d => d === 'desc' ? 'asc' : 'desc');
@@ -1803,11 +1803,11 @@ export default function AdminPage() {
                             </thead>
                             <tbody>
                               {sortedStudents.map(s => (
-                                <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                                <tr key={s.id} className="border-b border-border hover:bg-muted/40/50">
                                   <td className="py-3 px-3">
                                     <div>
-                                      <p className="font-medium text-gray-900">{s.name}</p>
-                                      <p className="text-xs text-gray-400">{s.email}</p>
+                                      <p className="font-medium text-foreground">{s.name}</p>
+                                      <p className="text-xs text-muted-foreground">{s.email}</p>
                                     </div>
                                   </td>
                                   <td className="text-center py-3 px-3">
@@ -1817,12 +1817,12 @@ export default function AdminPage() {
                                   </td>
                                   <td className="text-center py-3 px-3 font-semibold">{s.classCredits}</td>
                                   <td className="text-center py-3 px-3">{s.completedClasses}/{s.totalClasses}</td>
-                                  <td className="text-right py-3 px-3 font-semibold text-green-600">${s.totalSpent.toLocaleString()}</td>
-                                  <td className="hidden sm:table-cell text-center py-3 px-3 text-xs text-gray-500">
+                                  <td className="text-right py-3 px-3 font-semibold text-success">${s.totalSpent.toLocaleString()}</td>
+                                  <td className="hidden sm:table-cell text-center py-3 px-3 text-xs text-muted-foreground">
                                     {s.lastClassDate ? new Date(s.lastClassDate).toLocaleDateString() : '-'}
                                   </td>
                                   <td className="hidden sm:table-cell text-center py-3 px-3">
-                                    {s.hasSubscription ? <CheckCircle className="h-4 w-4 text-green-500 mx-auto" /> : <span className="text-gray-300">-</span>}
+                                    {s.hasSubscription ? <CheckCircle className="h-4 w-4 text-success mx-auto" /> : <span className="text-muted-foreground">-</span>}
                                   </td>
                                   <td className="text-center py-3 px-3">
                                     <Button variant="ghost" size="sm" onClick={() => setSelectedStudentId(s.id)}>
@@ -1856,8 +1856,8 @@ export default function AdminPage() {
                       onClick={() => setStudentDetailTab(tab)}
                       className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
                         studentDetailTab === tab
-                          ? 'bg-[#1C7BB1] text-white'
-                          : 'text-gray-500 hover:bg-gray-100'
+                          ? 'bg-primary text-white'
+                          : 'text-muted-foreground hover:bg-muted'
                       }`}
                     >
                       {tab === 'overview'
@@ -1872,13 +1872,13 @@ export default function AdminPage() {
                     {/* Header */}
                     <div>
                       <h3 className="text-lg font-bold">{studentDetail.user.firstName} {studentDetail.user.lastName}</h3>
-                      <p className="text-sm text-gray-500">{studentDetail.user.email}</p>
+                      <p className="text-sm text-muted-foreground">{studentDetail.user.email}</p>
                       <div className="flex gap-2 mt-2">
                         <Badge>{studentDetail.user.userType}</Badge>
                         <Badge variant="outline">{studentDetail.user.level}</Badge>
                         {studentDetail.user.aiSubscriptionActive && <Badge variant="secondary">AI</Badge>}
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {isEs ? 'Miembro desde' : 'Member since'}: {studentDetail.user.createdAt ? new Date(studentDetail.user.createdAt).toLocaleDateString() : '-'}
                       </p>
                     </div>
@@ -1886,14 +1886,14 @@ export default function AdminPage() {
                     {/* Quick stats */}
                     <div className="grid grid-cols-4 gap-3">
                       {[
-                        { label: isEs ? 'Completadas' : 'Completed', value: studentDetail.classes.completed, color: 'text-[#1C7BB1]' },
-                        { label: isEs ? 'Gastado' : 'Spent', value: `$${studentDetail.financial.totalSpent}`, color: 'text-green-600' },
-                        { label: isEs ? 'Créditos' : 'Credits', value: studentDetail.financial.creditsRemaining, color: 'text-[#F59E1C]' },
-                        { label: isEs ? 'Días sin clase' : 'Days idle', value: studentDetail.engagement.daysSinceLastClass ?? '-', color: 'text-red-500' },
+                        { label: isEs ? 'Completadas' : 'Completed', value: studentDetail.classes.completed, color: 'text-primary' },
+                        { label: isEs ? 'Gastado' : 'Spent', value: `$${studentDetail.financial.totalSpent}`, color: 'text-success' },
+                        { label: isEs ? 'Créditos' : 'Credits', value: studentDetail.financial.creditsRemaining, color: 'text-accent' },
+                        { label: isEs ? 'Días sin clase' : 'Days idle', value: studentDetail.engagement.daysSinceLastClass ?? '-', color: 'text-destructive' },
                       ].map((stat, i) => (
-                        <div key={i} className="text-center p-2 bg-gray-50 rounded-lg">
+                        <div key={i} className="text-center p-2 bg-muted/40 rounded-lg">
                           <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
-                          <p className="text-[10px] text-gray-500">{stat.label}</p>
+                          <p className="text-[10px] text-muted-foreground">{stat.label}</p>
                         </div>
                       ))}
                     </div>
@@ -1916,23 +1916,23 @@ export default function AdminPage() {
                     <div>
                       <p className="text-sm font-medium mb-2">{isEs ? 'Engagement' : 'Engagement'}</p>
                       <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="flex justify-between p-2 bg-gray-50 rounded">
-                          <span className="text-gray-500">{isEs ? 'Promedio/mes' : 'Avg/month'}</span>
+                        <div className="flex justify-between p-2 bg-muted/40 rounded">
+                          <span className="text-muted-foreground">{isEs ? 'Promedio/mes' : 'Avg/month'}</span>
                           <span className="font-semibold">{studentDetail.engagement.avgClassesPerMonth}</span>
                         </div>
-                        <div className="flex justify-between p-2 bg-gray-50 rounded">
-                          <span className="text-gray-500">{isEs ? 'Días registrado' : 'Days registered'}</span>
+                        <div className="flex justify-between p-2 bg-muted/40 rounded">
+                          <span className="text-muted-foreground">{isEs ? 'Días registrado' : 'Days registered'}</span>
                           <span className="font-semibold">{studentDetail.engagement.daysSinceSignup}</span>
                         </div>
                         {studentDetail.engagement.preferredCategory && (
-                          <div className="flex justify-between p-2 bg-gray-50 rounded">
-                            <span className="text-gray-500">{isEs ? 'Categoría' : 'Category'}</span>
+                          <div className="flex justify-between p-2 bg-muted/40 rounded">
+                            <span className="text-muted-foreground">{isEs ? 'Categoría' : 'Category'}</span>
                             <span className="font-semibold text-xs">{studentDetail.engagement.preferredCategory}</span>
                           </div>
                         )}
                         {studentDetail.engagement.preferredTutor && (
-                          <div className="flex justify-between p-2 bg-gray-50 rounded">
-                            <span className="text-gray-500">{isEs ? 'Tutor favorito' : 'Fav tutor'}</span>
+                          <div className="flex justify-between p-2 bg-muted/40 rounded">
+                            <span className="text-muted-foreground">{isEs ? 'Tutor favorito' : 'Fav tutor'}</span>
                             <span className="font-semibold text-xs">{studentDetail.engagement.preferredTutor.name}</span>
                           </div>
                         )}
@@ -1946,11 +1946,11 @@ export default function AdminPage() {
                         <div className="flex gap-4 text-sm">
                           <div className="text-center p-2 bg-purple-50 rounded flex-1">
                             <p className="font-bold text-purple-600">{studentDetail.aiUsage.conversations}</p>
-                            <p className="text-[10px] text-gray-500">{isEs ? 'Conversaciones' : 'Conversations'}</p>
+                            <p className="text-[10px] text-muted-foreground">{isEs ? 'Conversaciones' : 'Conversations'}</p>
                           </div>
                           <div className="text-center p-2 bg-purple-50 rounded flex-1">
                             <p className="font-bold text-purple-600">{studentDetail.aiUsage.messages}</p>
-                            <p className="text-[10px] text-gray-500">{isEs ? 'Mensajes' : 'Messages'}</p>
+                            <p className="text-[10px] text-muted-foreground">{isEs ? 'Mensajes' : 'Messages'}</p>
                           </div>
                         </div>
                       </div>
@@ -1960,18 +1960,18 @@ export default function AdminPage() {
                     <div>
                       <p className="text-sm font-medium mb-2">{isEs ? 'Financiero' : 'Financial'}</p>
                       {studentDetail.financial.subscription && (
-                        <div className="p-2 bg-green-50 rounded mb-2 text-sm">
-                          <span className="text-green-700 font-medium">{isEs ? 'Suscripción activa' : 'Active subscription'}: </span>
-                          <Badge variant="outline" className="text-green-700">{studentDetail.financial.subscription.status}</Badge>
+                        <div className="p-2 bg-success/10 rounded mb-2 text-sm">
+                          <span className="text-success font-medium">{isEs ? 'Suscripción activa' : 'Active subscription'}: </span>
+                          <Badge variant="outline" className="text-success">{studentDetail.financial.subscription.status}</Badge>
                         </div>
                       )}
                       {studentDetail.financial.purchases.length > 0 && (
                         <div className="space-y-1">
                           {studentDetail.financial.purchases.slice(0, 5).map((p: any) => (
-                            <div key={p.id} className="flex justify-between text-xs border-b border-gray-100 py-1">
-                              <span className="text-gray-500">{new Date(p.createdAt).toLocaleDateString()}</span>
+                            <div key={p.id} className="flex justify-between text-xs border-b border-border py-1">
+                              <span className="text-muted-foreground">{new Date(p.createdAt).toLocaleDateString()}</span>
                               <span>+{p.classesAdded} {isEs ? 'clases' : 'classes'}</span>
-                              <span className="font-semibold text-green-600">${Number(p.amount).toFixed(2)}</span>
+                              <span className="font-semibold text-success">${Number(p.amount).toFixed(2)}</span>
                             </div>
                           ))}
                         </div>
@@ -1985,35 +1985,35 @@ export default function AdminPage() {
                           <CreditCard className="h-3.5 w-3.5" /> Stripe
                         </p>
                         <div className="grid grid-cols-2 gap-2 mb-3">
-                          <div className="text-center p-2 bg-green-50 rounded">
-                            <p className="text-lg font-bold text-green-600">${studentStripe.ltv.toLocaleString()}</p>
-                            <p className="text-[10px] text-gray-500">LTV</p>
+                          <div className="text-center p-2 bg-success/10 rounded">
+                            <p className="text-lg font-bold text-success">${studentStripe.ltv.toLocaleString()}</p>
+                            <p className="text-[10px] text-muted-foreground">LTV</p>
                           </div>
-                          <div className="text-center p-2 bg-blue-50 rounded">
-                            <p className="text-lg font-bold text-blue-600">{studentStripe.paymentMethods.length}</p>
-                            <p className="text-[10px] text-gray-500">{isEs ? 'Métodos de pago' : 'Payment Methods'}</p>
+                          <div className="text-center p-2 bg-primary/10 rounded">
+                            <p className="text-lg font-bold text-primary">{studentStripe.paymentMethods.length}</p>
+                            <p className="text-[10px] text-muted-foreground">{isEs ? 'Métodos de pago' : 'Payment Methods'}</p>
                           </div>
                         </div>
                         {studentStripe.paymentMethods.length > 0 && (
                           <div className="space-y-1 mb-3">
                             {studentStripe.paymentMethods.map((pm) => (
-                              <div key={pm.id} className="flex justify-between text-xs p-1.5 bg-gray-50 rounded">
+                              <div key={pm.id} className="flex justify-between text-xs p-1.5 bg-muted/40 rounded">
                                 <span className="font-medium capitalize">{pm.brand} •{pm.last4}</span>
-                                <span className="text-gray-400">{pm.expMonth}/{pm.expYear}</span>
+                                <span className="text-muted-foreground">{pm.expMonth}/{pm.expYear}</span>
                               </div>
                             ))}
                           </div>
                         )}
                         {studentStripe.transactions.length > 0 && (
                           <div className="space-y-1">
-                            <p className="text-xs text-gray-500 font-medium">{isEs ? 'Transacciones recientes' : 'Recent transactions'}</p>
+                            <p className="text-xs text-muted-foreground font-medium">{isEs ? 'Transacciones recientes' : 'Recent transactions'}</p>
                             {studentStripe.transactions.slice(0, 5).map((tx) => (
-                              <div key={tx.id} className="flex justify-between text-xs border-b border-gray-100 py-1">
-                                <span className="text-gray-500">{new Date(tx.created).toLocaleDateString()}</span>
+                              <div key={tx.id} className="flex justify-between text-xs border-b border-border py-1">
+                                <span className="text-muted-foreground">{new Date(tx.created).toLocaleDateString()}</span>
                                 <Badge variant={tx.refunded ? 'destructive' : tx.status === 'succeeded' ? 'default' : 'secondary'} className="text-[9px] h-4">
                                   {tx.refunded ? (isEs ? 'Reemb.' : 'Refund') : tx.status}
                                 </Badge>
-                                <span className={`font-semibold ${tx.refunded ? 'text-red-500 line-through' : 'text-green-600'}`}>${tx.amount.toFixed(2)}</span>
+                                <span className={`font-semibold ${tx.refunded ? 'text-destructive line-through' : 'text-success'}`}>${tx.amount.toFixed(2)}</span>
                               </div>
                             ))}
                           </div>
@@ -2027,16 +2027,16 @@ export default function AdminPage() {
                         <p className="text-sm font-medium mb-2">{isEs ? 'Clases Recientes' : 'Recent Classes'}</p>
                         <div className="space-y-1">
                           {studentDetail.classes.recent.slice(0, 5).map((c: any) => (
-                            <div key={c.id} className="flex justify-between items-center text-xs border-b border-gray-100 py-1.5">
+                            <div key={c.id} className="flex justify-between items-center text-xs border-b border-border py-1.5">
                               <div>
                                 <p className="font-medium">{c.title}</p>
-                                <p className="text-gray-400">{c.tutorName}</p>
+                                <p className="text-muted-foreground">{c.tutorName}</p>
                               </div>
                               <div className="text-right">
                                 <Badge variant={c.status === 'completed' ? 'default' : c.status === 'cancelled' ? 'destructive' : 'secondary'} className="text-[10px]">
                                   {c.status}
                                 </Badge>
-                                <p className="text-gray-400 mt-0.5">{new Date(c.scheduledAt).toLocaleDateString()}</p>
+                                <p className="text-muted-foreground mt-0.5">{new Date(c.scheduledAt).toLocaleDateString()}</p>
                               </div>
                             </div>
                           ))}
@@ -2050,12 +2050,12 @@ export default function AdminPage() {
                         <p className="text-sm font-medium mb-2">{isEs ? 'Reviews' : 'Reviews'}</p>
                         <div className="space-y-2">
                           {studentDetail.reviews.map((r: any) => (
-                            <div key={r.id} className="p-2 bg-gray-50 rounded text-xs">
+                            <div key={r.id} className="p-2 bg-muted/40 rounded text-xs">
                               <div className="flex justify-between">
                                 <span className="font-medium">{r.tutorName}</span>
                                 <span className="text-yellow-500">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
                               </div>
-                              {r.comment && <p className="text-gray-600 mt-1">{r.comment}</p>}
+                              {r.comment && <p className="text-muted-foreground mt-1">{r.comment}</p>}
                             </div>
                           ))}
                         </div>
@@ -2067,7 +2067,7 @@ export default function AdminPage() {
                 {/* ====== HISTORIA TAB ====== */}
                 {studentDetail && studentDetailTab === 'historia' && (
                   <div className="space-y-4 mt-2 pb-8">
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {isEs ? 'Actividad cronológica del estudiante' : 'Chronological student activity'}
                     </p>
                     <div className="relative space-y-0">
@@ -2090,36 +2090,36 @@ export default function AdminPage() {
                             label: c.title || (isEs ? 'Clase' : 'Class'),
                             sub: c.tutorName ? `${isEs ? 'Con' : 'With'} ${c.tutorName}` : undefined,
                             badge: c.status,
-                            badgeColor: c.status === 'completed' ? 'text-green-700 bg-green-50' : c.status === 'cancelled' ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-gray-100',
+                            badgeColor: c.status === 'completed' ? 'text-success bg-success/10' : c.status === 'cancelled' ? 'text-destructive bg-destructive/10' : 'text-muted-foreground bg-muted',
                           });
                           if (c.sharedNotes) items.push({ date: c.scheduledAt, type: 'class', label: `📝 ${c.sharedNotes.slice(0, 80)}${c.sharedNotes.length > 80 ? '…' : ''}`, sub: isEs ? 'Nota del tutor' : 'Tutor note' });
-                          if (c.homeworkText) items.push({ date: c.scheduledAt, type: 'class', label: `📋 ${c.homeworkText.slice(0, 80)}${c.homeworkText.length > 80 ? '…' : ''}`, sub: isEs ? 'Tarea asignada' : 'Assigned homework', badgeColor: 'text-[#F59E1C] bg-[#F59E1C]/10', badge: isEs ? 'Tarea' : 'HW' });
+                          if (c.homeworkText) items.push({ date: c.scheduledAt, type: 'class', label: `📋 ${c.homeworkText.slice(0, 80)}${c.homeworkText.length > 80 ? '…' : ''}`, sub: isEs ? 'Tarea asignada' : 'Assigned homework', badgeColor: 'text-accent bg-accent/10', badge: isEs ? 'Tarea' : 'HW' });
                         });
 
                         // Sort chronologically desc
                         items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
                         if (items.length === 0) return (
-                          <p className="text-sm text-gray-400 text-center py-8">
+                          <p className="text-sm text-muted-foreground text-center py-8">
                             {isEs ? 'Sin actividad registrada' : 'No activity recorded'}
                           </p>
                         );
 
                         return items.map((item, i) => (
-                          <div key={i} className="flex gap-3 py-2.5 border-b border-gray-50 last:border-0">
+                          <div key={i} className="flex gap-3 py-2.5 border-b border-border last:border-0">
                             <div className={`mt-0.5 w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-sm ${
-                              item.type === 'class' ? 'bg-[#EAF4FA] text-[#1C7BB1]' :
+                              item.type === 'class' ? 'bg-muted text-primary' :
                               item.type === 'quiz' ? 'bg-purple-50 text-purple-600' :
-                              'bg-orange-50 text-orange-500'
+                              'bg-warning/15 text-orange-500'
                             }`}>
                               {item.type === 'class' ? '📅' : item.type === 'quiz' ? '✅' : '🤖'}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-gray-800 leading-snug">{item.label}</p>
-                              {item.sub && <p className="text-[10px] text-gray-400 mt-0.5">{item.sub}</p>}
+                              <p className="text-xs font-medium text-foreground leading-snug">{item.label}</p>
+                              {item.sub && <p className="text-[10px] text-muted-foreground mt-0.5">{item.sub}</p>}
                             </div>
                             <div className="flex-shrink-0 text-right">
-                              <p className="text-[10px] text-gray-400">
+                              <p className="text-[10px] text-muted-foreground">
                                 {new Date(item.date).toLocaleDateString(isEs ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric' })}
                               </p>
                               {item.badge && (
@@ -2135,10 +2135,10 @@ export default function AdminPage() {
 
                     {/* AI usage summary */}
                     {(studentDetail.aiUsage.conversations > 0) && (
-                      <div className="p-3 bg-orange-50 rounded-lg flex items-center gap-3">
+                      <div className="p-3 bg-warning/15 rounded-lg flex items-center gap-3">
                         <span className="text-2xl">🤖</span>
                         <div>
-                          <p className="text-xs font-semibold text-orange-700">
+                          <p className="text-xs font-semibold text-warning-foreground">
                             {studentDetail.aiUsage.conversations} {isEs ? 'conversaciones IA' : 'AI conversations'}
                           </p>
                           <p className="text-[10px] text-orange-500">
@@ -2163,26 +2163,26 @@ export default function AdminPage() {
               <CardContent>
                 {isSupportLoading ? (
                   <div className="text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C7BB1]"></div>
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 ) : supportTickets && supportTickets.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-100">
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">#</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Asunto</th>
-                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Categoría</th>
-                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Estado</th>
-                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Prioridad</th>
-                          <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">Fecha</th>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">#</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Asunto</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Categoría</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Estado</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Prioridad</th>
+                          <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Fecha</th>
                         </tr>
                       </thead>
                       <tbody>
                         {supportTickets.map(ticket => (
-                          <tr key={ticket.id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                            <td className="py-3 px-4 text-sm text-gray-600">#{ticket.id}</td>
-                            <td className="py-3 px-4 font-medium text-gray-900">{ticket.subject}</td>
+                          <tr key={ticket.id} className="border-b border-border hover:bg-muted/40/50">
+                            <td className="py-3 px-4 text-sm text-muted-foreground">#{ticket.id}</td>
+                            <td className="py-3 px-4 font-medium text-foreground">{ticket.subject}</td>
                             <td className="text-center py-3 px-4">
                               <Badge variant="outline">{ticket.category}</Badge>
                             </td>
@@ -2202,7 +2202,7 @@ export default function AdminPage() {
                                 {ticket.priority === 'high' ? 'Alta' : ticket.priority === 'normal' ? 'Normal' : 'Baja'}
                               </Badge>
                             </td>
-                            <td className="text-right py-3 px-4 text-sm text-gray-500">
+                            <td className="text-right py-3 px-4 text-sm text-muted-foreground">
                               {new Date(ticket.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                             </td>
                           </tr>
@@ -2212,8 +2212,8 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <LifeBuoy className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                    <p className="text-gray-500">No hay tickets de soporte</p>
+                    <LifeBuoy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No hay tickets de soporte</p>
                   </div>
                 )}
               </CardContent>
@@ -2236,7 +2236,7 @@ export default function AdminPage() {
                 <CardTitle>{isEs ? 'Configuración General' : 'General Settings'}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">{isEs ? 'Configuraciones adicionales del sistema estarán disponibles próximamente.' : 'Additional system settings will be available soon.'}</p>
+                <p className="text-muted-foreground">{isEs ? 'Configuraciones adicionales del sistema estarán disponibles próximamente.' : 'Additional system settings will be available soon.'}</p>
               </CardContent>
             </Card>
           </div>

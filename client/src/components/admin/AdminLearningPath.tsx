@@ -36,12 +36,12 @@ const CONTENT_TYPES = ["document", "quiz", "video", "exercise"] as const;
 const QUESTION_TYPES = ["multiple_choice", "true_false", "fill_blank", "ordering"] as const;
 
 const LEVEL_COLORS: Record<string, string> = {
-  A1: "bg-green-100 text-green-700",
+  A1: "bg-success/15 text-success",
   A2: "bg-teal-100 text-teal-700",
-  B1: "bg-blue-100 text-blue-700",
+  B1: "bg-primary/15 text-primary",
   B2: "bg-indigo-100 text-indigo-700",
-  C1: "bg-orange-100 text-orange-700",
-  C2: "bg-yellow-100 text-yellow-700",
+  C1: "bg-warning/15 text-warning-foreground",
+  C2: "bg-warning/15 text-warning-foreground",
 };
 
 const CONTENT_ICONS: Record<string, typeof FileText> = {
@@ -192,7 +192,7 @@ export default function AdminLearningPath() {
   };
 
   if (isLoading) {
-    return <div className="text-center py-12 text-gray-400">{isEs ? "Cargando..." : "Loading..."}</div>;
+    return <div className="text-center py-12 text-muted-foreground">{isEs ? "Cargando..." : "Loading..."}</div>;
   }
 
   return (
@@ -203,7 +203,7 @@ export default function AdminLearningPath() {
           variant={activeSection === "stations" ? "default" : "outline"}
           size="sm"
           onClick={() => setActiveSection("stations")}
-          className={activeSection === "stations" ? "bg-[#1C7BB1]" : ""}
+          className={activeSection === "stations" ? "bg-primary" : ""}
         >
           <BookOpen className="w-4 h-4 mr-2" />
           {isEs ? "Estaciones" : "Stations"}
@@ -212,7 +212,7 @@ export default function AdminLearningPath() {
           variant={activeSection === "rules" ? "default" : "outline"}
           size="sm"
           onClick={() => setActiveSection("rules")}
-          className={activeSection === "rules" ? "bg-[#1C7BB1]" : ""}
+          className={activeSection === "rules" ? "bg-primary" : ""}
         >
           <Settings2 className="w-4 h-4 mr-2" />
           {isEs ? "Reglas de Progresión" : "Progression Rules"}
@@ -223,12 +223,12 @@ export default function AdminLearningPath() {
       {activeSection === "stations" && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-[#0A4A6E]">
+            <h2 className="text-lg font-semibold text-primary-900">
               {isEs ? "Gestión de Estaciones" : "Station Management"}
             </h2>
             <Button
               size="sm"
-              className="bg-[#1C7BB1]"
+              className="bg-primary"
               onClick={() => { setEditingStation(null); setShowStationDialog(true); }}
             >
               <Plus className="w-4 h-4 mr-1" />
@@ -245,14 +245,14 @@ export default function AdminLearningPath() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Badge className={LEVEL_COLORS[level]}>{level}</Badge>
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground">
                       {levelStations.length} {isEs ? "estaciones" : "stations"}
                     </span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {levelStations.length === 0 && (
-                    <p className="text-sm text-gray-400 py-4 text-center">
+                    <p className="text-sm text-muted-foreground py-4 text-center">
                       {isEs ? "Sin estaciones. Crea la primera." : "No stations. Create the first one."}
                     </p>
                   )}
@@ -277,12 +277,12 @@ export default function AdminLearningPath() {
           {stations.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center">
-                <BookOpen className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                <p className="text-gray-500 mb-4">
+                <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground mb-4">
                   {isEs ? "No hay estaciones creadas todavía" : "No stations created yet"}
                 </p>
                 <Button
-                  className="bg-[#1C7BB1]"
+                  className="bg-primary"
                   onClick={() => { setEditingStation(null); setShowStationDialog(true); }}
                 >
                   <Plus className="w-4 h-4 mr-1" />
@@ -359,20 +359,20 @@ function StationRow({
   return (
     <div className="border rounded-lg">
       <div
-        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50"
+        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/40"
         onClick={onToggle}
       >
-        {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+        {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             {station.stationType === "milestone" && <Star className="w-4 h-4 text-amber-500" />}
-            <span className="font-medium text-sm text-gray-800">
+            <span className="font-medium text-sm text-foreground">
               #{station.stationOrder} — {isEs ? station.titleEs : station.title}
             </span>
             <Badge variant="outline" className="text-[10px]">{station.stationType}</Badge>
           </div>
           {station.description && (
-            <p className="text-xs text-gray-500 mt-0.5 truncate">
+            <p className="text-xs text-muted-foreground mt-0.5 truncate">
               {isEs ? station.descriptionEs : station.description}
             </p>
           )}
@@ -380,7 +380,7 @@ function StationRow({
         <Button
           variant="ghost"
           size="sm"
-          className="text-red-400 hover:text-red-600 p-1"
+          className="text-red-400 hover:text-destructive p-1"
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -388,9 +388,9 @@ function StationRow({
       </div>
 
       {isExpanded && (
-        <div className="border-t px-3 py-2 bg-gray-50/50 space-y-2">
+        <div className="border-t px-3 py-2 bg-muted/40/50 space-y-2">
           {contents.length === 0 && (
-            <p className="text-xs text-gray-400 py-2 text-center">
+            <p className="text-xs text-muted-foreground py-2 text-center">
               {isEs ? "Sin contenido" : "No content"}
             </p>
           )}
@@ -398,14 +398,14 @@ function StationRow({
             const Icon = CONTENT_ICONS[content.contentType] || FileText;
             return (
               <div key={content.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-white border text-sm">
-                <Icon className="w-3.5 h-3.5 text-gray-400" />
-                <span className="flex-1 truncate text-gray-700">
+                <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="flex-1 truncate text-foreground">
                   {isEs ? content.titleEs : content.title}
                 </span>
                 <Badge variant="outline" className="text-[10px]">{content.contentType}</Badge>
-                <span className="text-xs text-gray-400">{content.durationMinutes}min</span>
+                <span className="text-xs text-muted-foreground">{content.durationMinutes}min</span>
                 <Button variant="ghost" size="sm" className="p-1 h-auto" onClick={() => onEditContent(content)}>
-                  <Pencil className="w-3 h-3 text-gray-400" />
+                  <Pencil className="w-3 h-3 text-muted-foreground" />
                 </Button>
                 <Button variant="ghost" size="sm" className="p-1 h-auto" onClick={() => onDeleteContent(content.id)}>
                   <Trash2 className="w-3 h-3 text-red-400" />
@@ -457,7 +457,7 @@ function StationDialog({
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-[#0A4A6E]">
+          <DialogTitle className="text-primary-900">
             {station ? (isEs ? "Editar Estación" : "Edit Station") : (isEs ? "Nueva Estación" : "New Station")}
           </DialogTitle>
         </DialogHeader>
@@ -525,7 +525,7 @@ function StationDialog({
               {isEs ? "Cancelar" : "Cancel"}
             </Button>
             <Button
-              className="flex-1 bg-[#1C7BB1]"
+              className="flex-1 bg-primary"
               disabled={!form.title || !form.titleEs}
               onClick={() => onSave(form)}
             >
@@ -601,7 +601,7 @@ function ContentDialog({
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-[#0A4A6E]">
+          <DialogTitle className="text-primary-900">
             {content ? (isEs ? "Editar Contenido" : "Edit Content") : (isEs ? "Nuevo Contenido" : "New Content")}
           </DialogTitle>
         </DialogHeader>
@@ -653,7 +653,7 @@ function ContentDialog({
           {isQuiz && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-[#0A4A6E] font-semibold">
+                <Label className="text-primary-900 font-semibold">
                   {isEs ? "Preguntas" : "Questions"} ({questions.length})
                 </Label>
                 <Button variant="outline" size="sm" onClick={addQuestion}>
@@ -663,7 +663,7 @@ function ContentDialog({
               </div>
 
               {questions.map((q, idx) => (
-                <div key={idx} className="border rounded-lg p-3 space-y-3 bg-gray-50">
+                <div key={idx} className="border rounded-lg p-3 space-y-3 bg-muted/40">
                   <div className="flex items-center justify-between">
                     <Badge variant="outline" className="text-xs">Q{idx + 1}</Badge>
                     <div className="flex items-center gap-2">
@@ -702,7 +702,7 @@ function ContentDialog({
                   </div>
                   {(q.type === "multiple_choice" || q.type === "true_false") && (
                     <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">{isEs ? "Opciones (EN | ES)" : "Options (EN | ES)"}</Label>
+                      <Label className="text-xs text-muted-foreground">{isEs ? "Opciones (EN | ES)" : "Options (EN | ES)"}</Label>
                       {(q.options || []).map((opt, oi) => (
                         <div key={oi} className="grid grid-cols-2 gap-2">
                           <Input
@@ -731,7 +731,7 @@ function ContentDialog({
                   )}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label className="text-xs text-gray-500">{isEs ? "Respuesta correcta" : "Correct answer"}</Label>
+                      <Label className="text-xs text-muted-foreground">{isEs ? "Respuesta correcta" : "Correct answer"}</Label>
                       <Input
                         value={q.correctAnswer}
                         onChange={(e) => updateQuestion(idx, "correctAnswer", e.target.value)}
@@ -739,7 +739,7 @@ function ContentDialog({
                       />
                     </div>
                     <div>
-                      <Label className="text-xs text-gray-500">{isEs ? "Explicación (EN)" : "Explanation (EN)"}</Label>
+                      <Label className="text-xs text-muted-foreground">{isEs ? "Explicación (EN)" : "Explanation (EN)"}</Label>
                       <Input
                         value={q.explanation || ""}
                         onChange={(e) => updateQuestion(idx, "explanation", e.target.value)}
@@ -757,7 +757,7 @@ function ContentDialog({
               {isEs ? "Cancelar" : "Cancel"}
             </Button>
             <Button
-              className="flex-1 bg-[#1C7BB1]"
+              className="flex-1 bg-primary"
               disabled={!form.title || !form.titleEs}
               onClick={handleSave}
             >
@@ -788,7 +788,7 @@ function RulesEditor({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm text-[#0A4A6E]">
+        <CardTitle className="text-sm text-primary-900">
           {isEs ? "Reglas de Progresión de Nivel" : "Level Progression Rules"}
         </CardTitle>
       </CardHeader>
@@ -898,7 +898,7 @@ function RuleRow({
         <Button
           size="sm"
           variant={dirty ? "default" : "outline"}
-          className={dirty ? "bg-[#1C7BB1] h-8 text-xs" : "h-8 text-xs"}
+          className={dirty ? "bg-primary h-8 text-xs" : "h-8 text-xs"}
           onClick={() => { onSave(form); setDirty(false); }}
         >
           {isEs ? "Guardar" : "Save"}

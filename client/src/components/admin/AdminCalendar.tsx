@@ -95,11 +95,11 @@ export default function AdminCalendar() {
   const statusBadge = (status: string) => {
     switch (status) {
       case "scheduled":
-        return <Badge className="bg-blue-100 text-blue-700 text-[10px]">{isEs ? "Prog." : "Sched."}</Badge>;
+        return <Badge className="bg-primary/15 text-primary text-[10px]">{isEs ? "Prog." : "Sched."}</Badge>;
       case "completed":
-        return <Badge className="bg-green-100 text-green-700 text-[10px]">{isEs ? "Comp." : "Done"}</Badge>;
+        return <Badge className="bg-success/15 text-success text-[10px]">{isEs ? "Comp." : "Done"}</Badge>;
       case "cancelled":
-        return <Badge className="bg-red-100 text-red-700 text-[10px]">{isEs ? "Canc." : "Canc."}</Badge>;
+        return <Badge className="bg-destructive/15 text-destructive text-[10px]">{isEs ? "Canc." : "Canc."}</Badge>;
       default:
         return null;
     }
@@ -126,7 +126,7 @@ export default function AdminCalendar() {
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-8 text-center text-gray-400">
+        <CardContent className="p-8 text-center text-muted-foreground">
           {isEs ? "Cargando calendario..." : "Loading calendar..."}
         </CardContent>
       </Card>
@@ -142,7 +142,7 @@ export default function AdminCalendar() {
             variant={view === "calendar" ? "default" : "outline"}
             size="sm"
             onClick={() => setView("calendar")}
-            className={view === "calendar" ? "bg-[#1C7BB1]" : ""}
+            className={view === "calendar" ? "bg-primary" : ""}
           >
             <CalendarDays className="w-4 h-4 mr-1" />
             {isEs ? "Mensual" : "Monthly"}
@@ -151,7 +151,7 @@ export default function AdminCalendar() {
             variant={view === "agenda" ? "default" : "outline"}
             size="sm"
             onClick={() => setView("agenda")}
-            className={view === "agenda" ? "bg-[#1C7BB1]" : ""}
+            className={view === "agenda" ? "bg-primary" : ""}
           >
             <List className="w-4 h-4 mr-1" />
             {isEs ? "Agenda" : "Agenda"}
@@ -165,7 +165,7 @@ export default function AdminCalendar() {
             onChange={(e) =>
               setFilterTutor(e.target.value === "all" ? "all" : parseInt(e.target.value))
             }
-            className="text-sm border rounded-md px-2 py-1.5 text-gray-700"
+            className="text-sm border rounded-md px-2 py-1.5 text-foreground"
           >
             <option value="all">{isEs ? "Todos los profes" : "All tutors"}</option>
             {tutors.map((t) => (
@@ -196,13 +196,13 @@ export default function AdminCalendar() {
               {/* Week day headers */}
               <div className="grid grid-cols-7 mb-2">
                 {weekDays.map((d) => (
-                  <div key={d} className="text-center text-xs font-medium text-gray-500 py-1">
+                  <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">
                     {d}
                   </div>
                 ))}
               </div>
               {/* Days grid */}
-              <div className="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+              <div className="grid grid-cols-7 gap-px bg-muted border border-border rounded-lg overflow-hidden">
                 {calendarDays.map((day) => {
                   const dayEvents = eventsForDay(day);
                   const isToday = isSameDay(day, new Date());
@@ -213,15 +213,15 @@ export default function AdminCalendar() {
                     <button
                       key={day.toISOString()}
                       onClick={() => setSelectedDay(day)}
-                      className={`bg-white min-h-[80px] p-1 text-left transition-colors hover:bg-blue-50 ${
+                      className={`bg-white min-h-[80px] p-1 text-left transition-colors hover:bg-primary/10 ${
                         !isCurrentMonth ? "opacity-40" : ""
-                      } ${isSelected ? "ring-2 ring-[#1C7BB1] ring-inset" : ""}`}
+                      } ${isSelected ? "ring-2 ring-primary ring-inset" : ""}`}
                     >
                       <div
                         className={`text-xs font-medium mb-1 ${
                           isToday
-                            ? "bg-[#1C7BB1] text-white w-5 h-5 rounded-full flex items-center justify-center"
-                            : "text-gray-700"
+                            ? "bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center"
+                            : "text-foreground"
                         }`}
                       >
                         {format(day, "d")}
@@ -237,7 +237,7 @@ export default function AdminCalendar() {
                           </div>
                         ))}
                         {dayEvents.length > 3 && (
-                          <div className="text-[9px] text-gray-400 px-1">+{dayEvents.length - 3} more</div>
+                          <div className="text-[9px] text-muted-foreground px-1">+{dayEvents.length - 3} more</div>
                         )}
                       </div>
                     </button>
@@ -250,7 +250,7 @@ export default function AdminCalendar() {
           {/* Day detail panel */}
           <Card>
             <CardContent className="p-4">
-              <h3 className="font-semibold text-[#0A4A6E] mb-3">
+              <h3 className="font-semibold text-primary-900 mb-3">
                 {selectedDay
                   ? format(selectedDay, "EEEE, d MMM", { locale })
                   : isEs
@@ -258,7 +258,7 @@ export default function AdminCalendar() {
                     : "Select a day"}
               </h3>
               {selectedDay && selectedDayEvents.length === 0 && (
-                <p className="text-sm text-gray-400 py-8 text-center">
+                <p className="text-sm text-muted-foreground py-8 text-center">
                   {isEs ? "Sin clases este día" : "No classes this day"}
                 </p>
               )}
@@ -271,8 +271,8 @@ export default function AdminCalendar() {
                       </span>
                       {statusBadge(e.status)}
                     </div>
-                    <div className="text-sm font-medium text-gray-800">{e.title}</div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                    <div className="text-sm font-medium text-foreground">{e.title}</div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {format(new Date(e.scheduledAt), "HH:mm")} - {e.duration}min
@@ -280,14 +280,14 @@ export default function AdminCalendar() {
                       <span>{e.studentName}</span>
                     </div>
                     {e.isTrial && (
-                      <Badge className="mt-1 bg-amber-100 text-amber-700 text-[10px]">Trial</Badge>
+                      <Badge className="mt-1 bg-warning/15 text-warning-foreground text-[10px]">Trial</Badge>
                     )}
                     {e.meetingLink && e.status === "scheduled" && (
                       <a
                         href={e.meetingLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-2 flex items-center gap-1 text-xs text-[#1C7BB1] hover:underline"
+                        className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline"
                       >
                         <Video className="w-3 h-3" />
                         {isEs ? "Unirse" : "Join"}
@@ -307,24 +307,24 @@ export default function AdminCalendar() {
         <Card>
           <CardContent className="p-4">
             {agendaEvents.size === 0 && (
-              <p className="text-center text-gray-400 py-12">
+              <p className="text-center text-muted-foreground py-12">
                 {isEs ? "Sin clases este mes" : "No classes this month"}
               </p>
             )}
             <div className="space-y-6">
               {Array.from(agendaEvents.entries()).map(([dateKey, dayEvents]) => (
                 <div key={dateKey}>
-                  <h4 className="text-sm font-semibold text-[#0A4A6E] mb-2 capitalize">
+                  <h4 className="text-sm font-semibold text-primary-900 mb-2 capitalize">
                     {format(new Date(dateKey), "EEEE, d MMMM", { locale })}
                   </h4>
                   <div className="space-y-2">
                     {dayEvents.map((e) => (
                       <div
                         key={e.id}
-                        className="flex items-center gap-4 p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+                        className="flex items-center gap-4 p-3 rounded-lg border hover:bg-muted/40 transition-colors"
                         style={{ borderLeftWidth: 3, borderLeftColor: e.tutorColor }}
                       >
-                        <div className="text-sm font-mono text-gray-600 w-12">
+                        <div className="text-sm font-mono text-muted-foreground w-12">
                           {format(new Date(e.scheduledAt), "HH:mm")}
                         </div>
                         <div
@@ -332,14 +332,14 @@ export default function AdminCalendar() {
                           style={{ backgroundColor: e.tutorColor }}
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-800 truncate">{e.title}</div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-sm font-medium text-foreground truncate">{e.title}</div>
+                          <div className="text-xs text-muted-foreground">
                             {e.tutorName} &middot; {e.studentName} &middot; {e.duration}min
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {e.isTrial && (
-                            <Badge className="bg-amber-100 text-amber-700 text-[10px]">Trial</Badge>
+                            <Badge className="bg-warning/15 text-warning-foreground text-[10px]">Trial</Badge>
                           )}
                           {statusBadge(e.status)}
                           {e.meetingLink && e.status === "scheduled" && (
@@ -347,7 +347,7 @@ export default function AdminCalendar() {
                               href={e.meetingLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[#1C7BB1] hover:bg-blue-50 p-1 rounded"
+                              className="text-primary hover:bg-primary/10 p-1 rounded"
                             >
                               <Video className="w-4 h-4" />
                             </a>

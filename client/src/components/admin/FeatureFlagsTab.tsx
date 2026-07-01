@@ -66,18 +66,18 @@ export default function FeatureFlagsTab({ isEs }: { isEs: boolean }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Flag className="w-5 h-5 text-[#1C7BB1]" />
+            <Flag className="w-5 h-5 text-primary" />
             {isEs ? "Feature Flags" : "Feature Flags"}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             {isEs
               ? "Activa o desactiva funcionalidades en tiempo real. Los cambios se aplican en menos de 60 segundos sin redeploy. Útil para hacer rollout gradual (ej. LiveKit al 5% de usuarios primero)."
               : "Toggle features in real time. Changes propagate in under 60 seconds without redeploy. Use for gradual rollouts (e.g. LiveKit at 5% of users first)."}
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-2 mb-6 p-3 bg-gray-50 rounded-lg border">
+          <div className="flex flex-col sm:flex-row gap-2 mb-6 p-3 bg-muted/40 rounded-lg border">
             <Input
               placeholder={isEs ? "Nombre del flag (ej: livekit_classroom)" : "Flag key (e.g., livekit_classroom)"}
               value={newKey}
@@ -96,10 +96,10 @@ export default function FeatureFlagsTab({ isEs }: { isEs: boolean }) {
             </Button>
           </div>
 
-          {isLoading && <p className="text-gray-500">{isEs ? "Cargando…" : "Loading…"}</p>}
+          {isLoading && <p className="text-muted-foreground">{isEs ? "Cargando…" : "Loading…"}</p>}
 
           {!isLoading && flags.length === 0 && (
-            <p className="text-center text-gray-500 py-8">
+            <p className="text-center text-muted-foreground py-8">
               {isEs ? "Aún no hay flags. Crea el primero arriba." : "No flags yet. Create one above."}
             </p>
           )}
@@ -143,9 +143,9 @@ function FlagRow({ flag, isEs, onUpdate, onDelete }: {
     <div className="border rounded-lg p-4 bg-white">
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex-1 min-w-0">
-          <h4 className="font-bold text-[#0A4A6E] font-mono text-sm">{flag.key}</h4>
-          {flag.description && <p className="text-xs text-gray-600 mt-1">{flag.description}</p>}
-          <p className="text-[10px] text-gray-400 mt-1">
+          <h4 className="font-bold text-primary-900 font-mono text-sm">{flag.key}</h4>
+          {flag.description && <p className="text-xs text-muted-foreground mt-1">{flag.description}</p>}
+          <p className="text-[10px] text-muted-foreground mt-1">
             {isEs ? "Actualizado" : "Updated"}: {new Date(flag.updatedAt).toLocaleString(isEs ? "es-ES" : "en-US")}
           </p>
         </div>
@@ -155,9 +155,9 @@ function FlagRow({ flag, isEs, onUpdate, onDelete }: {
               checked={flag.enabled}
               onCheckedChange={(v) => onUpdate({ enabled: v })}
             />
-            <span className="text-xs text-gray-500">{flag.enabled ? (isEs ? "Activo" : "On") : (isEs ? "Apagado" : "Off")}</span>
+            <span className="text-xs text-muted-foreground">{flag.enabled ? (isEs ? "Activo" : "On") : (isEs ? "Apagado" : "Off")}</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-600 hover:bg-red-50">
+          <Button variant="ghost" size="sm" onClick={onDelete} className="text-destructive hover:bg-destructive/10">
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
@@ -180,7 +180,7 @@ function FlagRow({ flag, isEs, onUpdate, onDelete }: {
               {isEs ? "Guardar" : "Save"}
             </Button>
           </div>
-          <p className="text-[10px] text-gray-500 mt-1">
+          <p className="text-[10px] text-muted-foreground mt-1">
             {isEs ? "% determinístico de usuarios. Mismo userId siempre cae igual." : "Deterministic % of users. Same userId always lands the same way."}
           </p>
         </div>
@@ -198,7 +198,7 @@ function FlagRow({ flag, isEs, onUpdate, onDelete }: {
               {isEs ? "Guardar" : "Save"}
             </Button>
           </div>
-          <p className="text-[10px] text-gray-500 mt-1">
+          <p className="text-[10px] text-muted-foreground mt-1">
             {isEs ? "Comma-separated. Estos usuarios siempre verán la feature." : "Comma-separated. These users always see the feature."}
           </p>
         </div>
