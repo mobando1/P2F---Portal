@@ -6,6 +6,7 @@ import { StatCard } from "./ui/stat-card";
 import { SectionCard } from "./ui/section-card";
 import { TrendChart } from "./ui/trend-chart";
 import { EmptyState } from "./ui/empty-state";
+import { ErrorState } from "./ui/error-state";
 
 interface FunnelStage {
   stage: string;
@@ -29,7 +30,7 @@ export default function CrmMetrics() {
   const { language } = useLanguage();
   const isEs = language === "es";
 
-  const { data, isLoading, error } = useQuery<MetricsResponse>({
+  const { data, isLoading, error, refetch } = useQuery<MetricsResponse>({
     queryKey: ["/api/admin/crm/metrics"],
   });
   const { data: insights, isLoading: loadingInsights } = useQuery<InsightsResponse>({
@@ -38,8 +39,9 @@ export default function CrmMetrics() {
 
   if (error) {
     return (
-      <div className="py-10 text-center text-destructive">
-        {isEs ? "Error al cargar métricas" : "Failed to load metrics"}
+      <div className="mx-auto max-w-7xl">
+        <PageHeader title={isEs ? "Métricas" : "Metrics"} />
+        <ErrorState onRetry={() => refetch()} />
       </div>
     );
   }

@@ -19,9 +19,11 @@ import {
 import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { Trash2 } from "lucide-react";
 import { PageHeader } from "./ui/page-header";
 import { StatusBadge } from "./ui/status-badge";
+import { ErrorState } from "./ui/error-state";
 
 interface CrmStudent {
   id: number;
@@ -75,7 +77,7 @@ export default function CrmPipeline({ onSelectStudent }: CrmPipelineProps) {
   const [deleteTarget, setDeleteTarget] = useState<CrmStudent | null>(null);
   const [deleteConfirmName, setDeleteConfirmName] = useState("");
 
-  const { data, isLoading, error } = useQuery<CrmResponse>({
+  const { data, isLoading, error, refetch } = useQuery<CrmResponse>({
     queryKey: ["/api/admin/crm?limit=500"],
   });
 
@@ -126,14 +128,36 @@ export default function CrmPipeline({ onSelectStudent }: CrmPipelineProps) {
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     const userId = parseInt(result.draggableId);
+    const prevColumn = result.source.droppableId as ColumnKey;
     const newColumn = result.destination.droppableId as ColumnKey;
-    stageMutation.mutate({ userId, userType: newColumn });
+    if (prevColumn === newColumn) return;
+    const label = (c: ColumnKey) => (isEs ? COLUMN_LABELS[c].es : COLUMN_LABELS[c].en);
+    stageMutation.mutate(
+      { userId, userType: newColumn },
+      {
+        onSuccess: () => {
+          toast({
+            title: isEs ? "Etapa actualizada" : "Stage updated",
+            description: `${label(prevColumn)} → ${label(newColumn)}`,
+            action: (
+              <ToastAction
+                altText={isEs ? "Deshacer" : "Undo"}
+                onClick={() => stageMutation.mutate({ userId, userType: prevColumn })}
+              >
+                {isEs ? "Deshacer" : "Undo"}
+              </ToastAction>
+            ),
+          });
+        },
+      },
+    );
   };
 
   if (error) {
     return (
-      <div className="py-20 text-center text-destructive">
-        {isEs ? "Error al cargar datos del CRM" : "Failed to load CRM data"}
+      <div className="mx-auto max-w-[1600px]">
+        <PageHeader title="Pipeline" description={isEs ? "Arrastra contactos entre etapas" : "Drag contacts between stages"} />
+        <ErrorState onRetry={() => refetch()} />
       </div>
     );
   }

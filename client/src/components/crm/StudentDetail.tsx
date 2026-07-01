@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import {
   Loader2,
   X,
@@ -108,7 +109,7 @@ const STATUS_COLORS: Record<string, string> = {
   scheduled: "bg-primary/10 text-primary",
   completed: "bg-success/10 text-success",
   cancelled: "bg-destructive/10 text-destructive",
-  "no-show": "bg-orange-100 text-orange-800",
+  "no-show": "bg-warning/15 text-warning-foreground",
 };
 
 export default function StudentDetail({ userId, open, onClose }: StudentDetailProps) {
@@ -237,9 +238,28 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/crm", userId] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/crm?limit=500"] });
-      toast({ title: isEs ? "Etapa actualizada" : "Stage updated" });
     },
   });
+
+  const handleMoveStage = (newType: string) => {
+    const prev = student?.userType;
+    if (!prev || prev === newType) return;
+    moveStageMutation.mutate(newType, {
+      onSuccess: () => {
+        toast({
+          title: isEs ? "Etapa actualizada" : "Stage updated",
+          action: (
+            <ToastAction
+              altText={isEs ? "Deshacer" : "Undo"}
+              onClick={() => moveStageMutation.mutate(prev)}
+            >
+              {isEs ? "Deshacer" : "Undo"}
+            </ToastAction>
+          ),
+        });
+      },
+    });
+  };
 
   // Multichannel click-to-contact (tel/sms/whatsapp). El vendedor elige por contacto.
   const phoneDigits = (student?.phone || "").replace(/\D/g, "");
@@ -346,7 +366,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                 <Mail className="h-3.5 w-3.5" /> Email
               </Button>
               <div className="ml-auto">
-                <Select value={student.userType} onValueChange={(v) => moveStageMutation.mutate(v)}>
+                <Select value={student.userType} onValueChange={handleMoveStage}>
                   <SelectTrigger className="h-8 w-[148px] text-xs">
                     <SelectValue />
                   </SelectTrigger>
@@ -654,7 +674,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                       <div
                         key={task.id}
                         className={`flex items-start gap-2 border rounded-lg p-3 transition-colors ${
-                          isCompleted ? "bg-muted/40 opacity-60" : "bg-white"
+                          isCompleted ? "bg-muted/40 opacity-60" : "bg-card"
                         }`}
                       >
                         <button
@@ -726,7 +746,7 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
                 .map((cls) => (
                   <div
                     key={cls.id}
-                    className="border rounded-lg p-3 flex items-center justify-between bg-white"
+                    className="border rounded-lg p-3 flex items-center justify-between bg-card"
                   >
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-foreground">

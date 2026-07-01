@@ -29,6 +29,7 @@ import { StatCard } from "./ui/stat-card";
 import { StatusBadge } from "./ui/status-badge";
 import { DataTable, type Column } from "./ui/data-table";
 import { EmptyState } from "./ui/empty-state";
+import { ErrorState } from "./ui/error-state";
 
 interface CrmStudent {
   id: number;
@@ -89,7 +90,7 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
   if (search) queryParams.set("search", search);
   if (statusFilter !== "all") queryParams.set("status", statusFilter);
 
-  const { data, isLoading, error } = useQuery<CrmResponse>({
+  const { data, isLoading, error, refetch } = useQuery<CrmResponse>({
     queryKey: [`/api/admin/crm?${queryParams.toString()}`],
   });
 
@@ -256,8 +257,9 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
 
   if (error) {
     return (
-      <div className="py-10 text-center text-destructive">
-        {isEs ? "Error al cargar estudiantes" : "Failed to load students"}
+      <div className="mx-auto max-w-7xl">
+        <PageHeader title={isEs ? "Contactos" : "Contacts"} />
+        <ErrorState onRetry={() => refetch()} />
       </div>
     );
   }
