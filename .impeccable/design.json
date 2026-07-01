@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-26",
+  "title": "Design System: Passport2Fluency",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Sky Blue",
+        "canonical": "hsl(200 69% 43%)",
+        "tonalRamp": ["#06304A", "#114761", "#155579", "#1A6A9A", "#1C7BB1", "#37A0CF", "#6FBEE0", "#D6EDF7"]
+      },
+      "primary-900": {
+        "role": "primary",
+        "displayName": "Night Blue",
+        "canonical": "hsl(208 74% 25%)",
+        "tonalRamp": ["#06304A", "#0A4A6E", "#114761", "#155579", "#1A6A9A", "#1C7BB1", "#6FBEE0", "#D6EDF7"]
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "Sun Orange",
+        "canonical": "hsl(37 95% 58%)",
+        "tonalRamp": ["#5E2E10", "#8A4415", "#B45E1A", "#E08420", "#F59E1C", "#F8B44D", "#FBD08A", "#FDE8C4"]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Fog Blue",
+        "canonical": "hsl(200 60% 96%)",
+        "tonalRamp": ["#0B1220", "#141B29", "#2A3547", "#647D8C", "#94A8B5", "#C3D2DB", "#DBE5EC", "#EAF4FA"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Headline del login y héroes; títulos de página." },
+      "body": { "displayName": "Body", "purpose": "Texto denso del CRM; alta legibilidad." },
+      "label": { "displayName": "Label", "purpose": "Metadatos, KPIs pequeños, columnas de tabla (tabular-nums)." }
+    },
+    "shadows": [
+      { "name": "sm", "value": "0 1px 3px 0 hsl(208 60% 20% / 0.06), 0 1px 2px -1px hsl(208 60% 20% / 0.06)", "purpose": "Reposo de cards." },
+      { "name": "md", "value": "0 4px 12px -2px hsl(208 60% 20% / 0.08), 0 2px 6px -2px hsl(208 60% 20% / 0.06)", "purpose": "Hover de cards, popovers." },
+      { "name": "lg", "value": "0 12px 32px -8px hsl(208 60% 20% / 0.12), 0 4px 12px -4px hsl(208 60% 20% / 0.08)", "purpose": "Modales y overlays." },
+      { "name": "glow-primary", "value": "0 0 0 1px hsl(200 69% 43% / 0.2), 0 8px 32px -8px hsl(200 69% 43% / 0.35)", "purpose": "Hover de KPI/StatCard y card en drag." }
+    ],
+    "motion": [
+      { "name": "spring-smooth", "value": "type:spring stiffness:260 damping:26", "purpose": "Cards y paneles (framer-motion)." },
+      { "name": "spring-snappy", "value": "type:spring stiffness:400 damping:30", "purpose": "Botones, toggles, cross-fade del tema." },
+      { "name": "duration-base", "value": "220ms", "purpose": "Transiciones de estado estándar (hover/focus)." },
+      { "name": "aurora", "value": "aurora 18s ease-in-out infinite alternate", "purpose": "Gradiente de fondo del panel de login (respeta reduced-motion)." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal; degradado sky→night con micro-motion.",
+      "html": "<button class=\"ds-btn-primary\">Guardar</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:2.5rem;padding:0 1rem;border:none;border-radius:12px;font:600 .9375rem/1 Inter,sans-serif;color:#fff;background:linear-gradient(90deg,#1C7BB1,#155579);box-shadow:0 1px 3px hsl(208 60% 20% / .12);cursor:pointer;transition:filter .2s,box-shadow .2s,transform .12s}.ds-btn-primary:hover{filter:brightness(1.1);box-shadow:0 8px 24px -8px hsl(200 69% 43% / .45)}.ds-btn-primary:focus-visible{outline:none;box-shadow:0 0 0 3px hsl(200 69% 43% / .3)}.ds-btn-primary:active{transform:scale(.98)}"
+    },
+    {
+      "name": "Accent Button",
+      "kind": "button",
+      "refersTo": "button-accent",
+      "description": "CTA cálido (registro/oferta); acento sun-orange.",
+      "html": "<button class=\"ds-btn-accent\">Empezar gratis</button>",
+      "css": ".ds-btn-accent{display:inline-flex;align-items:center;justify-content:center;height:2.5rem;padding:0 1rem;border:none;border-radius:12px;font:600 .9375rem/1 Inter,sans-serif;color:#0A4A6E;background:linear-gradient(90deg,#F59E1C,#E08420);cursor:pointer;transition:filter .2s,box-shadow .2s}.ds-btn-accent:hover{filter:brightness(1.08);box-shadow:0 8px 24px -8px hsl(37 95% 58% / .5)}"
+    },
+    {
+      "name": "Stat Card",
+      "kind": "card",
+      "refersTo": "stat-card",
+      "description": "KPI con número display y glow al hover.",
+      "html": "<div class=\"ds-stat\"><span class=\"ds-stat-label\">Conversión</span><span class=\"ds-stat-value\">18.4%</span></div>",
+      "css": ".ds-stat{display:flex;flex-direction:column;gap:.5rem;padding:1.25rem;border:1px solid #DBE5EC;border-radius:12px;background:#fff;box-shadow:0 1px 3px hsl(208 60% 20% / .06);transition:box-shadow .2s}.ds-stat:hover{box-shadow:0 0 0 1px hsl(200 69% 43% / .2),0 8px 32px -8px hsl(200 69% 43% / .35)}.ds-stat-label{font:500 .75rem/1 Inter,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#647D8C}.ds-stat-value{font:800 1.875rem/1 'Plus Jakarta Sans',sans-serif;color:#0A4A6E;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Status Badge (stage)",
+      "kind": "chip",
+      "refersTo": "status-badge",
+      "description": "Etiqueta de etapa del pipeline; fondo tono/10 + texto del tono + punto.",
+      "html": "<span class=\"ds-badge\"><span class=\"ds-dot\"></span>Cliente</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;gap:.375rem;padding:.125rem .625rem;border-radius:9999px;font:500 .75rem/1.4 Inter,sans-serif;color:#27A36A;background:hsl(152 60% 40% / .1);box-shadow:inset 0 0 0 1px hsl(152 60% 40% / .2)}.ds-dot{width:6px;height:6px;border-radius:9999px;background:#27A36A}"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo con icono a la izquierda; foco sky-blue.",
+      "html": "<div class=\"ds-field\"><input class=\"ds-input\" placeholder=\"tu@email.com\"></div>",
+      "css": ".ds-input{width:100%;height:3rem;padding:0 .875rem;border:1px solid #DBE5EC;border-radius:10px;background:#FBFDFE;font:400 1rem/1.5 Inter,sans-serif;color:#0A4A6E;transition:border-color .3s,box-shadow .3s}.ds-input::placeholder{color:#647D8C}.ds-input:focus{outline:none;border-color:#1C7BB1;box-shadow:0 0 0 3px hsl(200 69% 43% / .18)}"
+    },
+    {
+      "name": "Sidebar Item (active)",
+      "kind": "nav",
+      "refersTo": "sidebar-item-active",
+      "description": "Ítem de navegación activo en el AppShell.",
+      "html": "<a class=\"ds-nav-item ds-nav-active\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg>Dashboard</a>",
+      "css": ".ds-nav-item{display:flex;align-items:center;gap:.625rem;padding:.5rem .75rem;border-radius:10px;font:500 .875rem/1 Inter,sans-serif;color:#647D8C;text-decoration:none;transition:background .15s,color .15s}.ds-nav-item:hover{background:#E9F2F8;color:#0A4A6E}.ds-nav-active{background:hsl(200 60% 96%);color:#1C7BB1}"
+    }
+  ],
+  "narrative": {
+    "northStar": "La Hora Dorada",
+    "overview": "El sistema vive en la hora dorada: sky-blue como el cielo confiable y sun-orange como la luz cálida del atardecer, ancladas por un night-blue profundo. Es una herramienta que da gusto operar y orgullo mostrar a clientes. Densidad respirada, no amontonada: aire, jerarquía clara y una acción primaria evidente por pantalla. Todo se expresa vía tokens CSS y funciona idéntico en claro y oscuro; el modo oscuro es una superficie casi-negra azulada premium (#0B1220), no el slate genérico. Rechaza el SaaS-crema, el enterprise recargado, el gris bancario y lo infantil.",
+    "keyCharacteristics": [
+      "Marca sky-blue + sun-orange + night-blue vía tokens, en claro y oscuro",
+      "Plano en reposo, se eleva al interactuar (sombras azuladas + glow)",
+      "Display Plus Jakarta Sans + cuerpo Inter",
+      "Aire y jerarquía sobre densidad; una acción primaria por pantalla",
+      "Micro-motion con spring; respeta prefers-reduced-motion"
+    ],
+    "rules": [
+      { "name": "La Regla del Sol", "body": "El sun-orange es acento, no fondo: ≤10% de cualquier pantalla. Su escasez es lo que lo hace cálido.", "section": "colors" },
+      { "name": "La Regla del Tinte Azul", "body": "Neutros y bordes se tintan hacia el azul de marca, nunca hacia crema/beige.", "section": "colors" },
+      { "name": "La Regla de la Sombra Azul", "body": "Toda sombra usa hsl(208 60% 20% / α), nunca negro puro.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar tokens (--primary, --accent, --foreground, --muted, --success…) para todo color; nunca hex de marca hardcodeado",
+      "Do mantener el sun-orange como acento ≤10% de la pantalla",
+      "Do verificar contraste AA en claro y oscuro (cuerpo ≥4.5:1)",
+      "Do elevar en respuesta a estado con sombras azuladas + glow-primary",
+      "Do envolver toda animación con alternativa prefers-reduced-motion",
+      "Do usar Plus Jakarta (display) + Inter (cuerpo); jerarquía por tamaño/peso"
+    ],
+    "donts": [
+      "Don't caer en SaaS genérico color crema ni grids de tarjetas idénticas",
+      "Don't amontonar como enterprise recargado (HubSpot/Salesforce viejo)",
+      "Don't volverlo gris bancario frío ni infantil/chillón",
+      "Don't usar border-left/right grueso de color como acento",
+      "Don't usar texto con gradiente, glassmorphism decorativo por defecto, ni sombras negras puras",
+      "Don't poner eyebrows en mayúsculas tracked sobre cada sección"
+    ]
+  }
+}
