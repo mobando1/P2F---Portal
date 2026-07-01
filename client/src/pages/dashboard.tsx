@@ -222,7 +222,7 @@ export default function Dashboard() {
 
   if (isDashboardError) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8]">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -233,7 +233,7 @@ export default function Dashboard() {
 
   if (isDashboardLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#F8F9FA' }}>
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Skeleton className="h-8 w-1/3 mb-6" />
@@ -257,7 +257,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F8F9FA' }}>
+    <div className="min-h-screen bg-background">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -269,10 +269,10 @@ export default function Dashboard() {
           transition={{ duration: 0.4 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-[#0A4A6E] mb-2">
-            {t.welcomeName} <span className="text-[#1C7BB1]">{dashboardData?.user?.firstName || user.firstName}</span>!
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            {t.welcomeName} <span className="text-primary">{dashboardData?.user?.firstName || user.firstName}</span>!
           </h1>
-          <p className="text-[#0A4A6E]/70">{t.continueJourney}</p>
+          <p className="text-muted-foreground">{t.continueJourney}</p>
         </motion.div>
 
         {/* Trial Flow Banner */}
@@ -311,7 +311,7 @@ export default function Dashboard() {
                 </div>
                 <Button
                   onClick={() => setLocation("/tutors")}
-                  className="bg-white text-[#F59E1C] hover:bg-white/90 font-bold"
+                  className="bg-background text-foreground hover:bg-background/90 font-bold"
                 >
                   {language === 'es' ? 'Reservar Ahora' : 'Book Now'}
                 </Button>
@@ -349,7 +349,7 @@ export default function Dashboard() {
                 </div>
                 <Button
                   onClick={() => setLocation("/tutors")}
-                  className="bg-white text-[#1C7BB1] hover:bg-white/90 font-bold"
+                  className="bg-background text-foreground hover:bg-background/90 font-bold"
                 >
                   {language === 'es' ? 'Reservar Ahora' : 'Book Now'}
                 </Button>
@@ -384,7 +384,7 @@ export default function Dashboard() {
                 </div>
                 <Button
                   onClick={() => setLocation("/packages")}
-                  className="bg-[#F59E1C] text-white hover:bg-[#e08a0e] font-bold"
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
                 >
                   {language === 'es' ? 'Ver Paquetes' : 'View Packages'}
                 </Button>
@@ -396,10 +396,10 @@ export default function Dashboard() {
         {/* Stats Cards */}
         <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-8">
           {[
-            { label: t.classesBooked, value: stats.classesBooked, icon: CalendarCheck, color: "text-[#1C7BB1]", bg: "bg-[#1C7BB1]/10" },
-            { label: t.classesCompleted, value: stats.classesCompleted, icon: GraduationCap, color: "text-[#F59E1C]", bg: "bg-[#F59E1C]/10" },
-            { label: t.learningHours, value: stats.learningHours, icon: Clock, color: "text-[#1C7BB1]", bg: "bg-[#1C7BB1]/10" },
-            { label: t.currentLevel, value: stats.currentLevel, icon: Star, color: "text-[#F59E1C]", bg: "bg-[#F59E1C]/10" },
+            { label: t.classesBooked, value: stats.classesBooked, icon: CalendarCheck, color: "text-primary", bg: "bg-primary/10" },
+            { label: t.classesCompleted, value: stats.classesCompleted, icon: GraduationCap, color: "text-accent", bg: "bg-accent/10" },
+            { label: t.learningHours, value: stats.learningHours, icon: Clock, color: "text-primary", bg: "bg-primary/10" },
+            { label: t.currentLevel, value: stats.currentLevel, icon: Star, color: "text-accent", bg: "bg-accent/10" },
           ].map((stat, i) => (
             <motion.div key={i} variants={fadeInUp}>
               <Card className="shadow-md border-0 hover:shadow-lg transition-shadow h-full">
@@ -407,8 +407,8 @@ export default function Dashboard() {
                   <div className={`p-2.5 rounded-xl ${stat.bg} mb-2`}>
                     <stat.icon className={`h-5 w-5 ${stat.color}`} />
                   </div>
-                  <p className="text-2xl md:text-3xl font-bold text-[#0A4A6E]">{stat.value}</p>
-                  <p className="text-[10px] sm:text-xs text-[#0A4A6E]/60 font-medium mt-0.5">{stat.label}</p>
+                  <p className="text-2xl md:text-3xl font-bold text-foreground">{stat.value}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-medium mt-0.5">{stat.label}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -427,7 +427,7 @@ export default function Dashboard() {
                 <Button
                   onClick={() => setLocation("/packages")}
                   size="sm"
-                  className="bg-white text-[#1C7BB1] hover:bg-white/90 font-medium text-xs mt-2 h-7 px-3"
+                  className="bg-background text-foreground hover:bg-background/90 font-medium text-xs mt-2 h-7 px-3"
                 >
                   {language === 'es' ? 'Comprar Más' : 'Buy More'}
                 </Button>
@@ -442,21 +442,21 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-8">
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">{t.upcomingClasses}</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4">{t.upcomingClasses}</h2>
 
                 <div className="space-y-4">
                   {upcomingClasses.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-[#EAF4FA] rounded-full mx-auto mb-4 flex items-center justify-center">
-                        <CalendarCheck className="w-8 h-8 text-[#1C7BB1]" />
+                      <div className="w-16 h-16 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <CalendarCheck className="w-8 h-8 text-primary" />
                       </div>
-                      <p className="text-[#0A4A6E]/60 mb-2">{t.noUpcomingClasses}</p>
-                      <p className="text-[#0A4A6E]/40 text-sm mb-4">
+                      <p className="text-muted-foreground mb-2">{t.noUpcomingClasses}</p>
+                      <p className="text-muted-foreground/60 text-sm mb-4">
                         {t.reserveFirstClass}
                       </p>
                       <Button
                         onClick={() => setLocation("/tutors")}
-                        className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
                       >
                         {t.exploreTutors}
                       </Button>
@@ -482,14 +482,14 @@ export default function Dashboard() {
             {recentCompletedClasses.length > 0 && (
               <Card>
                 <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4 flex items-center gap-2">
+                  <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
                     <span>📝</span>
                     {language === "es" ? "Notas de tu tutor" : "Notes from your tutor"}
                   </h2>
                   <div className="space-y-4">
                     {recentCompletedClasses.map(c => (
-                      <div key={c.id} className="border rounded-lg p-4 space-y-2 bg-[#EAF4FA]/40">
-                        <p className="text-xs text-[#0A4A6E]/50 font-medium uppercase tracking-wide">
+                      <div key={c.id} className="border rounded-lg p-4 space-y-2 bg-muted/40">
+                        <p className="text-xs text-muted-foreground font-medium">
                           {new Date(c.scheduledAt).toLocaleDateString(
                             language === "es" ? "es-ES" : "en-US",
                             { weekday: "short", month: "short", day: "numeric" }
@@ -497,14 +497,14 @@ export default function Dashboard() {
                           {" — "}{c.title}
                         </p>
                         {c.sharedNotes && (
-                          <p className="text-sm text-[#0A4A6E]">{c.sharedNotes}</p>
+                          <p className="text-sm text-foreground">{c.sharedNotes}</p>
                         )}
                         {c.homeworkText && (
-                          <div className="mt-2 p-3 bg-[#F59E1C]/10 rounded-md border-l-2 border-[#F59E1C]">
-                            <p className="text-xs font-semibold text-[#F59E1C] uppercase mb-1">
+                          <div className="mt-2 p-3 bg-accent/10 rounded-md border border-accent/20">
+                            <p className="text-xs font-semibold text-accent mb-1">
                               {language === "es" ? "Tarea" : "Homework"}
                             </p>
-                            <p className="text-sm text-[#0A4A6E]">{c.homeworkText}</p>
+                            <p className="text-sm text-foreground">{c.homeworkText}</p>
                           </div>
                         )}
                       </div>
@@ -553,26 +553,26 @@ export default function Dashboard() {
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <MessageCircle className="h-4 w-4 text-[#1C7BB1]" />
-                    <span className="text-sm text-[#0A4A6E]">
+                    <MessageCircle className="h-4 w-4 text-primary" />
+                    <span className="text-sm text-foreground">
                       {language === 'es' ? 'Mensajes usados' : 'Messages used'}
                     </span>
                   </div>
-                  <span className="text-sm font-bold text-[#0A4A6E]">
+                  <span className="text-sm font-bold text-foreground">
                     {aiUsage?.messagesUsed ?? 0}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-[#F59E1C]" />
-                    <span className="text-sm text-[#0A4A6E]">
+                    <TrendingUp className="h-4 w-4 text-accent" />
+                    <span className="text-sm text-foreground">
                       {language === 'es' ? 'Estado' : 'Status'}
                     </span>
                   </div>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     aiUsage?.isSubscribed
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-[#F59E1C]/10 text-[#F59E1C]'
+                      ? 'bg-success/15 text-success'
+                      : 'bg-accent/10 text-accent'
                   }`}>
                     {aiUsage?.isSubscribed
                       ? (language === 'es' ? 'Ilimitado' : 'Unlimited')
@@ -582,7 +582,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 {!aiUsage?.isSubscribed && aiUsage?.limit && (
-                  <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div className="w-full bg-muted rounded-full h-2">
                     <div
                       className="bg-gradient-to-r from-[#F59E1C] to-[#1C7BB1] h-2 rounded-full transition-all"
                       style={{ width: `${Math.min(((aiUsage.messagesUsed || 0) / aiUsage.limit) * 100, 100)}%` }}
@@ -591,7 +591,7 @@ export default function Dashboard() {
                 )}
                 <Button
                   onClick={() => setLocation("/ai-practice")}
-                  className="w-full bg-[#F59E1C] hover:bg-[#e08a0e] text-white"
+                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
                   size="sm"
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
@@ -627,18 +627,18 @@ export default function Dashboard() {
                     {achievements.slice(0, 6).map((a) => (
                       <div
                         key={a.id}
-                        className="flex flex-col items-center text-center p-2 rounded-lg bg-[#EAF4FA]/50 hover:bg-[#EAF4FA] transition-colors"
+                        className="flex flex-col items-center text-center p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                         title={a.description}
                       >
                         <span className="text-2xl mb-1">{a.icon}</span>
-                        <span className="text-[10px] font-medium text-[#0A4A6E] leading-tight">{a.title}</span>
+                        <span className="text-[10px] font-medium text-foreground leading-tight">{a.title}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <Trophy className="mx-auto h-8 w-8 text-[#1C7BB1]/30 mb-2" />
-                    <p className="text-xs text-[#0A4A6E]/50">
+                    <Trophy className="mx-auto h-8 w-8 text-primary/30 mb-2" />
+                    <p className="text-xs text-muted-foreground">
                       {language === 'es' ? 'Completa clases para desbloquear logros' : 'Complete classes to unlock achievements'}
                     </p>
                   </div>
@@ -649,44 +649,44 @@ export default function Dashboard() {
             {/* Quick Actions */}
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-[#0A4A6E] mb-4">
+                <h2 className="text-xl font-semibold text-foreground mb-4">
                   {language === 'es' ? 'Acciones Rápidas' : 'Quick Actions'}
                 </h2>
 
                 <div className="space-y-3">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start hover:bg-[#EAF4FA]"
+                    className="w-full justify-start hover:bg-muted"
                     onClick={() => setLocation("/tutors")}
                   >
-                    <Users className="mr-3 h-4 w-4 text-[#1C7BB1]" />
+                    <Users className="mr-3 h-4 w-4 text-primary" />
                     {language === 'es' ? 'Ver Profesores' : 'Browse Tutors'}
                   </Button>
 
                   <Button
                     variant="ghost"
-                    className="w-full justify-start hover:bg-[#EAF4FA]"
+                    className="w-full justify-start hover:bg-muted"
                     onClick={() => setLocation("/ai-practice")}
                   >
-                    <Sparkles className="mr-3 h-4 w-4 text-[#F59E1C]" />
+                    <Sparkles className="mr-3 h-4 w-4 text-accent" />
                     {language === 'es' ? 'Practice Partner IA' : 'AI Practice Partner'}
                   </Button>
 
                   <Button
                     variant="ghost"
-                    className="w-full justify-start hover:bg-[#EAF4FA]"
+                    className="w-full justify-start hover:bg-muted"
                     onClick={() => setLocation("/packages")}
                   >
-                    <BookOpen className="mr-3 h-4 w-4 text-[#1C7BB1]" />
+                    <BookOpen className="mr-3 h-4 w-4 text-primary" />
                     {language === 'es' ? 'Comprar Paquetes' : 'Buy Packages'}
                   </Button>
 
                   <Button
                     variant="ghost"
-                    className="w-full justify-start hover:bg-[#EAF4FA]"
+                    className="w-full justify-start hover:bg-muted"
                     onClick={() => setLocation("/support")}
                   >
-                    <LifeBuoy className="mr-3 h-4 w-4 text-[#1C7BB1]" />
+                    <LifeBuoy className="mr-3 h-4 w-4 text-primary" />
                     {language === 'es' ? 'Soporte' : 'Support'}
                   </Button>
                 </div>
