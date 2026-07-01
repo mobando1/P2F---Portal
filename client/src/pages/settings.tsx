@@ -669,7 +669,7 @@ export default function SettingsPage() {
                         : (isEs ? "No conectado" : "Not connected")}
                     </p>
                   </div>
-                  <div className={`w-3 h-3 rounded-full ${settings?.calendarConnected ? "bg-green-400" : "bg-gray-300"}`} />
+                  <div className={`w-3 h-3 rounded-full ${settings?.calendarConnected ? "bg-green-400" : "bg-muted"}`} />
                 </div>
 
                 <p className="text-sm text-muted-foreground mb-4">

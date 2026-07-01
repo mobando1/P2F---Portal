@@ -703,7 +703,7 @@ export default function TutorProfilePage() {
                                     {Array.from({ length: 5 }).map((_, i) => (
                                       <Star
                                         key={i}
-                                        className={`w-3.5 h-3.5 ${i < review.rating ? "fill-[#F59E1C] text-accent" : "text-gray-200"}`}
+                                        className={`w-3.5 h-3.5 ${i < review.rating ? "fill-[#F59E1C] text-accent" : "text-muted-foreground"}`}
                                       />
                                     ))}
                                   </div>

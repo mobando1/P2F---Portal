@@ -530,7 +530,7 @@ export default function AIPracticePage() {
           </AnimatePresence>
 
           {/* Main content area */}
-          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 bg-gradient-to-b from-gray-50/50 to-white">
+          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 bg-gradient-to-b from-muted/50 to-white">
             {activePanel === "vocabulary" ? (
               <VocabularyPanel
                 vocabulary={vocabulary}
@@ -603,22 +603,22 @@ export default function AIPracticePage() {
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center flex-shrink-0 ring-2 ring-offset-1 ring-amber-200">
                   <LingoMascot size="sm" />
                 </div>
-                <div className="bg-gradient-to-br from-gray-50 to-white border border-border rounded-2xl rounded-tl-sm px-4 py-3 shadow-md shadow-slate-200/50">
+                <div className="bg-gradient-to-br from-muted to-white border border-border rounded-2xl rounded-tl-sm px-4 py-3 shadow-md shadow-slate-200/50">
                   <div className="flex gap-1.5">
                     <motion.span
                       animate={{ y: [0, -4, 0] }}
                       transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-                      className="w-2 h-2 bg-gray-400 rounded-full"
+                      className="w-2 h-2 bg-muted-foreground/40 rounded-full"
                     />
                     <motion.span
                       animate={{ y: [0, -4, 0] }}
                       transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
-                      className="w-2 h-2 bg-gray-400 rounded-full"
+                      className="w-2 h-2 bg-muted-foreground/40 rounded-full"
                     />
                     <motion.span
                       animate={{ y: [0, -4, 0] }}
                       transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
-                      className="w-2 h-2 bg-gray-400 rounded-full"
+                      className="w-2 h-2 bg-muted-foreground/40 rounded-full"
                     />
                   </div>
                 </div>

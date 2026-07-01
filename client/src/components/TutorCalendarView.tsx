@@ -72,7 +72,7 @@ export default function TutorCalendarView({ classes, onCompleteClass }: Props) {
   const statusConfig: Record<string, { icon: typeof CheckCircle; color: string; bg: string; label: string }> = {
     scheduled: { icon: Clock, color: "text-primary", bg: "bg-primary", label: isEs ? "Programada" : "Scheduled" },
     completed: { icon: CheckCircle, color: "text-success", bg: "bg-success/100", label: isEs ? "Completada" : "Completed" },
-    cancelled: { icon: XCircle, color: "text-muted-foreground", bg: "bg-gray-400", label: isEs ? "Cancelada" : "Cancelled" },
+    cancelled: { icon: XCircle, color: "text-muted-foreground", bg: "bg-muted-foreground/40", label: isEs ? "Cancelada" : "Cancelled" },
   };
 
   return (

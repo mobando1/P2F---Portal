@@ -351,7 +351,7 @@ export default function HelpButton() {
                       }
                     </button>
                     {expandedFaq === i && (
-                      <div className="px-3 pb-3 text-xs text-muted-foreground leading-relaxed border-t border-gray-50 pt-2">
+                      <div className="px-3 pb-3 text-xs text-muted-foreground leading-relaxed border-t border-border pt-2">
                         {es ? item.aEs : item.a}
                       </div>
                     )}

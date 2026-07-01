@@ -33,9 +33,9 @@ interface CrmTask {
 }
 
 const PRIORITY_STYLES: Record<string, { className: string; label: { en: string; es: string } }> = {
-  high: { className: "bg-red-100 text-red-700 border-red-200", label: { en: "High", es: "Alta" } },
-  medium: { className: "bg-yellow-100 text-yellow-700 border-yellow-200", label: { en: "Medium", es: "Media" } },
-  low: { className: "bg-gray-100 text-gray-600 border-gray-200", label: { en: "Low", es: "Baja" } },
+  high: { className: "bg-destructive/15 text-destructive border-destructive/30", label: { en: "High", es: "Alta" } },
+  medium: { className: "bg-warning/15 text-warning-foreground border-warning/30", label: { en: "Medium", es: "Media" } },
+  low: { className: "bg-muted text-muted-foreground border-border", label: { en: "Low", es: "Baja" } },
 };
 
 export default function CrmTasksGlobal() {
@@ -120,7 +120,7 @@ export default function CrmTasksGlobal() {
 
   if (error) {
     return (
-      <div className="text-center py-10 text-red-500">
+      <div className="text-center py-10 text-destructive">
         {isEs ? "Error al cargar tareas" : "Failed to load tasks"}
       </div>
     );
@@ -223,7 +223,7 @@ export default function CrmTasksGlobal() {
             return (
               <Card
                 key={task.id}
-                className={`transition-colors ${overdue ? "border-red-300 bg-red-50/50" : ""}`}
+                className={`transition-colors ${overdue ? "border-destructive/30 bg-destructive/10/50" : ""}`}
               >
                 <CardContent className="py-3 px-4 flex items-center gap-3">
                   {/* Checkbox */}
@@ -267,7 +267,7 @@ export default function CrmTasksGlobal() {
                           { month: "short", day: "numeric", year: "numeric" }
                         )}
                         {overdue && (
-                          <span className="flex items-center gap-1 text-red-600 font-medium ml-2">
+                          <span className="flex items-center gap-1 text-destructive font-medium ml-2">
                             <AlertTriangle className="h-3 w-3" />
                             {isEs ? "Vencida" : "Overdue"}
                           </span>
@@ -280,7 +280,7 @@ export default function CrmTasksGlobal() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
                     disabled={deleteMutation.isPending}
                     onClick={() => deleteMutation.mutate(task.id)}
                   >

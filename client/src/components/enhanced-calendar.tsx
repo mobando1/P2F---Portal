@@ -175,7 +175,7 @@ export default function EnhancedCalendar({ remainingClasses, tutors, onBookClass
               <span className="text-muted-foreground">Available</span>
             </div>
             <div className="flex items-center">
-              <div className="w-3 h-3 bg-gray-300 rounded mr-2"></div>
+              <div className="w-3 h-3 bg-muted rounded mr-2"></div>
               <span className="text-muted-foreground">Past</span>
             </div>
           </div>
