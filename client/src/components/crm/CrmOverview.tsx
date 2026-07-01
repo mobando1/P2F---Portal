@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Users,
   TrendingUp,
@@ -17,13 +17,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useLanguage } from "@/lib/i18n";
-import { PageHeader } from "./ui/page-header";
 import { StatCard } from "./ui/stat-card";
 import { SectionCard } from "./ui/section-card";
 import { StatusBadge } from "./ui/status-badge";
 import { EmptyState } from "./ui/empty-state";
 import { TrendChart } from "./ui/trend-chart";
-import { listItem, listStagger } from "@/lib/animations";
+import { listItem, listStagger, spring } from "@/lib/animations";
+import { getCurrentUser } from "@/lib/auth";
 
 interface FunnelStage {
   stage: string;
@@ -67,7 +67,7 @@ interface TodayData {
   todayTasks: TodayTask[];
   newLeads: { id: number; firstName: string; lastName: string; email: string }[];
   trialsToday: { id: number; userId: number }[];
-  counts: { overdue: number; today: number; newLeads: number; trials: number };
+  counts: { overdue: number; today: number; newLeads: number; trials: number; completedToday: number };
 }
 
 const STAGE_LABEL: Record<string, { es: string; en: string }> = {
@@ -109,18 +109,62 @@ export default function CrmOverview() {
 
   const trendData = (stripe?.mrrTrend ?? []).map((p) => ({ month: p.month, mrr: p.mrr }));
 
+  const user = getCurrentUser();
+  const reduceMotion = useReducedMotion();
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? (isEs ? "Buenos días" : "Good morning")
+    : hour < 19 ? (isEs ? "Buenas tardes" : "Good afternoon")
+    : (isEs ? "Buenas noches" : "Good evening");
+  const c = today?.counts;
+  const dayDone = c?.completedToday ?? 0;
+  const dayPending = (c?.overdue ?? 0) + (c?.today ?? 0);
+  const dayTotal = dayDone + dayPending;
+  const dayPct = dayTotal ? Math.round((dayDone / dayTotal) * 100) : 0;
+  const focus =
+    (c?.overdue ?? 0) > 0
+      ? (isEs ? `${c!.overdue} tareas vencidas necesitan tu atención` : `${c!.overdue} overdue tasks need your attention`)
+      : (c?.today ?? 0) > 0
+        ? (isEs ? `Tienes ${c!.today} tareas para hoy` : `You have ${c!.today} tasks today`)
+        : (c?.newLeads ?? 0) > 0
+          ? (isEs ? `${c!.newLeads} leads nuevos esperan seguimiento` : `${c!.newLeads} new leads await follow-up`)
+          : (isEs ? "Todo al día. Sin pendientes 🎉" : "All caught up. Nothing pending 🎉");
+
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader
-        title="Dashboard"
-        description={isEs ? "Resumen de tu pipeline y crecimiento" : "Overview of your pipeline and growth"}
-        actions={
-          <Button onClick={() => setLocation("/admin/crm/pipeline")} className="gap-2">
+      {/* Greeting hero — momento de llegada personalizado */}
+      <div className="mb-4 rounded-2xl border border-border bg-gradient-to-br from-primary/5 to-accent/5 p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+              {greeting}{user?.firstName ? `, ${user.firstName}` : ""} 👋
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">{focus}</p>
+          </div>
+          <Button onClick={() => setLocation("/admin/crm/pipeline")} className="shrink-0 gap-2">
             {isEs ? "Ver pipeline" : "View pipeline"}
             <ArrowRight className="h-4 w-4" />
           </Button>
-        }
-      />
+        </div>
+        {dayTotal > 0 && (
+          <div className="mt-4">
+            <div className="mb-1 flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">{isEs ? "Progreso de hoy" : "Today's progress"}</span>
+              <span className="font-medium tabular-nums text-foreground">
+                {dayDone}/{dayTotal} {dayPending === 0 ? "🎉" : ""}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <motion.div
+                initial={reduceMotion ? false : { width: 0 }}
+                animate={{ width: `${dayPct}%` }}
+                transition={spring.smooth}
+                className="h-full rounded-full bg-gradient-to-r from-accent to-accent-600"
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Hoy — inbox accionable */}
       <SectionCard

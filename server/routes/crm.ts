@@ -140,6 +140,11 @@ export function registerCrmRoutes(app: Express) {
         (t) => t.dueDate && new Date(t.dueDate) >= startOfDay && new Date(t.dueDate) <= endOfDay,
       );
 
+      const completedTasks = await storage.getCrmTasks({ status: "completed" });
+      const completedToday = completedTasks.filter(
+        (t) => t.completedAt && new Date(t.completedAt) >= startOfDay && new Date(t.completedAt) <= endOfDay,
+      ).length;
+
       const leadRes = await storage.getStudentsCRM({ status: "lead", limit: 500 });
       const newLeads = leadRes.students
         .filter((u) => u.createdAt && new Date(u.createdAt) >= startOfDay)
@@ -165,6 +170,7 @@ export function registerCrmRoutes(app: Express) {
           today: todayTasks.length,
           newLeads: newLeads.length,
           trials: trialsToday.length,
+          completedToday,
         },
       });
     } catch (error) {
