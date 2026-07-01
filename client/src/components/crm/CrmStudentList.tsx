@@ -23,9 +23,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useLanguage } from "@/lib/i18n";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Download, Users, UserPlus, UserCheck, Sparkles, Trash2, Inbox } from "lucide-react";
+import { Search, Download, Trash2, Inbox } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "./ui/page-header";
-import { StatCard } from "./ui/stat-card";
 import { StatusBadge } from "./ui/status-badge";
 import { DataTable, type Column } from "./ui/data-table";
 import { EmptyState } from "./ui/empty-state";
@@ -277,19 +277,9 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
         }
       />
 
-      {/* Summary */}
-      {summary && (
-        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label={isEs ? "Total" : "Total"} value={summary.total} icon={Users} accent="primary" />
-          <StatCard label={isEs ? "Prueba" : "Trial"} value={summary.trial} icon={UserPlus} accent="primary" />
-          <StatCard label="Lead" value={summary.lead} icon={Sparkles} accent="accent" />
-          <StatCard label={isEs ? "Clientes" : "Customers"} value={summary.customer} icon={UserCheck} accent="success" />
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="mb-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
+      {/* Buscar + filtro por etapa con conteos (reemplaza stat-cards + select redundantes) */}
+      <div className="mb-4 space-y-3">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={isEs ? "Buscar por nombre o email..." : "Search by name or email..."}
@@ -298,19 +288,35 @@ export default function CrmStudentList({ onSelectStudent }: CrmStudentListProps)
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder={isEs ? "Estado" : "Status"} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{isEs ? "Todos" : "All"}</SelectItem>
-            <SelectItem value="trial">{isEs ? "Prueba" : "Trial"}</SelectItem>
-            <SelectItem value="lead">Lead</SelectItem>
-            <SelectItem value="negotiation">{isEs ? "Negociación" : "Negotiation"}</SelectItem>
-            <SelectItem value="customer">{isEs ? "Cliente" : "Customer"}</SelectItem>
-            <SelectItem value="inactive">{isEs ? "Inactivo" : "Inactive"}</SelectItem>
-          </SelectContent>
-        </Select>
+        {summary && (
+          <div className="flex flex-wrap gap-1.5">
+            {([
+              { key: "all", label: isEs ? "Todos" : "All", count: summary.total },
+              { key: "trial", label: isEs ? "Prueba" : "Trial", count: summary.trial },
+              { key: "lead", label: "Lead", count: summary.lead },
+              { key: "negotiation", label: isEs ? "Negociación" : "Negotiation", count: summary.negotiation },
+              { key: "customer", label: isEs ? "Cliente" : "Customer", count: summary.customer },
+              { key: "inactive", label: isEs ? "Inactivo" : "Inactive", count: summary.inactive },
+            ] as const).map((seg) => {
+              const active = statusFilter === seg.key;
+              return (
+                <button
+                  key={seg.key}
+                  onClick={() => { setStatusFilter(seg.key); setPage(1); }}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                    active ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-muted",
+                  )}
+                >
+                  {seg.label}
+                  <span className={cn("rounded-full px-1.5 text-xs tabular-nums", active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>
+                    {seg.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Bulk actions toolbar */}
