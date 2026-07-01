@@ -422,7 +422,7 @@ function StationNode({
 
         {isCurrentStation && (
           <motion.div
-            className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-[#F59E1C] border-2 border-white shadow-lg flex items-center justify-center"
+            className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-accent border-2 border-white shadow-lg flex items-center justify-center"
             animate={{ y: [0, -5, 0] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           >
@@ -630,7 +630,7 @@ function LevelSection({
           <div className="flex items-center gap-2">
             <div className="flex-1 h-1.5 rounded-full bg-white/25 overflow-hidden">
               <motion.div
-                className="h-full rounded-full bg-white"
+                className="h-full rounded-full bg-card"
                 initial={{ width: 0 }}
                 animate={{ width: total > 0 ? `${Math.round((completed / total) * 100)}%` : "0%" }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -733,7 +733,7 @@ export default function SnakePath({ levels, currentLevel, onStationClick }: Snak
                   style={{ background: `linear-gradient(to bottom, ${theme.primary}, ${nextTheme.primary})` }}
                 />
                 <div
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 bg-white flex items-center justify-center shadow-md"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 bg-card flex items-center justify-center shadow-md"
                   style={{ borderColor: nextTheme.primary }}
                 >
                   <ChevronDown size={14} style={{ color: nextTheme.primary }} />

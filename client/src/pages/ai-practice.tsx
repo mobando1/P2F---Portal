@@ -324,12 +324,12 @@ export default function AIPracticePage() {
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
       <div className="flex-1 flex overflow-hidden max-w-7xl mx-auto w-full">
         {/* Sidebar - Desktop */}
-        <aside className="hidden md:flex w-72 flex-col bg-gray-50/80 border-r border-gray-200/60">
+        <aside className="hidden md:flex w-72 flex-col bg-muted/40/80 border-r border-border/60">
           <SidebarContent
             conversations={conversations}
             activeId={activeConversationId}
@@ -361,7 +361,7 @@ export default function AIPracticePage() {
                 animate={{ x: 0 }}
                 exit={{ x: -300 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="fixed left-0 top-0 bottom-0 w-72 bg-gray-50/95 backdrop-blur-lg z-50 md:hidden flex flex-col shadow-2xl"
+                className="fixed left-0 top-0 bottom-0 w-72 bg-muted/40/95 backdrop-blur-lg z-50 md:hidden flex flex-col shadow-2xl"
               >
                 <SidebarContent
                   conversations={conversations}
@@ -384,14 +384,14 @@ export default function AIPracticePage() {
         {/* Chat Area */}
         <main className="flex-1 flex flex-col min-w-0">
           {/* Chat Header */}
-          <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/60 px-4 py-3 flex items-center justify-between">
+          <div className="bg-white/80 backdrop-blur-lg border-b border-border/60 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                className="md:hidden p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                className="md:hidden p-1.5 hover:bg-muted rounded-lg transition-colors"
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Open sidebar menu"
               >
-                <Menu className="w-5 h-5 text-gray-600" />
+                <Menu className="w-5 h-5 text-muted-foreground" />
               </button>
               <Coachmark
                 id="ai-chat-intro"
@@ -407,10 +407,10 @@ export default function AIPracticePage() {
                   <LingoMascot size="md" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-[#0A4A6E]">
+                  <h2 className="text-sm font-semibold text-foreground">
                     {activeConversation?.title || "Lingo"}
                   </h2>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     {activeConversation
                       ? `${activeConversation.language === "spanish" ? "Español" : "English"} · ${
                           activeConversation.mode === "chat"
@@ -431,35 +431,35 @@ export default function AIPracticePage() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setActivePanel("chat")}
-                className={`p-2 rounded-lg transition-colors ${activePanel === "chat" ? "bg-blue-50 text-blue-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}
+                className={`p-2 rounded-lg transition-colors ${activePanel === "chat" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-muted-foreground hover:bg-muted"}`}
                 title={isEs ? "Chat" : "Chat"}
               >
                 <MessageSquare className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setActivePanel("progress")}
-                className={`p-2 rounded-lg transition-colors ${activePanel === "progress" ? "bg-blue-50 text-blue-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}
+                className={`p-2 rounded-lg transition-colors ${activePanel === "progress" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-muted-foreground hover:bg-muted"}`}
                 title={isEs ? "Mi Progreso" : "My Progress"}
               >
                 <BarChart3 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setActivePanel("corrections")}
-                className={`p-2 rounded-lg transition-colors ${activePanel === "corrections" ? "bg-blue-50 text-blue-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}
+                className={`p-2 rounded-lg transition-colors ${activePanel === "corrections" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-muted-foreground hover:bg-muted"}`}
                 title={isEs ? "Mis Correcciones" : "My Corrections"}
               >
                 <Bookmark className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setActivePanel("vocabulary")}
-                className={`p-2 rounded-lg transition-colors ${activePanel === "vocabulary" ? "bg-blue-50 text-blue-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}
+                className={`p-2 rounded-lg transition-colors ${activePanel === "vocabulary" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-muted-foreground hover:bg-muted"}`}
                 title={isEs ? "Mi Vocabulario" : "My Vocabulary"}
               >
                 <BookA className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setShowScenarios(!showScenarios)}
-                className={`p-2 rounded-lg transition-colors ${showScenarios ? "bg-amber-50 text-amber-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}
+                className={`p-2 rounded-lg transition-colors ${showScenarios ? "bg-warning/15 text-warning-foreground" : "text-muted-foreground hover:text-muted-foreground hover:bg-muted"}`}
                 title={isEs ? "Escenarios" : "Scenarios"}
               >
                 <BookOpen className="w-4 h-4" />
@@ -474,14 +474,14 @@ export default function AIPracticePage() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="bg-white border-b border-gray-200/60 px-4 py-4 overflow-y-auto max-h-[70vh]"
+                className="bg-card border-b border-border/60 px-4 py-4 overflow-y-auto max-h-[70vh]"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-[#0A4A6E]">
+                  <h3 className="text-sm font-semibold text-foreground">
                     {isEs ? "Escenarios de Práctica" : "Practice Scenarios"}
                   </h3>
-                  <button onClick={() => setShowScenarios(false)} className="p-1 hover:bg-gray-100 rounded-lg">
-                    <X className="w-4 h-4 text-gray-400" />
+                  <button onClick={() => setShowScenarios(false)} className="p-1 hover:bg-muted rounded-lg">
+                    <X className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
                 {/* Group scenarios by category */}
@@ -496,7 +496,7 @@ export default function AIPracticePage() {
                   if (categoryScenarios.length === 0) return null;
                   return (
                     <div key={key} className="mb-4 last:mb-0">
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                      <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
                         <span>{icon}</span> {label}
                       </p>
                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
@@ -507,16 +507,16 @@ export default function AIPracticePage() {
                             whileTap={{ scale: 0.98 }}
                             onClick={() => handleNewConversation(s.id)}
                             disabled={createConversationMutation.isPending}
-                            className="text-left p-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group disabled:opacity-50"
+                            className="text-left p-3 rounded-xl border border-border hover:border-blue-300 hover:bg-primary/10/50 transition-all group disabled:opacity-50"
                           >
                             <span className="text-lg">{s.icon}</span>
-                            <p className="text-sm font-medium text-gray-700 group-hover:text-blue-700 mt-1">
+                            <p className="text-sm font-medium text-foreground group-hover:text-primary mt-1">
                               {isEs ? s.name.es : s.name.en}
                             </p>
-                            <p className="text-[10px] text-gray-400 mt-0.5">
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
                               {isEs ? s.description.es : s.description.en}
                             </p>
-                            <span className="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                            <span className="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                               {s.level}
                             </span>
                           </motion.button>
@@ -552,7 +552,7 @@ export default function AIPracticePage() {
               <EmptyState isEs={isEs} onNew={() => handleNewConversation()} isCreating={createConversationMutation.isPending} />
             ) : isLoadingMessages ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1C7BB1]" />
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
               </div>
             ) : messages.length === 0 ? (
               <WelcomeMessage
@@ -603,7 +603,7 @@ export default function AIPracticePage() {
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center flex-shrink-0 ring-2 ring-offset-1 ring-amber-200">
                   <LingoMascot size="sm" />
                 </div>
-                <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-md shadow-slate-200/50">
+                <div className="bg-gradient-to-br from-gray-50 to-white border border-border rounded-2xl rounded-tl-sm px-4 py-3 shadow-md shadow-slate-200/50">
                   <div className="flex gap-1.5">
                     <motion.span
                       animate={{ y: [0, -4, 0] }}
@@ -630,10 +630,10 @@ export default function AIPracticePage() {
 
           {/* Input Area */}
           {activeConversationId && (
-            <div className="bg-white/80 backdrop-blur-lg border-t border-gray-200/60 px-4 py-3">
+            <div className="bg-white/80 backdrop-blur-lg border-t border-border/60 px-4 py-3">
               {usage && !usage.isSubscribed && usage.remaining <= 5 && usage.remaining > 0 && (
-                <div className="flex items-center justify-center gap-2 mb-2 py-2 px-3 rounded-lg bg-amber-50 border border-amber-200/60">
-                  <p className="text-xs text-amber-700 font-medium">
+                <div className="flex items-center justify-center gap-2 mb-2 py-2 px-3 rounded-lg bg-warning/15 border border-amber-200/60">
+                  <p className="text-xs text-warning-foreground font-medium">
                     {isEs
                       ? `Te quedan ${usage.remaining} mensajes hoy.`
                       : `${usage.remaining} messages left today.`}
@@ -641,7 +641,7 @@ export default function AIPracticePage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-100 h-6 px-2"
+                    className="text-xs text-warning-foreground hover:text-warning-foreground hover:bg-warning/15 h-6 px-2"
                     onClick={() => setLocation("/packages")}
                   >
                     {isEs ? "Practica sin límites" : "Practice without limits"} →
@@ -649,11 +649,11 @@ export default function AIPracticePage() {
                 </div>
               )}
               {usage && !usage.isSubscribed && usage.remaining === 0 && (
-                <div className="text-center py-3 mb-2 rounded-lg bg-red-50 border border-red-200/60">
-                  <p className="text-sm text-red-600 font-semibold mb-1">
+                <div className="text-center py-3 mb-2 rounded-lg bg-destructive/10 border border-destructive/30/60">
+                  <p className="text-sm text-destructive font-semibold mb-1">
                     {isEs ? "Has alcanzado el límite diario" : "Daily limit reached"}
                   </p>
-                  <p className="text-xs text-red-500/80 mb-2">
+                  <p className="text-xs text-destructive/80 mb-2">
                     {isEs
                       ? "Suscríbete para practicar sin límites, 24/7"
                       : "Subscribe to practice without limits, 24/7"}
@@ -688,7 +688,7 @@ export default function AIPracticePage() {
                     isEs ? "Escribe tu mensaje..." : "Type your message..."
                   }
                   rows={1}
-                  className="flex-1 resize-none rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 focus:bg-white focus:shadow-md transition-all max-h-32"
+                  className="flex-1 resize-none rounded-xl border border-border bg-muted/40/50 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 focus:bg-card focus:shadow-md transition-all max-h-32"
                   disabled={sendMessageMutation.isPending || (usage ? !usage.isSubscribed && usage.remaining === 0 : false)}
                 />
                 <motion.button
@@ -742,14 +742,14 @@ function SidebarContent({
   return (
     <>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200/60">
+      <div className="p-4 border-b border-border/60">
         <div className="flex items-center gap-2.5 mb-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1C7BB1] to-[#0A4A6E] flex items-center justify-center shadow-md shadow-blue-300/30">
             <Sparkles className="w-4.5 h-4.5 text-white" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-[#0A4A6E]">Lingo</h1>
-            <p className="text-[10px] text-gray-400">
+            <h1 className="text-sm font-bold text-foreground">Lingo</h1>
+            <p className="text-[10px] text-muted-foreground">
               {isEs ? "Tu compañero de práctica 24/7" : "Your 24/7 practice buddy"}
             </p>
           </div>
@@ -770,17 +770,17 @@ function SidebarContent({
       </div>
 
       {/* Mode & Language */}
-      <div className="p-3 space-y-2 border-b border-gray-200/60">
+      <div className="p-3 space-y-2 border-b border-border/60">
         <ModeSelector mode={mode} onChange={onModeChange} language={isEs ? "es" : "en"} />
-        <div className="flex gap-1 p-1 bg-gray-100/80 rounded-xl">
+        <div className="flex gap-1 p-1 bg-muted/80 rounded-xl">
           {(["spanish", "english"] as const).map((lang) => (
             <button
               key={lang}
               onClick={() => onLanguageChange(lang)}
               className={`relative flex-1 text-xs py-1.5 rounded-lg font-medium transition-all ${
                 aiLanguage === lang
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-card text-primary shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {lang === "spanish" ? "Español" : "English"}
@@ -791,11 +791,11 @@ function SidebarContent({
 
       {/* Conversations list */}
       <div className="flex-1 overflow-y-auto p-2">
-        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold px-2 mb-2">
+        <p className="text-[10px]r text-muted-foreground font-semibold px-2 mb-2">
           {isEs ? "Historial" : "History"}
         </p>
         {conversations.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-4">
+          <p className="text-xs text-muted-foreground text-center py-4">
             {isEs ? "Sin conversaciones aún" : "No conversations yet"}
           </p>
         ) : (
@@ -806,15 +806,15 @@ function SidebarContent({
                 onClick={() => onSelect(conv)}
                 className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all ${
                   activeId === conv.id
-                    ? "bg-blue-50 text-blue-700 shadow-sm"
-                    : "text-gray-600 hover:bg-white hover:shadow-sm"
+                    ? "bg-primary/10 text-primary shadow-sm"
+                    : "text-muted-foreground hover:bg-card hover:shadow-sm"
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
                   <span className="truncate font-medium">{conv.title}</span>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-0.5 ml-5.5">
+                <p className="text-[10px] text-muted-foreground mt-0.5 ml-5.5">
                   {conv.language === "spanish" ? "ES" : "EN"} · {conv.mode}
                 </p>
               </button>
@@ -825,19 +825,19 @@ function SidebarContent({
 
       {/* Usage footer */}
       {usage && (
-        <div className="p-3 border-t border-gray-200/60">
+        <div className="p-3 border-t border-border/60">
           {usage.isSubscribed ? (
-            <div className="flex items-center gap-2 text-xs text-green-600 font-medium">
+            <div className="flex items-center gap-2 text-xs text-success font-medium">
               <Zap className="w-3.5 h-3.5" />
               <span>{isEs ? "Mensajes ilimitados" : "Unlimited messages"}</span>
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
                 <span>{isEs ? "Mensajes gratis" : "Free messages"}</span>
                 <span className="font-medium">{usage.remaining}/{usage.limit}</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+              <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${((usage.limit! - usage.remaining) / usage.limit!) * 100}%` }}
@@ -847,7 +847,7 @@ function SidebarContent({
               </div>
               <a
                 href="/packages"
-                className="flex items-center justify-center gap-1.5 mt-2 py-2 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-xs font-medium text-amber-700 hover:from-amber-100 hover:to-orange-100 transition-all"
+                className="flex items-center justify-center gap-1.5 mt-2 py-2 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-xs font-medium text-warning-foreground hover:from-amber-100 hover:to-orange-100 transition-all"
               >
                 <Zap className="w-3 h-3" />
                 {isEs ? "Desbloquea mensajes ilimitados" : "Unlock unlimited messages"}
@@ -878,10 +878,10 @@ function EmptyState({ isEs, onNew, isCreating }: { isEs: boolean; onNew: () => v
         >
           <LingoMascot size="lg" />
         </motion.div>
-        <h3 className="text-xl font-bold text-[#0A4A6E] mb-2">
+        <h3 className="text-xl font-bold text-foreground mb-2">
           Lingo
         </h3>
-        <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+        <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
           {isEs
             ? "Tu compañero de práctica de idiomas con IA. Practica conversación, pronunciación y gramática."
             : "Your AI language practice buddy. Practice conversation, pronunciation, and grammar."}
@@ -985,7 +985,7 @@ function WelcomeMessage({
 
       {/* Prompt suggestions */}
       <div className="px-2">
-        <p className="text-xs text-gray-400 font-medium mb-2.5 text-center">
+        <p className="text-xs text-muted-foreground font-medium mb-2.5 text-center">
           {isEs ? "Prueba con una de estas ideas:" : "Try one of these ideas:"}
         </p>
         <div className="flex flex-wrap justify-center gap-2">
@@ -997,7 +997,7 @@ function WelcomeMessage({
               transition={{ delay: 0.1 + idx * 0.08, type: "spring", damping: 20, stiffness: 300 }}
               onClick={() => onSendPrompt(prompt)}
               disabled={isSending}
-              className="px-3.5 py-2 text-sm rounded-xl border border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-all shadow-sm hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3.5 py-2 text-sm rounded-xl border border-border bg-card text-muted-foreground hover:border-blue-300 hover:bg-primary/10 hover:text-primary transition-all shadow-sm hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {prompt}
             </motion.button>
@@ -1015,7 +1015,7 @@ function WelcomeMessage({
         >
           <a
             href="/packages"
-            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/50 text-xs text-amber-700 hover:from-amber-100 hover:to-orange-100 transition-all"
+            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/50 text-xs text-warning-foreground hover:from-amber-100 hover:to-orange-100 transition-all"
           >
             <Zap className="w-3.5 h-3.5" />
             <span>
@@ -1035,7 +1035,7 @@ function ProgressPanel({ progressData, isEs }: { progressData: any; isEs: boolea
   if (!progressData) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1C7BB1]" />
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
       </div>
     );
   }
@@ -1049,7 +1049,7 @@ function ProgressPanel({ progressData, isEs }: { progressData: any; isEs: boolea
       animate={{ opacity: 1, y: 0 }}
       className="max-w-lg mx-auto space-y-5"
     >
-      <h3 className="text-lg font-bold text-[#0A4A6E] text-center">
+      <h3 className="text-lg font-bold text-foreground text-center">
         {isEs ? "Mi Progreso" : "My Progress"}
       </h3>
 
@@ -1059,38 +1059,38 @@ function ProgressPanel({ progressData, isEs }: { progressData: any; isEs: boolea
           <Flame className="w-6 h-6 text-orange-500" />
           <span className="text-3xl font-bold text-orange-600">{streak}</span>
         </div>
-        <p className="text-sm text-amber-700 font-medium">
+        <p className="text-sm text-warning-foreground font-medium">
           {isEs ? "Racha de práctica (días)" : "Practice streak (days)"}
         </p>
       </div>
 
       {/* Stats grid */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl p-4 border border-gray-200/60 text-center shadow-sm">
-          <p className="text-2xl font-bold text-[#1C7BB1]">{stats?.totalConversations || 0}</p>
-          <p className="text-[10px] text-gray-500 mt-1">{isEs ? "Conversaciones" : "Conversations"}</p>
+        <div className="bg-card rounded-xl p-4 border border-border/60 text-center shadow-sm">
+          <p className="text-2xl font-bold text-primary">{stats?.totalConversations || 0}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">{isEs ? "Conversaciones" : "Conversations"}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200/60 text-center shadow-sm">
-          <p className="text-2xl font-bold text-[#1C7BB1]">{stats?.totalMessages || 0}</p>
-          <p className="text-[10px] text-gray-500 mt-1">{isEs ? "Mensajes" : "Messages"}</p>
+        <div className="bg-card rounded-xl p-4 border border-border/60 text-center shadow-sm">
+          <p className="text-2xl font-bold text-primary">{stats?.totalMessages || 0}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">{isEs ? "Mensajes" : "Messages"}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200/60 text-center shadow-sm">
-          <p className="text-2xl font-bold text-[#1C7BB1]">{stats?.totalCorrections || 0}</p>
-          <p className="text-[10px] text-gray-500 mt-1">{isEs ? "Correcciones" : "Corrections"}</p>
+        <div className="bg-card rounded-xl p-4 border border-border/60 text-center shadow-sm">
+          <p className="text-2xl font-bold text-primary">{stats?.totalCorrections || 0}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">{isEs ? "Correcciones" : "Corrections"}</p>
         </div>
       </div>
 
       {/* Language breakdown */}
       {stats?.languageBreakdown && (
-        <div className="bg-white rounded-xl p-4 border border-gray-200/60 shadow-sm">
-          <p className="text-xs font-semibold text-gray-500 mb-3">{isEs ? "Por idioma" : "By language"}</p>
+        <div className="bg-card rounded-xl p-4 border border-border/60 shadow-sm">
+          <p className="text-xs font-semibold text-muted-foreground mb-3">{isEs ? "Por idioma" : "By language"}</p>
           <div className="flex gap-4">
             <div className="flex-1">
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-600">Español</span>
+                <span className="text-muted-foreground">Español</span>
                 <span className="font-medium">{stats.languageBreakdown.spanish}</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2">
+              <div className="w-full bg-muted rounded-full h-2">
                 <div
                   className="bg-gradient-to-r from-orange-400 to-red-400 h-2 rounded-full transition-all"
                   style={{ width: `${stats.totalConversations ? (stats.languageBreakdown.spanish / stats.totalConversations) * 100 : 0}%` }}
@@ -1099,10 +1099,10 @@ function ProgressPanel({ progressData, isEs }: { progressData: any; isEs: boolea
             </div>
             <div className="flex-1">
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-600">English</span>
+                <span className="text-muted-foreground">English</span>
                 <span className="font-medium">{stats.languageBreakdown.english}</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2">
+              <div className="w-full bg-muted rounded-full h-2">
                 <div
                   className="bg-gradient-to-r from-blue-400 to-indigo-400 h-2 rounded-full transition-all"
                   style={{ width: `${stats.totalConversations ? (stats.languageBreakdown.english / stats.totalConversations) * 100 : 0}%` }}
@@ -1115,8 +1115,8 @@ function ProgressPanel({ progressData, isEs }: { progressData: any; isEs: boolea
 
       {/* Mode breakdown */}
       {stats?.modeBreakdown && (
-        <div className="bg-white rounded-xl p-4 border border-gray-200/60 shadow-sm">
-          <p className="text-xs font-semibold text-gray-500 mb-3">{isEs ? "Por modo" : "By mode"}</p>
+        <div className="bg-card rounded-xl p-4 border border-border/60 shadow-sm">
+          <p className="text-xs font-semibold text-muted-foreground mb-3">{isEs ? "Por modo" : "By mode"}</p>
           <div className="flex gap-3">
             {[
               { key: "chat", label: "Chat", color: "from-blue-400 to-blue-500" },
@@ -1124,9 +1124,9 @@ function ProgressPanel({ progressData, isEs }: { progressData: any; isEs: boolea
               { key: "grammar", label: isEs ? "Gramática" : "Grammar", color: "from-purple-400 to-violet-500" },
             ].map(({ key, label, color }) => (
               <div key={key} className="flex-1 text-center">
-                <p className="text-xl font-bold text-gray-700">{stats.modeBreakdown[key] || 0}</p>
+                <p className="text-xl font-bold text-foreground">{stats.modeBreakdown[key] || 0}</p>
                 <div className={`h-1.5 rounded-full bg-gradient-to-r ${color} mt-1 mx-auto`} style={{ width: "60%" }} />
-                <p className="text-[10px] text-gray-500 mt-1">{label}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{label}</p>
               </div>
             ))}
           </div>
@@ -1135,16 +1135,16 @@ function ProgressPanel({ progressData, isEs }: { progressData: any; isEs: boolea
 
       {/* Top errors */}
       {stats?.topErrors && stats.topErrors.length > 0 && (
-        <div className="bg-white rounded-xl p-4 border border-gray-200/60 shadow-sm">
-          <p className="text-xs font-semibold text-gray-500 mb-3">
+        <div className="bg-card rounded-xl p-4 border border-border/60 shadow-sm">
+          <p className="text-xs font-semibold text-muted-foreground mb-3">
             {isEs ? "Errores más frecuentes" : "Most common errors"}
           </p>
           <div className="space-y-2">
             {stats.topErrors.map((err: any, idx: number) => (
               <div key={idx} className="flex items-center justify-between text-sm">
-                <span className="text-red-500 line-through text-xs">{err.error.split(" → ")[0]}</span>
-                <span className="text-green-600 text-xs font-medium">{err.error.split(" → ")[1]}</span>
-                <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-500">{err.count}x</span>
+                <span className="text-destructive line-through text-xs">{err.error.split(" → ")[0]}</span>
+                <span className="text-success text-xs font-medium">{err.error.split(" → ")[1]}</span>
+                <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">{err.count}x</span>
               </div>
             ))}
           </div>
@@ -1154,7 +1154,7 @@ function ProgressPanel({ progressData, isEs }: { progressData: any; isEs: boolea
       {/* Detected level */}
       {profile?.detectedLevel && (
         <div className="text-center">
-          <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium border border-blue-200/60">
+          <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/30/60">
             {isEs ? "Nivel estimado" : "Estimated level"}: {profile.detectedLevel}
           </span>
         </div>
@@ -1179,11 +1179,11 @@ function CorrectionsPanel({
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <Bookmark className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 font-medium">
+          <Bookmark className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground font-medium">
             {isEs ? "No tienes correcciones guardadas" : "No saved corrections yet"}
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {isEs
               ? "Las correcciones de tus conversaciones aparecerán aquí"
               : "Corrections from your conversations will appear here"}
@@ -1199,29 +1199,29 @@ function CorrectionsPanel({
       animate={{ opacity: 1, y: 0 }}
       className="max-w-lg mx-auto space-y-3"
     >
-      <h3 className="text-lg font-bold text-[#0A4A6E] text-center mb-4">
+      <h3 className="text-lg font-bold text-foreground text-center mb-4">
         {isEs ? "Mis Correcciones" : "My Corrections"}
       </h3>
       {corrections.map((c: any) => (
-        <div key={c.id} className="bg-white rounded-xl p-4 border border-gray-200/60 shadow-sm">
+        <div key={c.id} className="bg-card rounded-xl p-4 border border-border/60 shadow-sm">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 space-y-1">
               <p className="text-sm">
-                <span className="text-red-500 line-through">{c.original}</span>
-                <span className="mx-2 text-gray-400">→</span>
-                <span className="text-green-600 font-medium">{c.corrected}</span>
+                <span className="text-destructive line-through">{c.original}</span>
+                <span className="mx-2 text-muted-foreground">→</span>
+                <span className="text-success font-medium">{c.corrected}</span>
               </p>
               {c.explanation && (
-                <p className="text-xs text-gray-500">{c.explanation}</p>
+                <p className="text-xs text-muted-foreground">{c.explanation}</p>
               )}
-              <p className="text-[10px] text-gray-400">
+              <p className="text-[10px] text-muted-foreground">
                 {c.language === "spanish" ? "ES" : "EN"} · {new Date(c.createdAt).toLocaleDateString()}
               </p>
             </div>
             <button
               onClick={() => onDelete(c.id)}
               disabled={isDeleting}
-              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+              className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -1268,11 +1268,11 @@ function VocabularyPanel({
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <BookA className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 font-medium">
+          <BookA className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground font-medium">
             {isEs ? "No tienes vocabulario guardado" : "No saved vocabulary yet"}
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {isEs
               ? "Las palabras nuevas de tus conversaciones aparecerán aquí"
               : "New words from your conversations will appear here"}
@@ -1285,7 +1285,7 @@ function VocabularyPanel({
   const masteryLabels = isEs
     ? ["Nuevo", "Visto", "Aprendiendo", "Dominado"]
     : ["New", "Seen", "Learning", "Mastered"];
-  const masteryColors = ["bg-gray-200 text-gray-600", "bg-blue-100 text-blue-600", "bg-amber-100 text-amber-600", "bg-green-100 text-green-600"];
+  const masteryColors = ["bg-muted text-muted-foreground", "bg-primary/15 text-primary", "bg-warning/15 text-warning-foreground", "bg-success/15 text-success"];
 
   return (
     <motion.div
@@ -1294,7 +1294,7 @@ function VocabularyPanel({
       className="max-w-lg mx-auto space-y-4"
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-[#0A4A6E]">
+        <h3 className="text-lg font-bold text-foreground">
           {isEs ? "Mi Vocabulario" : "My Vocabulary"}
         </h3>
         <Button
@@ -1313,7 +1313,7 @@ function VocabularyPanel({
         <button
           onClick={() => setFilterMastery(null)}
           className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
-            filterMastery === null ? "bg-blue-100 text-blue-700 font-medium" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+            filterMastery === null ? "bg-primary/15 text-primary font-medium" : "bg-muted text-muted-foreground hover:bg-muted"
           }`}
         >
           {isEs ? "Todas" : "All"} ({vocabulary.length})
@@ -1326,7 +1326,7 @@ function VocabularyPanel({
               key={level}
               onClick={() => setFilterMastery(filterMastery === level ? null : level)}
               className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
-                filterMastery === level ? masteryColors[level] + " font-medium" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                filterMastery === level ? masteryColors[level] + " font-medium" : "bg-muted text-muted-foreground hover:bg-muted"
               }`}
             >
               {masteryLabels[level]} ({count})
@@ -1338,22 +1338,22 @@ function VocabularyPanel({
       {/* Word list */}
       <div className="space-y-2">
         {filtered.map((v: any) => (
-          <div key={v.id} className="bg-white rounded-xl p-4 border border-gray-200/60 shadow-sm">
+          <div key={v.id} className="bg-card rounded-xl p-4 border border-border/60 shadow-sm">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-[#0A4A6E]">{v.word}</p>
-                  <span className="text-gray-400">→</span>
-                  <p className="text-sm text-gray-600">{v.translation}</p>
+                  <p className="text-sm font-semibold text-foreground">{v.word}</p>
+                  <span className="text-muted-foreground">→</span>
+                  <p className="text-sm text-muted-foreground">{v.translation}</p>
                 </div>
                 {v.context && (
-                  <p className="text-xs text-gray-400 mt-1 italic truncate">"{v.context}"</p>
+                  <p className="text-xs text-muted-foreground mt-1 italic truncate">"{v.context}"</p>
                 )}
                 <div className="flex items-center gap-2 mt-1.5">
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${masteryColors[v.mastery || 0]}`}>
                     {masteryLabels[v.mastery || 0]}
                   </span>
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-[10px] text-muted-foreground">
                     {v.language === "spanish" ? "ES" : "EN"}
                   </span>
                 </div>
@@ -1361,7 +1361,7 @@ function VocabularyPanel({
               <button
                 onClick={() => onDelete(v.id)}
                 disabled={isDeleting}
-                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -1427,17 +1427,17 @@ function FlashcardMode({
     >
       {/* Header */}
       <div className="w-full flex items-center justify-between">
-        <button onClick={onExit} className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+        <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
           <ChevronLeft className="w-4 h-4" />
           {isEs ? "Volver" : "Back"}
         </button>
-        <span className="text-xs text-gray-400 font-medium">
+        <span className="text-xs text-muted-foreground font-medium">
           {currentIndex + 1} / {vocabulary.length}
         </span>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+      <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
         <motion.div
           animate={{ width: `${((currentIndex + 1) / vocabulary.length) * 100}%` }}
           transition={{ duration: 0.3 }}
@@ -1452,7 +1452,7 @@ function FlashcardMode({
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: "spring", damping: 20, stiffness: 300 }}
         onClick={() => setFlipped(!flipped)}
-        className="w-full aspect-[3/2] max-h-64 bg-white rounded-2xl border-2 border-gray-200/80 shadow-lg hover:shadow-xl transition-shadow cursor-pointer flex flex-col items-center justify-center p-8 select-none"
+        className="w-full aspect-[3/2] max-h-64 bg-card rounded-2xl border-2 border-border/80 shadow-lg hover:shadow-xl transition-shadow cursor-pointer flex flex-col items-center justify-center p-8 select-none"
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -1465,17 +1465,17 @@ function FlashcardMode({
           >
             {!flipped ? (
               <>
-                <p className="text-2xl font-bold text-[#0A4A6E] mb-2">{current.word}</p>
-                <p className="text-xs text-gray-400">
+                <p className="text-2xl font-bold text-foreground mb-2">{current.word}</p>
+                <p className="text-xs text-muted-foreground">
                   {isEs ? "Toca para ver la traducción" : "Tap to see translation"}
                 </p>
               </>
             ) : (
               <>
-                <p className="text-xl font-bold text-green-600 mb-1">{current.translation}</p>
-                <p className="text-sm text-gray-500">{current.word}</p>
+                <p className="text-xl font-bold text-success mb-1">{current.translation}</p>
+                <p className="text-sm text-muted-foreground">{current.word}</p>
                 {current.context && (
-                  <p className="text-xs text-gray-400 mt-2 italic">"{current.context}"</p>
+                  <p className="text-xs text-muted-foreground mt-2 italic">"{current.context}"</p>
                 )}
               </>
             )}
@@ -1490,7 +1490,7 @@ function FlashcardMode({
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={handleRepeat}
-            className="flex-1 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 font-medium text-sm hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive font-medium text-sm hover:bg-destructive/15 transition-colors flex items-center justify-center gap-2"
           >
             <RotateCcw className="w-4 h-4" />
             {isEs ? "Repetir" : "Repeat"}
@@ -1499,7 +1499,7 @@ function FlashcardMode({
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={handleKnow}
-            className="flex-1 py-3 rounded-xl bg-green-50 border border-green-200 text-green-600 font-medium text-sm hover:bg-green-100 transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-success/10 border border-success/30 text-success font-medium text-sm hover:bg-success/15 transition-colors flex items-center justify-center gap-2"
           >
             <Check className="w-4 h-4" />
             {isEs ? "Lo sé" : "I know it"}
@@ -1510,14 +1510,14 @@ function FlashcardMode({
           <button
             onClick={goPrev}
             disabled={currentIndex === 0}
-            className="flex-1 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-500 font-medium text-sm hover:bg-gray-100 transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-muted/40 border border-border text-muted-foreground font-medium text-sm hover:bg-muted transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
           >
             <ChevronLeft className="w-4 h-4" />
             {isEs ? "Anterior" : "Previous"}
           </button>
           <button
             onClick={goNext}
-            className="flex-1 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-500 font-medium text-sm hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-muted/40 border border-border text-muted-foreground font-medium text-sm hover:bg-muted transition-colors flex items-center justify-center gap-2"
           >
             {isEs ? "Siguiente" : "Next"}
             <ChevronRight className="w-4 h-4" />

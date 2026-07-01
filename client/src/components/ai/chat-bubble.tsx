@@ -78,7 +78,7 @@ export function ChatBubble({ role, content, corrections, onSpeak, isSpeaking, is
         className={`max-w-[80%] rounded-2xl px-4 py-3 ${
           isUser
             ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-sm shadow-lg shadow-blue-500/20"
-            : "bg-gradient-to-br from-gray-50 to-white border border-gray-100 text-gray-800 rounded-tl-sm shadow-md shadow-slate-200/50"
+            : "bg-gradient-to-br from-gray-50 to-white border border-border text-foreground rounded-tl-sm shadow-md shadow-slate-200/50"
         }`}
       >
         {!isUser && corrections && corrections.length > 0 ? (
@@ -91,23 +91,23 @@ export function ChatBubble({ role, content, corrections, onSpeak, isSpeaking, is
 
         {/* Vocabulary section for AI messages */}
         {!isUser && vocabItems.length > 0 && onSaveVocab && !corrections?.length && (
-          <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
-            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide flex items-center gap-1">
+          <div className="mt-3 pt-3 border-t border-border space-y-1.5">
+            <p className="text-xs font-semibold text-warning-foreground flex items-center gap-1">
               <BookA className="w-3 h-3" />
               Vocabulario
             </p>
             {vocabItems.map((item, idx) => (
               <div key={idx} className="flex items-center gap-2 text-xs group">
-                <span className="font-medium text-gray-700 bg-amber-50 px-1.5 py-0.5 rounded">{item.word}</span>
-                <span className="text-gray-400">=</span>
-                <span className="text-gray-500">{item.translation}</span>
+                <span className="font-medium text-foreground bg-warning/15 px-1.5 py-0.5 rounded">{item.word}</span>
+                <span className="text-muted-foreground">=</span>
+                <span className="text-muted-foreground">{item.translation}</span>
                 <button
                   onClick={() => handleSaveVocab(item)}
                   disabled={savedVocab.has(item.word)}
                   className={`p-1 rounded transition-colors ${
                     savedVocab.has(item.word)
                       ? "text-green-500"
-                      : "text-gray-300 hover:text-amber-500 hover:bg-amber-50 opacity-0 group-hover:opacity-100"
+                      : "text-muted-foreground hover:text-amber-500 hover:bg-warning/15 opacity-0 group-hover:opacity-100"
                   }`}
                   title={savedVocab.has(item.word) ? "Guardado" : "Guardar palabra"}
                 >
@@ -128,7 +128,7 @@ export function ChatBubble({ role, content, corrections, onSpeak, isSpeaking, is
             onClick={() => onSpeak(content)}
             aria-label={isSpeaking ? "Stop speaking" : "Listen to message"}
             className={`mt-2 flex items-center gap-1.5 text-xs transition-colors group ${
-              isSpeaking ? "text-blue-600" : "text-gray-400 hover:text-blue-600"
+              isSpeaking ? "text-primary" : "text-muted-foreground hover:text-primary"
             }`}
           >
             {isSpeaking ? (

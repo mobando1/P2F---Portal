@@ -152,13 +152,13 @@ export default function FlashcardPlayer({
             >
               {/* Front face */}
               <div
-                className="absolute inset-0 rounded-xl border-2 border-gray-200 bg-white flex flex-col items-center justify-center p-6"
+                className="absolute inset-0 rounded-xl border-2 border-border bg-card flex flex-col items-center justify-center p-6"
                 style={{ backfaceVisibility: "hidden" }}
               >
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-4">
+                <p className="text-xs font-medium text-muted-foregroundst mb-4">
                   {es ? "Palabra / Frase" : "Word / Phrase"}
                 </p>
-                <p className="text-2xl font-bold text-center text-[#0A4A6E]">
+                <p className="text-2xl font-bold text-center text-foreground">
                   {card.front}
                 </p>
                 <p className="text-xs text-muted-foreground mt-6">
@@ -168,16 +168,16 @@ export default function FlashcardPlayer({
 
               {/* Back face */}
               <div
-                className="absolute inset-0 rounded-xl border-2 border-[#1C7BB1] bg-[#EAF4FA] flex flex-col items-center justify-center p-6"
+                className="absolute inset-0 rounded-xl border-2 border-primary bg-muted flex flex-col items-center justify-center p-6"
                 style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
               >
-                <p className="text-2xl font-bold text-center text-[#0A4A6E] mb-3">
+                <p className="text-2xl font-bold text-center text-foreground mb-3">
                   {card.back}
                 </p>
                 {(card.example || card.exampleEs) && (
                   <>
-                    <div className="w-12 h-px bg-[#1C7BB1]/30 mb-3" />
-                    <p className="text-sm italic text-center text-[#1C7BB1]">
+                    <div className="w-12 h-px bg-primary/30 mb-3" />
+                    <p className="text-sm italic text-center text-primary">
                       {es && card.exampleEs ? card.exampleEs : card.example}
                     </p>
                   </>
@@ -200,7 +200,7 @@ export default function FlashcardPlayer({
           >
             <Button
               variant="outline"
-              className="flex-1 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+              className="flex-1 border-red-300 text-destructive hover:bg-destructive/10 hover:border-red-400"
               onClick={() => handleResult("again")}
             >
               🔁 {es ? "Otra vez" : "Again"}

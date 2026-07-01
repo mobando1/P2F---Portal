@@ -119,7 +119,7 @@ export default function SpeakingPromptActivity({
           {/* Situation */}
           <Card>
             <CardHeader className="pb-2 pt-4 px-4">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+              <p className="text-xs font-semibold text-muted-foregroundst">
                 {es ? "Tu situación" : "Your situation"}
               </p>
             </CardHeader>
@@ -131,9 +131,9 @@ export default function SpeakingPromptActivity({
           </Card>
 
           {/* Speaking cue */}
-          <div className="flex items-start gap-3 bg-[#EAF4FA] border-l-4 border-[#1C7BB1] rounded-r-lg p-3">
-            <Mic size={18} className="text-[#1C7BB1] mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-[#0A4A6E] font-medium">
+          <div className="flex items-start gap-3 bg-muted border border-primary/20 rounded-lg p-3">
+            <Mic size={18} className="text-primary mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-foreground font-medium">
               {es
                 ? "Intenta decirlo en voz alta en español"
                 : "Try to say it out loud in Spanish"}
@@ -142,9 +142,9 @@ export default function SpeakingPromptActivity({
 
           {/* Grammar/vocab tip */}
           {(prompt.tip || prompt.tipEs) && (
-            <div className="flex items-start gap-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-3">
+            <div className="flex items-start gap-3 bg-warning/15 border border-warning/30 rounded-lg p-3">
               <Lightbulb size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-warning-foreground">
                 {es && prompt.tipEs ? prompt.tipEs : prompt.tip}
               </p>
             </div>
@@ -154,7 +154,7 @@ export default function SpeakingPromptActivity({
 
       {/* Buttons */}
       <div className="space-y-2 mt-4">
-        <Button className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E]" onClick={handlePracticed}>
+        <Button className="w-full bg-primary hover:bg-primary-900" onClick={handlePracticed}>
           ✓ {es ? "¡Lo practiqué!" : "I practiced it!"}
         </Button>
         {prompt.aiScenarioId && (

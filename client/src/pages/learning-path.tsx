@@ -49,10 +49,10 @@ export default function LearningPathPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8]">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="animate-spin h-8 w-8 text-[#1C7BB1]" />
+          <Loader2 className="animate-spin h-8 w-8 text-primary" />
         </div>
       </div>
     );
@@ -60,21 +60,21 @@ export default function LearningPathPage() {
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8]">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
-          <BookOpen className="h-12 w-12 text-gray-300 mb-4" />
-          <h2 className="text-xl font-bold text-[#0A4A6E] mb-2">
+          <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-bold text-foreground mb-2">
             {es ? "No pudimos cargar tu camino" : "Couldn't load your path"}
           </h2>
-          <p className="text-gray-500 mb-4 max-w-md">
+          <p className="text-muted-foreground mb-4 max-w-md">
             {es
               ? "Hubo un problema al cargar tu progreso. Intenta de nuevo."
               : "There was a problem loading your progress. Please try again."}
           </p>
           <button
             onClick={() => refetch()}
-            className="px-4 py-2 bg-[#1C7BB1] text-white rounded-lg hover:bg-[#0A4A6E] transition-colors"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-900 transition-colors"
           >
             {es ? "Reintentar" : "Try Again"}
           </button>
@@ -127,7 +127,7 @@ export default function LearningPathPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8]">
+    <div className="min-h-screen bg-background">
       <Header />
 
       {/* Hero */}
@@ -167,7 +167,7 @@ export default function LearningPathPage() {
               {stats.totalStations > 0 && (
                 <div className="mt-3 bg-white/10 rounded-full h-2 w-full max-w-xs overflow-hidden">
                   <motion.div
-                    className="h-full bg-[#F59E1C] rounded-full"
+                    className="h-full bg-accent rounded-full"
                     initial={{ width: 0 }}
                     animate={{ width: `${progressPercent}%` }}
                     transition={{ duration: 0.9, delay: 0.3 }}
@@ -190,12 +190,12 @@ export default function LearningPathPage() {
         >
           {statCards.map((s, i) => (
             <motion.div key={i} variants={fadeInUp}>
-              <div className="bg-white rounded-2xl shadow-sm border border-white/80 p-3 sm:p-4 flex flex-col items-center text-center gap-1.5 sm:gap-2">
+              <div className="bg-card rounded-2xl shadow-sm border border-white/80 p-3 sm:p-4 flex flex-col items-center text-center gap-1.5 sm:gap-2">
                 <div className="p-2 sm:p-2.5 rounded-xl" style={{ backgroundColor: s.bg }}>
                   <s.icon className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: s.color }} />
                 </div>
                 <p className="text-xl sm:text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
-                <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium leading-tight">{s.label}</p>
+                <p className="text-[10px] sm:text-[11px] text-muted-foreground font-medium leading-tight">{s.label}</p>
               </div>
             </motion.div>
           ))}
@@ -205,10 +205,10 @@ export default function LearningPathPage() {
         {pendingAssignments.length > 0 && (
           <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="mb-8">
             <div className="flex items-center gap-2 mb-3">
-              <ClipboardList className="h-4 w-4 text-[#F59E1C]" />
-              <h2 className="text-sm font-semibold text-[#0A4A6E] uppercase tracking-wide">
+              <ClipboardList className="h-4 w-4 text-accent" />
+              <h2 className="text-sm font-semibold text-foreground">
                 {es ? "Actividades Asignadas" : "Assigned Activities"}
-                <span className="ml-2 bg-[#F59E1C] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                <span className="ml-2 bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                   {pendingAssignments.length}
                 </span>
               </h2>
@@ -239,9 +239,9 @@ export default function LearningPathPage() {
                 onStationClick={(id) => setSelectedStation(id)}
               />
             ) : (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 py-16 text-center">
-                <BookOpen className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm">
+              <div className="bg-card rounded-2xl shadow-sm border border-border py-16 text-center">
+                <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm">
                   {es
                     ? "El camino de aprendizaje se está preparando. Pronto estará disponible."
                     : "The learning path is being prepared. It will be available soon."}

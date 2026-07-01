@@ -200,8 +200,8 @@ export default function StationDetail({ stationId, open, onClose, onStationCompl
                 >
                   <Card
                     className={`transition-shadow hover:shadow-md ${
-                      isAiScenario ? "border-[#1C7BB1]/30 bg-[#EAF4FA]/40" :
-                      quizPassed ? "border-green-200 bg-green-50/50" : ""
+                      isAiScenario ? "border-primary/30 bg-muted/40" :
+                      quizPassed ? "border-success/30 bg-success/10/50" : ""
                     } ${!isAiScenario ? "cursor-pointer" : ""}`}
                     onClick={() => {
                       if (isQuiz && item.contentData?.questions) {
@@ -217,12 +217,12 @@ export default function StationDetail({ stationId, open, onClose, onStationCompl
                   >
                     <CardContent className="flex items-center gap-3 py-3 px-4">
                       <div className={`p-2 rounded-lg flex-shrink-0 ${
-                        isAiScenario ? "bg-[#1C7BB1]/10" :
-                        quizPassed ? "bg-green-100" : "bg-gray-100"
+                        isAiScenario ? "bg-primary/10" :
+                        quizPassed ? "bg-success/15" : "bg-muted"
                       }`}>
                         <Icon size={18} className={
-                          isAiScenario ? "text-[#1C7BB1]" :
-                          quizPassed ? "text-green-600" : "text-gray-600"
+                          isAiScenario ? "text-primary" :
+                          quizPassed ? "text-success" : "text-muted-foreground"
                         } />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -248,7 +248,7 @@ export default function StationDetail({ stationId, open, onClose, onStationCompl
                       {isAiScenario && (
                         <Button
                           size="sm"
-                          className="bg-[#1C7BB1] hover:bg-[#0A4A6E] text-white flex-shrink-0"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             const scenarioId = item.contentData?.scenarioId;
@@ -274,7 +274,7 @@ export default function StationDetail({ stationId, open, onClose, onStationCompl
                 className="pt-4"
               >
                 <Button
-                  className="w-full bg-[#1C7BB1] hover:bg-[#0A4A6E]"
+                  className="w-full bg-primary hover:bg-primary-900"
                   onClick={() => completeMutation.mutate()}
                   disabled={completeMutation.isPending}
                 >
@@ -289,7 +289,7 @@ export default function StationDetail({ stationId, open, onClose, onStationCompl
             )}
 
             {isCompleted && (
-              <div className="text-center py-4 text-green-600 font-medium flex items-center justify-center gap-2">
+              <div className="text-center py-4 text-success font-medium flex items-center justify-center gap-2">
                 <Check size={20} />
                 {language === "es" ? "Estacion completada" : "Station completed"}
               </div>

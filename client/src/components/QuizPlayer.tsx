@@ -173,8 +173,8 @@ export default function QuizPlayer({
                         key={i}
                         className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
                           isSelected
-                            ? "border-[#1C7BB1] bg-[#EAF4FA]"
-                            : "border-gray-200 hover:border-gray-300"
+                            ? "border-primary bg-muted"
+                            : "border-border hover:border-border"
                         }`}
                         onClick={() => selectAnswer(i)}
                         whileTap={{ scale: 0.98 }}
@@ -193,7 +193,7 @@ export default function QuizPlayer({
               {currentQ.type === "fill_blank" && (
                 <input
                   type="text"
-                  className="w-full p-3 border-2 rounded-lg focus:border-[#1C7BB1] focus:outline-none"
+                  className="w-full p-3 border-2 rounded-lg focus:border-primary focus:outline-none"
                   placeholder={language === "es" ? "Escribe tu respuesta..." : "Type your answer..."}
                   value={answers[currentIdx] || ""}
                   onChange={(e) => selectAnswer(e.target.value)}
@@ -206,9 +206,9 @@ export default function QuizPlayer({
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
-                  className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200"
+                  className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/30"
                 >
-                  <p className="text-sm text-blue-800">
+                  <p className="text-sm text-primary">
                     {language === "es" && currentQ.explanationEs ? currentQ.explanationEs : currentQ.explanation}
                   </p>
                 </motion.div>
