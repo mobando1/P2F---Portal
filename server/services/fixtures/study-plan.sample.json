@@ -1,0 +1,122 @@
+{
+  "headline": "Plan de Vuelo — Reuniones en Inglés",
+  "diagnosis": {
+    "cefrLevel": "B1",
+    "summary": "Entiendes casi todo lo que se te dice en un ritmo normal y tienes vocabulario suficiente para tu trabajo. Donde se te cae la conversación es al construir frases largas en tiempo real: empiezas bien, y a la tercera cláusula te devuelves a corregir el verbo y pierdes el hilo. No es un problema de vocabulario ni de comprensión — es de automatización.",
+    "strengths": [
+      "Comprendes preguntas de seguimiento sin pedir que las repitan",
+      "Tu vocabulario técnico de trabajo ya está ahí y lo usas bien",
+      "No te bloqueas: cuando no sabes una palabra, la rodeas"
+    ],
+    "evidence": [
+      {
+        "observation": "Al describir tu semana produjiste tres minutos seguidos sin pedir ayuda, con pausas cortas para buscar palabras.",
+        "quote": "I usually start the week with... with the team meeting, and then I have to, ehh, to report what we did"
+      },
+      {
+        "observation": "En el role-play de la reunión abandonaste una frase a mitad para corregir el pasado y perdiste el punto que estabas haciendo.",
+        "quote": "Last week we finish— we finished, we finished the... sorry, what I want to say is"
+      }
+    ]
+  },
+  "baseline": {
+    "fluency": 5,
+    "listening": 7,
+    "lexicalRange": 6,
+    "grammaticalAccuracy": 4,
+    "confidence": 4,
+    "targetTask": "partial"
+  },
+  "goalInTheirWords": "Quiero liderar la reunión de los lunes sin escribir todo antes.",
+  "blocker": "Te frena tener que decidir el tiempo verbal mientras hablas. Eso te obliga a parar, y parar te hace perder el punto que ibas a hacer.",
+  "focusAreas": [
+    {
+      "title": "Pasado simple automático",
+      "whyItMattersToYou": "La reunión de los lunes es un reporte de lo que pasó la semana anterior. Todo lo que vas a decir ahí está en pasado, así que cada vez que dudas del verbo, dudas en el momento en que todos te están mirando.",
+      "whatWellDo": "Práctica de recuperación rápida con los 40 verbos que de verdad usas en tu trabajo, hasta que salgan sin pensarlo.",
+      "currentState": "Te corriges a ti mismo en aproximadamente una de cada tres frases en pasado.",
+      "targetState": "Reportas cinco minutos en pasado sin auto-correcciones que te hagan perder el hilo."
+    },
+    {
+      "title": "Conectores para encadenar ideas",
+      "whyItMattersToYou": "Cuando lees tus notas, los conectores están escritos. Sin notas, tus frases se quedan sueltas y suenan a lista en vez de a un reporte con argumento.",
+      "whatWellDo": "Un set corto de conectores de causa, contraste y secuencia, practicados sobre tus propios temas de trabajo.",
+      "currentState": "Usas 'and' y 'but' casi exclusivamente.",
+      "targetState": "Encadenas tres ideas con conectores distintos sin pausa larga entre ellas."
+    },
+    {
+      "title": "Responder preguntas de seguimiento",
+      "whyItMattersToYou": "Dijiste que puedes preparar lo que vas a decir, pero no lo que te van a preguntar. Esa es la parte de la reunión que te da miedo, y es la que no se resuelve escribiendo antes.",
+      "whatWellDo": "Simulacros con preguntas que no viste venir, sobre tus propios proyectos, subiendo la velocidad gradualmente.",
+      "currentState": "Pides que repitan la pregunta para ganar tiempo.",
+      "targetState": "Respondes en menos de tres segundos, aunque sea para decir que lo confirmas después."
+    }
+  ],
+  "weeklyOutline": [
+    {
+      "weekRange": "Semanas 1-2",
+      "theme": "Abrir la reunión",
+      "objectives": [
+        "Los 40 verbos de tu trabajo en pasado, sin pensarlo",
+        "La estructura de apertura: contexto, qué se hizo, qué sigue"
+      ],
+      "milestone": "Puedo abrir la reunión y dar el contexto de la semana sin leer notas."
+    },
+    {
+      "weekRange": "Semanas 3-4",
+      "theme": "Reportar avances",
+      "objectives": [
+        "Conectores de secuencia y contraste sobre tus proyectos reales",
+        "Reportar tres puntos seguidos sin auto-corregirte"
+      ],
+      "milestone": "Puedo presentar tres avances de la semana sin volver atrás a corregir un verbo."
+    },
+    {
+      "weekRange": "Semanas 5-8",
+      "theme": "Responder en caliente",
+      "objectives": [
+        "Preguntas de seguimiento inesperadas a velocidad normal",
+        "Frases puente para ganar tiempo sin sonar inseguro"
+      ],
+      "milestone": "Puedo responder una pregunta que no esperaba en menos de tres segundos."
+    },
+    {
+      "weekRange": "Semanas 9-12",
+      "theme": "La reunión completa",
+      "objectives": [
+        "Reunión de 15 minutos de principio a fin, sin notas",
+        "Manejar un desacuerdo o una corrección en vivo"
+      ],
+      "milestone": "Puedo liderar la reunión completa de los lunes sin escribir nada antes."
+    }
+  ],
+  "checkpoints": [
+    {
+      "afterClass": 4,
+      "whatWeRemeasure": "Volvemos a medir las cinco habilidades. Aquí esperamos ver moverse precisión gramatical y confianza."
+    },
+    {
+      "afterClass": 8,
+      "whatWeRemeasure": "Medición completa más un simulacro cronometrado de preguntas de seguimiento."
+    },
+    {
+      "afterClass": 12,
+      "whatWeRemeasure": "Medición final y la reunión completa grabada, para que compares con tu clase de diagnóstico."
+    }
+  ],
+  "recommendation": {
+    "sessionsPerWeek": 2,
+    "durationWeeks": 12,
+    "totalSessions": 24,
+    "planTier": "momentum_plan",
+    "rationale": "Tienes una fecha concreta —la reunión es todas las semanas— y lo que te falta es automatización, que solo se consigue con repetición frecuente. Una sesión por semana no alcanza para automatizar; tres serían más de lo que tu agenda aguanta según lo que nos dijiste.",
+    "expectedOutcome": "En tres meses lideras la reunión de los lunes sin notas escritas y respondes preguntas de seguimiento sin pedir que las repitan."
+  },
+  "quickWins": [
+    "Antes de la reunión del lunes, di en voz alta tus tres puntos en pasado. Dos minutos, sin escribirlos.",
+    "Cuando te trabes en un verbo, sigue con la frase y corrige al final. Perder el hilo cuesta más que el error.",
+    "Ten lista una frase puente: 'Let me check that and come back to you.' Te compra tres segundos sin sonar inseguro."
+  ],
+  "confidence": 0.82,
+  "generationNotes": "Fixture de ejemplo para P2F_AI_MOCK=1. No es un plan real de un estudiante real."
+}

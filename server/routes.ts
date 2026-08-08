@@ -13,6 +13,7 @@ import { registerReviewRoutes } from "./routes/reviews";
 import { registerAiTutorRoutes } from "./routes/ai-tutor";
 import { registerDevRoutes } from "./routes/dev";
 import { registerTutorPortalRoutes } from "./routes/tutor-portal";
+import { registerDiagnosticRoutes } from "./routes/diagnostic";
 import { registerNotificationRoutes } from "./routes/notifications";
 import { registerSupportRoutes } from "./routes/support";
 import { registerMessageRoutes } from "./routes/messages";
@@ -42,6 +43,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   registerReviewRoutes(app);
   registerAiTutorRoutes(app);
   registerTutorPortalRoutes(app);
+  registerDiagnosticRoutes(app);
   registerNotificationRoutes(app);
   registerSupportRoutes(app);
   registerMessageRoutes(app);

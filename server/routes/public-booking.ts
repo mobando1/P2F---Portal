@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { z } from "zod";
+import { intakeSchema, consentSchema } from "@shared/intake";
 import { requireApiKey } from "../middleware/apiKey";
 import {
   resolveClassType,
@@ -56,6 +57,11 @@ export function registerPublicBookingRoutes(app: Express) {
     startAt: z.string(), // absolute ISO instant chosen by the visitor
     timeZone: z.string().optional(), // visitor timezone for their confirmation email
     lang: z.enum(["es", "en"]).optional(), // visitor UI language for their confirmation email
+    // Qualification answers + recording consent. BOTH OPTIONAL — the current
+    // production website sends neither, and `.parse()` strips unknown keys, so
+    // an old-shape payload validates identically. Verify that before shipping.
+    intake: intakeSchema.optional(),
+    consent: consentSchema.optional(),
   });
 
   app.post("/api/public/trial-bookings", requireApiKey, async (req: Request, res: Response) => {
@@ -76,6 +82,13 @@ export function registerPublicBookingRoutes(app: Express) {
         startAtISO: data.startAt,
         timeZone: data.timeZone,
         lang: data.lang,
+        intake: data.intake,
+        // The request reaches us from the website's SERVER, so `req.ip` is the
+        // proxy. Prefer the visitor IP the website forwards; fall back to the
+        // socket only so the field is never empty.
+        consent: data.consent
+          ? { ...data.consent, clientIp: data.consent.clientIp || req.ip }
+          : undefined,
       });
 
       if (result.success) {

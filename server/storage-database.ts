@@ -53,7 +53,7 @@ import {
   tutorMaterials,
   type TutorMaterial, type InsertTutorMaterial,
 } from "@shared/schema";
-import { db as maybeDb } from "./db";
+import { db as maybeDb, pool } from "./db";
 import { eq, and, or, not, gt, gte, lte, lt, desc, asc, sql, inArray } from "drizzle-orm";
 import type { IStorage } from "./storage";
 
@@ -1006,6 +1006,19 @@ export class DatabaseStorage implements IStorage {
     await this.db.delete(reviews).where(eq(reviews.userId, id));
     await this.db.delete(classPurchases).where(eq(classPurchases.userId, id));
     await this.db.delete(subscriptions).where(eq(subscriptions.userId, id));
+    // Diagnostic pipeline. Raw SQL because these tables live in the boot
+    // migration block, not the Drizzle schema. Order matters: study_plans
+    // references transcripts and intake, and all of them reference classes —
+    // so they must go before the classes delete below or the FKs throw.
+    if (pool) {
+      await pool.query(`DELETE FROM study_plans WHERE user_id = $1`, [id]);
+      await pool.query(
+        `DELETE FROM class_transcripts WHERE class_id IN (SELECT id FROM classes WHERE user_id = $1)`,
+        [id],
+      );
+      await pool.query(`DELETE FROM class_assessments WHERE user_id = $1`, [id]);
+      await pool.query(`DELETE FROM intake_responses WHERE user_id = $1`, [id]);
+    }
     await this.db.delete(classes).where(eq(classes.userId, id));
     // Messages: delete messages in conversations, then conversations
     const userConvs = await this.db.select().from(conversations)

@@ -15,11 +15,26 @@ const PRICING: Record<string, { input: number; output: number }> = {
   // Anthropic
   "claude-haiku-4-5": { input: 1.0, output: 5.0 },
   "claude-sonnet-4-6": { input: 3.0, output: 15.0 },
-  "claude-opus-4-7": { input: 15.0, output: 75.0 },
+  "claude-sonnet-5": { input: 3.0, output: 15.0 },
+  "claude-opus-5": { input: 5.0, output: 25.0 },
+  "claude-opus-4-8": { input: 5.0, output: 25.0 },
+  "claude-opus-4-7": { input: 5.0, output: 25.0 },
+  // Legacy, still referenced by ai-tutor.ts and tutor-portal.ts
+  "claude-sonnet-4": { input: 3.0, output: 15.0 },
   // Embeddings
   "text-embedding-3-small": { input: 0.02, output: 0 },
   "text-embedding-3-large": { input: 0.13, output: 0 },
 };
+
+/**
+ * Call sites pass dated full IDs (`claude-haiku-4-5-20251001`,
+ * `claude-sonnet-4-20250514`) while PRICING is keyed on the short alias. Without
+ * this, every lookup missed and `calculateCostUsd` silently returned 0 — which
+ * is why /admin/ai-cost has always shown $0.00.
+ */
+function normalizeModelKey(model: string): string {
+  return model.replace(/-\d{8}$/, "");
+}
 
 const AUDIO_PRICING_PER_MIN: Record<string, number> = {
   "whisper-1": 0.006,
@@ -66,8 +81,12 @@ export function calculateCostUsd(params: {
     const perMin = AUDIO_PRICING_PER_MIN[model] || 0;
     return (audioSeconds / 60) * perMin;
   }
-  const p = PRICING[model];
-  if (!p) return 0;
+  const key = normalizeModelKey(model);
+  const p = PRICING[key];
+  if (!p) {
+    logger.warn({ model, key }, "No pricing entry for model — cost recorded as $0");
+    return 0;
+  }
   return (tokensIn / 1_000_000) * p.input + (tokensOut / 1_000_000) * p.output;
 }
 

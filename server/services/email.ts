@@ -80,6 +80,19 @@ function brandFooter(lang: "es" | "en"): string {
   `;
 }
 
+/**
+ * HTML-escape for values that originate from user input (student names, the
+ * free-text goal from the booking form). Templates interpolate freely, so
+ * anything a visitor typed must pass through here.
+ */
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function wrapTemplate(title: string, body: string, lang: "es" | "en"): string {
   return `
     <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -366,6 +379,16 @@ export const emailService = {
     return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Bienvenido al Equipo" : "Welcome to the Team", body, lang) });
   },
 
+  /**
+   * New-booking notification to the coach.
+   *
+   * For diagnostic classes this doubles as the PRE-CLASS BRIEFING — the class
+   * protocol plus what the student told us at booking. It rides this email
+   * because it already fires at booking time and coaches read it on a phone;
+   * the tutor-portal prep card is the durable second surface.
+   *
+   * Every briefing param is optional, so existing callers are unaffected.
+   */
   async sendTutorNewBooking(params: {
     to: string;
     tutorName: string;
@@ -373,22 +396,163 @@ export const emailService = {
     date: string;
     time: string;
     lang: "es" | "en";
+    studentEmail?: string;
+    studentPhone?: string;
+    isDiagnostic?: boolean;
+    /** Pre-rendered from diagnostic-script.ts so the email and the portal can't drift. */
+    protocolHtml?: string;
+    intake?: Record<string, any>;
   }): Promise<boolean> {
-    const { to, tutorName, studentName, date, time, lang } = params;
+    const {
+      to, tutorName, studentName, date, time, lang,
+      studentEmail, studentPhone, isDiagnostic, protocolHtml, intake,
+    } = params;
     const isEs = lang === "es";
 
-    const subject = isEs ? `Nueva clase agendada — ${studentName}` : `New class booked — ${studentName}`;
+    const kind = isDiagnostic
+      ? (isEs ? "Clase de Diagnóstico" : "Diagnostic Class")
+      : (isEs ? "Nueva Clase" : "New Class");
+
+    const subject = isEs
+      ? `${kind} agendada — ${studentName}`
+      : `${kind} booked — ${studentName}`;
+
+    const contactRows = [
+      studentEmail ? `<p style="margin: 4px 0; color: #0A4A6E;"><strong>Email:</strong> ${esc(studentEmail)}</p>` : "",
+      studentPhone ? `<p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Teléfono:" : "Phone:"}</strong> ${esc(studentPhone)}</p>` : "",
+    ].join("");
+
+    // What the student wrote in their own words is the most useful line here —
+    // it's the scenario the coach role-plays in block 4 of the protocol.
+    const intakeBlock = intake
+      ? `
+      <div style="background:#F0F9FF;border-left:4px solid #1C7BB1;padding:16px;margin:16px 0;border-radius:0 8px 8px 0;">
+        <h3 style="margin:0 0 10px;color:#0A4A6E;font-size:16px;">
+          ${isEs ? "Lo que te contó al reservar" : "What they told us at booking"}
+        </h3>
+        ${intake.goal ? `<p style="margin:6px 0;color:#0F172A;"><em>"${esc(String(intake.goal))}"</em></p>` : ""}
+        ${intake.goalCategory ? `<p style="margin:4px 0;color:#475569;font-size:14px;"><strong>${isEs ? "Para qué:" : "What for:"}</strong> ${esc(String(intake.goalCategory))}</p>` : ""}
+        ${intake.selfLevel ? `<p style="margin:4px 0;color:#475569;font-size:14px;"><strong>${isEs ? "Nivel que dice tener:" : "Self-assessed level:"}</strong> ${esc(String(intake.selfLevel))}</p>` : ""}
+        ${intake.blocker ? `<p style="margin:4px 0;color:#475569;font-size:14px;"><strong>${isEs ? "Lo que más se le dificulta:" : "Hardest for them:"}</strong> ${esc(String(intake.blocker))}</p>` : ""}
+      </div>`
+      : "";
+
     const body = `
       <p style="color: #374151; font-size: 16px;">${isEs ? "Hola" : "Hi"} <strong>${tutorName}</strong>,</p>
       <p style="color: #374151;">${isEs ? "Tienes una nueva clase agendada:" : "You have a new class booked:"}</p>
       <div style="background: #EAF4FA; border-left: 4px solid #1C7BB1; padding: 16px; margin: 16px 0; border-radius: 0 8px 8px 0;">
-        <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Estudiante:" : "Student:"}</strong> ${studentName}</p>
+        <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Estudiante:" : "Student:"}</strong> ${esc(studentName)}</p>
+        ${contactRows}
         <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Fecha:" : "Date:"}</strong> ${date}</p>
         <p style="margin: 4px 0; color: #0A4A6E;"><strong>${isEs ? "Hora:" : "Time:"}</strong> ${time}</p>
       </div>
+      ${protocolHtml || ""}
+      ${intakeBlock}
     `;
 
-    return sendEmail({ to, subject, html: wrapTemplate(isEs ? "Nueva Clase" : "New Class", body, lang) });
+    return sendEmail({ to, subject, html: wrapTemplate(kind, body, lang) });
+  },
+
+  /**
+   * Delivers the Flight Plan to the student.
+   *
+   * Signed by the COACH, not by "the team" — the plan came out of a
+   * conversation with a person, and the email has to sound like it did.
+   *
+   * One CTA, no discount, no deadline, no "spots are filling". The whole point
+   * is that this is not a sales email; the purchase decision lives on the plan
+   * page, after they have read what they got for free. That also makes
+   * first_viewed_at a real engagement signal instead of a pixel-open guess.
+   */
+  async sendStudyPlanReady(params: {
+    to: string;
+    studentName: string;
+    tutorName: string;
+    planHeadline: string;
+    /** The student's own words, verbatim. If it wasn't captured, omit it — never fake it. */
+    goalQuote?: string;
+    recommendationLine: string;
+    planUrl: string;
+    lang: "es" | "en";
+  }): Promise<boolean> {
+    const { to, studentName, tutorName, planHeadline, goalQuote, recommendationLine, planUrl, lang } = params;
+    const isEs = lang === "es";
+
+    const subject = isEs
+      ? `${studentName}, esto fue lo que encontré en tu inglés`
+      : `${studentName}, here's what I found in your Spanish`;
+
+    // The quote is what makes this land. Templating a generic sentence here
+    // destroys the entire effect, so when there's no real quote we drop the
+    // paragraph rather than invent one.
+    const quoteBlock = goalQuote
+      ? `<p style="color:#374151;">${isEs
+          ? "Me quedé pensando en algo que dijiste:"
+          : "One thing you said stuck with me:"}
+         <em style="color:#0A4A6E;">"${esc(goalQuote)}"</em>
+         ${isEs ? "Armé tu plan alrededor de eso." : "I built your plan around that."}</p>`
+      : "";
+
+    const bullets = isEs
+      ? [
+          "Dónde estás hoy de verdad — incluyendo cosas en las que estás mejor de lo que crees",
+          "Las 3 cosas que te están frenando, y por qué cada una importa para <em>tu</em> meta",
+          "Tu ruta semana a semana, con un logro concreto que vas marcando",
+          "Cuántas clases por semana necesitas para llegar a tiempo",
+        ]
+      : [
+          "Where you actually are today — including things you're better at than you think",
+          "The 3 things holding you back, and why each one matters for <em>your</em> goal",
+          "Your week-by-week route, with a concrete win you check off",
+          "How many classes a week you need to get there on time",
+        ];
+
+    const body = `
+      <p style="color:#374151;font-size:16px;">${isEs ? "Hola" : "Hi"} <strong>${esc(studentName)}</strong>,</p>
+      <p style="color:#374151;">${isEs
+        ? "Gracias por los 50 minutos. Tu plan ya está listo."
+        : "Thanks for the 50 minutes. Your plan is ready."}</p>
+      ${quoteBlock}
+
+      <div style="background:#EAF4FA;border-left:4px solid #1C7BB1;padding:16px;margin:20px 0;border-radius:0 8px 8px 0;">
+        <p style="margin:0 0 6px;color:#0A4A6E;font-weight:600;font-size:17px;">${esc(planHeadline)}</p>
+        <p style="margin:0;color:#475569;font-size:14px;">${esc(recommendationLine)}</p>
+      </div>
+
+      <p style="color:#374151;">${isEs ? "Adentro vas a encontrar:" : "Inside you'll find:"}</p>
+      <ul style="color:#374151;padding-left:20px;">
+        ${bullets.map((b) => `<li style="margin-bottom:6px;">${b}</li>`).join("")}
+      </ul>
+
+      <div style="text-align:center;margin:28px 0;">
+        <a href="${planUrl}" style="display:inline-block;background:#F59E1C;color:white;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">
+          ${isEs ? "Ver mi Plan de Vuelo" : "Open my Flight Plan"}
+        </a>
+      </div>
+
+      <p style="color:#374151;">${isEs
+        ? "Léelo con calma. Es tuyo: salió de lo que hablamos, y se queda contigo te inscribas o no. Si decides trabajarlo por tu cuenta, por lo menos ya sabes por dónde empezar y en qué orden."
+        : "Take your time with it. It's yours: it came out of our conversation, and you keep it whether or not you enroll. If you decide to work through it on your own, at least you know where to start and in what order."}</p>
+
+      <p style="color:#374151;">${isEs
+        ? "Y si prefieres que lo recorramos juntos, el paso siguiente está en la última sección del plan. Uno a uno, a tu ritmo, sin nadie con quien competir."
+        : "And if you'd rather we walked it together, the next step is in the last section of the plan. One on one, at your pace, with nobody to keep up with."}</p>
+
+      <p style="color:#374151;">${isEs
+        ? "Cualquier duda, respóndeme este correo. Yo lo leo."
+        : "Any questions, just reply to this email. It comes straight to me."}</p>
+
+      <p style="color:#0A4A6E;margin-top:24px;">
+        <strong>${esc(tutorName)}</strong><br />
+        <span style="color:#64748B;font-size:14px;">${isEs ? "Tu coach en Passport2Fluency" : "Your coach at Passport2Fluency"}</span>
+      </p>
+    `;
+
+    return sendEmail({
+      to,
+      subject,
+      html: wrapTemplate(isEs ? "Tu Plan de Vuelo" : "Your Flight Plan", body, lang),
+    });
   },
 
   async sendTutorClassReminder(params: {
