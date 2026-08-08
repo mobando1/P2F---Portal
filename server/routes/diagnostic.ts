@@ -336,6 +336,37 @@ export function registerDiagnosticRoutes(app: Express) {
     });
   });
 
+  /**
+   * Claim the account from the plan page.
+   *
+   * The trial user already exists (created at booking) with a random UUID
+   * password. This is the moment they choose a real one — one form, no email
+   * round-trip, and they land in the Portal, which is the whole point of
+   * delivering the plan there rather than as a PDF.
+   *
+   * `updateUser` hashes the password, so it is passed in plain.
+   */
+  app.post("/api/public/study-plans/:token/claim", async (req: Request, res: Response) => {
+    const password = String(req.body?.password ?? "");
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: "La contraseña debe tener al menos 8 caracteres." });
+    }
+
+    // Read WITHOUT the view-tracking side effect — claiming is not a view.
+    const plan = await getPlanByShareTokenReadOnly(req.params.token);
+    if (!plan) return res.status(404).json({ success: false, message: "Plan not found" });
+
+    const user = await storage.getUser(plan.userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    // Possessing the token proves they received our email at their own address,
+    // so this doubles as email verification.
+    await storage.updateUser(user.id, { password, emailVerified: true } as any);
+    (req.session as any).userId = user.id;
+
+    res.json({ success: true, redirectTo: "/dashboard" });
+  });
+
   /* ── Student: logged-in view ───────────────────────────────────────── */
 
   app.get("/api/study-plans/me", requireAuth, async (req: Request, res: Response) => {
@@ -418,6 +449,17 @@ export function registerDiagnosticRoutes(app: Express) {
 /* ── queries that don't belong to a single service ────────────────────── */
 
 import { pool } from "../db";
+
+/** Token lookup with no view-count side effect. */
+async function getPlanByShareTokenReadOnly(token: string) {
+  if (!pool) return null;
+  const r = await pool.query(
+    `SELECT id, user_id FROM study_plans WHERE share_token = $1 AND status = 'sent' LIMIT 1`,
+    [token],
+  );
+  const row = r.rows[0];
+  return row ? { id: row.id as number, userId: row.user_id as number } : null;
+}
 
 async function getLatestSentPlanForUser(userId: number) {
   if (!pool) return null;

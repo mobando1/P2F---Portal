@@ -1,4 +1,5 @@
 import {
+  Stethoscope,
   LayoutDashboard,
   KanbanSquare,
   Contact,
@@ -39,6 +40,7 @@ export const crmNav: NavItem[] = [
   { key: "pipeline", href: `${CRM_BASE}/pipeline`, labelEs: "Pipeline", labelEn: "Pipeline", icon: KanbanSquare, group: "crm" },
   { key: "contacts", href: `${CRM_BASE}/contacts`, labelEs: "Contactos", labelEn: "Contacts", icon: Contact, group: "crm" },
   { key: "tasks", href: `${CRM_BASE}/tasks`, labelEs: "Tareas", labelEn: "Tasks", icon: CheckSquare, group: "crm" },
+  { key: "diagnostics", href: `${CRM_BASE}/diagnostics`, labelEs: "Diagnósticos", labelEn: "Diagnostics", icon: Stethoscope, group: "crm" },
   { key: "metrics", href: `${CRM_BASE}/metrics`, labelEs: "Métricas", labelEn: "Metrics", icon: BarChart3, group: "crm" },
   { key: "campaigns", href: `${CRM_BASE}/campaigns`, labelEs: "Campañas", labelEn: "Campaigns", icon: Send, group: "marketing" },
   { key: "offers", href: `${CRM_BASE}/offers`, labelEs: "Ofertas", labelEn: "Offers", icon: Tag, group: "marketing" },
