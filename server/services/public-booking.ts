@@ -5,6 +5,11 @@ import { storage } from '../storage';
 import { availabilityService, localSlotToUtc, tutorTimezone, APP_TIMEZONE } from './availability';
 import { googleMeetService } from './google-meet';
 import { emailService } from './email';
+import { recordIntake } from './intake';
+import { recordConsent } from './recording-consent';
+import { DIAGNOSTIC_SCRIPT, COACH_RULES, renderScriptHtml } from './diagnostic-script';
+import { dripCampaignService } from './drip-campaign';
+import type { IntakePayload, ConsentPayload } from '@shared/intake';
 import type { Tutor } from '@shared/schema';
 
 const TRIAL_DURATION_MIN = 50;
@@ -99,8 +104,22 @@ export async function getAggregatedAvailabilityRange(params: {
   return result;
 }
 
-/** Upserts a lead/trial user from website contact info (idempotent by email). */
-async function upsertTrialUser(name: string, email: string, phone?: string) {
+/**
+ * Upserts a lead/trial user from website contact info (idempotent by email).
+ *
+ * `lang` and `timeZone` are persisted deliberately. This function used to
+ * discard them even though the route had both, so every website-booked user
+ * ended up with preferredLanguage='en' and timezone='America/New_York'
+ * defaults — which silently breaks generating the study plan in the student's
+ * own language, and sends their confirmation email in the wrong one.
+ */
+async function upsertTrialUser(
+  name: string,
+  email: string,
+  phone?: string,
+  lang?: 'es' | 'en',
+  timeZone?: string,
+) {
   const rawName = name?.trim() || email.split('@')[0];
   const [firstName, ...rest] = rawName.split(/\s+/);
   const lastName = rest.join(' ') || '—';
@@ -115,9 +134,18 @@ async function upsertTrialUser(name: string, email: string, phone?: string) {
       lastName,
       phone: phone || null,
       userType: 'trial',
+      preferredLanguage: lang || undefined,
+      timezone: timeZone || undefined,
+      leadSource: 'website_booking',
     } as any);
-  } else if (!user.phone && phone) {
-    await storage.updateUser(user.id, { phone } as any);
+  } else {
+    // Backfill only — never overwrite something the student set themselves.
+    const patch: Record<string, unknown> = {};
+    if (!user.phone && phone) patch.phone = phone;
+    if (lang && !user.preferredLanguage) patch.preferredLanguage = lang;
+    if (timeZone && !user.timezone) patch.timezone = timeZone;
+    if (!user.leadSource) patch.leadSource = 'website_booking';
+    if (Object.keys(patch).length) await storage.updateUser(user.id, patch as any);
   }
   return { user, firstName };
 }
@@ -156,6 +184,10 @@ export async function bookTrialAuto(params: {
   timeZone?: string;
   /** visitor UI language for their confirmation email */
   lang?: 'es' | 'en';
+  /** Qualification answers — the coach reads these BEFORE the class. */
+  intake?: IntakePayload;
+  /** Recording consent captured on the booking form. */
+  consent?: ConsentPayload;
 }): Promise<TrialBookingResult> {
   const startUtc = new Date(params.startAtISO);
   if (isNaN(startUtc.getTime())) return { success: false, code: 'invalid', message: 'Invalid start time' };
@@ -186,7 +218,11 @@ export async function bookTrialAuto(params: {
     const v = await availabilityService.validateBooking(tutor.id, startUtc, TRIAL_DURATION_MIN);
     if (!v.valid) continue;
 
-    if (!account) account = await upsertTrialUser(params.name, params.email, params.phone);
+    if (!account) {
+      account = await upsertTrialUser(
+        params.name, params.email, params.phone, params.lang, params.timeZone,
+      );
+    }
     const user = account.user!;
     const firstName = account.firstName;
 
@@ -242,6 +278,37 @@ export async function bookTrialAuto(params: {
     // Mark trial usage on the user
     await storage.updateUser(user.id, { trialTutorId: tutor.id, trialStartedAt: new Date() } as any).catch(() => {});
 
+    // Persist the qualification answers against the class that was just created.
+    // Best-effort: never fail a booking because the intake write failed — the
+    // class is what the student is waiting on.
+    if (params.intake) {
+      await recordIntake({
+        userId: user.id,
+        classId: newClass.id,
+        source: 'booking',
+        intake: params.intake,
+        locale: params.lang,
+      }).catch(() => null);
+    }
+
+    // Recording consent. Google Meet announces recording in-call, but that is a
+    // notification — this is the auditable record, and transcript ingestion
+    // refuses to run without it.
+    if (params.consent?.recording) {
+      recordConsent({
+        userId: user.id,
+        classId: newClass.id,
+        scope: 'class',
+        ipAddress: params.consent.clientIp,
+        userAgent: params.consent.userAgent,
+        clientPolicyVersion: params.consent.policyVersion,
+      }).catch((e) => console.error('[public-booking] consent write failed:', e));
+    }
+
+    // Website-booked trials never entered the drip sequence — only
+    // POST /api/classes/book-trial called this — so they got no pre-class tips.
+    dripCampaignService.onTrialBooked(user.id, startUtc).catch(() => {});
+
     // Notifications — TZ-correct, localized emails (student in their zone/lang, coach in theirs, team to info@/mateo@)
     const studentLang: 'es' | 'en' = params.lang === 'en' ? 'en' : 'es';
     const studentLocale = studentLang === 'en' ? enUS : es;
@@ -263,13 +330,22 @@ export async function bookTrialAuto(params: {
     }).catch((e) => console.error('[public-booking] student email failed:', e));
 
     if (tutor.email) {
+      // The coach briefing rides this email because it already fires at booking
+      // time and coaches read it on their phones. Protocol first (what to do),
+      // intake second (who they're meeting) — that ordering is what makes the
+      // class feel personalized from minute one.
       emailService.sendTutorNewBooking({
         to: tutor.email,
         tutorName: tutor.name,
-        studentName: `${firstName} (${params.email}${params.phone ? ', ' + params.phone : ''})`,
+        studentName: firstName,
+        studentEmail: params.email,
+        studentPhone: params.phone,
         date: dateTutor,
         time: `${timeTutor} (${tz})`,
         lang: 'es',
+        isDiagnostic: true,
+        intake: params.intake,
+        protocolHtml: renderScriptHtml('es'),
       }).catch((e) => console.error('[public-booking] tutor email failed:', e));
     }
 

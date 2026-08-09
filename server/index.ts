@@ -703,6 +703,116 @@ async function startServer() {
           );
           CREATE INDEX IF NOT EXISTS idx_recording_consents_user ON recording_consents (user_id);
           CREATE INDEX IF NOT EXISTS idx_recording_consents_class ON recording_consents (class_id);
+
+          -- ── Diagnostic Class → Flight Plan pipeline ────────────────────────
+          -- The first class is now a DIAGNOSTIC whose deliverable is a
+          -- personalized study plan. These four tables carry it end to end:
+          -- what the student told us at booking, what was said in the class,
+          -- what the coach measured, and the plan that came out.
+
+          -- Qualification answers from the website booking form.
+          -- Per-INQUIRY, not per-person: someone can book twice with different
+          -- goals. Kept off 'users' deliberately — drip-campaign iterates
+          -- getAllUsers() every hour and free text there taxes every tick.
+          CREATE TABLE IF NOT EXISTS intake_responses (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            class_id INTEGER REFERENCES classes(id),
+            source TEXT NOT NULL DEFAULT 'booking',
+            schema_version INTEGER NOT NULL DEFAULT 1,
+            goal TEXT,
+            goal_category TEXT,
+            blocker TEXT,
+            deadline TEXT,
+            self_level TEXT,
+            weekly_time TEXT,
+            -- Forward-compat escape hatch: the website can add a fifth question
+            -- and it lands here without a Portal deploy.
+            raw JSONB,
+            locale TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          );
+          CREATE INDEX IF NOT EXISTS idx_intake_responses_user ON intake_responses (user_id, created_at DESC);
+          CREATE INDEX IF NOT EXISTS idx_intake_responses_class ON intake_responses (class_id);
+
+          -- Class transcripts. Separate table, NOT a column on 'classes':
+          -- 'classes' is SELECT-*'d by the coach dashboard, the CRM list and the
+          -- admin calendar — a 60KB TEXT column would ride along on every one.
+          CREATE TABLE IF NOT EXISTS class_transcripts (
+            id SERIAL PRIMARY KEY,
+            class_id INTEGER NOT NULL REFERENCES classes(id),
+            source TEXT NOT NULL,
+            source_ref TEXT,
+            format TEXT NOT NULL DEFAULT 'plain',
+            content TEXT NOT NULL,
+            segments JSONB,
+            language TEXT,
+            word_count INTEGER,
+            char_count INTEGER,
+            uploaded_by INTEGER REFERENCES users(id),
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          );
+          CREATE INDEX IF NOT EXISTS idx_class_transcripts_class ON class_transcripts (class_id, created_at DESC);
+
+          -- The rubric. The transcript gives the qualitative evidence; this
+          -- gives the NUMBERS progress is measured against. Re-scored at class
+          -- 4, 8 and 12 so the student watches the same bars move.
+          CREATE TABLE IF NOT EXISTS class_assessments (
+            id SERIAL PRIMARY KEY,
+            class_id INTEGER NOT NULL REFERENCES classes(id),
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            assessment_number INTEGER NOT NULL DEFAULT 1,
+            fluency INTEGER,
+            listening INTEGER,
+            lexical_range INTEGER,
+            grammatical_accuracy INTEGER,
+            confidence INTEGER,
+            target_task_result TEXT,
+            cefr_estimate TEXT,
+            notes TEXT,
+            assessed_by INTEGER REFERENCES users(id),
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          );
+          CREATE INDEX IF NOT EXISTS idx_class_assessments_user ON class_assessments (user_id, assessment_number);
+          CREATE UNIQUE INDEX IF NOT EXISTS uniq_class_assessments_class_number
+            ON class_assessments (class_id, assessment_number);
+
+          -- The Flight Plan itself. 'ai_content' keeps the untouched model
+          -- output beside the coach-edited 'content': every edit is a labeled
+          -- correction, and edit-distance over time is what tells us when
+          -- auto-send is safe.
+          CREATE TABLE IF NOT EXISTS study_plans (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            class_id INTEGER REFERENCES classes(id),
+            transcript_id INTEGER REFERENCES class_transcripts(id),
+            intake_id INTEGER REFERENCES intake_responses(id),
+            version INTEGER NOT NULL DEFAULT 1,
+            status TEXT NOT NULL DEFAULT 'generating',
+            language TEXT NOT NULL DEFAULT 'es',
+            model TEXT,
+            prompt_version TEXT,
+            content JSONB,
+            ai_content JSONB,
+            edited_by INTEGER REFERENCES users(id),
+            reviewed_at TIMESTAMP,
+            sent_at TIMESTAMP,
+            first_viewed_at TIMESTAMP,
+            last_viewed_at TIMESTAMP,
+            view_count INTEGER NOT NULL DEFAULT 0,
+            share_token TEXT UNIQUE,
+            failure_reason TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+          );
+          CREATE INDEX IF NOT EXISTS idx_study_plans_user ON study_plans (user_id);
+          CREATE INDEX IF NOT EXISTS idx_study_plans_status ON study_plans (status, created_at DESC);
+          -- One active plan per diagnostic, race-safe. Same partial-unique trick
+          -- as uniq_classes_tutor_slot_scheduled.
+          CREATE UNIQUE INDEX IF NOT EXISTS uniq_study_plans_active_class
+            ON study_plans (class_id)
+            WHERE status NOT IN ('superseded', 'failed');
+
           ALTER TABLE classes ADD COLUMN IF NOT EXISTS livekit_room_name TEXT;
           ALTER TABLE classes ADD COLUMN IF NOT EXISTS recording_url TEXT;
           ALTER TABLE classes ADD COLUMN IF NOT EXISTS recording_started_at TIMESTAMP;

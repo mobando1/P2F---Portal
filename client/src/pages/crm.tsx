@@ -7,6 +7,7 @@ import CrmCampaigns from "@/components/crm/CrmCampaigns";
 import OfferManager from "@/components/crm/OfferManager";
 import CrmTasksGlobal from "@/components/crm/CrmTasksGlobal";
 import CrmMetrics from "@/components/crm/CrmMetrics";
+import DiagnosticsTab from "@/components/crm/DiagnosticsTab";
 import SubscriberList from "@/components/crm/SubscriberList";
 import StudentDetail from "@/components/crm/StudentDetail";
 import { SegmentsTab } from "@/components/crm/CrmDashboard";
@@ -35,6 +36,7 @@ export default function CrmArea() {
         <Route path="/admin/crm/campaigns">{() => <CrmCampaigns />}</Route>
         <Route path="/admin/crm/offers">{() => <OfferManager />}</Route>
         <Route path="/admin/crm/tasks">{() => <CrmTasksGlobal />}</Route>
+        <Route path="/admin/crm/diagnostics">{() => <DiagnosticsTab />}</Route>
         <Route path="/admin/crm/metrics">{() => <CrmMetrics />}</Route>
         <Route path="/admin/crm/segments">{() => <SegmentsTab />}</Route>
         <Route path="/admin/crm/subscribers">{() => <SubscriberList />}</Route>

@@ -15,20 +15,58 @@ const PRICING: Record<string, { input: number; output: number }> = {
   // Anthropic
   "claude-haiku-4-5": { input: 1.0, output: 5.0 },
   "claude-sonnet-4-6": { input: 3.0, output: 15.0 },
-  "claude-opus-4-7": { input: 15.0, output: 75.0 },
+  "claude-sonnet-5": { input: 3.0, output: 15.0 },
+  "claude-opus-5": { input: 5.0, output: 25.0 },
+  "claude-opus-4-8": { input: 5.0, output: 25.0 },
+  "claude-opus-4-7": { input: 5.0, output: 25.0 },
+  // Legacy, still referenced by ai-tutor.ts and tutor-portal.ts
+  "claude-sonnet-4": { input: 3.0, output: 15.0 },
   // Embeddings
   "text-embedding-3-small": { input: 0.02, output: 0 },
   "text-embedding-3-large": { input: 0.13, output: 0 },
 };
+
+/**
+ * Call sites pass dated full IDs (`claude-haiku-4-5-20251001`,
+ * `claude-sonnet-4-20250514`) while PRICING is keyed on the short alias. Without
+ * this, every lookup missed and `calculateCostUsd` silently returned 0 — which
+ * is why /admin/ai-cost has always shown $0.00.
+ */
+function normalizeModelKey(model: string): string {
+  return model.replace(/-\d{8}$/, "");
+}
 
 const AUDIO_PRICING_PER_MIN: Record<string, number> = {
   "whisper-1": 0.006,
   "deepgram-nova-2": 0.043 / 10, // approx; update when contract is signed
 };
 
-const DAILY_BUDGET_USD = parseFloat(process.env.AI_DAILY_BUDGET_USD || "10");
-const MONTHLY_BUDGET_USD = parseFloat(process.env.AI_MONTHLY_BUDGET_USD || "200");
-const PER_USER_DAILY_USD = parseFloat(process.env.AI_PER_USER_DAILY_USD || "1");
+/**
+ * Budget caps. UNSET MEANS UNLIMITED, deliberately.
+ *
+ * These used to default to $10/day and $200/month, which only ever looked safe
+ * because `calculateCostUsd` was silently returning 0 for every model and the
+ * guard never fired. Now that costs are recorded for real, a default cap would
+ * start blocking work nobody asked it to block — and the failure mode is bad:
+ * a coach hits "generate", the guard refuses, and the student never receives
+ * the plan we promised them within 72 hours.
+ *
+ * The real protection against a runaway loop is MAX_REGENERATIONS_PER_CLASS in
+ * study-plan.ts (5), which bounds the only expensive path we have. A daily cap
+ * on top of that is redundant and can only cause outages.
+ *
+ * Set AI_DAILY_BUDGET_USD / AI_MONTHLY_BUDGET_USD explicitly to opt into a cap.
+ */
+function budgetFromEnv(name: string): number {
+  const raw = process.env[name];
+  if (!raw || !raw.trim()) return Infinity;
+  const n = parseFloat(raw);
+  return Number.isFinite(n) && n > 0 ? n : Infinity;
+}
+
+const DAILY_BUDGET_USD = budgetFromEnv("AI_DAILY_BUDGET_USD");
+const MONTHLY_BUDGET_USD = budgetFromEnv("AI_MONTHLY_BUDGET_USD");
+const PER_USER_DAILY_USD = budgetFromEnv("AI_PER_USER_DAILY_USD");
 const ALERT_THRESHOLD_PCT = 0.5; // log warn at 50% of daily budget
 
 let alertSent50pct = false;
@@ -66,8 +104,12 @@ export function calculateCostUsd(params: {
     const perMin = AUDIO_PRICING_PER_MIN[model] || 0;
     return (audioSeconds / 60) * perMin;
   }
-  const p = PRICING[model];
-  if (!p) return 0;
+  const key = normalizeModelKey(model);
+  const p = PRICING[key];
+  if (!p) {
+    logger.warn({ model, key }, "No pricing entry for model — cost recorded as $0");
+    return 0;
+  }
   return (tokensIn / 1_000_000) * p.input + (tokensOut / 1_000_000) * p.output;
 }
 
@@ -104,6 +146,16 @@ export async function getUserDailyCostUsd(userId: number): Promise<number> {
  * has exceeded its daily/monthly budget. Call this BEFORE any AI request.
  */
 export async function assertWithinBudget(userId?: number): Promise<void> {
+  // No caps configured — skip the cost queries entirely rather than run three
+  // aggregate scans on every AI call just to compare against Infinity.
+  if (
+    DAILY_BUDGET_USD === Infinity &&
+    MONTHLY_BUDGET_USD === Infinity &&
+    PER_USER_DAILY_USD === Infinity
+  ) {
+    return;
+  }
+
   const daily = await getDailyCostUsd();
   if (daily >= DAILY_BUDGET_USD) {
     await maybeAlertBudget(daily, "blocked");
@@ -123,6 +175,9 @@ export async function assertWithinBudget(userId?: number): Promise<void> {
 }
 
 async function maybeAlertBudget(currentDaily: number, status: "ok" | "blocked") {
+  // Nothing to alert against without a cap. Spend is still recorded in
+  // ai_usage and visible on /admin/ai-cost — it just isn't policed.
+  if (DAILY_BUDGET_USD === Infinity) return;
   maybeResetDailyAlerts();
   const pct = currentDaily / DAILY_BUDGET_USD;
   if (pct >= 1 && !alertSent100pct) {
