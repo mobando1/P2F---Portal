@@ -301,6 +301,7 @@ export async function bookTrialAuto(params: {
         scope: 'class',
         ipAddress: params.consent.clientIp,
         userAgent: params.consent.userAgent,
+        clientPolicyVersion: params.consent.policyVersion,
       }).catch((e) => console.error('[public-booking] consent write failed:', e));
     }
 
