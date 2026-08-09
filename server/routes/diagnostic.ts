@@ -234,6 +234,34 @@ export function registerDiagnosticRoutes(app: Express) {
     res.json(plan);
   });
 
+  /**
+   * Read one plan by id, for the review screen.
+   *
+   * Unlike the student-facing endpoint this DOES return `confidence` and
+   * `generationNotes` — those are the model's own uncertainty signals and they
+   * tell the coach where to look hardest.
+   */
+  app.get("/api/tutor/study-plans/:id", requireTutor, async (req: Request, res: Response) => {
+    const planId = parseInt(req.params.id, 10);
+    const plan = await getPlanById(planId);
+    if (!plan?.classId) return res.status(404).json({ success: false, message: "Plan not found" });
+    const cls = await assertOwnedClass(req, res, plan.classId);
+    if (!cls) return;
+
+    const [student, tutor] = await Promise.all([
+      storage.getUser(plan.userId),
+      cls.tutorId ? storage.getTutor(cls.tutorId) : Promise.resolve(undefined),
+    ]);
+
+    res.json({
+      ...plan,
+      studentFirstName: student?.firstName ?? "",
+      coachName: tutor?.name ?? null,
+      classDate: cls.scheduledAt,
+      classId: plan.classId,
+    });
+  });
+
   app.patch("/api/tutor/study-plans/:id", requireTutor, async (req: Request, res: Response) => {
     const planId = parseInt(req.params.id, 10);
     const plan = await getPlanById(planId);

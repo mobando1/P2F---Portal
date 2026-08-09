@@ -432,7 +432,7 @@ export default function TutorDiagnosticPage() {
               </Button>
               {briefing.planId && (
                 <Button variant="outline" asChild>
-                  <a href={`/tutor/study-plan/${briefing.planId}`}>
+                  <a href={`/tutor-portal/study-plan/${briefing.planId}`}>
                     <Send className="w-4 h-4 mr-2" />
                     Revisar y enviar
                   </a>

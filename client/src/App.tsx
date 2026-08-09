@@ -42,6 +42,7 @@ const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 const StudyPlanPage = lazy(() => import("@/pages/study-plan"));
 const TutorDiagnosticPage = lazy(() => import("@/pages/tutor-diagnostic"));
+const TutorStudyPlanReviewPage = lazy(() => import("@/pages/tutor-study-plan-review"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 const ClassroomPage = lazy(() => import("@/pages/classroom"));
 const PreflightCheckPage = lazy(() => import("@/pages/classroom").then(m => ({ default: m.PreflightCheck })));
@@ -201,6 +202,11 @@ function Router() {
         <Route path="/tutor-portal/diagnostic/:classId">
           <ProtectedRoute>
             <TutorDiagnosticPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/tutor-portal/study-plan/:id">
+          <ProtectedRoute>
+            <TutorStudyPlanReviewPage />
           </ProtectedRoute>
         </Route>
         <Route path="/tutor-portal/availability">
