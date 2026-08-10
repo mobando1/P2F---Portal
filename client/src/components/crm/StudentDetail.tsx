@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import StudentDiagnosticTab from "@/components/crm/StudentDiagnosticTab";
 import { useLanguage } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -410,9 +411,12 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
 
         {student && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList className="grid grid-cols-5 w-full">
+            <TabsList className="grid grid-cols-6 w-full">
               <TabsTrigger value="overview" className="text-xs">
                 {isEs ? "General" : "Overview"}
+              </TabsTrigger>
+              <TabsTrigger value="diagnostic" className="text-xs">
+                {isEs ? "Plan" : "Plan"}
               </TabsTrigger>
               <TabsTrigger value="notes" className="text-xs">
                 {isEs ? "Notas" : "Notes"}
@@ -557,6 +561,11 @@ export default function StudentDetail({ userId, open, onClose }: StudentDetailPr
             </TabsContent>
 
             {/* ─── Notes Tab ─── */}
+            {/* ─── Flight Plan Tab ─── */}
+            <TabsContent value="diagnostic" className="mt-4">
+              <StudentDiagnosticTab userId={student.id} isEs={isEs} />
+            </TabsContent>
+
             <TabsContent value="notes" className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Textarea

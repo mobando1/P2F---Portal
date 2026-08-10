@@ -81,6 +81,13 @@ function Router() {
         {/* Public by design: the student reaches their plan by capability URL,
             not by logging in. See server/routes/diagnostic.ts. */}
         <Route path="/plan/:token" component={StudyPlanPage} />
+        {/* Same page, signed-in variant: the student reaching their own plan
+            from the dashboard instead of from the delivery email. */}
+        <Route path="/plan">
+          <ProtectedRoute>
+            <StudyPlanPage />
+          </ProtectedRoute>
+        </Route>
         <Route path="/forgot-password" component={ForgotPasswordPage} />
         <Route path="/reset-password" component={ResetPasswordPage} />
         <Route path="/home">

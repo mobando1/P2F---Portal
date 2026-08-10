@@ -397,12 +397,49 @@ export function registerDiagnosticRoutes(app: Express) {
 
   /* ── Student: logged-in view ───────────────────────────────────────── */
 
+  /**
+   * The logged-in student's own plan.
+   *
+   * Returns the SAME shape as the public share-token endpoint so the plan page
+   * renders identically whether they arrived from the delivery email or from
+   * their dashboard. Coach-only fields are stripped here too.
+   */
   app.get("/api/study-plans/me", requireAuth, async (req: Request, res: Response) => {
     const userId = (req.session as any).userId;
     const plan = await getLatestSentPlanForUser(userId);
     if (!plan?.content) return res.status(404).json({ success: false, message: "No plan yet" });
+
+    const [student, cls] = await Promise.all([
+      storage.getUser(userId),
+      plan.classId ? storage.getClassById(plan.classId) : Promise.resolve(undefined),
+    ]);
+    const tutor = cls?.tutorId ? await storage.getTutor(cls.tutorId) : undefined;
+
     const { generationNotes, confidence, ...studentFacing } = plan.content;
-    res.json({ plan: studentFacing, language: plan.language, version: plan.version });
+    res.json({
+      plan: studentFacing,
+      language: plan.language,
+      studentFirstName: student?.firstName ?? "",
+      coachName: tutor?.name ?? null,
+      classDate: cls?.scheduledAt ?? null,
+      version: plan.version,
+      // Already signed in, so never show the "create your password" block.
+      hasAccount: true,
+    });
+  });
+
+  /** Lightweight existence check, for the dashboard card. */
+  app.get("/api/study-plans/me/summary", requireAuth, async (req: Request, res: Response) => {
+    const plan = await getLatestSentPlanForUser((req.session as any).userId);
+    if (!plan?.content) return res.json({ hasPlan: false });
+    res.json({
+      hasPlan: true,
+      headline: plan.content.headline,
+      cefrLevel: plan.content.diagnosis?.cefrLevel ?? null,
+      sessionsPerWeek: plan.content.recommendation?.sessionsPerWeek ?? null,
+      durationWeeks: plan.content.recommendation?.durationWeeks ?? null,
+      version: plan.version,
+    });
   });
 
   /* ── Admin ─────────────────────────────────────────────────────────── */
@@ -423,6 +460,75 @@ export function registerDiagnosticRoutes(app: Express) {
       userAgent: `admin-override by user ${(req.session as any).userId}`,
     });
     res.json({ success: true });
+  });
+
+  /**
+   * Everything diagnostic-related for ONE contact, for the CRM detail view.
+   *
+   * Transcripts come back as METADATA ONLY — never ship 60KB of raw transcript
+   * into a CRM panel, and a verbatim record of someone's language mistakes
+   * isn't something a sales view needs anyway.
+   */
+  app.get("/api/admin/crm/:userId/diagnostic", requireAdmin, async (req: Request, res: Response) => {
+    const userId = parseInt(req.params.userId, 10);
+    if (!Number.isFinite(userId)) {
+      return res.status(400).json({ success: false, message: "Invalid user id" });
+    }
+    if (!pool) return res.json({ plans: [], intake: null, classes: [] });
+
+    const plans = (await pool.query(
+      `SELECT sp.id, sp.class_id, sp.version, sp.status, sp.language, sp.sent_at,
+              sp.first_viewed_at, sp.last_viewed_at, sp.view_count, sp.share_token,
+              sp.created_at, sp.failure_reason,
+              sp.content ->> 'headline'                            AS headline,
+              sp.content -> 'diagnosis' ->> 'cefrLevel'            AS cefr_level,
+              sp.content ->> 'goalInTheirWords'                    AS goal,
+              sp.content -> 'recommendation' ->> 'planTier'        AS plan_tier,
+              sp.content -> 'recommendation' ->> 'sessionsPerWeek' AS sessions_per_week,
+              sp.content -> 'recommendation' ->> 'durationWeeks'   AS duration_weeks,
+              c.scheduled_at, t.name AS coach_name
+         FROM study_plans sp
+         LEFT JOIN classes c ON c.id = sp.class_id
+         LEFT JOIN tutors  t ON t.id = c.tutor_id
+        WHERE sp.user_id = $1
+        ORDER BY sp.version DESC`,
+      [userId],
+    )).rows;
+
+    const intake = (await pool.query(
+      `SELECT goal, goal_category, self_level, blocker, locale, created_at
+         FROM intake_responses WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [userId],
+    )).rows[0] ?? null;
+
+    // Diagnostic classes plus whether each one has a transcript and a rubric —
+    // this is the "what is this contact waiting on" answer.
+    const classes = (await pool.query(
+      `SELECT c.id, c.scheduled_at, c.status, t.name AS coach_name,
+              tr.word_count AS transcript_words, tr.created_at AS transcript_at,
+              a.cefr_estimate, a.assessment_number
+         FROM classes c
+         LEFT JOIN tutors t ON t.id = c.tutor_id
+         LEFT JOIN LATERAL (
+           SELECT * FROM class_transcripts WHERE class_id = c.id ORDER BY created_at DESC LIMIT 1
+         ) tr ON TRUE
+         LEFT JOIN LATERAL (
+           SELECT * FROM class_assessments WHERE class_id = c.id ORDER BY assessment_number ASC LIMIT 1
+         ) a ON TRUE
+        WHERE c.user_id = $1 AND c.is_trial = TRUE
+        ORDER BY c.scheduled_at DESC`,
+      [userId],
+    )).rows;
+
+    // The measurement series — the same five skills at class 1, 4, 8, 12.
+    const assessments = (await pool.query(
+      `SELECT assessment_number, fluency, listening, lexical_range,
+              grammatical_accuracy, confidence, target_task_result, cefr_estimate, created_at
+         FROM class_assessments WHERE user_id = $1 ORDER BY assessment_number ASC`,
+      [userId],
+    )).rows;
+
+    res.json({ plans, intake, classes, assessments });
   });
 
   app.get("/api/admin/diagnostics", requireAdmin, async (_req: Request, res: Response) => {
@@ -497,7 +603,9 @@ async function getLatestSentPlanForUser(userId: number) {
     [userId],
   );
   const row = r.rows[0];
-  return row ? { content: row.content, language: row.language, version: row.version } : null;
+  return row
+    ? { content: row.content, language: row.language, version: row.version, classId: row.class_id }
+    : null;
 }
 
 /**

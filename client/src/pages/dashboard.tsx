@@ -33,6 +33,7 @@ import {
   LifeBuoy,
   Gift,
   ShoppingCart,
+  Compass,
 } from "lucide-react";
 
 // Animated counter hook
@@ -92,6 +93,20 @@ export default function Dashboard() {
   const [rescheduleClass, setRescheduleClass] = useState<any>(null);
 
   // ALL hooks must be called before any conditional returns (React Rules of Hooks)
+  // The Flight Plan card only appears once a plan has actually been sent.
+  const { data: planSummary } = useQuery<{
+    hasPlan: boolean; headline?: string; cefrLevel?: string | null;
+    sessionsPerWeek?: number | null; durationWeeks?: number | null; version?: number;
+  }>({
+    queryKey: ["study-plan-summary"],
+    queryFn: async () => {
+      const res = await fetch("/api/study-plans/me/summary");
+      if (!res.ok) return { hasPlan: false };
+      return res.json();
+    },
+    retry: false,
+  });
+
   const { data: dashboardData, isLoading: isDashboardLoading, isError: isDashboardError, error: dashboardError } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard", user?.id],
     enabled: !!user,
@@ -388,6 +403,51 @@ export default function Dashboard() {
                 >
                   {language === 'es' ? 'Ver Paquetes' : 'View Packages'}
                 </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Flight Plan — the artifact they were promised. Sits above the stats
+            because for a student fresh out of a diagnostic it IS the dashboard. */}
+        {planSummary?.hasPlan && (
+          <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="mb-8">
+            <Card className="border-0 shadow-lg bg-gradient-to-r from-[#0A4A6E] to-[#1C7BB1] text-white overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Compass className="w-5 h-5" />
+                      <span className="text-sm font-medium opacity-90">
+                        {language === "es" ? "Tu Plan de Vuelo" : "Your Flight Plan"}
+                      </span>
+                      {planSummary.version && planSummary.version > 1 && (
+                        <span className="text-xs bg-white/20 rounded px-2 py-0.5">v{planSummary.version}</span>
+                      )}
+                    </div>
+                    <h3 className="text-lg md:text-xl font-bold leading-snug">{planSummary.headline}</h3>
+                    <p className="text-sm opacity-90 mt-2">
+                      {planSummary.cefrLevel && (
+                        <>{language === "es" ? "Nivel" : "Level"} {planSummary.cefrLevel}</>
+                      )}
+                      {planSummary.sessionsPerWeek && planSummary.durationWeeks && (
+                        <>
+                          {" · "}
+                          {planSummary.sessionsPerWeek}
+                          {language === "es" ? " clases por semana · " : " classes per week · "}
+                          {planSummary.durationWeeks}
+                          {language === "es" ? " semanas" : " weeks"}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setLocation("/plan")}
+                    className="bg-white text-[#0A4A6E] hover:bg-gray-100 font-semibold shrink-0"
+                  >
+                    {language === "es" ? "Ver mi plan" : "Open my plan"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </motion.div>

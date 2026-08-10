@@ -139,6 +139,8 @@ const COPY = {
 export default function StudyPlanPage() {
   const [, params] = useRoute("/plan/:token");
   const token = params?.token;
+  /** No token in the URL means they got here from their own dashboard. */
+  const isOwnPlan = !token;
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [password, setPassword] = useState("");
@@ -146,13 +148,12 @@ export default function StudyPlanPage() {
   const [checked, setChecked] = useState<Set<number>>(new Set());
 
   const { data, isLoading, isError } = useQuery<PlanResponse>({
-    queryKey: ["study-plan", token],
+    queryKey: ["study-plan", token ?? "me"],
     queryFn: async () => {
-      const res = await fetch(`/api/public/study-plans/${token}`);
+      const res = await fetch(isOwnPlan ? "/api/study-plans/me" : `/api/public/study-plans/${token}`);
       if (!res.ok) throw new Error("not found");
       return res.json();
     },
-    enabled: !!token,
     retry: false,
   });
 
@@ -470,7 +471,7 @@ export default function StudyPlanPage() {
         {/* Claim: one form, no email round-trip. This is how a trial user
             becomes an account without ever being asked to reset a password
             they never set. */}
-        {!data.hasAccount && (
+        {!data.hasAccount && !isOwnPlan && (
           <Card className="bg-muted/40">
             <CardContent className="p-6 space-y-3">
               <div className="flex items-center gap-2">
