@@ -28,6 +28,7 @@ import {
 import { studyPlanSchema } from "@shared/study-plan-schema";
 import { DIAGNOSTIC_SCRIPT, COACH_RULES, CLOSING_SCRIPT, RUBRIC_SKILLS, TARGET_TASK_RESULTS } from "../services/diagnostic-script";
 import { emailService } from "../services/email";
+import { getAggregatedAvailabilityRange, type Audience, type Language } from "../services/public-booking";
 
 /**
  * The diagnostic → Flight Plan pipeline, over HTTP.
@@ -529,6 +530,62 @@ export function registerDiagnosticRoutes(app: Express) {
     )).rows;
 
     res.json({ plans, intake, classes, assessments });
+  });
+
+  /**
+   * Is the funnel actually bookable?
+   *
+   * The whole site now pushes people at "Agendar mi diagnóstico". If a class
+   * type has no bookable slots, that button silently degrades to a contact
+   * form — the lead is still captured, but no class is created and none of the
+   * diagnostic pipeline runs. That failure is invisible from the outside:
+   * nothing errors, conversions just quietly stop.
+   *
+   * This reports it per class type, and distinguishes the two very different
+   * causes: no coach is CONFIGURED for that combination, versus coaches exist
+   * but nobody has published hours.
+   */
+  app.get("/api/admin/availability-health", requireAdmin, async (_req: Request, res: Response) => {
+    const COMBOS: { classType: string; audience: Audience; language: Language; label: string }[] = [
+      { classType: "english_adults", audience: "adults", language: "english", label: "Inglés · adultos" },
+      { classType: "english_children", audience: "kids", language: "english", label: "Inglés · niños" },
+      { classType: "spanish_adults", audience: "adults", language: "spanish", label: "Español · adultos" },
+      { classType: "spanish_children", audience: "kids", language: "spanish", label: "Español · niños" },
+    ];
+    const startDateStr = new Date().toISOString().split("T")[0];
+
+    const rows = [];
+    for (const c of COMBOS) {
+      const coaches = await storage.getTutorsByCategory(c.audience, c.language);
+      let slots = 0;
+      try {
+        const days = await getAggregatedAvailabilityRange({
+          audience: c.audience, language: c.language, startDateStr, days: 14,
+        });
+        slots = days.reduce((n, d) => n + d.slots.length, 0);
+      } catch { /* treated as zero below */ }
+
+      const cause =
+        coaches.length === 0 ? "no_coaches"
+        : slots === 0 ? "no_hours"
+        : "ok";
+
+      rows.push({
+        classType: c.classType,
+        label: c.label,
+        coaches: coaches.length,
+        coachNames: coaches.map((t: any) => t.name),
+        slots14d: slots,
+        cause,
+        bookable: slots > 0,
+      });
+    }
+
+    res.json({
+      rows,
+      blocked: rows.filter((r) => !r.bookable).map((r) => r.classType),
+      checkedAt: new Date().toISOString(),
+    });
   });
 
   app.get("/api/admin/diagnostics", requireAdmin, async (_req: Request, res: Response) => {

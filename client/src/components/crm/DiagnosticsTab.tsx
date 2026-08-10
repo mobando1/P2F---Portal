@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, ExternalLink } from "lucide-react";
+import { Loader2, ExternalLink, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 /**
  * The daily operating view for the diagnostic funnel.
@@ -77,9 +77,31 @@ function matches(r: Row, f: Filter): boolean {
   }
 }
 
+interface AvailabilityRow {
+  classType: string;
+  label: string;
+  coaches: number;
+  coachNames: string[];
+  slots14d: number;
+  cause: "no_coaches" | "no_hours" | "ok";
+  bookable: boolean;
+}
+
 export default function DiagnosticsTab() {
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
+
+  // Nothing else on this page matters if people can't book in the first place.
+  const { data: health } = useQuery<{ rows: AvailabilityRow[]; blocked: string[] }>({
+    queryKey: ["availability-health"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/availability-health");
+      if (!res.ok) throw new Error("no health");
+      return res.json();
+    },
+    refetchInterval: 5 * 60 * 1000,
+    retry: false,
+  });
 
   const { data, isLoading } = useQuery<{ rows: Row[] }>({
     queryKey: ["admin-diagnostics"],
@@ -132,8 +154,55 @@ export default function DiagnosticsTab() {
     );
   }
 
+  const blocked = (health?.rows ?? []).filter((r) => !r.bookable);
+
   return (
     <div className="space-y-4">
+      {/* A blocked class type means the site is advertising a diagnostic nobody
+          can book. It degrades to a contact form silently, so it has to be
+          loud here. */}
+      {health && (
+        blocked.length > 0 ? (
+          <Card className="border-amber-400 bg-amber-50/70 dark:bg-amber-950/20">
+            <CardContent className="p-4 space-y-2">
+              <div className="flex items-center gap-2 font-semibold text-sm">
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                {blocked.length === 1
+                  ? "Hay 1 tipo de clase que nadie puede reservar"
+                  : `Hay ${blocked.length} tipos de clase que nadie puede reservar`}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                El sitio ofrece el diagnóstico, pero sin horarios la reserva cae al
+                formulario de contacto: se captura el lead y no se crea la clase.
+              </p>
+              <div className="space-y-1.5 pt-1">
+                {blocked.map((r) => (
+                  <div key={r.classType} className="text-sm flex flex-wrap items-baseline gap-x-2">
+                    <span className="font-medium">{r.label}:</span>
+                    {r.cause === "no_coaches" ? (
+                      <span className="text-amber-800 dark:text-amber-500">
+                        ningún coach está configurado para esta combinación
+                        <span className="text-muted-foreground"> — arréglalo en Admin → Profesores (idioma que enseña)</span>
+                      </span>
+                    ) : (
+                      <span className="text-amber-800 dark:text-amber-500">
+                        {r.coaches} coach(es) pero sin horarios publicados
+                        <span className="text-muted-foreground"> — {r.coachNames.join(", ")} en Portal del profe → Disponibilidad</span>
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+            Los cuatro tipos de clase tienen horarios reservables.
+          </div>
+        )
+      )}
+
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-3 md:grid-cols-7 gap-3 text-center">
