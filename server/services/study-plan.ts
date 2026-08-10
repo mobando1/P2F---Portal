@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { jsonSchemaOutputFormat } from "@anthropic-ai/sdk/helpers/json-schema";
 import crypto from "crypto";
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -12,6 +12,8 @@ import { getIntakeForClass } from "./intake";
 import { getAssessmentForClass } from "./assessments";
 import {
   studyPlanSchema,
+  studyPlanJsonSchema,
+  coerceToLimits,
   reconcileTier,
   type StudyPlan,
   type PlanStatus,
@@ -176,7 +178,9 @@ async function callModel(userPrompt: string, classId: number): Promise<StudyPlan
       // The SDK's effort union tops out at 'max'; 'high' is the documented
       // setting for intelligence-sensitive work that isn't agentic coding.
       effort: "high",
-      format: zodOutputFormat(studyPlanSchema),
+      // NOT zodOutputFormat: that helper needs Zod 4 and this project is on
+      // Zod 3, so it throws at runtime. See shared/study-plan-schema.ts.
+      format: jsonSchemaOutputFormat(studyPlanJsonSchema),
     },
     messages: [{ role: "user", content: userPrompt }],
   });
@@ -191,10 +195,26 @@ async function callModel(userPrompt: string, classId: number): Promise<StudyPlan
     throw new PlanGenerationError("Output truncated at max_tokens", "max_tokens");
   }
 
-  const parsed = message.parsed_output as StudyPlan | null;
-  if (!parsed) {
+  const raw = message.parsed_output;
+  if (!raw) {
     throw new PlanGenerationError("Model output did not match the schema", "schema_mismatch");
   }
+  // The JSON Schema constrained the shape; Zod enforces the detail (string
+  // lengths, array bounds, numeric ranges) that structured outputs can't carry.
+  // Trim an overshoot first — throwing away a finished generation over a few
+  // characters wastes the call and blocks the coach.
+  const { plan: coerced, trimmed } = coerceToLimits(raw);
+  if (trimmed.length) {
+    logger.info({ classId, trimmed }, "Study plan trimmed to layout limits");
+  }
+  const check = studyPlanSchema.safeParse(coerced);
+  if (!check.success) {
+    throw new PlanGenerationError(
+      `Plan failed validation: ${check.error.issues.slice(0, 3).map((i) => i.path.join(".") + " " + i.message).join("; ")}`,
+      "schema_mismatch",
+    );
+  }
+  const parsed = check.data;
 
   logger.info(
     { classId, inputTokens: message.usage.input_tokens, outputTokens: message.usage.output_tokens },
